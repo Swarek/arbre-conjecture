@@ -21,3 +21,18 @@
   seulement pour `n <= 8` et incomplète au-delà.
 - Next action : remplacer le placeholder grande taille par une première piste
   algorithmique mesurable, probablement Piste A ou E.
+
+## 2026-05-21 agent guide
+
+- Date/heure : 2026-05-21, Europe/Paris.
+- Commit hash : pending until checkpoint commit is created.
+- Hypothèse testée : un guide explicite réduit le risque qu’un agent futur
+  confonde quick benchmark, benchmark fort et preuve.
+- Changement fait : ajout de `docs/agent_loop_guide.md`; références ajoutées
+  dans `README.md` et `AGENTS.md`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `11 passed in 0.01s`, puis `JUSTE`.
+- Résultat benchmark : non applicable, changement documentation seulement.
+- Conclusion : guide ajouté sans modifier le comportement du solver ni des
+  outils.
+- Next action : utiliser le guide pour lancer une première piste algorithmique.

@@ -38,3 +38,5 @@ script. Cela ne prouve pas la correction globale.
 Les prochains travaux doivent remplacer la baseline par un algorithme prouvé ou
 par des sous-cas clairement énoncés, en maintenant des contre-exemples,
 benchmarks et obligations de preuve à jour.
+
+Pour reprendre la boucle de recherche, lire `docs/agent_loop_guide.md`.

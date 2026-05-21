@@ -1,6 +1,6 @@
 # Instructions pour agents
 
-- Tu dois toujours commencer par lire `README.md`, `docs/experiment_protocol.md`, `docs/hypothesis_portfolio.md` et `docs/checkpoints.md`.
+- Tu dois toujours commencer par lire `README.md`, `docs/agent_loop_guide.md`, `docs/experiment_protocol.md`, `docs/hypothesis_portfolio.md` et `docs/checkpoints.md`.
 - Pour tout changement non trivial, crée ou mets à jour une entrée dans `docs/experiment_log.md`.
 - Ne demande pas à l’utilisateur "quelle est la prochaine étape" si une prochaine expérience raisonnable est possible.
 - Si une piste échoue deux fois de suite sans amélioration mesurable, bascule vers une autre piste du portefeuille.
