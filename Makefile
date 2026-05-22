@@ -1,7 +1,7 @@
 PYTHON ?= $(shell if [ -x .venv/bin/python ]; then echo .venv/bin/python; elif command -v python3 >/dev/null 2>&1; then echo python3; else echo python; fi)
 PYTEST ?= $(PYTHON) -m pytest
 
-.PHONY: quick check hunt-counterexamples bench-quick bench bench-piste-f unit acceptance
+.PHONY: quick check hunt-counterexamples bench-quick bench bench-piste-f bench-csp-quick unit acceptance
 
 unit:
 	$(PYTEST) -q
@@ -89,6 +89,16 @@ bench-piste-f:
 	  --pc-tree mixed \
 	  --diagnostics-up-to 8 \
 	  --output reports/complexity_paired_farthest_mixed.json
+
+bench-csp-quick:
+	mkdir -p reports && \
+	$(PYTHON) tools/pc_csp_internal_benchmark.py \
+	  --sizes 4,5,6,7 \
+	  --repeats 3 \
+	  --instance-kinds random,cycle,block,ultrametric,equal,non_strict,paired_farthest,permuted_cycle \
+	  --pc-trees balanced,mixed \
+	  --max-p-degree 3 \
+	  --output reports/csp_internal_benchmark_quick.json
 
 acceptance:
 	make check && make bench

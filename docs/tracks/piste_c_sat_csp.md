@@ -167,8 +167,32 @@ Prochaine action : mesurer séparément coût de compilation et coût de solve,
 chercher les familles où les nogoods explosent, puis décider si Piste C reste
 prometteuse ou si Piste B/F doit reprendre la priorité.
 
+## Tentative T013 - Benchmark interne CSP/nogoods
+
+Statut : benchmark expérimental / signal de décision.
+
+Changement : ajout de `tools/pc_csp_internal_benchmark.py` et du target
+`make bench-csp-quick`. Le rapport JSON sépare `compile_seconds`,
+`solve_seconds`, `direct_seconds`, nombre d’atoms, nombre de nogoods uniques,
+tailles de support, espace d’affectations complet, feuilles visitées et branches
+prunées.
+
+Résultat observé : sur `192` lignes (`n=4..7`, arbres balanced/mixed, huit
+familles, trois répétitions), aucun mismatch. Médians observés :
+compilation `~0.00104s`, solve pruné `~0.000284s`, filtre direct `~0.000304s`.
+Le solve pruné visite `2208` feuilles sur `5760` affectations possibles et
+prune `1280` branches, mais la compilation produit déjà `31616` nogoods uniques.
+
+Interprétation : le pruning post-compilation est mesurable, mais la compilation
+semble être le coût dominant même sur petites tailles. La piste C doit maintenant
+soit éviter l’énumération de compilation, soit céder la priorité à Piste B/F.
+
+Prochaine action : créer un rapport de décision Piste C vs Piste B/F, et tester
+une signature DP/collision ou un sous-cas polynomial avant de continuer à
+raffiner le CSP énumératif.
+
 ## Prochaine action
 
-Mesurer séparément coût de compilation et coût de solve, puis chercher les
-familles où les nogoods explosent, sans appeler `candidate.py` tant que la
-suffisance et les cas non stricts ne sont pas établis.
+Créer un rapport de décision Piste C vs Piste B/F, puis tester une signature
+DP/collision ou un sous-cas polynomial avant de continuer à raffiner le CSP
+énumératif.

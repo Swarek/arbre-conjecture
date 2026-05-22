@@ -25,6 +25,7 @@ make hunt-counterexamples
 make bench-quick
 make bench
 make bench-piste-f
+make bench-csp-quick
 make acceptance
 ```
 
@@ -41,6 +42,10 @@ shrink. Elle est faite pour les moments où une candidate semble marcher et doit
 `permuted_cycle` comme sous-cas planted-cycle, et `paired_farthest` comme famille
 hard-looking à appariements farthest. Ces familles ne sont pas ajoutées au
 `mixed` par défaut.
+
+`make bench-csp-quick` mesure les expériences internes Piste C : compilation de
+nogoods, solve pruné, filtre direct et métriques de pruning. Ce n’est pas la
+gate de la candidate générale.
 
 Dans `tools/pc_circular_conjecture_test.py`, la sortie `JUSTE` signifie seulement
 que la candidate a été égale à l’oracle exact sur les instances générées par ce

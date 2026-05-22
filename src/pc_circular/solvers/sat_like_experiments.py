@@ -630,20 +630,16 @@ def _first_matching_completed_nogood(
     return None
 
 
-def solve_pruned_nogood_csp(
+def solve_pruned_nogood_csp_from_compilation(
     D,
     pc_tree: PCNode,
+    compilation: dict,
     *,
     max_p_degree: int = 3,
     validate_against_direct: bool = True,
 ) -> dict:
-    """Backtrack through local domains and prune completed nogood signatures.
+    """Backtrack through local domains using a precomputed compilation."""
 
-    Compilation still enumerates complete assignments.  The gain measured here
-    is only in the post-compilation search phase.
-    """
-
-    compilation = compile_cr_nogoods(D, pc_tree, max_p_degree=max_p_degree)
     counts = {
         "nodes_visited": 0,
         "branches_considered": 0,
@@ -760,6 +756,29 @@ def solve_pruned_nogood_csp(
             }
 
     return result
+
+
+def solve_pruned_nogood_csp(
+    D,
+    pc_tree: PCNode,
+    *,
+    max_p_degree: int = 3,
+    validate_against_direct: bool = True,
+) -> dict:
+    """Backtrack through local domains and prune completed nogood signatures.
+
+    Compilation still enumerates complete assignments.  The gain measured here
+    is only in the post-compilation search phase.
+    """
+
+    compilation = compile_cr_nogoods(D, pc_tree, max_p_degree=max_p_degree)
+    return solve_pruned_nogood_csp_from_compilation(
+        D,
+        pc_tree,
+        compilation,
+        max_p_degree=max_p_degree,
+        validate_against_direct=validate_against_direct,
+    )
 
 
 def prop45_nogood_frontier_report(

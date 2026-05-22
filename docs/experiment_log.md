@@ -307,8 +307,7 @@
 ## 2026-05-22 pruned nogood backtracking
 
 - Date/heure : 2026-05-22, Europe/Paris.
-- Commit hash : checkpoint commit containing this entry; report with
-  `git log -1`.
+- Commit hash : 9346feb.
 - Hypothèse testée : les nogoods compilés peuvent pruner des sous-arbres
   d’affectations avant reconstruction de frontier, tout en gardant exactement
   les mêmes frontiers acceptées que le filtre cR direct.
@@ -337,3 +336,34 @@
   de compilation des nogoods.
 - Next action : ajouter un benchmark interne de compilation/solve pour mesurer
   l’explosion des nogoods par famille et décider si Piste C reste prioritaire.
+
+## 2026-05-22 CSP internal benchmark
+
+- Date/heure : 2026-05-22, Europe/Paris.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : il faut mesurer séparément compilation, solve pruné et
+  filtre direct pour savoir si Piste C reste prometteuse.
+- Changement fait : ajout de `tools/pc_csp_internal_benchmark.py`, du target
+  `make bench-csp-quick`, et d’un test unitaire minimal du rapport.
+- Commande exécutée : `make unit`.
+- Résultat correction : `38 passed in 0.22s`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `38 passed in 0.21s`, puis `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-csp-quick`.
+- Résultat benchmark : `reports/csp_internal_benchmark_quick.json` écrit ;
+  `192` lignes, `0` mismatch, compilation médiane `~0.00104s`, solve pruné
+  médian `~0.000285s`, filtre direct médian `~0.000307s`, `31616` nogoods
+  uniques, `1280` branches prunées, `2208` feuilles visitées sur `5760`
+  affectations possibles.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark : `reports/complexity_report_quick.json` écrit; 8 tailles,
+  0 timeout, 20 runs incomplets explicitement marqués pour `n > 8`; médiane
+  `n=20` environ `0.00360s`.
+- Conclusion : Piste C a maintenant un benchmark interne. Le pruning est réel,
+  mais la compilation énumérative produit déjà beaucoup de nogoods ; il faut
+  décider entre compilation non énumérative, DP, ou sous-cas.
+- Next action : produire une décision Piste C vs Piste B/F et tester une
+  signature DP/collision avant de raffiner davantage le CSP énumératif.

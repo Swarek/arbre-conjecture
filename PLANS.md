@@ -374,3 +374,51 @@ Décision : continuer à instrumenter Piste C, mais ne pas intégrer dans
 `candidate.py`. Le pruning post-compilation est réel sur la probe, cependant la
 compilation reste énumérative. Prochaine étape : benchmark interne séparant coût
 de compilation, coût de solve et explosion des nogoods/supports par famille.
+
+## ExecPlan 2026-05-22 - CSP internal benchmark
+
+But : mesurer objectivement si Piste C progresse ou si la compilation des
+nogoods explose déjà sur petits arbres supportés.
+
+Hypothèse : un benchmark séparant compilation, solve pruné et filtre direct
+permettra de savoir si le backtracking pruné réduit assez les feuilles pour
+justifier la suite, ou si l’explosion des nogoods doit faire basculer vers Piste
+B/F.
+
+Fichiers à modifier : `src/pc_circular/solvers/sat_like_experiments.py`,
+`tools/pc_csp_internal_benchmark.py`, `tests/test_csp_internal_benchmark.py`,
+`Makefile`, `docs/tracks/piste_c_sat_csp.md`, `docs/experiment_log.md`,
+`docs/proof_obligations.md`, `docs/tracks/README.md`, `docs/checkpoints.md`.
+
+Algorithme pressenti : exposer une fonction qui lance le solve pruné depuis une
+compilation déjà construite, puis créer un outil JSON qui mesure séparément
+`compile_seconds`, `solve_seconds`, `direct_seconds`, `unique_nogoods`,
+`full_assignment_space`, `leaf_assignments_seen`, `branches_pruned` et les
+désaccords de validation. Le target Makefile `bench-csp-quick` reste borné à
+petits `n`.
+
+Tests à exécuter : `make unit`, `make quick`, `make check`, `make bench-csp-quick`
+et `make bench-quick`.
+
+Risques : benchmark trop lent ; rapport trop optimiste parce que la compilation
+reste énumérative ; PC-trees unsupported cachés dans les agrégats.
+
+Plan de contre-exemples : l’outil doit enregistrer tout mismatch entre solve
+pruné et filtre direct. Si un mismatch apparaît, le transformer en régression
+avant toute suite algorithmique.
+
+Plan subagents : pas de fanout immédiat ; cette tranche produit le signal qui
+décidera si un fanout Piste B/F devient prioritaire.
+
+Résultats observés : `solve_pruned_nogood_csp_from_compilation` ajouté pour
+séparer compilation et solve. `tools/pc_csp_internal_benchmark.py` et
+`make bench-csp-quick` ajoutés. Le benchmark rapide produit
+`reports/csp_internal_benchmark_quick.json` avec `192` lignes, `0` mismatch,
+compilation médiane `~0.00104s`, solve pruné médian `~0.000284s`, filtre direct
+médian `~0.000307s`, `31616` nogoods uniques, `1280` branches prunées, `2208`
+feuilles visitées sur `5760` affectations possibles.
+
+Décision : Piste C reste correcte expérimentalement, mais la compilation
+énumérative domine déjà le solve sur petites tailles. Ne pas intégrer dans
+`candidate.py`. La prochaine itération doit soit trouver une compilation
+non-énumérative, soit basculer vers Piste B/F avec cette limite documentée.

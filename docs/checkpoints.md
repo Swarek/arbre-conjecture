@@ -39,11 +39,13 @@ Dernier commit green avant T009 : `07120e4`.
   Nogoods compilés de quartets cR ajoutés. Validation observée : `make quick`,
   `make check`, `make bench-quick`, probe compiled-nogood sans désaccord sur
   960 instances.
-- Checkpoint T012 courant : commit contenant le backtracking pruné par nogoods
-  compilés ; son hash est à lire avec `git log -1` et doit être reporté dans le
-  compte rendu final de la session. Validation observée : `make quick`,
-  `make check`, `make bench-quick`, probe pruned-nogood sans désaccord sur 640
-  instances.
+- Checkpoint T012 : `9346feb` (`checkpoint: add pruned nogood backtracking`).
+  Backtracking pruné par nogoods compilés ajouté. Validation observée :
+  `make quick`, `make check`, `make bench-quick`, probe pruned-nogood sans
+  désaccord sur 640 instances.
+- Checkpoint T013 courant : commit contenant le benchmark interne Piste C ; son
+  hash est à lire avec `git log -1` et doit être reporté dans le compte rendu
+  final de la session.
 
 ## Rollback
 

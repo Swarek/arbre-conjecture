@@ -74,6 +74,17 @@ Cette commande écrit des rapports dédiés aux familles `permuted_cycle` et
 frontiers, les ordres cR valides, les ordres passant farthest, et les faux
 positifs farthest.
 
+Benchmark interne Piste C :
+
+```bash
+make bench-csp-quick
+```
+
+Cette commande mesure les expériences CSP/nogoods hors `candidate.py` :
+temps de compilation, temps du solve pruné, filtre cR direct, nombre de nogoods,
+branches prunées et mismatches. Un mismatch doit être traité comme un
+contre-exemple de la piste expérimentale, pas comme une faiblesse de l’oracle.
+
 ## Interprétation
 
 Un algorithme qui passe les gates peut encore être faux. Après chaque succès, il

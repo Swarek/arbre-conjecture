@@ -10,7 +10,7 @@ idées, essais, résultats, contre-exemples et prochaines actions par axe.
 | --- | --- | --- |
 | A - Contraintes locales P/C | `piste_a_local_pc_constraints.md` | Diagnostic utile ajouté ; pas solver |
 | B - DP sur PC-tree | `piste_b_dp_pc_tree.md` | Signature proposée ; à falsifier |
-| C - SAT/CSP | `piste_c_sat_csp.md` | Backtracking pruné ajouté ; compilation encore énumérative |
+| C - SAT/CSP | `piste_c_sat_csp.md` | Benchmark interne ajouté ; compilation encore dominante |
 | D - Circular-ones / intersection | `piste_d_circular_ones.md` | Non testée expérimentalement |
 | E - Obstructions farthest/quartets | `piste_e_farthest_quartets.md` | Farthest seul réfuté ; cR quartets restent centraux |
 | F - Complexité / sous-cas | `piste_f_complexity_subcases.md` | Deux familles stress ajoutées |
@@ -44,6 +44,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T010 | 2026-05-22 | C | Domaines locaux `P/C` et CSP cR direct expérimentaux | `solve_nogood_csp(source="cr")` |
 | T011 | 2026-05-22 | C | Nogoods compilés de quartets cR sur supports locaux | `compile_cr_nogoods` |
 | T012 | 2026-05-22 | C | Backtracking pruné par signatures de nogoods complètes | `solve_pruned_nogood_csp` |
+| T013 | 2026-05-22 | C | Benchmark interne compile/solve/direct/pruning | `make bench-csp-quick` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

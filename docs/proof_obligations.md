@@ -163,3 +163,18 @@ Limites restantes :
 - le pruning dépend de l’ordre des variables et peut être faible si les supports
   sont profonds ou larges ;
 - aucune borne en `n` et `|T|` n’est prouvée.
+
+### Benchmark interne CSP/nogoods
+
+Statut : preuve expérimentale / mesure de limite.
+
+`tools/pc_csp_internal_benchmark.py` mesure séparément compilation, solve pruné
+post-compilation et filtre cR direct. Le benchmark rapide T013 montre déjà que
+la compilation peut dominer le solve pruné, et que le nombre de nogoods uniques
+peut être élevé même pour `n <= 7`.
+
+Conséquence expérimentale : Piste C ne peut pas être promue en candidate générale
+tant que la compilation reste fondée sur l’énumération complète des
+affectations. La prochaine obligation est soit de prouver/implémenter une
+compilation non énumérative, soit de basculer vers une signature DP ou un
+sous-cas polynomial.
