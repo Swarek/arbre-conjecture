@@ -115,3 +115,21 @@
   sont explicites et ne polluent pas `mixed`.
 - Next action : utiliser `paired_farthest` pour casser les futurs filtres
   locaux, et `permuted_cycle` pour tester la reconnaissance d’un témoin caché.
+
+## 2026-05-22 per-track documentation
+
+- Date/heure : 2026-05-22, Europe/Paris.
+- Commit hash : pending until checkpoint commit is created.
+- Hypothèse testée : le journal chronologique ne suffit pas pour relire
+  facilement 50 pistes/tentatives ; il faut un document vivant par piste.
+- Changement fait : ajout de `docs/tracks/README.md` et d’un fichier dédié pour
+  chaque piste A-F ; liens ajoutés depuis `README.md`,
+  `docs/agent_loop_guide.md`, `docs/hypothesis_portfolio.md` et
+  `docs/experiment_protocol.md`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `18 passed in 0.03s`, puis `JUSTE`.
+- Résultat benchmark : non applicable, documentation seulement.
+- Conclusion : documentation par piste créée et reliée aux points d’entrée
+  principaux.
+- Next action : maintenir à jour à chaque tentative le fichier de piste
+  correspondant et le compteur dans `docs/tracks/README.md`.

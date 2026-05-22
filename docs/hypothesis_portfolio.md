@@ -4,6 +4,10 @@ Le portefeuille doit conserver au moins 4 pistes actives. Une piste qui échoue
 deux fois de suite sans meilleur benchmark, preuve partielle ou nouveau
 contre-exemple doit être remplacée ou reformulée.
 
+Les détails vivants par piste sont dans `docs/tracks/README.md`. Ce fichier
+reste le portefeuille synthétique ; les fichiers `docs/tracks/piste_*.md`
+contiennent les essais, résultats, artefacts et prochaines actions.
+
 ## Piste A : contraintes locales sur nœuds P/C
 
 Intuition : les croisements de cordes farthest-neighbor imposent peut-être des

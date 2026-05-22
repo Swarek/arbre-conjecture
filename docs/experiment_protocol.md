@@ -123,4 +123,10 @@ documentée d’au moins 50 pistes ou tentatives actives avant de conclure qu’
 voie valide ne reste. Cette barre ne réduit pas les gates de correction ; elle
 évite seulement un abandon trop précoce.
 
+La documentation doit être double :
+
+- `docs/experiment_log.md` pour l’historique chronologique ;
+- `docs/tracks/README.md` et `docs/tracks/piste_*.md` pour l’historique par
+  piste.
+
 Toute modification des tests doit être justifiée dans `docs/experiment_log.md`.

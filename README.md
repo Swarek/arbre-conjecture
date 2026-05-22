@@ -51,3 +51,4 @@ par des sous-cas clairement énoncés, en maintenant des contre-exemples,
 benchmarks et obligations de preuve à jour.
 
 Pour reprendre la boucle de recherche, lire `docs/agent_loop_guide.md`.
+Pour lire l’évolution par piste, utiliser `docs/tracks/README.md`.

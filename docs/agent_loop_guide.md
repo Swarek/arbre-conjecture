@@ -14,6 +14,7 @@ Lire dans cet ordre :
 4. `docs/checkpoints.md`
 5. `docs/proof_obligations.md`
 6. `docs/experiment_log.md`
+7. `docs/tracks/README.md`
 
 Vérifier ensuite :
 
@@ -92,15 +93,16 @@ Pour chaque tentative non triviale :
 1. Choisir une piste active dans `docs/hypothesis_portfolio.md`.
 2. Écrire l’hypothèse testée avant de coder.
 3. Définir comment chercher des contre-exemples si l’hypothèse semble marcher.
-4. Modifier le minimum de fichiers.
-5. Lancer `make quick`.
-6. Si vert et si le changement touche le solver, lancer
+4. Mettre à jour le fichier correspondant dans `docs/tracks/`.
+5. Modifier le minimum de fichiers.
+6. Lancer `make quick`.
+7. Si vert et si le changement touche le solver, lancer
    `make hunt-counterexamples` ou une variante justifiée.
-7. Si toujours vert, lancer `make bench-quick` quand le changement touche la
+8. Si toujours vert, lancer `make bench-quick` quand le changement touche la
    complexité.
-8. Ajouter une entrée à `docs/experiment_log.md`.
-9. Ajouter tout contre-exemple dans les tests ou un fichier de régression.
-10. Committer un checkpoint compréhensible.
+9. Ajouter une entrée à `docs/experiment_log.md`.
+10. Ajouter tout contre-exemple dans les tests ou un fichier de régression.
+11. Committer un checkpoint compréhensible.
 
 La recherche de contre-exemples est un outil de compréhension, pas seulement un
 test de validation. Chaque tentative sérieuse doit essayer de casser sa propre
