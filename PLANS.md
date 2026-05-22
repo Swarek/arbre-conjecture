@@ -606,3 +606,60 @@ incomplet.
 Décision : continuer avec ce sous-cas prouvé intégré à la candidate. Il améliore
 la complétude grande taille pour une famille non stricte, mais ne résout pas le
 cas général.
+
+## ExecPlan 2026-05-23 - certify sampled positive witnesses
+
+But : améliorer la sémantique de `candidate.py` sans changer l'oracle : un ordre
+échantillonné qui vérifie `is_precircular_order_cR` est un certificat positif
+d'existence, même si la recherche n'est pas exhaustive pour les réponses
+négatives.
+
+Hypothèse : pour un `pc_tree`, les ordres produits par `enumerate_frontiers`
+sont représentés ; pour `quasi_orders`, l'ordre vient de la famille fournie ;
+pour l'absence de PC-tree, tout ordre circulaire sur `0..n-1` est admissible.
+Donc une réponse `exists=True` accompagnée d'un ordre cR valide est complète
+comme preuve d'existence. En revanche, l'absence de témoin dans l'échantillon ne
+prouve toujours pas `False`.
+
+Fichiers à modifier : `src/pc_circular/solvers/candidate.py`,
+`tests/test_candidate.py`, `docs/experiment_log.md`, `docs/checkpoints.md`,
+`docs/proof_obligations.md`, `docs/tracks/README.md`, éventuellement
+`README.md`.
+
+Algorithme pressenti : dans la boucle large-n de `candidate.solve`, si un ordre
+échantillonné passe `is_precircular_order_cR`, renvoyer `complete=True`,
+`solver="candidate_validated_sampled_witness"` et une note expliquant que le
+témoin prouve l'existence. Garder `complete=False` pour les retours négatifs
+après échantillonnage.
+
+Tests à exécuter : `make unit`, probe `make bench-quick` pour mesurer les runs
+incomplets, `make quick`, `make check`, `make hunt-counterexamples`, puis
+`make bench-quick`.
+
+Risques : confondre "preuve positive d'existence" avec "algorithme décisionnel
+complet" ; retourner `complete=True` pour un témoin qui ne vient pas vraiment de
+la famille représentée ; oublier que les réponses négatives restent
+placeholders.
+
+Plan de contre-exemples : tester un grand cycle metric sur `star` où le témoin
+naturel suffit, un grand cas non cR échantillonné où le résultat doit rester
+incomplet, et les gates oracle sur `n <= 8`.
+
+Plan subagents : pas de fanout ; c'est une clarification de certificat positif
+locale et directement testable.
+
+Résultats observés : `candidate.py` renvoie maintenant
+`candidate_validated_sampled_witness` avec `complete=True` lorsqu'un ordre
+échantillonné est cR. Les retours négatifs après échantillonnage conservent
+`complete=False`. Tests ajoutés pour un grand cycle metric `star` certifié
+positif et pour une famille `quasi_orders` qui ne contient qu'un mauvais ordre,
+où le résultat reste incomplet. `make unit` : `59 passed`. `make bench-quick` :
+`0` timeout, `0` run incomplet, les grandes tailles mixed/star passent par
+`candidate_validated_sampled_witness` sauf les sous-cas universels déjà prouvés.
+`make bench` : `0` timeout jusqu'à `n=100`, `42` runs incomplets visibles, fit
+polynomial empirique `p ~= 3.25`, les incomplets correspondant aux réponses
+négatives du placeholder.
+
+Décision : conserver cette clarification de certificat positif. Elle améliore
+les benchmarks sans changer l'oracle ni faire passer un `False` non justifié
+pour complet.

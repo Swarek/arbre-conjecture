@@ -505,3 +505,42 @@
 - Next action : chercher un sous-cas plus structuré, par exemple planted-cycle
   représenté par le PC-tree, ou retourner à Piste F pour formaliser les
   obstructions de compacité.
+
+## 2026-05-23 certified sampled positive witnesses
+
+- Date/heure : 2026-05-23, Europe/Paris.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : une recherche non exhaustive peut néanmoins produire une
+  réponse positive complète si elle renvoie un ordre représenté et vérifié cR ;
+  seules les réponses négatives après échantillonnage doivent rester
+  incomplètes.
+- Changement fait : `candidate.py` renvoie maintenant
+  `candidate_validated_sampled_witness` avec `complete=True` lorsqu'un ordre
+  échantillonné passe `is_precircular_order_cR`. Les résultats négatifs du
+  placeholder restent `complete=False`.
+- Commande exécutée avant modification : `make quick`.
+- Résultat correction : `58 passed in 0.50s`, puis `JUSTE`.
+- Commande exécutée : `make unit`.
+- Résultat correction : `59 passed in 0.51s`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark : `reports/complexity_report_quick.json` écrit ; 8 tailles,
+  `0` timeout, `0` run incomplet ; grandes tailles mixed/star via
+  `candidate_validated_sampled_witness` ou sous-cas universel.
+- Commande exécutée : `make quick`.
+- Résultat correction : `59 passed in 0.50s`, puis `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make hunt-counterexamples`.
+- Résultat correction : `JUSTE` sur exhaustif `n=4`, `5000` random,
+  `max-n=8`, seed `314159`, shrink actif.
+- Commande exécutée : `make bench`.
+- Résultat benchmark : `reports/complexity_report.json` écrit ; tailles jusqu'à
+  `n=100`, `0` timeout, `42` runs incomplets visibles ; médiane `n=100`
+  environ `2.10s`, fit polynomial empirique `p ~= 3.25`. Les runs incomplets
+  sont des réponses négatives du placeholder, pas des faux `False` complets.
+- Conclusion : les positifs échantillonnés sont maintenant correctement
+  certifiés par témoin. Cela améliore les métriques sans transformer un échec
+  d'échantillonnage en preuve de non-existence.
+- Next action : lancer gates fortes, puis chercher un sous-cas plus structuré
+  ou attaquer les cas négatifs incomplets.

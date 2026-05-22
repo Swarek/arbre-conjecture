@@ -54,11 +54,15 @@ Dernier commit green avant T009 : `07120e4`.
   signatures`). Métriques de signature de bloc Piste B ajoutées. Validation
   observée : `make unit`, probe signature de blocs `27` lignes, `make quick`,
   `make check`, `make bench-quick`.
-- Checkpoint T016 courant : commit contenant le sous-cas universel
-  `|B(a,b)| <= 1` intégré à la candidate ; son hash est à lire avec
-  `git log -1` et doit être reporté dans le compte rendu final de la session.
+- Checkpoint T016 : `eff96c1` (`checkpoint: add universal bad-witness
+  subcase`). Sous-cas universel `|B(a,b)| <= 1` intégré à la candidate.
   Validation observée : `make unit`, probe large-n `33` checks, `make quick`,
   `make check`, `make hunt-counterexamples`, `make bench-quick`.
+- Checkpoint T017 courant : commit contenant la certification des témoins
+  positifs échantillonnés ; son hash est à lire avec `git log -1` et doit être
+  reporté dans le compte rendu final de la session. Validation observée :
+  `make unit`, `make quick`, `make check`, `make hunt-counterexamples`,
+  `make bench-quick`, `make bench` (`0` timeout, `42` incomplets visibles).
 
 ## Rollback
 

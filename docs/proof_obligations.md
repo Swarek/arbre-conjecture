@@ -300,3 +300,27 @@ Limites :
 Preuve expérimentale T016 : tests unitaires, probe `n=9..30` sur
 star/balanced/mixed avec `33` checks, et faux ami à arête basse vérifié hors
 sous-cas.
+
+### Témoins positifs échantillonnés
+
+Statut : conséquence directe / clarification de la candidate.
+
+Lorsqu'une recherche non exhaustive trouve un ordre représenté et vérifie
+`is_precircular_order_cR(D, order)`, la réponse `exists=True` est certifiée par
+le témoin. Cela ne rend pas la recherche complète pour les réponses négatives :
+si aucun ordre échantillonné ne marche, `complete=False` reste obligatoire.
+
+Ce que cela couvre :
+
+- obligation 4 pour les positifs : avec `pc_tree`, l'ordre vient de
+  `enumerate_frontiers`; avec `quasi_orders`, il vient de la famille fournie ;
+  sans PC-tree, tout ordre sur `0..n-1` est admissible ;
+- obligation 1/2 pour un résultat positif ponctuel : le témoin est vérifié par
+  le prédicat fixed-order exact.
+
+Limites :
+
+- aucune preuve de non-existence ;
+- aucune amélioration de complexité worst-case ;
+- les résultats `False` du placeholder restent incomplets et doivent rester
+  visibles dans les rapports.

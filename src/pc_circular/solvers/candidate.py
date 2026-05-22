@@ -6,7 +6,8 @@ The current implementation is deliberately conservative:
 * for a proved universal-order sub-case it returns a represented witness,
   because every circular order is circular Robinson;
 * for larger instances it tries a small deterministic set of represented
-  orders and returns ``complete=False``.
+  orders; a found witness proves ``exists=True``, but failure remains
+  ``complete=False``.
 
 This is not a solution to the general problem.  Future goals should replace
 the large-n placeholder with a proved algorithm or a clearly scoped sub-case.
@@ -108,10 +109,10 @@ def solve(D, quasi_orders=None, pc_tree=None):
             return {
                 "exists": True,
                 "order": list(order),
-                "complete": False,
-                "solver": "candidate_large_n_placeholder",
+                "complete": True,
+                "solver": "candidate_validated_sampled_witness",
                 "tried_orders": tried,
-                "note": "witness found by incomplete deterministic sampling",
+                "note": "sampled represented order is a valid circular-Robinson witness",
             }
 
     return {

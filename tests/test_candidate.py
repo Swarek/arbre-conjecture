@@ -50,6 +50,16 @@ def test_candidate_universal_subcase_uses_first_quasi_order():
 
 def test_candidate_non_constant_large_instance_remains_incomplete_placeholder():
     D = cycle_metric(10)
-    result = solve(D, pc_tree=star_pc_tree(10))
-    assert result["solver"] == "candidate_large_n_placeholder"
+    bad_first_orders = [(0, 2, 4, 6, 8, 1, 3, 5, 7, 9)]
+    result = solve(D, quasi_orders=bad_first_orders)
+    assert result["exists"] is False
     assert result["complete"] is False
+
+
+def test_candidate_marks_sampled_positive_witness_complete():
+    D = cycle_metric(10)
+    result = solve(D, pc_tree=star_pc_tree(10))
+    assert result["exists"] is True
+    assert result["complete"] is True
+    assert result["solver"] == "candidate_validated_sampled_witness"
+    assert is_precircular_order_cR(D, result["order"])
