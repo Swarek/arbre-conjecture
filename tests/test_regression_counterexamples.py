@@ -10,6 +10,7 @@ from pc_circular.predicates import (
     is_precircular_order_cR,
     passes_farthest_crossing_condition,
 )
+from pc_circular.solvers.candidate import _minimum_distance_cycle_order
 
 COUNTEREXAMPLES = [
     {
@@ -51,6 +52,22 @@ COUNTEREXAMPLES = [
         "is_circular_robinson": False,
         "passes_farthest_crossing": True,
     },
+    {
+        "name": "minimum_distance_cycle_not_sufficient_for_cR",
+        "kind": "minimum_cycle_false_positive",
+        "D": [
+            [0, 1, 2, 2, 2, 1],
+            [1, 0, 1, 2, 2, 3],
+            [2, 1, 0, 1, 2, 2],
+            [2, 2, 1, 0, 1, 3],
+            [2, 2, 2, 1, 0, 1],
+            [1, 3, 2, 3, 1, 0],
+        ],
+        "order": [0, 1, 2, 3, 4, 5],
+        "is_circular_robinson": False,
+        "passes_farthest_crossing": False,
+        "minimum_cycle_order": [0, 1, 2, 3, 4, 5],
+    },
 ]
 
 
@@ -72,3 +89,5 @@ def test_recorded_counterexamples_match_predicates():
             assert find_farthest_crossing_violation(D, order) is None
         else:
             assert find_farthest_crossing_violation(D, order) is not None
+        if "minimum_cycle_order" in example:
+            assert _minimum_distance_cycle_order(D, len(D)) == tuple(example["minimum_cycle_order"])

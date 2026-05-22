@@ -13,7 +13,7 @@ idées, essais, résultats, contre-exemples et prochaines actions par axe.
 | C - SAT/CSP | `piste_c_sat_csp.md` | Benchmark interne ajouté ; compilation encore dominante |
 | D - Circular-ones / intersection | `piste_d_circular_ones.md` | Non testée expérimentalement |
 | E - Obstructions farthest/quartets | `piste_e_farthest_quartets.md` | Farthest seul réfuté ; cR quartets restent centraux |
-| F - Complexité / sous-cas | `piste_f_complexity_subcases.md` | Sous-cas universel intégré ; familles stress conservées |
+| F - Complexité / sous-cas | `piste_f_complexity_subcases.md` | Sous-cas universel + témoin minimum-cycle star intégrés ; familles stress conservées |
 
 ## Règle d’édition
 
@@ -49,6 +49,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T015 | 2026-05-23 | B | Signature de bloc mesurée ; compression faible hors égal-distance | `block_signature_bucket_report` |
 | T016 | 2026-05-23 | F | Sous-cas `|B(a,b)| <= 1` intégré à la candidate | `candidate_universal_bad_witness_bound_all_orders` |
 | T017 | 2026-05-23 | Candidate | Témoins positifs échantillonnés marqués complets | `candidate_validated_sampled_witness` |
+| T018 | 2026-05-23 | F/Sources | Témoin minimum-cycle star ajouté ; faux positif `n=6` régressé ; capture Prop. 4.4 vendored | `candidate_minimum_distance_cycle_witness` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

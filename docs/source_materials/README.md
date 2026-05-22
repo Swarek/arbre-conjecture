@@ -22,7 +22,12 @@ The screenshot path provided by the UI was a temporary file:
 /var/folders/yx/knynxqw926j197htt4wm7jhh0000gn/T/TemporaryItems/NSIRD_screencaptureui_YxIDQL/Screenshot 2026-05-22 at 10.55.03 PM.png
 ```
 
-At import time, that file was no longer present, and no matching screenshot was
-found under `/Users/mathisblanc/Downloads`. The mathematical content shown in
-the screenshot, Proposition 4.4, is preserved in `docs/source_notes.md` and
-covered by tests for `passes_farthest_prop_4_4_condition`.
+It is now vendored here:
+
+| File | Source path at import time | SHA-256 |
+| --- | --- | --- |
+| `images/proposition_4_4_2026-05-22.png` | `/var/folders/yx/knynxqw926j197htt4wm7jhh0000gn/T/TemporaryItems/NSIRD_screencaptureui_YxIDQL/Screenshot 2026-05-22 at 10.55.03 PM.png` | `cef8d6fa5de1065658c45cb5b8072ac77957f9b21d117d4bb758e3bda9c66ad1` |
+
+The mathematical content shown in the screenshot, Proposition 4.4, is preserved
+in `docs/source_notes.md` and covered by tests for
+`passes_farthest_prop_4_4_condition`.

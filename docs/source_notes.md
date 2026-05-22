@@ -14,11 +14,11 @@ preuve du dépôt.
 | `docs/source_materials/pdfs/Modules_PQ-tree-1.pdf` | `/Users/mathisblanc/Downloads/Modules_PQ-tree-1.pdf` | 43 | Modules et PQ-trees pour ordres Robinson linéaires |
 | `docs/source_materials/pdfs/Hsu-McConnel_PC-trees-1.pdf` | `/Users/mathisblanc/Downloads/Hsu-McConnel_PC-trees-1.pdf` | 18 | PC-trees pour circular-ones arrangements |
 | `docs/source_materials/pdfs/Brucker_Osswald-1.pdf` | `/Users/mathisblanc/Downloads/Brucker_Osswald-1.pdf` | 17 | Hypercycles, dissimilarités et liens circular/Robinson |
-| Screenshot utilisateur 2026-05-22 | temporary UI path, not recoverable at import time | 1 | Proposition 4.4 farthest-neighbor |
+| `docs/source_materials/images/proposition_4_4_2026-05-22.png` | temporary UI path from screenshot upload | 1 | Proposition 4.4 farthest-neighbor |
 
-Les fichiers PDF sont conservés dans `docs/source_materials/pdfs/`, avec hashes
-dans `docs/source_materials/README.md`. Le screenshot temporaire n’a pas pu être
-récupéré comme fichier, mais son contenu mathématique est documenté ici.
+Les fichiers PDF sont conservés dans `docs/source_materials/pdfs/`, et la
+capture est conservée dans `docs/source_materials/images/`. Les hashes sont
+listés dans `docs/source_materials/README.md`.
 
 Commandes utilisées :
 

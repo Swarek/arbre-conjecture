@@ -324,3 +324,36 @@ Limites :
 - aucune amélioration de complexité worst-case ;
 - les résultats `False` du placeholder restent incomplets et doivent rester
   visibles dans les rapports.
+
+### Témoin cycle par distances minimales
+
+Statut : conséquence directe pour positifs vérifiés / sous-cas expérimental.
+
+Si le graphe des arêtes de distance minimale positive est un cycle simple
+couvrant tous les sommets, `candidate.py` reconstruit un ordre cyclique. Cet
+ordre n'est accepté que si `is_precircular_order_cR` le valide et si la
+représentation est certaine : pas de PC-tree fourni, ou PC-tree star de feuilles.
+
+Ce que cela couvre :
+
+- obligation 4 pour les positifs star/None : le témoin est représenté par
+  construction ;
+- obligation 1/2 pour le résultat positif ponctuel : le témoin est vérifié par
+  le prédicat fixed-order exact.
+
+Limites :
+
+- le graphe minimum simple cycle n'implique pas cR ; un contre-exemple `n=6` est
+  enregistré dans les régressions ;
+- les graphes minimaux avec plusieurs cycles ou des cordes minimales restent
+  ambigus ;
+- les PC-trees non-star restent hors de ce sous-cas faute de test de
+  représentation non énumératif.
+
+Preuve expérimentale T018 : `make quick`, `make check` et
+`make hunt-counterexamples` restent verts. Le benchmark ciblé
+`permuted_cycle/star` utilise ce témoin pour tous les `n > 8` sans timeout ni
+run incomplet, tandis que `paired_farthest` reste volontairement incomplet en
+grande taille. Le benchmark fort mixed/star T018 garde `0` timeout jusqu'à
+`n=100`, avec `42` runs incomplets visibles et non présentés comme des preuves
+de non-existence.

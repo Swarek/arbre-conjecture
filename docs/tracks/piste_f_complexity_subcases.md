@@ -73,6 +73,28 @@ Résultat T016 : probe large-n `n=9..30` sur star/balanced/mixed, `33` checks,
 témoin cR et représenté/échantillonné ; le faux ami à arête basse reste
 placeholder incomplet.
 
+## Témoin cycle par distances minimales
+
+Statut : certificat positif intégré pour star/None, pas critère complet.
+
+Si les arêtes de distance minimale positive forment un cycle simple couvrant
+tous les sommets, `candidate.py` reconstruit cet ordre. Il l'accepte seulement
+si l'ordre passe `is_precircular_order_cR` et si la représentation est sûre :
+pas de PC-tree, ou PC-tree star de feuilles.
+
+Résultat T018 :
+
+- `permuted_cycle/star` grandes tailles passe par
+  `candidate_minimum_distance_cycle_witness` ;
+- benchmark ciblé : `0` timeout et `0` incomplet pour `permuted_cycle/star`,
+  avec la branche minimum-cycle utilisée pour tous les `n > 8` ;
+- `paired_farthest` ne déclenche pas ce témoin et reste un stress négatif ;
+- benchmark ciblé : `paired_farthest/star` garde `60` runs incomplets sur les
+  tailles `n > 8`, et `paired_farthest/mixed` en garde `40` ;
+- un contre-exemple `n=6` montre que "graphe minimum = cycle" ne suffit pas pour
+  cR ; le garde fixed-order est donc indispensable ;
+- les PC-trees non-star sont volontairement exclus de cette branche.
+
 ## Artefacts
 
 - `permuted_cycle_metric`;
@@ -81,6 +103,7 @@ placeholder incomplet.
 - `instance_by_kind(..., kind="paired_farthest")`;
 - `has_at_most_one_bad_witness_per_pair`;
 - `sample_frontier`;
+- `candidate_minimum_distance_cycle_witness`;
 - `--diagnostics-up-to` dans `tools/pc_circular_complexity_benchmark.py`;
 - `make bench-piste-f`.
 

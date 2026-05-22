@@ -544,3 +544,59 @@
   d'échantillonnage en preuve de non-existence.
 - Next action : lancer gates fortes, puis chercher un sous-cas plus structuré
   ou attaquer les cas négatifs incomplets.
+
+## 2026-05-23 minimum-distance cycle witness
+
+- Date/heure : 2026-05-23, Europe/Paris.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : pour les instances planted-cycle, le graphe des distances
+  minimales positives peut révéler un ordre circulaire témoin. Si cet ordre est
+  directement vérifié cR et si la représentation est certaine (`pc_tree` absent
+  ou star de feuilles), il fournit un certificat positif complet.
+- Changement fait : ajout de `_minimum_distance_cycle_order` et
+  `candidate_minimum_distance_cycle_witness` dans `candidate.py`; ajout de
+  tests pour `permuted_cycle/star`, exclusion explicite des PC-trees non-star,
+  et régression du faux positif `n=6` où le graphe minimum est un cycle simple
+  mais l'ordre reconstruit n'est pas circular Robinson. La capture Proposition
+  4.4 fournie par l'utilisateur est conservée dans
+  `docs/source_materials/images/proposition_4_4_2026-05-22.png`.
+- Plan subagents : deux explorateurs lecture seule. Le premier a confirmé que
+  la branche ne devait être qu'un certificat positif star/None avec vérification
+  cR. Le second a trouvé le contre-exemple `n=6`, transformé en régression.
+- Commande exécutée : `shasum -a 256 docs/source_materials/pdfs/*.pdf
+  docs/source_materials/images/proposition_4_4_2026-05-22.png`.
+- Résultat source : les six PDF versionnés correspondent à l'index, et la
+  capture a le hash
+  `cef8d6fa5de1065658c45cb5b8072ac77957f9b21d117d4bb758e3bda9c66ad1`.
+- Commande exécutée : `make unit`.
+- Résultat correction : `62 passed in 0.50s`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `62 passed in 0.49s`, puis `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make hunt-counterexamples`.
+- Résultat correction : `JUSTE` sur exhaustif `n=4`, `5000` random,
+  `max-n=8`, seed `314159`, shrink actif.
+- Commande exécutée : `make bench-piste-f`.
+- Résultat benchmark : `permuted_cycle/star` a `0` timeout et `0` incomplet,
+  avec `candidate_minimum_distance_cycle_witness` pour tous les `n > 8`.
+  `paired_farthest/star` reste incomplet sur `60` runs grande taille et
+  `paired_farthest/mixed` sur `40` runs, sans timeout.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark : `reports/complexity_report_quick.json` écrit ; 8 tailles,
+  `0` timeout, `0` incomplet. La branche minimum-cycle apparaît dans le mixed
+  benchmark à `n=16`, aux côtés du sous-cas universel et des témoins
+  échantillonnés validés.
+- Commande exécutée : `make bench`.
+- Résultat benchmark : `reports/complexity_report.json` écrit ; tailles jusqu'à
+  `n=100`, `0` timeout, `42` runs incomplets visibles ; médiane `n=100`
+  environ `2.12s`, fit polynomial empirique `p ~= 3.25` (`r2 ~= 0.92`). Les
+  incomplets restent des placeholders négatifs, pas des rejets justifiés.
+- Conclusion : progrès utile comme certificat positif sur planted-cycle/star.
+  Ce n'est pas une caractérisation : le contre-exemple `n=6` interdit d'utiliser
+  le graphe minimum-cycle seul, et les PC-trees non-star restent hors périmètre.
+- Next action : attaquer les cas négatifs incomplets, en priorité
+  `paired_farthest` et les PC-trees non-star, ou chercher un test de
+  représentation non énumératif pour promouvoir le témoin cycle au-delà du
+  star.

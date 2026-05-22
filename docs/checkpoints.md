@@ -58,11 +58,18 @@ Dernier commit green avant T009 : `07120e4`.
   subcase`). Sous-cas universel `|B(a,b)| <= 1` intégré à la candidate.
   Validation observée : `make unit`, probe large-n `33` checks, `make quick`,
   `make check`, `make hunt-counterexamples`, `make bench-quick`.
-- Checkpoint T017 courant : commit contenant la certification des témoins
-  positifs échantillonnés ; son hash est à lire avec `git log -1` et doit être
-  reporté dans le compte rendu final de la session. Validation observée :
+- Checkpoint T017 : `376ecea` (`checkpoint: certify sampled positive
+  witnesses`). Certification des témoins positifs échantillonnés. Validation
+  observée :
   `make unit`, `make quick`, `make check`, `make hunt-counterexamples`,
   `make bench-quick`, `make bench` (`0` timeout, `42` incomplets visibles).
+- Checkpoint T018 courant : commit contenant le témoin minimum-cycle star, le
+  contre-exemple régressé `n=6` montrant que le graphe minimum cycle ne suffit
+  pas pour cR, et la capture Proposition 4.4 conservée dans
+  `docs/source_materials/images/`. Validation observée : `make unit`,
+  `make quick`, `make check`, `make hunt-counterexamples`,
+  `make bench-piste-f`, `make bench-quick`, `make bench` (`0` timeout, `42`
+  incomplets visibles, fit polynomial empirique `p ~= 3.25`).
 
 ## Rollback
 

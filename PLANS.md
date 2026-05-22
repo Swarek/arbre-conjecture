@@ -663,3 +663,73 @@ négatives du placeholder.
 Décision : conserver cette clarification de certificat positif. Elle améliore
 les benchmarks sans changer l'oracle ni faire passer un `False` non justifié
 pour complet.
+
+## ExecPlan 2026-05-23 - minimum-distance cycle witness
+
+But : ajouter une recherche positive structurée pour la famille planted-cycle :
+si le graphe des distances minimales positives est un cycle simple, reconstruire
+l'ordre cyclique candidat et l'accepter seulement s'il est vérifié cR et
+représenté.
+
+Hypothèse : dans les métriques de cycle permutées, les arêtes de distance
+minimale forment exactement le cycle planté. Pour un PC-tree `star`, tout ordre
+est représenté ; sans PC-tree, tout ordre circulaire sur `0..n-1` est admissible.
+Donc le cycle reconstruit peut fournir un témoin positif complet. Pour les
+PC-trees non-star, l'étape reste désactivée tant qu'on n'a pas de test de
+représentation non énumératif fiable.
+
+Fichiers à modifier : `src/pc_circular/solvers/candidate.py`,
+`tests/test_candidate.py`, `docs/tracks/piste_f_complexity_subcases.md`,
+`docs/experiment_log.md`, `docs/proof_obligations.md`,
+`docs/tracks/README.md`, `docs/checkpoints.md`.
+
+Algorithme pressenti : calculer les arêtes de distance minimale positive. Si
+chaque sommet a degré 2 et le graphe est connexe, parcourir le cycle depuis le
+plus petit label avec un choix déterministe du voisin suivant. Vérifier ensuite
+`is_precircular_order_cR(D, order)`. Accepter seulement si `pc_tree is None` ou
+si le PC-tree est un star de feuilles, car la représentation est alors certaine.
+
+Tests à exécuter : `make unit`, probe sur `permuted_cycle/star` grandes tailles,
+`make quick`, `make check`, `make hunt-counterexamples`, `make bench-piste-f`,
+`make bench-quick`.
+
+Risques : le graphe des distances minimales peut être un cycle simple sans que
+les distances restantes satisfassent cR ; d'où la vérification cR obligatoire.
+Pour un PC-tree non-star, le cycle reconstruit peut ne pas être représenté ;
+d'où désactivation hors star/None. Le cas `n <= 3` est déjà couvert par brute
+force/universel.
+
+Plan de contre-exemples : chercher des matrices où le graphe minimum est un
+cycle simple mais le cycle échoue cR ; vérifier que la candidate ne les accepte
+pas. Tester `permuted_cycle` grande taille, `paired_farthest`, `random` et un
+PC-tree balanced où le témoin structurel doit être ignoré.
+
+Plan subagents : deux explorateurs lecture seule : preuve/risques du témoin
+cycle-minimum et recherche de faux positifs.
+
+Résultats observés : `candidate.py` ajoute
+`candidate_minimum_distance_cycle_witness`. La branche reconstruit le cycle du
+graphe des distances minimales positives, puis accepte seulement après
+`is_precircular_order_cR`. Elle est désactivée pour les PC-trees non-star.
+Subagent preuve/risques : accepter seulement comme certificat positif
+star/None ; vérifier directement cR ; ajouter un garde non-star. Subagent
+contre-exemples : matrice `n=6` où le graphe minimum est le cycle
+`(0,1,2,3,4,5)` mais l'ordre viole cR, donc le test fixed-order est
+indispensable. Tests ajoutés : témoin `permuted_cycle` grande taille sur star,
+non-utilisation sur balanced non-star, et régression du faux positif minimum
+cycle. Les documents sources locaux sont aussi conservés dans
+`docs/source_materials/`, y compris la capture Proposition 4.4.
+
+Validation observée : `make unit` : `62 passed`; `make quick` : `62 passed`,
+`JUSTE`; `make check` : `JUSTE`; `make hunt-counterexamples` : `JUSTE`;
+`make bench-piste-f` : `0` timeout, `0` incomplet pour
+`permuted_cycle/star`, et `candidate_minimum_distance_cycle_witness` pour tous
+les `n > 8`; `paired_farthest` reste incomplet en grande taille (`60`
+incomplets star, `40` incomplets mixed), ce qui garde la famille stress utile ;
+`make bench-quick` : `0` timeout, `0` incomplet. `make bench` : `0` timeout,
+`42` incomplets visibles jusqu'à `n=100`, fit polynomial empirique
+`p ~= 3.25`.
+
+Décision : conserver comme certificat positif borné, pas comme critère de
+décision général. Continuer ensuite sur une piste qui attaque les cas négatifs
+incomplets, notamment `paired_farthest` et PC-trees non-star.
