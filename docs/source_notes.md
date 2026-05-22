@@ -6,15 +6,19 @@ preuve du dépôt.
 
 ## Sources locales consultées
 
-| Fichier | Pages | Usage actuel |
-| --- | ---: | --- |
-| `/Users/mathisblanc/Downloads/strongly-circular-sidma-1.pdf` | 19 | Conditions cR/pre-cR, farthest-neighbor, test d’un ordre fixé |
-| `/Users/mathisblanc/Downloads/Robinson_modules-1.pdf` | 27 | Modules en espaces Robinson linéaires, analogies structurelles |
-| `/Users/mathisblanc/Downloads/PC-Trees_vs._PQ-Trees__Hsu-2.pdf` | 15 | PC-trees vs PQ-trees, circular-ones |
-| `/Users/mathisblanc/Downloads/Modules_PQ-tree-1.pdf` | 43 | Modules et PQ-trees pour ordres Robinson linéaires |
-| `/Users/mathisblanc/Downloads/Hsu-McConnel_PC-trees-1.pdf` | 18 | PC-trees pour circular-ones arrangements |
-| `/Users/mathisblanc/Downloads/Brucker_Osswald-1.pdf` | 17 | Hypercycles, dissimilarités et liens circular/Robinson |
-| Screenshot utilisateur 2026-05-22 | 1 | Proposition 4.4 farthest-neighbor |
+| Fichier versionné | Source originale | Pages | Usage actuel |
+| --- | --- | ---: | --- |
+| `docs/source_materials/pdfs/strongly-circular-sidma-1.pdf` | `/Users/mathisblanc/Downloads/strongly-circular-sidma-1.pdf` | 19 | Conditions cR/pre-cR, farthest-neighbor, test d’un ordre fixé |
+| `docs/source_materials/pdfs/Robinson_modules-1.pdf` | `/Users/mathisblanc/Downloads/Robinson_modules-1.pdf` | 27 | Modules en espaces Robinson linéaires, analogies structurelles |
+| `docs/source_materials/pdfs/PC-Trees_vs._PQ-Trees__Hsu-2.pdf` | `/Users/mathisblanc/Downloads/PC-Trees_vs._PQ-Trees__Hsu-2.pdf` | 15 | PC-trees vs PQ-trees, circular-ones |
+| `docs/source_materials/pdfs/Modules_PQ-tree-1.pdf` | `/Users/mathisblanc/Downloads/Modules_PQ-tree-1.pdf` | 43 | Modules et PQ-trees pour ordres Robinson linéaires |
+| `docs/source_materials/pdfs/Hsu-McConnel_PC-trees-1.pdf` | `/Users/mathisblanc/Downloads/Hsu-McConnel_PC-trees-1.pdf` | 18 | PC-trees pour circular-ones arrangements |
+| `docs/source_materials/pdfs/Brucker_Osswald-1.pdf` | `/Users/mathisblanc/Downloads/Brucker_Osswald-1.pdf` | 17 | Hypercycles, dissimilarités et liens circular/Robinson |
+| Screenshot utilisateur 2026-05-22 | temporary UI path, not recoverable at import time | 1 | Proposition 4.4 farthest-neighbor |
+
+Les fichiers PDF sont conservés dans `docs/source_materials/pdfs/`, avec hashes
+dans `docs/source_materials/README.md`. Le screenshot temporaire n’a pas pu être
+récupéré comme fichier, mais son contenu mathématique est documenté ici.
 
 Commandes utilisées :
 

@@ -155,3 +155,22 @@
   testable pour ordre fixé, mais pas un solver d’existence dans PC-tree.
 - Next action : tester expérimentalement le couple Proposition 4.4/4.5 comme
   accélérateur de test d’ordre fixé sous quasi-circularité.
+
+## 2026-05-22 vendored source PDFs
+
+- Date/heure : 2026-05-22, Europe/Paris.
+- Commit hash : pending until checkpoint commit is created.
+- Hypothèse testée : les documents de référence doivent être conservés dans le
+  dépôt pour que les notes restent reproductibles même si `~/Downloads` change.
+- Changement fait : copie des 6 PDF fournis dans `docs/source_materials/pdfs/`;
+  ajout de `docs/source_materials/README.md` avec source originale et SHA-256 ;
+  mise à jour de `docs/source_notes.md` pour pointer vers les copies versionnées.
+- Commande exécutée : `make quick`.
+- Résultat correction : `21 passed in 0.02s`, puis `JUSTE`.
+- Résultat benchmark : non applicable, vendoring documentaire.
+- Conclusion : les 6 PDF sont maintenant versionnés dans le dépôt avec
+  manifeste de provenance et hashes. Le screenshot temporaire n’était plus
+  récupérable comme fichier ; son contenu reste documenté dans
+  `docs/source_notes.md`.
+- Next action : si la capture d’écran Proposition 4.4 est fournie comme fichier
+  stable, l’ajouter dans `docs/source_materials/images/`.
