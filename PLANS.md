@@ -206,3 +206,58 @@ Décision : continuer Piste C, mais ne pas intégrer ce filtre dans
 `candidate.py`. Prochaine étape recommandée : `build_local_domains` /
 `frontier_from_assignment` pour petits nœuds `P/C`, avec refus `unsupported`
 plutôt qu’une réponse négative sur grands domaines.
+
+## ExecPlan 2026-05-22 - local-domain CSP scaffold
+
+But : passer du scan de frontiers à un premier moteur CSP expérimental où les
+variables sont les choix locaux des nœuds internes du PC-tree.
+
+Hypothèse : pour des PC-trees dont tous les nœuds `P` ont un degré borné, on
+peut énumérer les affectations de domaines locaux, reconstruire exactement les
+frontiers représentées, puis filtrer par nogoods cR directs. Cela ne prouve pas
+encore une complexité utile, mais valide la représentation CSP avant toute
+compression Prop. 4.5 ou DP.
+
+Fichiers à modifier : `src/pc_circular/solvers/sat_like_experiments.py`,
+`tests/test_sat_like_experiments.py`, `docs/tracks/piste_c_sat_csp.md`,
+`docs/experiment_log.md`, `docs/proof_obligations.md` et
+`docs/tracks/README.md`.
+
+Algorithme pressenti : traverser le PC-tree avec des chemins de nœuds comme
+variables. Domaine d’un `C` : ordre forward et reverse de ses enfants. Domaine
+d’un `P` : toutes les permutations des enfants si le degré est `<= max_p_degree`,
+sinon statut `unsupported`. Une affectation complète reconstruit une frontier
+linéaire ; sa forme canonique doit coïncider avec `enumerate_frontiers`. Le
+solver expérimental `source="cr"` accepte exactement les affectations dont la
+frontier vérifie `is_precircular_order_cR`.
+
+Tests à exécuter : `make unit`, `make quick`, `make check`. Pour la recherche de
+contre-exemples, comparer CSP `source="cr"` à `enumerate_frontiers` +
+`is_precircular_order_cR` sur plusieurs petits arbres balanced/mixed et familles
+random/cycle/block/ultrametric.
+
+Risques : faire passer une énumération d’affectations pour un algorithme compact
+; rater les duplications de frontiers dues aux symétries ; retourner `False` sur
+un grand `P` au lieu de `unsupported`; mélanger source cR directe et Prop. 4.5.
+
+Plan de contre-exemples : si les frontiers d’affectations diffèrent de
+`enumerate_frontiers`, enregistrer l’arbre et l’affectation. Si `source="cr"`
+diffère du filtre exact, ajouter un test de régression. Tester explicitement un
+gros `P` pour vérifier `unsupported`.
+
+Plan subagents : pas de nouveau fanout dans ce patch ; les subagents précédents
+ont déjà fourni l’API et les risques. Un fanout pourra reprendre après T010 pour
+falsifier une signature DP ou attaquer le benchmark.
+
+Résultats observés : `build_local_domains`, `frontier_from_assignment`,
+`iter_local_assignments`, `assignment_frontier_report`, `solve_nogood_csp` et
+`accepted_frontiers_by_csp` ajoutés. Les tests vérifient que les frontiers issues
+des affectations égalent `enumerate_frontiers`, que `source="cr"` égale le
+filtre exact cR sur un arbre mixed, et qu’un star `P` de degré 5 avec
+`max_p_degree=3` retourne `unsupported` sans décision négative. Probe bornée :
+`1600` instances `n=4..7`, arbres balanced/mixed, huit familles, aucun désaccord.
+
+Décision : continuer Piste C. La couche variable/frontier est validée comme
+scaffold expérimental, mais elle énumère encore toutes les affectations. La
+prochaine étape doit compiler des nogoods de quartets cR sur supports de
+variables et mesurer le pruning ; ne pas intégrer dans `candidate.py`.

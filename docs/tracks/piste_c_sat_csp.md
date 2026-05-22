@@ -79,8 +79,38 @@ Prochaine action : implémenter un vrai moteur de domaines locaux pour petits
 nœuds `P/C`, en commençant par `source="cr"` pour valider le moteur sans
 nouvelle hypothèse mathématique, puis comparer à `source="prop45"`.
 
+## Tentative T010 - Domaines locaux P/C et source cR directe
+
+Statut : conséquence directe expérimentale / scaffold, non intégré dans
+`candidate.py`.
+
+Changement : `build_local_domains` crée une variable par nœud interne, avec
+domaine forward/reverse pour `C` et permutations bornées pour `P`.
+`frontier_from_assignment` reconstruit la frontier d’une affectation complète.
+`solve_nogood_csp(source="cr")` énumère ces affectations, déduplique les
+frontiers circulaires canoniques, puis accepte exactement celles qui vérifient
+`is_precircular_order_cR`.
+
+Invariant testé : pour les PC-trees supportés, les frontiers reconstruites par
+affectations locales coïncident avec `enumerate_frontiers`. Le filtre
+`source="cr"` coïncide avec `enumerate_frontiers(T)` filtré par cR exact.
+
+Limite : il n’y a pas encore de pruning compact ni de clauses projetées sur un
+petit support. Le moteur énumère les affectations et sert à valider la couche de
+variables avant compression. Un nœud `P` de degré supérieur à `max_p_degree`
+renvoie `unsupported` et ne produit pas de décision négative.
+
+Résultat expérimental : probe sur `1600` instances `n=4..7`, arbres
+balanced/mixed, familles `random/cycle/block/ultrametric/equal/non_strict/
+paired_farthest/permuted_cycle` : aucun désaccord entre CSP `source="cr"` et le
+filtre exact de frontiers.
+
+Prochaine action : compiler de vrais nogoods de quartets cR sur supports de
+variables, puis chercher si ces nogoods prunent avant énumération complète ou si
+des collisions forcent une signature plus riche.
+
 ## Prochaine action
 
-Implémenter l’encodage expérimental dans
-`src/pc_circular/solvers/sat_like_experiments.py`, sans l’appeler depuis
-`candidate.py` tant qu’il n’est pas validé.
+Compiler de vrais nogoods de quartets cR sur supports de variables locales,
+sans appeler `candidate.py` tant que la suffisance et les cas non stricts ne
+sont pas établis.

@@ -87,3 +87,30 @@ Ce rapport vérifie une compatibilité d’ordre fixé et fournit des faux posit
 ou faux négatifs si la compatibilité échoue. Il ne satisfait pas encore les
 obligations 2, 3 et 5 : il ne donne ni encodage compact de PC-tree, ni preuve de
 suffisance globale, ni complexité polynomiale.
+
+### CSP à domaines locaux P/C
+
+Statut : conséquence directe expérimentale / scaffold Piste C.
+
+`build_local_domains` associe une variable à chaque nœud interne supporté :
+permutation de branches pour `P`, orientation forward/reverse pour `C`.
+`frontier_from_assignment` reconstruit la frontier linéaire d’une affectation
+complète, et `solve_nogood_csp(source="cr")` accepte une affectation si la
+frontier canonique vérifie `is_precircular_order_cR`.
+
+Obligations couvertes dans le périmètre expérimental :
+
+- obligation 3 partielle : sur les arbres supportés testés, les frontiers issues
+  des affectations coïncident avec `enumerate_frontiers` ;
+- obligation 4 partielle : tout témoin renvoyé vient d’une affectation locale et
+  est donc représenté par construction dans ce scaffold ;
+- correction du filtre `source="cr"` : conséquence directe du prédicat exact
+  d’ordre fixé, pas un nouveau théorème.
+
+Limites restantes :
+
+- pas de pruning compact ni de preuve de complexité ;
+- un nœud `P` de degré supérieur à `max_p_degree` est `unsupported`, jamais une
+  preuve de non-existence ;
+- `source="prop45"` reste soumis à la précondition quasi-circulaire et ne doit
+  pas être utilisé comme rejet global.

@@ -27,9 +27,15 @@ Un commit stable doit satisfaire :
 
 Dernier commit green avant T009 : `07120e4`.
 
-Le checkpoint T009 courant est le commit contenant l’expérience
-`prop45_nogood_frontier_report`; son hash est à lire avec `git log -1` et doit
-être reporté dans le compte rendu final de la session.
+- Checkpoint T009 : `f17ad89` (`checkpoint: add prop45 nogood frontier
+  experiment`). Scan Prop. 4.5 comme nogood de frontier ajouté. Validation
+  observée : `make unit`, `make quick`, `make check`, `make bench-quick`, probe
+  random bornée sans désaccord sur ordres quasi-circulaires.
+- Checkpoint T010 courant : commit contenant le scaffold CSP à domaines locaux
+  `P/C`; son hash est à lire avec `git log -1` et doit être reporté dans le
+  compte rendu final de la session. Validation observée : `make quick`,
+  `make check`, `make bench-quick`, probe CSP directe sans désaccord sur 1600
+  instances.
 
 ## Rollback
 

@@ -205,8 +205,7 @@
 ## 2026-05-22 Prop. 4.5 nogood frontier scan
 
 - Date/heure : 2026-05-22, Europe/Paris.
-- Commit hash : checkpoint commit containing this entry; report with
-  `git log -1`.
+- Commit hash : f17ad89.
 - Hypothèse testée : Prop. 4.5 peut servir de nogood expérimental sur des
   frontiers énumérées, avec rapport explicite des faux positifs/faux négatifs,
   sans changer la candidate générale.
@@ -239,3 +238,37 @@
 - Next action : implémenter le moteur CSP à domaines locaux sur petits nœuds
   `P/C`, d’abord avec nogoods cR directs, puis comparer à Prop. 4.5 sous
   précondition quasi-circulaire.
+
+## 2026-05-22 local-domain CSP scaffold
+
+- Date/heure : 2026-05-22, Europe/Paris.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : avant de chercher une compression SAT/CSP, il faut valider
+  que des variables locales `P/C` reconstruisent exactement les frontiers et que
+  `source="cr"` coïncide avec le filtre cR exact par frontier.
+- Changement fait : ajout de `build_local_domains`, `frontier_from_assignment`,
+  `iter_local_assignments`, `assignment_frontier_report`,
+  `solve_nogood_csp` et `accepted_frontiers_by_csp`; ajout de tests unitaires
+  pour reconstruction de frontiers, filtre `source="cr"` et refus `unsupported`
+  sur gros `P`.
+- Commande exécutée : `make unit`.
+- Résultat correction : `31 passed in 0.19s`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `31 passed in 0.18s`, puis `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : probe CSP `source="cr"` sur `n=4..7`, arbres
+  balanced/mixed, familles `random/cycle/block/ultrametric/equal/non_strict/
+  paired_farthest/permuted_cycle`, `25` répétitions par famille.
+- Résultat correction : aucun désaccord ; `1600` instances comparées à
+  `enumerate_frontiers(T)` filtré par `is_precircular_order_cR`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark : `reports/complexity_report_quick.json` écrit; 8 tailles,
+  0 timeout, 20 runs incomplets explicitement marqués pour `n > 8`; médiane
+  `n=20` environ `0.00433s`.
+- Conclusion : la couche de domaines locaux est cohérente sur petits arbres
+  supportés. Elle reste une énumération d’affectations, pas encore un solver
+  compact.
+- Next action : compiler des nogoods de quartets cR sur supports de variables
+  et mesurer si le pruning apparaît avant énumération complète.
