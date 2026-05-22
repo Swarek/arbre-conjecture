@@ -67,6 +67,15 @@ bench-piste-f:
 	  --sizes 4,5,6,8,10,12,16,20 \
 	  --repeats 10 \
 	  --timeout 2.0 \
+	  --instance-kind cycle \
+	  --pc-tree mixed \
+	  --diagnostics-up-to 8 \
+	  --output reports/complexity_cycle_mixed.json && \
+	$(PYTHON) tools/pc_circular_complexity_benchmark.py \
+	  --candidate src/pc_circular/solvers/candidate.py:solve \
+	  --sizes 4,5,6,8,10,12,16,20 \
+	  --repeats 10 \
+	  --timeout 2.0 \
 	  --instance-kind permuted_cycle \
 	  --pc-tree star \
 	  --diagnostics-up-to 8 \

@@ -10,10 +10,12 @@ et, si `True`, un ordre circulaire témoin représenté par `T`.
 
 Le dépôt ne prétend pas résoudre le problème général. La candidate courante est
 une baseline : brute force exacte pour `n <= 8`, un sous-cas large-n prouvé où
-chaque paire a au plus un témoin mauvais global, puis échantillonnage incomplet
-documenté au-delà. Un témoin positif échantillonné est certifié par vérification
-directe de l'ordre ; un échec d'échantillonnage reste incomplet. Les tests
-servent à protéger les expériences, pas à remplacer une preuve.
+chaque paire a au plus un témoin mauvais global, un certificat positif
+minimum-cycle quand l'ordre reconstruit est représenté et vérifié cR, puis
+échantillonnage incomplet documenté au-delà. Un témoin positif échantillonné est
+certifié par vérification directe de l'ordre ; un échec d'échantillonnage reste
+incomplet. Les tests servent à protéger les expériences, pas à remplacer une
+preuve.
 
 Commandes principales :
 
@@ -40,10 +42,10 @@ version plus lourde.
 shrink. Elle est faite pour les moments où une candidate semble marcher et doit
 être attaquée avant d’être considérée comme un progrès stable.
 
-`make bench-piste-f` lance des benchmarks ciblés sur deux familles explicites :
-`permuted_cycle` comme sous-cas planted-cycle, et `paired_farthest` comme famille
-hard-looking à appariements farthest. Ces familles ne sont pas ajoutées au
-`mixed` par défaut.
+`make bench-piste-f` lance des benchmarks ciblés sur des familles explicites :
+`cycle/mixed` comme sous-cas représenté non-star, `permuted_cycle/star` comme
+sous-cas planted-cycle, et `paired_farthest` comme famille hard-looking à
+appariements farthest. Ces familles ne sont pas ajoutées au `mixed` par défaut.
 
 `make bench-csp-quick` mesure les expériences internes Piste C : compilation de
 nogoods, solve pruné, filtre direct et métriques de pruning. Ce n’est pas la

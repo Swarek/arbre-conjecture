@@ -147,11 +147,84 @@ def enumerate_frontiers(
     return result
 
 
-def represents_order(node: PCNode, order: Sequence[int], *, limit: Optional[int] = None) -> bool:
-    """Check representation by exact enumeration, suitable for small trees."""
+def _represents_linear_frontier(node: PCNode, seq: tuple[int, ...]) -> bool:
+    if node.kind == "leaf":
+        return len(seq) == 1 and seq[0] == node.label
 
-    target = canonical_circular_order(order)
-    return target in set(enumerate_frontiers(node, canonical=True, limit=limit))
+    child_label_sets = [set(labels(child)) for child in node.children]
+    label_to_child: dict[int, int] = {}
+    for idx, child_labels in enumerate(child_label_sets):
+        for label in child_labels:
+            label_to_child[label] = idx
+
+    chunks: list[tuple[int, tuple[int, ...]]] = []
+    seen_children: set[int] = set()
+    current_child: int | None = None
+    current_chunk: list[int] = []
+    for label in seq:
+        child_idx = label_to_child.get(label)
+        if child_idx is None:
+            return False
+        if child_idx != current_child:
+            if child_idx in seen_children:
+                return False
+            if current_child is not None:
+                chunks.append((current_child, tuple(current_chunk)))
+            seen_children.add(child_idx)
+            current_child = child_idx
+            current_chunk = [label]
+        else:
+            current_chunk.append(label)
+
+    if current_child is not None:
+        chunks.append((current_child, tuple(current_chunk)))
+    if len(chunks) != len(node.children):
+        return False
+
+    child_order = tuple(child_idx for child_idx, _ in chunks)
+    if set(child_order) != set(range(len(node.children))):
+        return False
+    if node.kind == "C":
+        forward = tuple(range(len(node.children)))
+        backward = tuple(reversed(forward))
+        if child_order != forward and child_order != backward:
+            return False
+
+    return all(_represents_linear_frontier(node.children[child_idx], chunk) for child_idx, chunk in chunks)
+
+
+def _rotations(seq: tuple[int, ...]) -> Iterable[tuple[int, ...]]:
+    for idx in range(len(seq)):
+        yield seq[idx:] + seq[:idx]
+
+
+def represents_order(node: PCNode, order: Sequence[int], *, limit: Optional[int] = None) -> bool:
+    """Check whether ``order`` is represented by the scaffold PC-tree.
+
+    With ``limit`` this preserves the old bounded-enumeration diagnostic.  When
+    no limit is given, membership is checked by parsing the fixed order into
+    child blocks and testing only root rotations/reversal, avoiding frontier
+    enumeration.
+    """
+
+    if limit is not None:
+        target = canonical_circular_order(order)
+        return target in set(enumerate_frontiers(node, canonical=True, limit=limit))
+
+    seq = tuple(order)
+    node_labels = labels(node)
+    if len(seq) != len(node_labels) or set(seq) != set(node_labels):
+        return False
+
+    seen: set[tuple[int, ...]] = set()
+    for oriented in (seq, tuple(reversed(seq))):
+        for rotated in _rotations(oriented):
+            if rotated in seen:
+                continue
+            seen.add(rotated)
+            if _represents_linear_frontier(node, rotated):
+                return True
+    return False
 
 
 def star_pc_tree(n: int) -> PCNode:

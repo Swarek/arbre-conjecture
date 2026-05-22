@@ -8,8 +8,8 @@ The current implementation is deliberately conservative:
 * for larger instances it tries a small deterministic set of represented
   orders; a found witness proves ``exists=True``, but failure remains
   ``complete=False``.
-* for star/unconstrained instances it also tries a structural minimum-distance
-  cycle witness and accepts it only after direct cR verification.
+* when the minimum-distance graph exposes a cycle, it accepts the reconstructed
+  order only after direct cR and PC-tree representation verification.
 
 This is not a solution to the general problem.  Future goals should replace
 the large-n placeholder with a proved algorithm or a clearly scoped sub-case.
@@ -20,7 +20,7 @@ from __future__ import annotations
 from itertools import islice
 from typing import Iterable, Optional, Sequence
 
-from pc_circular.pc_tree import PCNode, enumerate_frontiers, labels, sample_frontier
+from pc_circular.pc_tree import PCNode, enumerate_frontiers, represents_order, sample_frontier
 from pc_circular.predicates import (
     has_at_most_one_bad_witness_per_pair,
     is_precircular_order_cR,
@@ -45,16 +45,6 @@ def _fallback_orders(n: int) -> list[tuple[int, ...]]:
     reversed_order = tuple(reversed(natural))
     even_odd = tuple(list(range(0, n, 2)) + list(range(1, n, 2)))
     return list(dict.fromkeys([natural, reversed_order, even_odd]))
-
-
-def _is_leaf_star(pc_tree: Optional[PCNode], n: int) -> bool:
-    if pc_tree is None:
-        return False
-    return (
-        pc_tree.kind == "P"
-        and all(child.kind == "leaf" for child in pc_tree.children)
-        and set(labels(pc_tree)) == set(range(n))
-    )
 
 
 def _validate_order_shape(order: Sequence[int], n: int) -> tuple[int, ...]:
@@ -99,17 +89,19 @@ def _minimum_distance_cycle_order(D, n: int) -> tuple[int, ...] | None:
 
 
 def _minimum_cycle_witness_result(D, n: int, pc_tree: Optional[PCNode]):
-    if pc_tree is not None and not _is_leaf_star(pc_tree, n):
-        return None
     order = _minimum_distance_cycle_order(D, n)
-    if order is None or not is_precircular_order_cR(D, order):
+    if order is None:
+        return None
+    if pc_tree is not None and not represents_order(pc_tree, order):
+        return None
+    if not is_precircular_order_cR(D, order):
         return None
     return {
         "exists": True,
         "order": list(order),
         "complete": True,
         "solver": "candidate_minimum_distance_cycle_witness",
-        "note": "minimum-distance graph is a simple cycle and the reconstructed order is a verified witness",
+        "note": "minimum-distance graph is a simple cycle and the reconstructed order is a represented verified witness",
     }
 
 

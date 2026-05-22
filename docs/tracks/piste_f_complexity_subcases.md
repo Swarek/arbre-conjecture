@@ -75,12 +75,13 @@ placeholder incomplet.
 
 ## Témoin cycle par distances minimales
 
-Statut : certificat positif intégré pour star/None, pas critère complet.
+Statut : certificat positif intégré pour tout PC-tree du scaffold où le témoin
+est représenté, pas critère complet.
 
 Si les arêtes de distance minimale positive forment un cycle simple couvrant
 tous les sommets, `candidate.py` reconstruit cet ordre. Il l'accepte seulement
 si l'ordre passe `is_precircular_order_cR` et si la représentation est sûre :
-pas de PC-tree, ou PC-tree star de feuilles.
+pas de PC-tree, ou `represents_order(T, order)` vrai pour le scaffold P/C/leaf.
 
 Résultat T018 :
 
@@ -93,7 +94,22 @@ Résultat T018 :
   tailles `n > 8`, et `paired_farthest/mixed` en garde `40` ;
 - un contre-exemple `n=6` montre que "graphe minimum = cycle" ne suffit pas pour
   cR ; le garde fixed-order est donc indispensable ;
-- les PC-trees non-star sont volontairement exclus de cette branche.
+- à T018, les PC-trees non-star étaient volontairement exclus de cette branche
+  faute de test de représentation non énumératif.
+
+Résultat T019 :
+
+- `represents_order` teste maintenant l'appartenance d'un ordre fixé au
+  PC-tree scaffold sans énumérer les frontiers quand `limit is None` ;
+- le test parse récursivement des blocs contigus d'enfants, avec rotations et
+  renversement autorisés seulement au root circulaire ;
+- comparaison exhaustive contre `enumerate_frontiers` sur petits arbres :
+  `11837` checks locaux sans désaccord ;
+- `cycle/mixed` grandes tailles passe par
+  `candidate_minimum_distance_cycle_witness` pour tous les `n > 8` ;
+- `permuted_cycle` avec labels aléatoires reste rarement représenté par
+  balanced/mixed dans le scaffold, donc la branche n'est pas forcée hors cas
+  réellement représentés.
 
 ## Artefacts
 
@@ -104,6 +120,7 @@ Résultat T018 :
 - `has_at_most_one_bad_witness_per_pair`;
 - `sample_frontier`;
 - `candidate_minimum_distance_cycle_witness`;
+- `represents_order` non énumératif quand `limit is None`;
 - `--diagnostics-up-to` dans `tools/pc_circular_complexity_benchmark.py`;
 - `make bench-piste-f`.
 
@@ -113,4 +130,5 @@ Utiliser `paired_farthest` pour casser tout filtre local ou farthest-like.
 Utiliser `permuted_cycle` comme sous-cas où un futur solver devrait reconnaître
 un témoin caché sans brute force star.
 Chercher ensuite un sous-cas plus structuré que le critère universel, par
-exemple planted-cycle représenté par le PC-tree ou degré interne borné.
+exemple planted-cycle représenté par un vrai PC-tree Hsu/McConnell, ou degré
+interne borné.

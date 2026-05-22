@@ -600,3 +600,60 @@
   `paired_farthest` et les PC-trees non-star, ou chercher un test de
   représentation non énumératif pour promouvoir le témoin cycle au-delà du
   star.
+
+## 2026-05-23 non-enumerative PC-tree membership for witnesses
+
+- Date/heure : 2026-05-23, Europe/Paris.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : pour un ordre fixé, le scaffold PC-tree P/C/leaf permet un
+  test de représentation exact sans énumérer toutes les frontiers, en parsant
+  récursivement des blocs contigus d'enfants. Ce test peut certifier les
+  témoins positifs minimum-cycle hors star.
+- Changement fait : `represents_order` utilise maintenant un parseur exact
+  non énumératif quand `limit is None`, tout en gardant l'ancien diagnostic
+  borné si `limit` est fourni. `candidate.py` utilise ce test pour accepter
+  `candidate_minimum_distance_cycle_witness` avec PC-tree non-star, et teste la
+  représentation avant `is_precircular_order_cR` quand un PC-tree est fourni.
+  `make bench-piste-f` ajoute un rapport `cycle/mixed`.
+- Plan subagents : trois explorateurs lecture seule. Résultats : invariant
+  membership confirmé par induction ; risque clé des rotations internes de `C`
+  transformé en test ; contre-exemple `n=6` ajouté où le min-cycle est cR mais
+  non représenté et l'oracle PC-tree répond `False`; mesure `permuted_cycle`
+  balanced/mixed : hits très rares au-delà de `n=10`.
+- Commande exécutée : `make unit`.
+- Résultat correction : `70 passed in 0.55s`.
+- Commande exécutée : probe membership avec `PYTHONPATH=src`, comparaison à
+  `enumerate_frontiers` sur star/balanced `C/P/mixed` jusqu'à `n <= 8`, puis
+  grands `cycle/mixed` et `paired_farthest`.
+- Résultat correction : `OK checks 11837`; aucun désaccord membership, témoins
+  `cycle/mixed` représentés et cR pour `n=10,14,20,40,80`.
+- Résultat subagent benchmark : sur `permuted_cycle_metric`, seeds `0..999`,
+  balanced/mixed représentent le cycle minimum pour `3/1000` seeds à `n=9`,
+  `1/1000` à `n=10`, puis `0/1000` de `n=12` à `80`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `70 passed`, puis `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make hunt-counterexamples`.
+- Résultat correction : `JUSTE` sur exhaustif `n=4`, `5000` random,
+  `max-n=8`, seed `314159`, shrink actif.
+- Commande exécutée : `make bench-piste-f`.
+- Résultat benchmark : `reports/complexity_cycle_mixed.json` ajouté ;
+  `cycle/mixed` et `permuted_cycle/star` ont `0` timeout et `0` incomplet, avec
+  `candidate_minimum_distance_cycle_witness` pour tous les `n > 8`.
+  `paired_farthest/star` reste incomplet sur `60` runs grande taille et
+  `paired_farthest/mixed` sur `40` runs, sans timeout.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark : `reports/complexity_report_quick.json` écrit ; 8 tailles,
+  `0` timeout, `0` incomplet.
+- Commande exécutée : `make bench`.
+- Résultat benchmark : `reports/complexity_report.json` écrit ; tailles jusqu'à
+  `n=100`, `0` timeout, `42` runs incomplets visibles ; médiane `n=100`
+  environ `2.12s`, fit polynomial empirique `p ~= 3.25` (`r2 ~= 0.92`).
+- Conclusion : extension sûre comme certificat positif d'ordre représenté dans
+  le scaffold. Elle ne prouve aucun rejet et ne résout pas les cas où le cycle
+  minimum n'est pas représenté ou n'existe pas.
+- Next action : attaquer `paired_farthest` ou chercher une contrainte
+  structurelle qui génère un ordre candidat représenté, pas seulement qui teste
+  un ordre déjà connu.

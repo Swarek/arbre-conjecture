@@ -10,6 +10,8 @@ from pc_circular.predicates import (
     is_precircular_order_cR,
     passes_farthest_crossing_condition,
 )
+from pc_circular.oracle import exact_oracle_pc_tree
+from pc_circular.pc_tree import balanced_pc_tree, represents_order
 from pc_circular.solvers.candidate import _minimum_distance_cycle_order
 
 COUNTEREXAMPLES = [
@@ -68,6 +70,25 @@ COUNTEREXAMPLES = [
         "passes_farthest_crossing": False,
         "minimum_cycle_order": [0, 1, 2, 3, 4, 5],
     },
+    {
+        "name": "minimum_cycle_witness_not_sufficient_without_representation",
+        "kind": "minimum_cycle_representation_false_positive",
+        "D": [
+            [0, 2, 3, 2, 1, 1],
+            [2, 0, 1, 2, 1, 3],
+            [3, 1, 0, 1, 2, 2],
+            [2, 2, 1, 0, 3, 1],
+            [1, 1, 2, 3, 0, 2],
+            [1, 3, 2, 1, 2, 0],
+        ],
+        "order": [0, 4, 1, 2, 3, 5],
+        "is_circular_robinson": True,
+        "passes_farthest_crossing": True,
+        "minimum_cycle_order": [0, 4, 1, 2, 3, 5],
+        "pc_tree_kind": "mixed",
+        "minimum_cycle_represented": False,
+        "pc_tree_oracle_exists": False,
+    },
 ]
 
 
@@ -91,3 +112,7 @@ def test_recorded_counterexamples_match_predicates():
             assert find_farthest_crossing_violation(D, order) is not None
         if "minimum_cycle_order" in example:
             assert _minimum_distance_cycle_order(D, len(D)) == tuple(example["minimum_cycle_order"])
+        if "pc_tree_kind" in example:
+            T = balanced_pc_tree(len(D), kind=example["pc_tree_kind"])
+            assert represents_order(T, order) is example["minimum_cycle_represented"]
+            assert exact_oracle_pc_tree(D, T)["exists"] is example["pc_tree_oracle_exists"]

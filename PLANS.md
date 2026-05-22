@@ -733,3 +733,81 @@ incomplets star, `40` incomplets mixed), ce qui garde la famille stress utile ;
 Décision : conserver comme certificat positif borné, pas comme critère de
 décision général. Continuer ensuite sur une piste qui attaque les cas négatifs
 incomplets, notamment `paired_farthest` et PC-trees non-star.
+
+## ExecPlan 2026-05-23 - non-enumerative PC-tree membership for witnesses
+
+But : promouvoir les certificats positifs hors PC-tree star quand un ordre
+candidat est déjà connu et vérifié cR, en ajoutant un test exact de
+représentation d'une frontier par le scaffold PC-tree sans énumérer toutes les
+frontiers.
+
+Hypothèse : dans le scaffold actuel, une frontier linéaire représentée par un
+nœud interne est exactement une concaténation de blocs contigus correspondant à
+ses enfants ; pour `P`, l'ordre des blocs est arbitraire, et pour `C`, il est
+forward ou reverse. Pour un ordre circulaire au root, il suffit de tester les
+rotations des deux orientations. Cela donne un test de membership sûr pour un
+ordre témoin fixé.
+
+Fichiers à modifier : `src/pc_circular/pc_tree.py`,
+`src/pc_circular/solvers/candidate.py`, `tests/test_pc_tree_frontiers.py`,
+`tests/test_candidate.py`, `docs/tracks/piste_f_complexity_subcases.md`,
+`docs/experiment_log.md`, `docs/proof_obligations.md`,
+`docs/tracks/README.md`, `docs/checkpoints.md`.
+
+Algorithme pressenti : ajouter un parseur récursif `represents_order_fast` ou
+améliorer `represents_order` quand `limit is None`. Le parseur valide la
+permutation de labels, découpe la séquence en runs de labels appartenant au même
+enfant, rejette si un enfant apparaît dans plusieurs runs, vérifie l'ordre
+local `P/C`, puis recurse dans les chunks. Au root, tester toutes les rotations
+de l'ordre et de son renversé. Dans `candidate.py`, remplacer le garde
+star-only du témoin minimum-cycle par "pas de PC-tree, ou ordre représenté par
+ce test exact".
+
+Tests à exécuter : `make unit`, probe comparant membership rapide à
+`enumerate_frontiers` sur arbres small star/balanced/mixed, probe large-n
+`permuted_cycle` sur star/balanced/mixed, `make quick`, `make check`,
+`make hunt-counterexamples`, `make bench-piste-f`, `make bench-quick`, et si
+vert `make bench`.
+
+Risques : une rotation de root pourrait être acceptée à tort dans un sous-nœud ;
+d'où restriction des rotations au root seulement. Une canonicalisation
+circulaire pourrait masquer un ordre linéaire non représenté ; d'où comparaison
+contre l'énumération exacte sur petits arbres. Pour les grands PC-trees
+non-star, un `False` du membership ne prouve rien sur l'existence générale.
+
+Plan de contre-exemples : chercher un ordre qui traverse deux fois le même
+sous-arbre et doit être rejeté ; tester des rotations/renversements valides ;
+tester un C-node avec ordre enfant non forward/reverse ; comparer exhaustivement
+aux frontiers énumérées pour `n <= 8`.
+
+Plan subagents : trois explorateurs lecture seule : preuve/risques du parseur
+PC-tree, attaque du témoin minimum-cycle + membership, et mesure sur
+`permuted_cycle` avec PC-trees balanced/mixed.
+
+Résultats observés : `represents_order` garde l'ancien diagnostic borné quand
+`limit` est fourni, mais utilise maintenant un parseur exact non énumératif
+quand `limit is None`. `candidate_minimum_distance_cycle_witness` accepte un
+témoin minimum-cycle pour un PC-tree non-star seulement si ce parseur confirme
+la représentation ; le test de représentation est fait avant le check cR pour
+éviter un coût élevé sur les non-hits. Subagents : l'explorateur membership a
+confirmé l'invariant par induction et signalé le piège des rotations internes
+de `C`; l'explorateur contre-exemples a fourni un cas `n=6` où le min-cycle est
+cR mais non représenté et où l'oracle PC-tree répond `False`; l'explorateur
+benchmark a mesuré que `permuted_cycle` aléatoire est presque jamais représenté
+par balanced/mixed au-delà de `n=10`.
+
+Validation observée : `make unit` : `70 passed`; probe membership vs
+énumération : `11837` checks sans désaccord ; probe grande taille
+`cycle/mixed` : témoin représenté et cR pour `n=10,14,20,40,80` ;
+`make quick` : `70 passed`, `JUSTE`; `make check` : `JUSTE`;
+`make hunt-counterexamples` : `JUSTE`; `make bench-piste-f` :
+`cycle/mixed` et `permuted_cycle/star` ont `0` timeout et `0` incomplet,
+`paired_farthest` reste incomplet grande taille (`60` star, `40` mixed) ;
+`make bench-quick` : `0` timeout et `0` incomplet ; `make bench` : `0`
+timeout jusqu'à `n=100`, `42` incomplets visibles, fit polynomial empirique
+`p ~= 3.25`.
+
+Décision : conserver l'extension comme certificat positif sûr pour ordre fixé
+représenté. Elle améliore les PC-trees non-star quand le cycle est compatible
+avec les blocs du scaffold, sans résoudre les cas négatifs ni les vrais
+PC-trees Hsu/McConnell.

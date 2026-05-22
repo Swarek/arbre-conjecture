@@ -63,10 +63,19 @@ Dernier commit green avant T009 : `07120e4`.
   observée :
   `make unit`, `make quick`, `make check`, `make hunt-counterexamples`,
   `make bench-quick`, `make bench` (`0` timeout, `42` incomplets visibles).
-- Checkpoint T018 courant : commit contenant le témoin minimum-cycle star, le
+- Checkpoint T018 : `aad8e98` (`checkpoint: add minimum-distance cycle
+  witness`). Commit contenant le témoin minimum-cycle star, le
   contre-exemple régressé `n=6` montrant que le graphe minimum cycle ne suffit
   pas pour cR, et la capture Proposition 4.4 conservée dans
   `docs/source_materials/images/`. Validation observée : `make unit`,
+  `make quick`, `make check`, `make hunt-counterexamples`,
+  `make bench-piste-f`, `make bench-quick`, `make bench` (`0` timeout, `42`
+  incomplets visibles, fit polynomial empirique `p ~= 3.25`).
+- Checkpoint T019 courant : commit contenant `represents_order` non énumératif
+  pour les ordres fixés du scaffold PC-tree, l'extension du témoin
+  minimum-cycle aux PC-trees non-star représentés, et le contre-exemple
+  régressé où un min-cycle cR non représenté ne doit pas être accepté.
+  Validation observée : `make unit`, probe membership `11837` checks,
   `make quick`, `make check`, `make hunt-counterexamples`,
   `make bench-piste-f`, `make bench-quick`, `make bench` (`0` timeout, `42`
   incomplets visibles, fit polynomial empirique `p ~= 3.25`).

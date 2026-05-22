@@ -325,6 +325,41 @@ Limites :
 - les résultats `False` du placeholder restent incomplets et doivent rester
   visibles dans les rapports.
 
+### Membership PC-tree d'un ordre fixé
+
+Statut : théorème prouvé pour le scaffold P/C/leaf enraciné, pas pour une
+implémentation Hsu/McConnell complète.
+
+`represents_order(T, order)` teste maintenant l'appartenance d'un ordre
+circulaire fixé sans énumérer les frontiers quand `limit is None`. La partie
+linéaire récursive vérifie que les feuilles de chaque enfant forment un bloc
+contigu ; un nœud `P` accepte toute permutation de ces blocs, un nœud `C`
+accepte seulement l'ordre local forward ou reverse. Les rotations et le
+renversement global ne sont essayés qu'au root circulaire.
+
+Ce que cela couvre :
+
+- obligation 3/4 pour un témoin fixé dans le scaffold : un ordre accepté est
+  représenté par construction inductive, et un ordre représenté par
+  `_linear_frontiers` est accepté par la même induction ;
+- obligation 5 dans le scaffold : l'implémentation actuelle est polynomiale,
+  avec un facteur de rotations au root et des ensembles de labels recalculés ;
+- obligation de cas dégénérés structurels : les `C` internes ne sont pas
+  traités modulo rotation.
+
+Limites :
+
+- ce n'est pas une preuve pour les vrais PC-trees non enracinés
+  Hsu/McConnell ;
+- avec `limit`, `represents_order` garde l'ancien comportement de diagnostic
+  par énumération bornée et ne doit pas être utilisé pour prouver un rejet ;
+- ce test ne dit rien sur cR, seulement sur la représentation d'un ordre fixé.
+
+Preuve expérimentale T019 : tests unitaires et probe locale ont comparé ce test
+à `enumerate_frontiers` sur star, balanced `C/P/mixed` et arbres P/C imbriqués
+jusqu'à `n <= 8`, `11837` checks sans désaccord. Un test verrouille le cas où
+un `C` interne ne doit pas accepter une rotation locale.
+
 ### Témoin cycle par distances minimales
 
 Statut : conséquence directe pour positifs vérifiés / sous-cas expérimental.
@@ -332,12 +367,13 @@ Statut : conséquence directe pour positifs vérifiés / sous-cas expérimental.
 Si le graphe des arêtes de distance minimale positive est un cycle simple
 couvrant tous les sommets, `candidate.py` reconstruit un ordre cyclique. Cet
 ordre n'est accepté que si `is_precircular_order_cR` le valide et si la
-représentation est certaine : pas de PC-tree fourni, ou PC-tree star de feuilles.
+représentation est certaine : pas de PC-tree fourni, ou `represents_order`
+accepte l'ordre pour le PC-tree scaffold.
 
 Ce que cela couvre :
 
-- obligation 4 pour les positifs star/None : le témoin est représenté par
-  construction ;
+- obligation 4 pour les positifs : le témoin est représenté par construction
+  via le sous-cas sans PC-tree ou le membership PC-tree fixé ;
 - obligation 1/2 pour le résultat positif ponctuel : le témoin est vérifié par
   le prédicat fixed-order exact.
 
@@ -347,8 +383,8 @@ Limites :
   enregistré dans les régressions ;
 - les graphes minimaux avec plusieurs cycles ou des cordes minimales restent
   ambigus ;
-- les PC-trees non-star restent hors de ce sous-cas faute de test de
-  représentation non énumératif.
+- un rejet du témoin cycle ne prouve pas la non-existence d'un autre ordre cR
+  représenté.
 
 Preuve expérimentale T018 : `make quick`, `make check` et
 `make hunt-counterexamples` restent verts. Le benchmark ciblé
@@ -357,3 +393,9 @@ run incomplet, tandis que `paired_farthest` reste volontairement incomplet en
 grande taille. Le benchmark fort mixed/star T018 garde `0` timeout jusqu'à
 `n=100`, avec `42` runs incomplets visibles et non présentés comme des preuves
 de non-existence.
+
+Preuve expérimentale T019 : `cycle/mixed` utilise maintenant ce témoin pour
+tous les `n > 8` dans `make bench-piste-f`, sans timeout ni run incomplet.
+`paired_farthest` reste incomplet en grande taille, ce qui confirme que la
+branche n'est qu'un certificat positif. Le benchmark fort mixed/star T019 garde
+`0` timeout jusqu'à `n=100`, avec `42` runs incomplets visibles.

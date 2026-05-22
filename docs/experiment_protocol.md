@@ -69,10 +69,10 @@ Benchmarks ciblés Piste F :
 make bench-piste-f
 ```
 
-Cette commande écrit des rapports dédiés aux familles `permuted_cycle` et
-`paired_farthest`, avec diagnostics exacts jusqu’à `n <= 8` pour compter les
-frontiers, les ordres cR valides, les ordres passant farthest, et les faux
-positifs farthest.
+Cette commande écrit des rapports dédiés aux familles `cycle/mixed`,
+`permuted_cycle/star` et `paired_farthest`, avec diagnostics exacts jusqu’à
+`n <= 8` pour compter les frontiers, les ordres cR valides, les ordres passant
+farthest, et les faux positifs farthest.
 
 Benchmark interne Piste C :
 
