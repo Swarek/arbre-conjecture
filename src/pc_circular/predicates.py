@@ -210,6 +210,69 @@ def passes_farthest_crossing_condition(D: Matrix, order: Order) -> bool:
     return find_farthest_crossing_violation(D, order) is None
 
 
+def passes_farthest_prop_4_4_condition(D: Matrix, order: Order, *, strict: bool = False) -> bool:
+    """Check the farthest-neighbor necessary condition from Proposition 4.4.
+
+    This is a diagnostic necessary condition for a fixed compatible cR order,
+    not a decision procedure.  In the non-strict case, the proposition allows
+    degeneracy clause (c); the older ``passes_farthest_crossing_condition`` is
+    deliberately cruder and does not implement that clause.
+    """
+
+    return find_farthest_prop_4_4_violation(D, order, strict=strict) is None
+
+
+def find_farthest_prop_4_4_violation(D: Matrix, order: Order, *, strict: bool = False) -> dict | None:
+    """Return the first violation of the Proposition 4.4 farthest condition."""
+
+    n = _validate_order_for_D(D, order)
+    position = {value: idx for idx, value in enumerate(order)}
+    farthest = farthest_sets(D)
+
+    for x in range(n):
+        for y in range(n):
+            for xp in farthest[x]:
+                for yp in farthest[y]:
+                    endpoints = {x, xp, y, yp}
+                    if len(endpoints) < 3:
+                        continue
+
+                    if not strict:
+                        degenerate = bool(({y, yp} & farthest[x]) or ({x, xp} & farthest[y]))
+                        if degenerate:
+                            continue
+
+                    alternating = _prop_4_4_alternates_from_x(position, x, y, xp, yp, n)
+                    if not alternating:
+                        return {
+                            "x": x,
+                            "y": y,
+                            "x_farthest": xp,
+                            "y_farthest": yp,
+                            "positions": (
+                                position[x],
+                                position[y],
+                                position[xp],
+                                position[yp],
+                            ),
+                            "strict": strict,
+                            "farthest_x": sorted(farthest[x]),
+                            "farthest_y": sorted(farthest[y]),
+                        }
+    return None
+
+
+def _prop_4_4_alternates_from_x(position: dict[int, int], x: int, y: int, xp: int, yp: int, n: int) -> bool:
+    if len({x, y, xp, yp}) < 4:
+        return False
+
+    def offset(point: int) -> int:
+        return (position[point] - position[x]) % n
+
+    after_x = sorted((y, xp, yp), key=offset)
+    return after_x == [y, xp, yp] or after_x == [yp, xp, y]
+
+
 def find_farthest_crossing_violation(D: Matrix, order: Order) -> dict | None:
     """Return the first non-crossing farthest-neighbor chord pair.
 

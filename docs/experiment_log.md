@@ -133,3 +133,25 @@
   principaux.
 - Next action : maintenir à jour à chaque tentative le fichier de piste
   correspondant et le compteur dans `docs/tracks/README.md`.
+
+## 2026-05-22 source notes and Proposition 4.4
+
+- Date/heure : 2026-05-22, Europe/Paris.
+- Commit hash : pending until checkpoint commit is created.
+- Hypothèse testée : les PDF fournis doivent être intégrés comme idées et
+  références, sans remplacer les tests ni l’oracle.
+- Changement fait : ajout de `docs/source_notes.md`; ajout du prédicat
+  expérimental `passes_farthest_prop_4_4_condition`; clarification que la
+  condition farthest brute précédemment réfutée n’est pas la Proposition 4.4
+  complète car elle ignorait la clause dégénérée non stricte.
+- Commande exécutée : `make unit`.
+- Résultat correction : `21 passed in 0.03s`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `21 passed in 0.02s`, puis `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Résultat benchmark : non applicable.
+- Conclusion : Proposition 4.4 devient une condition nécessaire documentée et
+  testable pour ordre fixé, mais pas un solver d’existence dans PC-tree.
+- Next action : tester expérimentalement le couple Proposition 4.4/4.5 comme
+  accélérateur de test d’ordre fixé sous quasi-circularité.

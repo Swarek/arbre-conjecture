@@ -26,6 +26,11 @@ La condition de croisement des cordes `x x'`, `y y'` avec `x' in F_x` et
 `passes_farthest_crossing_condition`, ne peut pas être utilisée seule comme
 critère de décision.
 
+Cette condition brute est distincte de la Proposition 4.4 de
+`strongly-circular-sidma-1.pdf`, qui inclut une clause dégénérée non stricte.
+Le prédicat expérimental `passes_farthest_prop_4_4_condition` encode cette
+version séparément.
+
 Limites observées :
 
 - Non-nécessité en cas non strict : la matrice égal-distance à 4 points est
@@ -39,6 +44,10 @@ Ces exemples sont verrouillés dans `tests/test_regression_counterexamples.py`.
 Toute piste utilisant les farthest-neighbors doit donc préciser les cas
 dégénérés, ajouter d’autres contraintes, ou restreindre explicitement le sous-cas
 traité.
+
+Observation expérimentale initiale : sur les ordres quasi-circulaires exhaustifs
+testés en petit `n`, la version Proposition 4.4 n’a pas montré de faux négatif
+cR. Cela reste une vérification expérimentale, pas une preuve interne au dépôt.
 
 ### Projection locale des obstructions
 

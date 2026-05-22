@@ -20,6 +20,11 @@ Les contre-exemples de la Piste E indiquent que les contraintes farthest seules
 ne suffisent pas ; cette piste doit donc partir des quartets cR exacts ou d’une
 reformulation prouvée plus forte.
 
+Les sources Hsu/McConnell et Hsu PC-vs-PQ sont listées dans
+`docs/source_notes.md`. Elles justifient la pertinence des PC-trees pour les
+arrangements circular-ones, mais l’implémentation actuelle reste un scaffold
+minimal.
+
 ## Risques
 
 - Les contraintes cR peuvent ne pas être exprimables comme contraintes d’arcs

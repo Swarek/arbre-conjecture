@@ -9,13 +9,16 @@ ordres, ou faut-il utiliser les quartets cR exacts ?
 
 Statut : preuve expérimentale avec contre-exemples minimaux.
 
-La condition farthest-crossing brute n’est pas un critère de décision.
+La condition farthest-crossing brute n’est pas un critère de décision. Cette
+condition brute n’est pas la Proposition 4.4 complète : elle ignore la clause
+dégénérée non stricte mentionnée dans le papier `strongly-circular-sidma-1.pdf`.
 
 Elle n’est pas nécessaire :
 
 - matrice égal-distance à 4 points ;
 - tout ordre est cR ;
-- farthest brut échoue à cause de dégénérescences massives.
+- farthest brut échoue à cause de dégénérescences massives ;
+- la condition Proposition 4.4 complète passe grâce à la clause dégénérée.
 
 Elle n’est pas suffisante :
 
@@ -27,8 +30,10 @@ Artefacts :
 
 - `tests/test_regression_counterexamples.py`;
 - `docs/proof_obligations.md`;
+- `docs/source_notes.md`;
 - `find_precircular_cR_violation`;
 - `find_farthest_crossing_violation`.
+- `passes_farthest_prop_4_4_condition`.
 
 ## Données observées
 
@@ -46,6 +51,11 @@ Toute candidate basée sur farthest doit :
 - traiter explicitement les égalités et dégénérescences ;
 - ajouter des contraintes non-farthest ;
 - ou annoncer un sous-cas strictement plus restreint.
+
+La version Proposition 4.4 est une condition nécessaire pour un ordre cR
+compatible. Elle n’est pas utilisée comme oracle global. Le prochain test utile
+est de vérifier expérimentalement le couple Prop. 4.4/4.5 sur les ordres
+quasi-circulaires.
 
 ## Prochaine action
 
