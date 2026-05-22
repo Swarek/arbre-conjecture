@@ -10,18 +10,26 @@ Un commit stable doit satisfaire :
 
 ## Dernier commit green
 
-- Initial setup : hash à reporter depuis `git log` après création du checkpoint
-  initial.
+- Initial setup : `e5f0ec3` (`checkpoint: baseline research setup with
+  correctness and complexity gates`).
 - Statut attendu : baseline exacte `n <= 8`, placeholder incomplet au-delà.
 - Validation initiale : `make quick` vert et `make bench-quick` sans timeout,
   avec runs incomplets explicitement comptés pour `n > 8`.
-- Checkpoint Goal 2026-05-22 : à reporter après commit. Diagnostics
-  d’obstructions, contre-exemples farthest, familles Piste F et benchmark ciblé
-  ajoutés. Validation observée : `make quick`, `make hunt-counterexamples`,
+- Checkpoint Goal 2026-05-22 : `7da77f5` (`checkpoint: add obstruction
+  diagnostics and stress families`). Diagnostics d’obstructions,
+  contre-exemples farthest, familles Piste F et benchmark ciblé ajoutés.
+  Validation observée : `make quick`, `make hunt-counterexamples`,
   `make check`, `make bench-quick`, `make bench-piste-f`.
-- Checkpoint Prop. 4.5 : à reporter après commit. Diagnostic d’ordre fixé
-  quasi-circulaire ajouté. Validation observée : `make quick`, `make check`,
-  probe exhaustif `n <= 5` sur ordres quasi-circulaires sans désaccord.
+- Checkpoint Prop. 4.5 : `07120e4` (`checkpoint: add prop 4.5 fixed-order
+  diagnostic`). Diagnostic d’ordre fixé quasi-circulaire ajouté. Validation
+  observée : `make quick`, `make check`, probe exhaustif `n <= 5` sur ordres
+  quasi-circulaires sans désaccord.
+
+Dernier commit green avant T009 : `07120e4`.
+
+Le checkpoint T009 courant est le commit contenant l’expérience
+`prop45_nogood_frontier_report`; son hash est à lire avec `git log -1` et doit
+être reporté dans le compte rendu final de la session.
 
 ## Rollback
 

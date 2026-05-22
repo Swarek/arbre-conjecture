@@ -73,3 +73,17 @@ branches des nœuds internes du PC-tree. Cela permet de mesurer si une obstructi
 est visible localement dans un nœud `P` ou `C`. Cet outil ne prouve aucune
 suffisance : il sert à tester les pistes A/B/C et à chercher des collisions où
 deux contextes ont la même signature locale mais une validité cR différente.
+
+### Prop. 4.5 comme nogood de frontier
+
+Statut : preuve expérimentale / scaffold Piste C.
+
+`prop45_nogood_frontier_report` compare, sur des frontiers énumérées, le filtre
+`find_farthest_prop_4_5_obstruction is None` au prédicat exact
+`is_precircular_order_cR`. Avec `require_quasi=True`, les ordres hors
+précondition quasi-circulaire sont sautés explicitement.
+
+Ce rapport vérifie une compatibilité d’ordre fixé et fournit des faux positifs
+ou faux négatifs si la compatibilité échoue. Il ne satisfait pas encore les
+obligations 2, 3 et 5 : il ne donne ni encodage compact de PC-tree, ni preuve de
+suffisance globale, ni complexité polynomiale.

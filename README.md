@@ -53,3 +53,5 @@ benchmarks et obligations de preuve à jour.
 Pour reprendre la boucle de recherche, lire `docs/agent_loop_guide.md`.
 Pour lire l’évolution par piste, utiliser `docs/tracks/README.md`.
 Pour les notes issues des PDF locaux, lire `docs/source_notes.md`.
+Les PDF conservés dans le dépôt et leurs hashes sont listés dans
+`docs/source_materials/README.md`.

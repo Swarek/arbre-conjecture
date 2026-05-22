@@ -3,7 +3,7 @@
 ## 2026-05-21 initial setup
 
 - Date/heure : 2026-05-21, Europe/Paris.
-- Commit hash : pending until checkpoint commit is created.
+- Commit hash : e5f0ec3.
 - Hypothèse testée : une baseline brute force exacte sur petites tailles peut
   servir de harnais initial sans prétendre résoudre le problème général.
 - Changement fait : création du dépôt, de l’oracle exact, des générateurs, de la
@@ -25,7 +25,7 @@
 ## 2026-05-21 agent guide
 
 - Date/heure : 2026-05-21, Europe/Paris.
-- Commit hash : pending until checkpoint commit is created.
+- Commit hash : b1a77fd.
 - Hypothèse testée : un guide explicite réduit le risque qu’un agent futur
   confonde quick benchmark, benchmark fort et preuve.
 - Changement fait : ajout de `docs/agent_loop_guide.md`; références ajoutées
@@ -40,7 +40,7 @@
 ## 2026-05-22 Goal operating model
 
 - Date/heure : 2026-05-22, Europe/Paris.
-- Commit hash : pending until checkpoint commit is created.
+- Commit hash : 6e497f5.
 - Hypothèse testée : avant de démarrer le Goal algorithmique, le dépôt doit
   forcer une méthode contre-exemple-first et permettre l’exploration parallèle
   de plusieurs pistes.
@@ -62,7 +62,7 @@
 ## 2026-05-22 farthest-crossing counterexamples
 
 - Date/heure : 2026-05-22, Europe/Paris.
-- Commit hash : pending until checkpoint commit is created.
+- Commit hash : 7da77f5.
 - Hypothèse testée : la condition de croisement farthest-neighbor brute pourrait
   servir de filtre local fort pour guider un solver.
 - Changement fait : ajout de diagnostics `find_precircular_cR_violation` et
@@ -91,7 +91,7 @@
 ## 2026-05-22 Piste F benchmark families
 
 - Date/heure : 2026-05-22, Europe/Paris.
-- Commit hash : pending until checkpoint commit is created.
+- Commit hash : 7da77f5.
 - Hypothèse testée : il faut séparer un sous-cas planted-cycle probablement
   facile d’une famille hard-looking à appariements farthest pour éviter de
   sur-optimiser `mixed`.
@@ -119,7 +119,7 @@
 ## 2026-05-22 per-track documentation
 
 - Date/heure : 2026-05-22, Europe/Paris.
-- Commit hash : pending until checkpoint commit is created.
+- Commit hash : a51812f.
 - Hypothèse testée : le journal chronologique ne suffit pas pour relire
   facilement 50 pistes/tentatives ; il faut un document vivant par piste.
 - Changement fait : ajout de `docs/tracks/README.md` et d’un fichier dédié pour
@@ -137,7 +137,7 @@
 ## 2026-05-22 source notes and Proposition 4.4
 
 - Date/heure : 2026-05-22, Europe/Paris.
-- Commit hash : pending until checkpoint commit is created.
+- Commit hash : 3c12127.
 - Hypothèse testée : les PDF fournis doivent être intégrés comme idées et
   références, sans remplacer les tests ni l’oracle.
 - Changement fait : ajout de `docs/source_notes.md`; ajout du prédicat
@@ -159,7 +159,7 @@
 ## 2026-05-22 vendored source PDFs
 
 - Date/heure : 2026-05-22, Europe/Paris.
-- Commit hash : pending until checkpoint commit is created.
+- Commit hash : 89782bf.
 - Hypothèse testée : les documents de référence doivent être conservés dans le
   dépôt pour que les notes restent reproductibles même si `~/Downloads` change.
 - Changement fait : copie des 6 PDF fournis dans `docs/source_materials/pdfs/`;
@@ -178,7 +178,7 @@
 ## 2026-05-22 Proposition 4.5 fixed-order diagnostic
 
 - Date/heure : 2026-05-22, Europe/Paris.
-- Commit hash : pending until checkpoint commit is created.
+- Commit hash : 07120e4.
 - Hypothèse testée : sous précondition quasi-circularité d’un ordre fixé,
   l’absence de certificat farthest Proposition 4.5 coïncide avec le prédicat
   exact `is_precircular_order_cR`.
@@ -201,3 +201,41 @@
   l’existence dans le PC-tree.
 - Next action : utiliser ce certificat dans Piste C ou B pour contraindre les
   choix de branches plutôt que de tester les frontiers une par une.
+
+## 2026-05-22 Prop. 4.5 nogood frontier scan
+
+- Date/heure : 2026-05-22, Europe/Paris.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : Prop. 4.5 peut servir de nogood expérimental sur des
+  frontiers énumérées, avec rapport explicite des faux positifs/faux négatifs,
+  sans changer la candidate générale.
+- Changement fait : ajout de `prop45_nogood_frontier_report` et
+  `prop45_nogood_frontier_search` dans `sat_like_experiments.py`; ajout de tests
+  unitaires Piste C ; mise à jour des docs de piste, obligations et checkpoints.
+- Commande exécutée : `make quick` avant modification.
+- Résultat correction : `24 passed in 0.09s`, puis `JUSTE`.
+- Commande exécutée : `make unit`.
+- Résultat correction : première exécution rouge à cause d’une attente de test
+  erronée (`729` matrices attendues au lieu de `657` matrices ayant au moins un
+  ordre quasi-circulaire) ; correction de l’assertion.
+- Commande exécutée : `make unit`.
+- Résultat correction : `27 passed in 0.29s`.
+- Commande exécutée : probe random bornée `n=6..8`, familles
+  `random/block/ultrametric/equal/non_strict/paired_farthest/permuted_cycle`,
+  valeurs avec égalités, `40` répétitions par famille, tous les ordres pour
+  `n<=7` et `200` ordres échantillonnés pour `n=8`.
+- Résultat correction : aucun désaccord ; `173600` couples inspectés, `35068`
+  ordres quasi-circulaires testés.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark : `reports/complexity_report_quick.json` écrit; 8 tailles,
+  0 timeout, 20 runs incomplets explicitement marqués pour `n > 8`; médiane
+  `n=20` environ `0.0036s`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Conclusion : Piste C dispose maintenant d’un rapport de nogoods Prop. 4.5
+  falsifiable sur frontiers énumérées. Cela reste une expérience, pas un CSP
+  compact ni une preuve.
+- Next action : implémenter le moteur CSP à domaines locaux sur petits nœuds
+  `P/C`, d’abord avec nogoods cR directs, puis comparer à Prop. 4.5 sous
+  précondition quasi-circulaire.

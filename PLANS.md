@@ -151,3 +151,58 @@ quasi-circulaires : 0 désaccord avec `is_precircular_order_cR` ; `n=5` contient
 Décision : conserver Prop. 4.5 comme diagnostic d’ordre fixé et source
 d’obstructions exactes pour Piste B/C. Ne pas l’intégrer dans `candidate.py`
 tant qu’il ne traite pas directement l’existence dans PC-tree.
+
+## ExecPlan 2026-05-22 - Prop 4.5 nogood frontier scan
+
+But : créer une première brique Piste C qui traite les obstructions Prop. 4.5
+comme des nogoods expérimentaux sur les frontiers d’un PC-tree, sans modifier
+la candidate générale.
+
+Hypothèse : même si l’encodage CSP complet n’est pas encore écrit, un scanner
+qui compare, frontier par frontier, `Prop. 4.5 passe` et `cR exact` donne une
+mesure falsifiable : faux positifs, faux négatifs, première obstruction, et
+témoin accepté. Ce rapport doit devenir le point d’entrée pour ajouter des
+variables/nogoods de PC-tree au lieu d’énumérer naïvement.
+
+Fichiers à modifier : `src/pc_circular/solvers/sat_like_experiments.py`, un test
+unitaire dédié, `docs/tracks/piste_c_sat_csp.md`, `docs/experiment_log.md`,
+éventuellement `docs/proof_obligations.md` et `docs/tracks/README.md`.
+
+Algorithme pressenti : énumérer un ensemble borné ou complet d’ordres représentés
+par `quasi_orders` ou `pc_tree`, filtrer optionnellement les ordres non
+quasi-circulaires, appliquer `passes_farthest_prop_4_5_order_test`, puis
+comparer à `is_precircular_order_cR` pour compter les désaccords. Retourner un
+rapport structuré et une fonction de recherche de témoin Prop. 4.5.
+
+Tests à exécuter : `make unit`, `make quick`; comme la candidate ne change pas,
+`make hunt-counterexamples` n’est pas obligatoire mais un test exhaustif borné
+doit vérifier qu’aucun désaccord n’est introduit sur les cas `n=4` déjà couverts.
+
+Risques : présenter une énumération de frontiers comme un vrai CSP ; appliquer
+Prop. 4.5 sans précondition quasi-circulaire ; confondre l’absence de désaccord
+expérimental avec une preuve.
+
+Plan de contre-exemples : enregistrer dans le rapport le premier faux positif et
+le premier faux négatif ; si un désaccord apparaît sur ordre quasi-circulaire,
+l’ajouter aux régressions et basculer Piste E avant toute intégration solver.
+
+Plan subagents : 5 subagents exploratoires sont lancés en parallèle sur Pistes
+B/C/E/F et audit documentaire ; ils ne modifient pas les fichiers et doivent
+rapporter des risques ou prochaines expériences indépendantes.
+
+Résultats observés : `prop45_nogood_frontier_report` et
+`prop45_nogood_frontier_search` ajoutés dans `sat_like_experiments.py`. Les
+tests vérifient un rejet de l’ordre quasi-circulaire non-cR à 4 points, un témoin
+cycle-metric sur star tree, et l’absence de désaccord Prop. 4.5 vs cR sur les
+657 matrices `n=4` à valeurs `{1,2,3}` ayant au moins un ordre quasi-circulaire.
+Une probe random bornée `n=6..8` n’a trouvé aucun désaccord sur `35068` ordres
+quasi-circulaires. `make unit`, `make quick`, `make check` et
+`make bench-quick` passent. Les subagents confirment que la suite doit être un
+moteur CSP à domaines locaux avec source `cr` directe avant compression
+Prop. 4.5, et que le benchmark devra mieux séparer décisions complètes et runs
+incomplets.
+
+Décision : continuer Piste C, mais ne pas intégrer ce filtre dans
+`candidate.py`. Prochaine étape recommandée : `build_local_domains` /
+`frontier_from_assignment` pour petits nœuds `P/C`, avec refus `unsupported`
+plutôt qu’une réponse négative sur grands domaines.

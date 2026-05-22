@@ -54,6 +54,31 @@ structure supplémentaire.
 - un gros `P` doit être traité comme permutation-domain ou explicitement marqué
   non 2-SAT.
 
+## Tentative T009 - Prop. 4.5 comme nogood de frontier
+
+Statut : preuve expérimentale / scaffold, non intégré dans `candidate.py`.
+
+Changement : `prop45_nogood_frontier_report` énumère des frontiers bornées ou
+complètes, filtre optionnellement les ordres non quasi-circulaires, puis compare
+le filtre Prop. 4.5 avec `is_precircular_order_cR`. Le rapport expose le premier
+rejet, les faux positifs, les faux négatifs, un témoin accepté et si
+l’énumération a été tronquée.
+
+Invariant testé : sur les ordres quasi-circulaires, le filtre Prop. 4.5 doit
+coïncider avec cR exact. Le test exhaustif `n=4` couvre les matrices à valeurs
+`{1,2,3}` qui possèdent au moins un ordre quasi-circulaire.
+
+Limite : ce n’est pas encore un CSP de choix locaux du PC-tree. C’est une
+énumération contrôlée qui prépare les nogoods et les métriques de désaccord.
+
+Risque : si le PC-tree fourni n’est pas garanti quasi-circulaire pour `D`,
+`require_quasi=True` saute les ordres hors précondition ; `require_quasi=False`
+doit être interprété comme diagnostic seulement.
+
+Prochaine action : implémenter un vrai moteur de domaines locaux pour petits
+nœuds `P/C`, en commençant par `source="cr"` pour valider le moteur sans
+nouvelle hypothèse mathématique, puis comparer à `source="prop45"`.
+
 ## Prochaine action
 
 Implémenter l’encodage expérimental dans
