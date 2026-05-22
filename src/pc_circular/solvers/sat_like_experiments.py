@@ -26,6 +26,7 @@ from pc_circular.predicates import (
 Order = Sequence[int]
 Path = tuple[int, ...]
 Assignment = dict[Path, tuple[int, ...]]
+NogoodSignature = tuple[tuple[Path, tuple[int, ...]], ...]
 
 
 def not_implemented_status() -> dict:
@@ -330,6 +331,281 @@ def accepted_frontiers_by_csp(
     if result["unsupported"]:
         raise ValueError("unsupported local domain")
     return {tuple(order) for order in result["accepted_frontiers"]}
+
+
+def _cr_atom_violation(D, x: int, y: int, z: int, t: int) -> dict | None:
+    lhs = D[x][z]
+    rhs = min(
+        max(D[x][y], D[y][z]),
+        max(D[x][t], D[t][z]),
+    )
+    if lhs < rhs:
+        return {
+            "atom": (x, y, z, t),
+            "lhs_pair": (x, z),
+            "lhs": lhs,
+            "rhs": rhs,
+            "d_xy": D[x][y],
+            "d_yz": D[y][z],
+            "d_xt": D[x][t],
+            "d_tz": D[t][z],
+        }
+    return None
+
+
+def forbidden_cr_atoms(D) -> list[dict]:
+    """Return ordered cyclic quartet atoms that violate the cR inequality."""
+
+    n = validate_dissimilarity(D)
+    atoms: list[dict] = []
+    for x in range(n):
+        for y in range(n):
+            if y == x:
+                continue
+            for z in range(n):
+                if z in {x, y}:
+                    continue
+                for t in range(n):
+                    if t in {x, y, z}:
+                        continue
+                    violation = _cr_atom_violation(D, x, y, z, t)
+                    if violation is not None:
+                        atoms.append(violation)
+    return atoms
+
+
+def _cyclic_atom_occurs(order: Order, atom: Sequence[int]) -> bool:
+    x, y, z, t = atom
+    position = {value: idx for idx, value in enumerate(order)}
+    n = len(order)
+    return 0 < (position[y] - position[x]) % n < (position[z] - position[x]) % n < (
+        position[t] - position[x]
+    ) % n
+
+
+def quartet_support_paths(pc_tree: PCNode, atom: Sequence[int]) -> tuple[Path, ...]:
+    """Return local variables whose choices determine this atom's order.
+
+    A node is included when the queried labels below it are split across at
+    least two child branches.  Descendants are relevant only inside child
+    branches containing at least two queried labels.
+    """
+
+    wanted = set(atom)
+    if len(wanted) != len(tuple(atom)):
+        raise ValueError("atom labels must be distinct")
+    if not wanted.issubset(set(labels(pc_tree))):
+        raise ValueError("atom labels must all occur in the PC-tree")
+
+    support: list[Path] = []
+
+    def visit(node: PCNode, path: Path, active: set[int]) -> None:
+        if node.kind == "leaf" or len(active) < 2:
+            return
+        child_active: list[tuple[int, set[int]]] = []
+        for idx, child in enumerate(node.children):
+            child_labels = set(labels(child))
+            overlap = active & child_labels
+            if overlap:
+                child_active.append((idx, overlap))
+        if len(child_active) >= 2:
+            support.append(path)
+        for idx, overlap in child_active:
+            if len(overlap) >= 2:
+                visit(node.children[idx], path + (idx,), overlap)
+
+    visit(pc_tree, (), wanted)
+    return tuple(support)
+
+
+def _nogood_signature(assignment: Assignment, support: Sequence[Path]) -> NogoodSignature:
+    return tuple((path, assignment[path]) for path in support)
+
+
+def _nogood_matches(assignment: Assignment, signature: NogoodSignature) -> bool:
+    return all(assignment.get(path) == choice for path, choice in signature)
+
+
+def compile_cr_nogoods(
+    D,
+    pc_tree: PCNode,
+    *,
+    max_p_degree: int = 3,
+    limit: Optional[int] = None,
+) -> dict:
+    """Compile cR-violating cyclic quartet atoms into projected nogoods.
+
+    The compilation is still experimental and enumerates complete assignments
+    to discover projected signatures.  It is useful for measuring whether the
+    support projection is exact on small PC-trees.
+    """
+
+    validate_dissimilarity(D)
+    encoding = build_local_domains(pc_tree, max_p_degree=max_p_degree)
+    report = {
+        "implemented": True,
+        "method": "compiled_cr_quartet_nogoods",
+        "encoding": encoding,
+        "complete": True,
+        "atoms": forbidden_cr_atoms(D),
+        "nogoods": [],
+        "counts": {
+            "assignments_seen": 0,
+            "atom_hits": 0,
+            "unique_nogoods": 0,
+            "atoms_with_nogoods": 0,
+            "max_support_size": 0,
+            "support_size_histogram": {},
+        },
+    }
+    if encoding["unsupported"]:
+        report["complete"] = False
+        return report
+
+    atoms = report["atoms"]
+    support_by_atom = {
+        tuple(atom_info["atom"]): quartet_support_paths(pc_tree, atom_info["atom"])
+        for atom_info in atoms
+    }
+    seen: dict[tuple[tuple[int, ...], NogoodSignature], dict] = {}
+    truncated = False
+    for assignment in iter_local_assignments(encoding, limit=None if limit is None else limit + 1):
+        if limit is not None and report["counts"]["assignments_seen"] >= limit:
+            truncated = True
+            break
+        report["counts"]["assignments_seen"] += 1
+        order = canonical_circular_order(frontier_from_assignment(pc_tree, assignment))
+        for atom_info in atoms:
+            atom = tuple(atom_info["atom"])
+            if not _cyclic_atom_occurs(order, atom):
+                continue
+            support = support_by_atom[atom]
+            signature = _nogood_signature(assignment, support)
+            key = (atom, signature)
+            report["counts"]["atom_hits"] += 1
+            if key in seen:
+                continue
+            nogood = {
+                "atom": atom,
+                "support": support,
+                "signature": signature,
+                "violation": atom_info,
+            }
+            seen[key] = nogood
+
+    nogoods = list(seen.values())
+    atoms_with_nogoods = {nogood["atom"] for nogood in nogoods}
+    histogram: dict[int, int] = {}
+    for nogood in nogoods:
+        size = len(nogood["support"])
+        histogram[size] = histogram.get(size, 0) + 1
+
+    report["nogoods"] = nogoods
+    report["complete"] = not truncated
+    report["counts"]["unique_nogoods"] = len(nogoods)
+    report["counts"]["atoms_with_nogoods"] = len(atoms_with_nogoods)
+    report["counts"]["support_size_histogram"] = dict(sorted(histogram.items()))
+    report["counts"]["max_support_size"] = max(histogram, default=0)
+    return report
+
+
+def solve_compiled_nogood_csp(
+    D,
+    pc_tree: PCNode,
+    *,
+    max_p_degree: int = 3,
+    limit: Optional[int] = None,
+) -> dict:
+    """Search using compiled cR quartet nogoods.
+
+    This is a consistency experiment for the nogood projection.  A returned
+    witness is rechecked with the exact cR predicate before being exposed.
+    """
+
+    compilation = compile_cr_nogoods(
+        D,
+        pc_tree,
+        max_p_degree=max_p_degree,
+        limit=limit,
+    )
+    counts = {
+        "assignments_seen": 0,
+        "unique_frontiers_seen": 0,
+        "accepted_frontiers": 0,
+        "rejected_assignments": 0,
+        "duplicate_frontiers": 0,
+        "false_positive_frontiers": 0,
+        "false_negative_frontiers": 0,
+    }
+    result = {
+        "implemented": True,
+        "solver": "compiled_cr_quartet_nogood_experiment",
+        "exists": None,
+        "order": None,
+        "complete": compilation["complete"],
+        "unsupported": compilation["encoding"]["unsupported"],
+        "counts": counts,
+        "accepted_frontiers": [],
+        "first_disagreement": None,
+        "compilation": compilation,
+        "note": "experimental compiled nogood search; not a proved compact solver",
+    }
+    if result["unsupported"]:
+        result["complete"] = False
+        result["note"] = "unsupported local domain; no negative decision made"
+        return result
+
+    nogoods = compilation["nogoods"]
+    seen_frontiers: set[tuple[int, ...]] = set()
+    accepted: list[tuple[int, ...]] = []
+    truncated = False
+    for assignment in iter_local_assignments(
+        compilation["encoding"],
+        limit=None if limit is None else limit + 1,
+    ):
+        if limit is not None and counts["assignments_seen"] >= limit:
+            truncated = True
+            break
+        counts["assignments_seen"] += 1
+        rejected = any(_nogood_matches(assignment, nogood["signature"]) for nogood in nogoods)
+        order = canonical_circular_order(frontier_from_assignment(pc_tree, assignment))
+        exact = is_precircular_order_cR(D, order)
+        if order in seen_frontiers:
+            counts["duplicate_frontiers"] += 1
+        else:
+            seen_frontiers.add(order)
+            counts["unique_frontiers_seen"] += 1
+
+        if rejected:
+            counts["rejected_assignments"] += 1
+            if exact:
+                counts["false_negative_frontiers"] += 1
+                if result["first_disagreement"] is None:
+                    result["first_disagreement"] = {
+                        "kind": "false_negative",
+                        "order": list(order),
+                    }
+            continue
+
+        if not exact:
+            counts["false_positive_frontiers"] += 1
+            if result["first_disagreement"] is None:
+                result["first_disagreement"] = {
+                    "kind": "false_positive",
+                    "order": list(order),
+                }
+            continue
+
+        if order not in accepted:
+            counts["accepted_frontiers"] += 1
+            accepted.append(order)
+            if result["order"] is None:
+                result["order"] = list(order)
+
+    result["complete"] = result["complete"] and not truncated
+    result["exists"] = bool(accepted)
+    result["accepted_frontiers"] = [list(order) for order in accepted]
+    return result
 
 
 def prop45_nogood_frontier_report(

@@ -114,3 +114,29 @@ Limites restantes :
   preuve de non-existence ;
 - `source="prop45"` reste soumis à la précondition quasi-circulaire et ne doit
   pas être utilisé comme rejet global.
+
+### Nogoods compilés de quartets cR
+
+Statut : preuve expérimentale / scaffold Piste C.
+
+`compile_cr_nogoods` part des quartets ordonnés qui violent l’inégalité cR et
+projette chaque occurrence sur les variables locales calculées par
+`quartet_support_paths`. Ce support inclut les nœuds internes où les quatre
+labels sont répartis dans au moins deux branches, puis descend récursivement dans
+les branches contenant au moins deux labels du quartet.
+
+Obligations partiellement couvertes :
+
+- nécessité des atoms : conséquence directe de la définition pre-circular cR ;
+- représentation du témoin : comme T010, tout témoin accepté vient d’une
+  affectation locale ;
+- exactitude expérimentale du support : tests et probes n’ont trouvé ni
+  sur-rejet ni sous-rejet sur petits arbres supportés.
+
+Limites restantes :
+
+- la compilation actuelle énumère les affectations complètes pour découvrir les
+  signatures, donc elle ne prouve aucune borne polynomiale ;
+- le nombre de nogoods peut être grand, et doit être mesuré avant toute
+  intégration candidate ;
+- la suffisance globale pour un PC-tree Hsu/McConnell compact reste non prouvée.

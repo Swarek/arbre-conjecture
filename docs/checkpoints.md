@@ -31,11 +31,14 @@ Dernier commit green avant T009 : `07120e4`.
   experiment`). Scan Prop. 4.5 comme nogood de frontier ajouté. Validation
   observée : `make unit`, `make quick`, `make check`, `make bench-quick`, probe
   random bornée sans désaccord sur ordres quasi-circulaires.
-- Checkpoint T010 courant : commit contenant le scaffold CSP à domaines locaux
-  `P/C`; son hash est à lire avec `git log -1` et doit être reporté dans le
-  compte rendu final de la session. Validation observée : `make quick`,
-  `make check`, `make bench-quick`, probe CSP directe sans désaccord sur 1600
-  instances.
+- Checkpoint T010 : `f7aa62f` (`checkpoint: add local domain csp scaffold`).
+  Scaffold CSP à domaines locaux `P/C` ajouté. Validation observée :
+  `make quick`, `make check`, `make bench-quick`, probe CSP directe sans
+  désaccord sur 1600 instances.
+- Checkpoint T011 courant : commit contenant les nogoods compilés de quartets
+  cR; son hash est à lire avec `git log -1` et doit être reporté dans le compte
+  rendu final de la session. Validation observée : `make quick`, `make check`,
+  `make bench-quick`, probe compiled-nogood sans désaccord sur 960 instances.
 
 ## Rollback
 

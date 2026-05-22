@@ -5,12 +5,17 @@ from pc_circular.generators import cycle_metric, quasi_circular_not_circular_fou
 from pc_circular.pc_tree import balanced_pc_tree, c_node, enumerate_frontiers, leaf, p_node, star_pc_tree
 from pc_circular.predicates import all_circular_orders, is_precircular_order_cR, is_quasi_circular_order
 from pc_circular.solvers.sat_like_experiments import (
+    _cyclic_atom_occurs,
     accepted_frontiers_by_csp,
     assignment_frontier_report,
     build_local_domains,
+    compile_cr_nogoods,
+    forbidden_cr_atoms,
     frontier_from_assignment,
     prop45_nogood_frontier_report,
     prop45_nogood_frontier_search,
+    quartet_support_paths,
+    solve_compiled_nogood_csp,
     solve_nogood_csp,
 )
 
@@ -113,9 +118,57 @@ def test_local_domain_csp_reports_unsupported_large_p_without_false_decision():
     D = cycle_metric(5)
     encoding = build_local_domains(T, max_p_degree=3)
     result = solve_nogood_csp(D, T, source="cr", max_p_degree=3)
+    compiled = solve_compiled_nogood_csp(D, T, max_p_degree=3)
 
     assert encoding["unsupported"]
     assert result["unsupported"]
     assert result["exists"] is None
     assert not result["complete"]
     assert result["order"] is None
+    assert compiled["unsupported"]
+    assert compiled["exists"] is None
+
+
+def test_quartet_support_paths_include_nested_split_nodes():
+    T = c_node([p_node([leaf(0), leaf(1)]), p_node([leaf(2), leaf(3)]), leaf(4)])
+
+    assert quartet_support_paths(T, (0, 1, 2, 3)) == ((), (0,), (1,))
+    assert quartet_support_paths(T, (0, 2, 3, 4)) == ((), (1,))
+
+
+def test_omitting_nested_support_can_change_quartet_projection():
+    T = c_node([leaf(0), p_node([leaf(1), leaf(2)]), leaf(3)])
+    same_root = {(): (0, 1, 2)}
+    assignment_a = {**same_root, (1,): (0, 1)}
+    assignment_b = {**same_root, (1,): (1, 0)}
+    atom = (0, 1, 2, 3)
+
+    assert quartet_support_paths(T, atom) == ((), (1,))
+    assert _cyclic_atom_occurs(frontier_from_assignment(T, assignment_a), atom)
+    assert not _cyclic_atom_occurs(frontier_from_assignment(T, assignment_b), atom)
+
+
+def test_compiled_cr_nogoods_reject_wrapping_violation():
+    D = quasi_circular_not_circular_four_point()
+    T = c_node([leaf(3), leaf(0), leaf(1), leaf(2)])
+    compilation = compile_cr_nogoods(D, T)
+    result = solve_compiled_nogood_csp(D, T)
+
+    assert any(atom_info["atom"] == (0, 1, 2, 3) for atom_info in forbidden_cr_atoms(D))
+    assert compilation["counts"]["unique_nogoods"] >= 1
+    assert _cyclic_atom_occurs((3, 0, 1, 2), (0, 1, 2, 3))
+    assert not result["exists"]
+    assert result["counts"]["false_positive_frontiers"] == 0
+    assert result["counts"]["false_negative_frontiers"] == 0
+
+
+def test_compiled_cr_nogoods_match_direct_cr_csp_on_small_tree():
+    T = balanced_pc_tree(6, kind="mixed")
+    D = random_dissimilarity(6, values=(1, 2, 3), rng=random.Random(20260523))
+    expected = accepted_frontiers_by_csp(D, T, source="cr", max_p_degree=3)
+    result = solve_compiled_nogood_csp(D, T, max_p_degree=3)
+    actual = {tuple(order) for order in result["accepted_frontiers"]}
+
+    assert actual == expected
+    assert result["counts"]["false_positive_frontiers"] == 0
+    assert result["counts"]["false_negative_frontiers"] == 0

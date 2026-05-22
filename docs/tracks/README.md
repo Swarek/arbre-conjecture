@@ -10,7 +10,7 @@ idées, essais, résultats, contre-exemples et prochaines actions par axe.
 | --- | --- | --- |
 | A - Contraintes locales P/C | `piste_a_local_pc_constraints.md` | Diagnostic utile ajouté ; pas solver |
 | B - DP sur PC-tree | `piste_b_dp_pc_tree.md` | Signature proposée ; à falsifier |
-| C - SAT/CSP | `piste_c_sat_csp.md` | Scaffold domaines locaux ajouté ; non compact |
+| C - SAT/CSP | `piste_c_sat_csp.md` | Nogoods cR compilés ajoutés ; non compact |
 | D - Circular-ones / intersection | `piste_d_circular_ones.md` | Non testée expérimentalement |
 | E - Obstructions farthest/quartets | `piste_e_farthest_quartets.md` | Farthest seul réfuté ; cR quartets restent centraux |
 | F - Complexité / sous-cas | `piste_f_complexity_subcases.md` | Deux familles stress ajoutées |
@@ -42,6 +42,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T008 | 2026-05-22 | E | Prop. 4.5 testée sur ordres quasi-circulaires petits | `passes_farthest_prop_4_5_order_test` |
 | T009 | 2026-05-22 | C | Prop. 4.5 mesurée comme filtre nogood sur frontiers énumérées | `prop45_nogood_frontier_report` |
 | T010 | 2026-05-22 | C | Domaines locaux `P/C` et CSP cR direct expérimentaux | `solve_nogood_csp(source="cr")` |
+| T011 | 2026-05-22 | C | Nogoods compilés de quartets cR sur supports locaux | `compile_cr_nogoods` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

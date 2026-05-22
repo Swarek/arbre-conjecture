@@ -242,8 +242,7 @@
 ## 2026-05-22 local-domain CSP scaffold
 
 - Date/heure : 2026-05-22, Europe/Paris.
-- Commit hash : checkpoint commit containing this entry; report with
-  `git log -1`.
+- Commit hash : f7aa62f.
 - Hypothèse testée : avant de chercher une compression SAT/CSP, il faut valider
   que des variables locales `P/C` reconstruisent exactement les frontiers et que
   `source="cr"` coïncide avec le filtre cR exact par frontier.
@@ -272,3 +271,36 @@
   compact.
 - Next action : compiler des nogoods de quartets cR sur supports de variables
   et mesurer si le pruning apparaît avant énumération complète.
+
+## 2026-05-22 compiled cR quartet nogoods
+
+- Date/heure : 2026-05-22, Europe/Paris.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les quartets cR interdits peuvent être projetés sur les
+  variables locales qui déterminent leur ordre cyclique, sans sur-rejet ni
+  sous-rejet sur petits PC-trees supportés.
+- Changement fait : ajout de `forbidden_cr_atoms`, `quartet_support_paths`,
+  `compile_cr_nogoods` et `solve_compiled_nogood_csp`; ajout de tests pour
+  support imbriqué, support affaibli, wrapping circulaire, unsupported gros `P`,
+  et égalité avec le CSP cR direct.
+- Commande exécutée : `make unit`.
+- Résultat correction : `35 passed in 0.20s`.
+- Commande exécutée : probe compiled-nogood vs `source="cr"` sur `n=4..7`,
+  arbres balanced/mixed, familles `random/cycle/block/ultrametric/equal/
+  non_strict/paired_farthest/permuted_cycle`, `15` répétitions par famille.
+- Résultat correction : aucun désaccord ; `960` instances comparées,
+  `153512` nogoods uniques produits sur la probe.
+- Commande exécutée : `make quick`.
+- Résultat correction : `35 passed in 0.19s`, puis `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark : `reports/complexity_report_quick.json` écrit; 8 tailles,
+  0 timeout, 20 runs incomplets explicitement marqués pour `n > 8`; médiane
+  `n=20` environ `0.00360s`.
+- Conclusion : les nogoods compilés sont cohérents expérimentalement avec le
+  filtre cR direct sur petits arbres supportés, mais la compilation reste
+  énumérative et volumineuse.
+- Next action : mesurer l’explosion des nogoods et implémenter un backtracking
+  qui prune sur signatures partielles avant génération de toutes les frontiers.

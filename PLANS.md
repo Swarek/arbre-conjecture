@@ -261,3 +261,61 @@ Décision : continuer Piste C. La couche variable/frontier est validée comme
 scaffold expérimental, mais elle énumère encore toutes les affectations. La
 prochaine étape doit compiler des nogoods de quartets cR sur supports de
 variables et mesurer le pruning ; ne pas intégrer dans `candidate.py`.
+
+## ExecPlan 2026-05-22 - compiled cR quartet nogoods
+
+But : transformer le CSP local en un artefact plus proche d’un vrai solveur :
+des nogoods explicites issus de quartets cR interdits, projetés sur les variables
+locales qui déterminent l’ordre cyclique du quartet.
+
+Hypothèse : pour un quartet fixé, les choix locaux des nœuds internes où les
+quatre labels sont séparés entre au moins deux branches déterminent son ordre
+relatif. En projetant chaque violation cR sur ces variables, on obtient des
+nogoods qui rejettent exactement les mêmes frontiers que `source="cr"` sur les
+petits arbres supportés. Si cette projection sur-rejette ou sous-rejette, le
+dépôt doit enregistrer un contre-exemple.
+
+Fichiers à modifier : `src/pc_circular/solvers/sat_like_experiments.py`,
+`tests/test_sat_like_experiments.py`, `docs/tracks/piste_c_sat_csp.md`,
+`docs/experiment_log.md`, `docs/proof_obligations.md`,
+`docs/tracks/README.md`, `docs/checkpoints.md`.
+
+Algorithme pressenti : générer tous les atoms ordonnés `(x,y,z,t)` dont
+l’inégalité pre-circular cR échoue. Pour chaque atom, calculer son support de
+variables dans le PC-tree. Énumérer les affectations supportées et enregistrer
+la projection de celles où l’atom apparaît dans l’ordre cyclique. Résoudre par
+matching de ces signatures de nogoods au lieu de recalculer l’inégalité cR à
+chaque frontier. Mesurer nombre d’atoms, nogoods uniques, tailles de support et
+désaccords éventuels avec le filtre exact.
+
+Tests à exécuter : `make unit`, `make quick`, `make check`; probe bornée sur
+petits arbres balanced/mixed et familles variées pour comparer
+`solve_compiled_nogood_csp` à `accepted_frontiers_by_csp(source="cr")`.
+
+Risques : un support trop petit sur-rejette ; un support trop grand ne compresse
+pas ; les frontiers équivalentes par rotation/renversement peuvent produire des
+assignations dupliquées ; le résultat reste énumératif car la compilation
+actuelle inspecte les affectations complètes.
+
+Plan de contre-exemples : comparer le solveur compilé au filtre cR direct sur
+familles `random/cycle/block/ultrametric/equal/non_strict/paired_farthest/
+permuted_cycle`, arbres balanced/mixed, `n <= 7`. En cas de désaccord, enregistrer
+`D`, `T`, l’atom, le nogood et la frontier fautive dans les régressions.
+
+Plan subagents : un subagent lecture seule relit les risques de support de
+variables et les tests de contre-exemples. L’intégration reste locale dans le
+thread principal.
+
+Résultats observés : `forbidden_cr_atoms`, `quartet_support_paths`,
+`compile_cr_nogoods` et `solve_compiled_nogood_csp` ajoutés. Les tests couvrent
+les supports imbriqués, un support artificiellement trop petit qui change la
+projection d’un quartet, un atom qui wrappe autour de la coupure linéaire, le
+statut `unsupported` pour gros `P`, et l’égalité avec le CSP cR direct sur petit
+arbre. Probe bornée : `960` instances `n=4..7`, arbres balanced/mixed, huit
+familles, aucun désaccord ; `153512` nogoods uniques produits.
+
+Décision : continuer Piste C mais ne pas intégrer dans `candidate.py`. La
+projection de support semble correcte expérimentalement ; le prochain obstacle
+est la taille des nogoods et l’absence de pruning avant énumération complète.
+Prochaine étape : backtracking avec signatures partielles et rapport de
+croissance des nogoods/supports.

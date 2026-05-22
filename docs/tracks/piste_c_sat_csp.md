@@ -109,8 +109,38 @@ Prochaine action : compiler de vrais nogoods de quartets cR sur supports de
 variables, puis chercher si ces nogoods prunent avant énumération complète ou si
 des collisions forcent une signature plus riche.
 
+## Tentative T011 - Nogoods compilés de quartets cR
+
+Statut : preuve expérimentale / scaffold, non intégré dans `candidate.py`.
+
+Changement : `forbidden_cr_atoms` génère les quartets ordonnés dont l’inégalité
+cR échoue. `quartet_support_paths` calcule le sous-arbre de variables locales
+pertinentes pour les quatre labels. `compile_cr_nogoods` projette les
+affectations violant un atom sur ce support, puis
+`solve_compiled_nogood_csp` compare les signatures compilées aux affectations.
+
+Invariant testé : un nogood compilé ne doit rejeter qu’une affectation dont la
+frontier viole `is_precircular_order_cR`, et toute frontier non-cR doit matcher
+au moins un nogood. Les tests couvrent un split imbriqué, un test négatif où
+retirer une variable du support change la projection du quartet, un cas de
+wrapping autour de la coupure linéaire, et l’égalité avec le filtre cR direct.
+
+Résultat expérimental : probe sur `960` instances `n=4..7`, arbres
+balanced/mixed, familles `random/cycle/block/ultrametric/equal/non_strict/
+paired_farthest/permuted_cycle` : aucun désaccord entre le solveur à nogoods
+compilés et `solve_nogood_csp(source="cr")`. `153512` nogoods uniques ont été
+produits dans cette probe, ce qui montre que la compilation est encore
+énumérative et peut être volumineuse.
+
+Limite : la compilation inspecte encore les affectations complètes pour découvrir
+les signatures. Ce n’est pas une preuve de complexité ni un algorithme compact.
+
+Prochaine action : mesurer la taille des supports et chercher des familles où le
+nombre de nogoods explose, puis tenter un backtracking qui prune dès qu’une
+signature partielle matche un nogood.
+
 ## Prochaine action
 
-Compiler de vrais nogoods de quartets cR sur supports de variables locales,
-sans appeler `candidate.py` tant que la suffisance et les cas non stricts ne
-sont pas établis.
+Mesurer les supports/nogoods et implémenter un backtracking avec pruning par
+signatures partielles, sans appeler `candidate.py` tant que la suffisance et les
+cas non stricts ne sont pas établis.
