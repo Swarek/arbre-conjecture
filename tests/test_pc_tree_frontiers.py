@@ -1,6 +1,6 @@
 from math import factorial
 
-from pc_circular.pc_tree import balanced_pc_tree, enumerate_frontiers, represents_order, star_pc_tree
+from pc_circular.pc_tree import balanced_pc_tree, enumerate_frontiers, represents_order, sample_frontier, star_pc_tree
 from pc_circular.predicates import all_circular_orders
 
 
@@ -30,3 +30,10 @@ def test_balanced_tree_frontiers_are_valid_permutations():
     assert frontiers
     for order in frontiers:
         assert sorted(order) == list(range(6))
+
+
+def test_sample_frontier_is_represented_without_full_enumeration():
+    T = balanced_pc_tree(7, kind="mixed")
+    order = sample_frontier(T)
+    assert sorted(order) == list(range(7))
+    assert represents_order(T, order)

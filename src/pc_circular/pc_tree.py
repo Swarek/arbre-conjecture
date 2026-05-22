@@ -100,6 +100,19 @@ def _linear_frontiers(node: PCNode) -> Iterable[tuple[int, ...]]:
             yield tuple(merged)
 
 
+def sample_frontier(node: PCNode) -> tuple[int, ...]:
+    """Return one represented frontier without enumerating alternatives."""
+
+    if node.kind == "leaf":
+        assert node.label is not None
+        return (node.label,)
+
+    merged: list[int] = []
+    for child in node.children:
+        merged.extend(sample_frontier(child))
+    return tuple(merged)
+
+
 def enumerate_frontiers(
     node: PCNode,
     *,

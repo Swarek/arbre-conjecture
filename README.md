@@ -8,8 +8,9 @@ Entrée principale : une matrice symétrique `D` sur `X = {0, ..., n-1}`, à
 diagonale nulle, et éventuellement un PC-arbre `T`. Sortie visée : `True/False`
 et, si `True`, un ordre circulaire témoin représenté par `T`.
 
-Le dépôt ne prétend pas résoudre le problème général. La candidate initiale est
-une baseline : brute force exacte pour `n <= 8`, puis échantillonnage incomplet
+Le dépôt ne prétend pas résoudre le problème général. La candidate courante est
+une baseline : brute force exacte pour `n <= 8`, un sous-cas large-n prouvé où
+chaque paire a au plus un témoin mauvais global, puis échantillonnage incomplet
 documenté au-delà. Les tests servent à protéger les expériences, pas à remplacer
 une preuve.
 

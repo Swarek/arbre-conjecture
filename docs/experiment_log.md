@@ -459,3 +459,49 @@
 - Next action : ne pas intégrer cette signature dans `candidate.py`. Basculer
   soit vers une signature moins globale/sous-cas borné, soit vers Piste F pour
   formaliser une obstruction de compacité.
+
+## 2026-05-23 universal bad-witness subcase
+
+- Date/heure : 2026-05-23, Europe/Paris.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : si chaque paire `{a,b}` a au plus un témoin mauvais global
+  `w` avec `max(D[a][w], D[w][b]) > D[a][b]`, alors tout ordre circulaire est
+  circular Robinson ; l'existence dans un PC-tree non vide se réduit donc à
+  produire une frontier représentée.
+- Changement fait : ajout de `is_constant_off_diagonal` et
+  `has_at_most_one_bad_witness_per_pair` dans `predicates.py`, ajout de
+  `sample_frontier` dans `pc_tree.py`, et intégration du solver
+  `candidate_universal_bad_witness_bound_all_orders` dans `candidate.py`.
+- Plan subagents : deux explorateurs lecture seule. Résultats : preuve du cas
+  constant confirmée ; sous-cas plus large `|B(a,b)| <= 1` proposé et intégré ;
+  faux amis documentés, notamment une arête basse dans une matrice presque
+  constante.
+- Commande exécutée avant modification : `make quick`.
+- Résultat correction : `49 passed in 0.49s`, puis `JUSTE`.
+- Commande exécutée : `make unit`.
+- Résultat correction : `58 passed in 0.49s`.
+- Commande exécutée : probe large-n avec `PYTHONPATH=src`, arbres
+  star/balanced/mixed, tailles `n=9,10,12,20,30`, matrices constantes et
+  `constant + une arête haute`.
+- Résultat correction : `OK checks=33`; témoins cR, représentés par énumération
+  quand borné ou égaux à `sample_frontier` en grande taille ; le faux ami avec
+  une arête basse reste hors sous-cas et retombe sur le placeholder incomplet.
+- Commande exécutée : `make quick`.
+- Résultat correction : `58 passed in 0.49s`, puis `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make hunt-counterexamples`.
+- Résultat correction : `JUSTE` sur exhaustif `n=4`, `5000` random,
+  `max-n=8`, seed `314159`, shrink actif.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark : `reports/complexity_report_quick.json` écrit ; 8 tailles,
+  `0` timeout, `18` runs incomplets explicitement marqués pour `n > 8`;
+  le sous-cas prouvé apparaît sur `n=16` et `n=20` dans le mixed benchmark ;
+  médiane `n=20` environ `0.00369s`.
+- Conclusion : premier sous-cas large-n prouvé intégré à la candidate. Il
+  améliore la complétude sur une famille non stricte, sans prétendre résoudre
+  le cas général.
+- Next action : chercher un sous-cas plus structuré, par exemple planted-cycle
+  représenté par le PC-tree, ou retourner à Piste F pour formaliser les
+  obstructions de compacité.

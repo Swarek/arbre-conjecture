@@ -13,7 +13,7 @@ idées, essais, résultats, contre-exemples et prochaines actions par axe.
 | C - SAT/CSP | `piste_c_sat_csp.md` | Benchmark interne ajouté ; compilation encore dominante |
 | D - Circular-ones / intersection | `piste_d_circular_ones.md` | Non testée expérimentalement |
 | E - Obstructions farthest/quartets | `piste_e_farthest_quartets.md` | Farthest seul réfuté ; cR quartets restent centraux |
-| F - Complexité / sous-cas | `piste_f_complexity_subcases.md` | Deux familles stress ajoutées |
+| F - Complexité / sous-cas | `piste_f_complexity_subcases.md` | Sous-cas universel intégré ; familles stress conservées |
 
 ## Règle d’édition
 
@@ -47,6 +47,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T013 | 2026-05-22 | C | Benchmark interne compile/solve/direct/pruning | `make bench-csp-quick` |
 | T014 | 2026-05-23 | B | cR fixed-order reformulé par mauvais témoins sur deux arcs | `passes_bad_side_cr_test` |
 | T015 | 2026-05-23 | B | Signature de bloc mesurée ; compression faible hors égal-distance | `block_signature_bucket_report` |
+| T016 | 2026-05-23 | F | Sous-cas `|B(a,b)| <= 1` intégré à la candidate | `candidate_universal_bad_witness_bound_all_orders` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

@@ -50,11 +50,15 @@ Dernier commit green avant T009 : `07120e4`.
   diagnostic`). Diagnostic bad-side fixed-order Piste B ajouté. Validation
   observée : `make unit`, probe bad-side `715875` comparaisons, `make quick`,
   `make check`, `make bench-quick`.
-- Checkpoint T015 courant : commit contenant les métriques de signature de bloc
-  Piste B ; son hash est à lire avec `git log -1` et doit être reporté dans le
-  compte rendu final de la session. Validation observée : `make unit`, probe
-  signature de blocs `27` lignes, `make quick`, `make check`,
-  `make bench-quick`.
+- Checkpoint T015 : `ed52c2e` (`checkpoint: measure bad-side block
+  signatures`). Métriques de signature de bloc Piste B ajoutées. Validation
+  observée : `make unit`, probe signature de blocs `27` lignes, `make quick`,
+  `make check`, `make bench-quick`.
+- Checkpoint T016 courant : commit contenant le sous-cas universel
+  `|B(a,b)| <= 1` intégré à la candidate ; son hash est à lire avec
+  `git log -1` et doit être reporté dans le compte rendu final de la session.
+  Validation observée : `make unit`, probe large-n `33` checks, `make quick`,
+  `make check`, `make hunt-counterexamples`, `make bench-quick`.
 
 ## Rollback
 

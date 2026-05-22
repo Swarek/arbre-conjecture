@@ -8,6 +8,8 @@ from pc_circular.predicates import (
     find_farthest_prop_4_4_violation,
     find_farthest_prop_4_5_obstruction,
     find_precircular_cR_violation,
+    has_at_most_one_bad_witness_per_pair,
+    is_constant_off_diagonal,
     is_precircular_order_cR,
     is_quasi_circular_order,
     passes_farthest_crossing_condition,
@@ -26,6 +28,49 @@ def test_all_circular_orders_counts_mod_rotation_and_reversal():
 def test_cycle_metric_is_circular_robinson_in_cycle_order():
     D = cycle_metric(6)
     assert is_precircular_order_cR(D, (0, 1, 2, 3, 4, 5))
+
+
+def test_constant_off_diagonal_predicate_handles_equalities():
+    assert is_constant_off_diagonal([[0]])
+    assert is_constant_off_diagonal([[0, 7], [7, 0]])
+    assert is_constant_off_diagonal(
+        [
+            [0, 2, 2],
+            [2, 0, 2],
+            [2, 2, 0],
+        ]
+    )
+    assert not is_constant_off_diagonal(
+        [
+            [0, 2, 3],
+            [2, 0, 2],
+            [3, 2, 0],
+        ]
+    )
+
+
+def test_single_bad_witness_bound_is_stronger_than_constant_case():
+    D = [
+        [0, 2, 1, 1],
+        [2, 0, 1, 1],
+        [1, 1, 0, 1],
+        [1, 1, 1, 0],
+    ]
+    assert not is_constant_off_diagonal(D)
+    assert has_at_most_one_bad_witness_per_pair(D)
+    for order in all_circular_orders(4):
+        assert is_precircular_order_cR(D, order)
+
+
+def test_single_bad_witness_bound_rejects_low_edge_counterexample():
+    D = [
+        [0, 2, 1, 2],
+        [2, 0, 2, 2],
+        [1, 2, 0, 2],
+        [2, 2, 2, 0],
+    ]
+    assert not has_at_most_one_bad_witness_per_pair(D)
+    assert not is_precircular_order_cR(D, (0, 1, 2, 3))
 
 
 def test_four_point_order_can_be_quasi_circular_but_not_circular_robinson():

@@ -258,3 +258,45 @@ affaiblie ou réduite aux endpoints. Une probe subagent indépendante a trouvé 
 collisions de signature simples mais aucune collision sémantique sur `37924`
 checks de même contexte, ce qui suggère une signature cohérente mais peu
 compressive.
+
+### Sous-cas universel par nombre de témoins mauvais
+
+Statut : théorème prouvé pour ce sous-cas + intégré à la candidate.
+
+Pour chaque paire `{a,b}`, poser :
+
+```text
+B(a,b) = {w != a,b : max(D[a][w], D[w][b]) > D[a][b]}
+```
+
+Si `|B(a,b)| <= 1` pour toute paire, alors tout ordre circulaire est circular
+Robinson. Par la caractérisation bad-side d'un ordre fixé, une violation cR
+demanderait une paire `{a,b}` avec un témoin mauvais sur chacun des deux arcs
+ouverts, donc au moins deux témoins mauvais globaux pour cette paire.
+
+Ce que cela couvre :
+
+- obligation 1 : le critère utilise une condition suffisante issue directement
+  de l'inégalité cR ;
+- obligation 2 dans le sous-cas : tout ordre représenté est accepté, donc la
+  suffisance est immédiate ;
+- obligation 3 dans le sous-cas : aucun ordre représenté n'est manqué, puisque
+  tous sont cR ;
+- obligation 4 dans le sous-cas PC-tree : `sample_frontier` produit une frontier
+  représentée par construction ;
+- obligation 5 dans le sous-cas : le test du critère est `O(n^3)` et la
+  construction du témoin PC-tree est `O(|T|)` ;
+- obligation 6 : les égalités sont traitées par le `>` strict dans la définition
+  de témoin mauvais.
+
+Limites :
+
+- c'est seulement une condition suffisante pour "tous les ordres sont cR", pas
+  une caractérisation de l'existence générale ;
+- si le critère échoue, la candidate retombe sur le placeholder grande taille ;
+- les familles planted-cycle, paired-farthest et PC-tree généraux restent
+  ouvertes.
+
+Preuve expérimentale T016 : tests unitaires, probe `n=9..30` sur
+star/balanced/mixed avec `33` checks, et faux ami à arête basse vérifié hors
+sous-cas.

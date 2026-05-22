@@ -547,3 +547,62 @@ Décision : la signature candidate est cohérente et falsifiable, mais trop
 globale pour suggérer une DP compacte telle quelle. Continuer Piste B seulement
 si une signature moins indexée par paires globales est proposée ; sinon basculer
 vers Piste F ou un sous-cas polynomial.
+
+## ExecPlan 2026-05-23 - universal bad-witness subcase
+
+But : ajouter un premier sous-cas large-n prouvé à `candidate.py` sans affaiblir
+l'oracle ni cacher les limites générales : si chaque paire `{a,b}` a au plus un
+témoin mauvais global, tout ordre circulaire est circular Robinson.
+
+Hypothèse : pour `B(a,b) = {w : max(D[a][w], D[w][b]) > D[a][b]}`, si
+`|B(a,b)| <= 1` pour toute paire, aucun ordre circulaire ne peut placer deux
+témoins mauvais sur les deux arcs opposés d'une même paire. Par le lemme T014,
+aucune violation cR n'est possible. Le cas constant hors diagonale est inclus
+car tous les ensembles `B(a,b)` sont vides.
+
+Fichiers à modifier : `src/pc_circular/predicates.py`,
+`src/pc_circular/pc_tree.py`, `src/pc_circular/solvers/candidate.py`, tests
+ciblés, `docs/tracks/piste_f_complexity_subcases.md`,
+`docs/experiment_log.md`, `docs/proof_obligations.md`,
+`docs/tracks/README.md`, `docs/checkpoints.md`, éventuellement `README.md`.
+
+Algorithme pressenti : ajouter un prédicat
+`has_at_most_one_bad_witness_per_pair(D)` et un constructeur
+`sample_frontier(T)` qui renvoie une frontier valide sans énumération. Dans
+`candidate.solve`, avant le placeholder grande taille, retourner `exists=True`,
+`complete=True` et un témoin représenté pour les instances du sous-cas ; si
+`quasi_orders` est fourni, consommer seulement le premier ordre et renvoyer
+`False` complet si la famille est vide.
+
+Tests à exécuter : `make unit`, probe `n=9..30` sur star/balanced/mixed
+vérifiant témoin cR et représenté, `make quick`, `make check`,
+`make hunt-counterexamples`, `make bench-quick`.
+
+Risques : retourner un ordre qui n'est pas représenté par le PC-tree ; traiter
+une famille `quasi_orders` vide comme non vide ; présenter un sous-cas suffisant
+comme caractérisation générale ; ne pas documenter que les autres grandes
+tailles restent placeholder.
+
+Plan de contre-exemples : tester arbres star/balanced/mixed pour `n>8`, un
+itérable `quasi_orders=[]`, un premier `quasi_order` explicite, une matrice
+constante, une matrice `constant + une arête haute`, et une matrice presque
+constante avec une seule distance basse pour vérifier que le placeholder reste
+marqué incomplet.
+
+Plan subagents : deux explorateurs lecture seule : preuve/risques du sous-cas
+constant, et recherche d'un autre sous-cas sûr adjacent. L'intégration reste
+locale ; le second subagent a proposé le critère plus large `|B(a,b)| <= 1`.
+
+Résultats observés : prédicats `is_constant_off_diagonal` et
+`has_at_most_one_bad_witness_per_pair` ajoutés, `sample_frontier` ajouté, et
+`candidate.py` renvoie maintenant `complete=True` avec solver
+`candidate_universal_bad_witness_bound_all_orders` sur le sous-cas. Tests
+unitaires ajoutés pour constant, `constant + une arête haute`,
+`quasi_orders=[]`, premier `quasi_order`, et faux ami avec une arête basse.
+Probe large-n : `33` checks sur star/balanced/mixed, `n=9..30`, témoins cR et
+représentés/structurellement échantillonnés ; le faux ami reste placeholder
+incomplet.
+
+Décision : continuer avec ce sous-cas prouvé intégré à la candidate. Il améliore
+la complétude grande taille pour une famille non stricte, mais ne résout pas le
+cas général.

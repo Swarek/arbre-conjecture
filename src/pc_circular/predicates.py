@@ -37,6 +37,42 @@ def validate_dissimilarity(D: Matrix) -> int:
     return n
 
 
+def is_constant_off_diagonal(D: Matrix) -> bool:
+    """Return whether all off-diagonal dissimilarities have the same value."""
+
+    n = validate_dissimilarity(D)
+    if n <= 2:
+        return True
+    reference = D[0][1]
+    for i in range(n):
+        for j in range(i + 1, n):
+            if D[i][j] != reference:
+                return False
+    return True
+
+
+def has_at_most_one_bad_witness_per_pair(D: Matrix) -> bool:
+    """Return a sufficient condition for every circular order to be cR.
+
+    For pair ``{a,b}``, a bad witness is a point ``w`` with
+    ``max(d(a,w), d(w,b)) > d(a,b)``.  If every pair has at most one such
+    witness, no circular order can place bad witnesses on both arcs.
+    """
+
+    n = validate_dissimilarity(D)
+    for a in range(n):
+        for b in range(a + 1, n):
+            bad_count = 0
+            for w in range(n):
+                if w == a or w == b:
+                    continue
+                if max(D[a][w], D[w][b]) > D[a][b]:
+                    bad_count += 1
+                    if bad_count > 1:
+                        return False
+    return True
+
+
 def _validate_order_for_D(D: Matrix, order: Order) -> int:
     n = validate_dissimilarity(D)
     if len(order) != n or set(order) != set(range(n)):

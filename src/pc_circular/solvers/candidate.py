@@ -3,6 +3,8 @@
 The current implementation is deliberately conservative:
 
 * for n <= 8 it calls the exact brute-force baseline;
+* for a proved universal-order sub-case it returns a represented witness,
+  because every circular order is circular Robinson;
 * for larger instances it tries a small deterministic set of represented
   orders and returns ``complete=False``.
 
@@ -15,8 +17,12 @@ from __future__ import annotations
 from itertools import islice
 from typing import Iterable, Optional, Sequence
 
-from pc_circular.pc_tree import PCNode, enumerate_frontiers
-from pc_circular.predicates import is_precircular_order_cR, validate_dissimilarity
+from pc_circular.pc_tree import PCNode, enumerate_frontiers, sample_frontier
+from pc_circular.predicates import (
+    has_at_most_one_bad_witness_per_pair,
+    is_precircular_order_cR,
+    validate_dissimilarity,
+)
 from pc_circular.solvers import brute_force
 
 
@@ -38,6 +44,40 @@ def _fallback_orders(n: int) -> list[tuple[int, ...]]:
     return list(dict.fromkeys([natural, reversed_order, even_odd]))
 
 
+def _validate_order_shape(order: Sequence[int], n: int) -> tuple[int, ...]:
+    seq = tuple(order)
+    if len(seq) != n or set(seq) != set(range(n)):
+        raise ValueError("order must be a permutation of 0..n-1")
+    return seq
+
+
+def _universal_order_result(n: int, quasi_orders, pc_tree: Optional[PCNode]):
+    if quasi_orders is not None:
+        iterator = iter(quasi_orders)
+        try:
+            order = _validate_order_shape(next(iterator), n)
+        except StopIteration:
+            return {
+                "exists": False,
+                "order": None,
+                "complete": True,
+                "solver": "candidate_universal_bad_witness_bound_all_orders",
+                "note": "all orders would be circular Robinson, but the provided order family is empty",
+            }
+    elif pc_tree is not None:
+        order = _validate_order_shape(sample_frontier(pc_tree), n)
+    else:
+        order = tuple(range(n))
+
+    return {
+        "exists": True,
+        "order": list(order),
+        "complete": True,
+        "solver": "candidate_universal_bad_witness_bound_all_orders",
+        "note": "all represented orders are circular Robinson by the bad-witness count bound",
+    }
+
+
 def _sample_orders(
     n: int,
     quasi_orders: Optional[Iterable[Sequence[int]]],
@@ -57,6 +97,9 @@ def solve(D, quasi_orders=None, pc_tree=None):
         result = brute_force.solve(D, quasi_orders=quasi_orders, pc_tree=pc_tree)
         result["solver"] = "candidate_exact_bruteforce_n_le_8"
         return result
+
+    if has_at_most_one_bad_witness_per_pair(D):
+        return _universal_order_result(n, quasi_orders, pc_tree)
 
     tried = 0
     for order in _sample_orders(n, quasi_orders, pc_tree):

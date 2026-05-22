@@ -41,12 +41,46 @@ Résultat observé mixed :
 
 - aucun ordre cR valide dans les diagnostics `n=4,6,8` du premier benchmark.
 
+## Sous-cas universel par témoins mauvais
+
+Statut : sous-cas prouvé intégré à `candidate.py`.
+
+Pour une paire `{a,b}`, définir :
+
+```text
+B(a,b) = {w != a,b : max(D[a][w], D[w][b]) > D[a][b]}
+```
+
+Si `|B(a,b)| <= 1` pour toute paire, alors tout ordre circulaire est circular
+Robinson. Par le lemme bad-side T014, une violation cR demanderait deux témoins
+mauvais pour une même paire, situés sur les deux arcs opposés. Le cas constant
+hors diagonale est inclus, car tous les ensembles `B(a,b)` sont vides.
+
+Artefacts :
+
+- `has_at_most_one_bad_witness_per_pair` dans `predicates.py` ;
+- `sample_frontier` dans `pc_tree.py` pour produire un témoin représenté sans
+  énumération ;
+- `candidate_universal_bad_witness_bound_all_orders` dans `candidate.py`.
+
+Contre-exemples aux faux amis :
+
+- une matrice presque constante avec toutes les distances `2` sauf une arête
+  basse `D[0][2]=1` sort du sous-cas et peut violer cR ;
+- deux arêtes hautes disjointes ne suffisent pas non plus comme règle générale.
+
+Résultat T016 : probe large-n `n=9..30` sur star/balanced/mixed, `33` checks,
+témoin cR et représenté/échantillonné ; le faux ami à arête basse reste
+placeholder incomplet.
+
 ## Artefacts
 
 - `permuted_cycle_metric`;
 - `paired_farthest_matching`;
 - `instance_by_kind(..., kind="permuted_cycle")`;
 - `instance_by_kind(..., kind="paired_farthest")`;
+- `has_at_most_one_bad_witness_per_pair`;
+- `sample_frontier`;
 - `--diagnostics-up-to` dans `tools/pc_circular_complexity_benchmark.py`;
 - `make bench-piste-f`.
 
@@ -55,3 +89,5 @@ Résultat observé mixed :
 Utiliser `paired_farthest` pour casser tout filtre local ou farthest-like.
 Utiliser `permuted_cycle` comme sous-cas où un futur solver devrait reconnaître
 un témoin caché sans brute force star.
+Chercher ensuite un sous-cas plus structuré que le critère universel, par
+exemple planted-cycle représenté par le PC-tree ou degré interne borné.

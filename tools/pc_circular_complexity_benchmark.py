@@ -219,8 +219,9 @@ def main(argv: list[str]) -> int:
         "pc_tree": args.pc_tree,
         "diagnostics_up_to": args.diagnostics_up_to,
         "baseline_warning": (
-            "candidate.py is exact only for n <= 8; larger runs may be "
-            "incomplete placeholders and are benchmarked as such"
+            "candidate.py is exact for n <= 8 and for documented proved "
+            "sub-cases; other larger runs may be incomplete placeholders and "
+            "are benchmarked as such"
         ),
         "rows": rows,
         "model_fits": fit_models(rows),
