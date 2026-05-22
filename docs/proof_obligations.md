@@ -459,3 +459,18 @@ représenté par un PC-tree `C`. `make bench-piste-f` passe
 reste incomplet lorsque le témoin canonique n'est pas représenté. Le benchmark
 fort mixed/star T020 garde `0` timeout jusqu'à `n=100`, avec `42` runs
 incomplets visibles.
+
+Preuve expérimentale T021 / limite : pour `paired_farthest` non-star, le témoin
+canonique n'est pas une caractérisation d'existence. Un cas minimal `n=6`
+montre que l'ordre canonique est non représenté par le PC-tree mixed, alors
+qu'un autre ordre représenté est cR et que l'oracle répond `True`. Inversement,
+un autre cas `n=6` montre que la condition brute "les cordes farthest/high
+croisent" n'est pas suffisante pour cR. Toute future branche non-star doit donc
+prouver à la fois :
+
+- que la famille d'ordres générée couvre tous les témoins représentés possibles,
+  ou rester un certificat positif incomplet ;
+- que les contraintes high/farthest sont complétées par les contraintes
+  low/mid ou bad-side nécessaires ;
+- que le coût de génération est borné sans retomber sur une énumération cachée
+  des frontiers.

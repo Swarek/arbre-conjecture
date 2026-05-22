@@ -153,3 +153,35 @@ proposer une signature moins globale, soit être mise en pause au profit de
 Piste F/sous-cas. Une expérience raisonnable restante est de chercher un
 sous-cas où les masques se factorisent, par exemple degré PC-tree borné ou
 familles laminaire/equal-block.
+
+## Résultats T021
+
+Statut : résultat négatif expérimental sur signatures compactées.
+
+Hypothèse testée par subagent : remplacer `block_bad_side_signature` par des
+agrégats plus compacts, par exemple endpoints + `bad_any`, `forced_only`,
+histogrammes de masques ou compteurs de paires forcées.
+
+Métriques sur P-node star-block `n=8`, bloc de taille `6`, `720`
+sous-frontiers :
+
+- `cycle` : signature complète `720/720`, histogramme `0.597`, `bad_any`
+  `0.042` ;
+- `random` : complète `672/720`, forced `0.906`, histogramme `0.450` ;
+- `paired_farthest` : complète `716/720`, forced `0.817`, histogramme
+  `0.686` ;
+- `equal` : complète `30/720`, seule famille franchement compressible.
+
+Contre-exemple de compression non sûre :
+
+- famille `paired_farthest`, `n=8`, seed `1008` ;
+- bloc `(0,1,2,3,4)`, contexte `(7,5,6)` ;
+- signature `forced_only` identique et aucune paire forcée ;
+- frontier `(1,2,0,4,3)` donne cR `True` ;
+- frontier `(1,2,4,0,3)` donne cR `False`, violation sur quadruplet
+  `(4,0,5,6)`.
+
+Conclusion : les agrégats compressent, mais perdent l'information de côté ou
+l'identité fine des témoins mauvais sur les familles stress. Continuer Piste B
+seulement avec une structure supplémentaire prouvable : degré borné, familles
+laminaires/equal-block, ou sous-cas strict.

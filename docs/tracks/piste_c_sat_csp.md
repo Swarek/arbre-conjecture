@@ -196,3 +196,32 @@ raffiner le CSP énumératif.
 Créer un rapport de décision Piste C vs Piste B/F, puis tester une signature
 DP/collision ou un sous-cas polynomial avant de continuer à raffiner le CSP
 énumératif.
+
+## Tentative T021 - Repair positive-only pour paired-farthest
+
+Statut : idée saine comme générateur expérimental vérifié, mais non intégrée à
+`candidate.py`.
+
+Idée subagent : `paired_farthest_frontier_repair_candidates(D, T)` détecterait
+la structure paired-farthest, échantillonnerait des frontiers représentées,
+déduirait un ordre de paires ou des deux composantes `low`, puis reconstruirait
+des ordres side-by-side avec les mates. Le résultat ne serait accepté qu'après
+`represents_order(T, order)` et `is_precircular_order_cR(D, order)`.
+
+Résultats lecture seule :
+
+- `n=6`, 80 seeds : oracle `True` 24 fois, heuristique `24/24`, aucun faux
+  positif ;
+- `n=8`, 80 seeds : oracle `True` 6 fois, heuristique `6/6`, aucun faux
+  positif ;
+- `n=10`, 80 seeds : oracle `True` 1 fois, déjà trouvé par la candidate ;
+- `n=12`, 200 seeds : oracle `True` 0 fois ;
+- odd `n=9/11` : rares positifs, déjà trouvés par la candidate ;
+- scan crossing-filter profond jusqu'à 100k frontiers/seed : aucun gain
+  grande taille observé ; `n=6 seed=21` confirme qu'un ordre où les cordes high
+  croisent peut encore violer cR.
+
+Conclusion : la fonction pourrait servir d'outil de recherche positive, mais
+elle n'apporte pas de gain mesurable à la candidate actuelle et reste
+échantillonnée. Ne pas l'intégrer avant d'avoir soit une borne, soit une preuve
+de couverture d'un sous-cas non-star.

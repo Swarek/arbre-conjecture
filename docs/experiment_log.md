@@ -712,3 +712,69 @@
 - Next action : attaquer la représentation non-star de paired-farthest ou
   basculer vers une piste A/C qui construit un ordre représenté sous contraintes
   plutôt que seulement un témoin canonique.
+
+## 2026-05-23 paired-farthest non-star counterexamples
+
+- Date/heure : 2026-05-23, Europe/Paris.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : pour `paired_farthest` avec PC-tree non-star, le témoin
+  canonique `A, mate(A)` peut être insuffisant ; une génération d'ordres dérivée
+  des frontiers représentées ou des contraintes high-cross pourrait révéler les
+  positifs manqués.
+- Changement fait : ajout de deux régressions dans
+  `tests/test_regression_counterexamples.py` : un cas `n=6 seed=1` où le témoin
+  canonique paired-farthest est non représenté mais un autre ordre représenté
+  est cR, et un cas `n=6 seed=21` où la condition brute de croisement farthest
+  passe mais cR échoue. Mise à jour des pistes A/B/C/F, obligations de preuve,
+  plans et checkpoints.
+- Sources : les six PDF fournis et la capture Proposition 4.4 sont déjà
+  conservés dans `docs/source_materials/` ; hashes vérifiés contre
+  `docs/source_materials/README.md`.
+- Plan subagents : cinq explorateurs lecture seule. Résultats : Piste A
+  confirme que les projections `I_x(v)` sont utiles comme diagnostic mais non
+  décisives ; Piste B réfute des signatures compactées agrégées ; Piste C
+  teste un repair positive-only sans gain grande taille ; Piste E/F shrinke les
+  cas paired-farthest non-star ; sources confirme les obligations autour
+  Prop. 4.4/4.5, strict et circular-ones.
+- Commande exécutée avant modification : `make quick`.
+- Résultat correction : `75 passed in 0.52s`, puis `JUSTE`.
+- Probe locale : génération naïve d'ordres side-by-side depuis rotations de
+  frontiers représentées récupère tous les positifs oracle observés sur
+  `paired_farthest` `n=6/8`, mais devient trop coûteuse sans borne. Version
+  bornée : `n=10` hit `1/10`, puis `0` hit sur `n=12..40`, avec médiane temps
+  jusqu'à `~0.25s` à `n=40` pour seulement `16` candidats.
+- Résultat subagent E/F : sur seeds `0..999`, `balanced` et `mixed` donnent
+  les mêmes counts dans le scaffold fanout 2. `n=6` : `202` canoniques
+  représentés, `96` positifs oracle non canoniques, `702` oracle `False`.
+  `n=8` : `36`, `20`, `944`. `n=10` : `6`, `12`, `982`. Le phénomène non
+  canonique apparaît minimalement à `n=6`.
+- Résultat subagent A : laminarité brute des `I_x` non nécessaire ; circular
+  ones local sans faux rejet observé dans certains stress mais beaucoup de faux
+  silences ; `paired_farthest` balanced/mixed souvent muet car projections
+  singletons.
+- Résultat subagent B : signatures DP agrégées compactent mais perdent la
+  sémantique. Contre-exemple `paired_farthest n=8 seed=1008` où deux
+  sous-frontiers ont même signature `forced_only` mais divergent cR dans le
+  même contexte.
+- Résultat subagent C : repair positive-only sûr si finalisé par
+  `represents_order` + `is_precircular_order_cR`, mais aucun gain observé au-delà
+  des cas déjà couverts par la candidate dans les probes `n >= 10`.
+- Commande exécutée : `pytest -q tests/test_regression_counterexamples.py`.
+- Résultat correction : `2 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `75 passed in 0.53s`, puis `JUSTE`.
+- Commande exécutée : `make bench-piste-f`.
+- Résultat benchmark : `cycle/mixed`, `permuted_cycle/star` et
+  `paired_farthest/star` gardent `0` timeout et `0` incomplet ;
+  `paired_farthest/mixed` garde `0` timeout et `40` incomplets visibles, tous
+  via `candidate_large_n_placeholder`.
+- Conclusion : ne pas intégrer de nouvelle branche candidate. Le résultat utile
+  est négatif et durable : le témoin canonique ne caractérise pas l'existence
+  non-star, et high-cross/farthest seul reste insuffisant. Les prochaines
+  pistes doivent viser un sous-cas non-star prouvé ou un diagnostic local/CSP
+  explicitement expérimental.
+- Next action : soit formaliser un sous-cas strict/degree-bound où les ordres
+  représentés se génèrent polynomialement, soit ajouter un rapport
+  `project_farthest_sets_to_pc_nodes` pour guider les obstructions sans servir
+  de solver.

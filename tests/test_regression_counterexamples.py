@@ -106,6 +106,41 @@ COUNTEREXAMPLES = [
         "witness_represented": False,
         "pc_tree_oracle_exists": False,
     },
+    {
+        "name": "paired_farthest_canonical_misses_represented_witness",
+        "kind": "paired_farthest_canonical_incomplete_non_star",
+        "D": [
+            [0, 1, 2, 1, 2, 3],
+            [1, 0, 2, 1, 3, 2],
+            [2, 2, 0, 3, 1, 1],
+            [1, 1, 3, 0, 2, 2],
+            [2, 3, 1, 2, 0, 1],
+            [3, 2, 1, 2, 1, 0],
+        ],
+        "order": [0, 1, 2, 5, 4, 3],
+        "is_circular_robinson": True,
+        "passes_farthest_crossing": True,
+        "paired_farthest_order": [0, 1, 3, 5, 4, 2],
+        "canonical_witness_represented": False,
+        "pc_tree_kind": "mixed",
+        "witness_represented": True,
+        "pc_tree_oracle_exists": True,
+    },
+    {
+        "name": "paired_farthest_high_chords_crossing_not_sufficient",
+        "kind": "paired_farthest_high_crossing_false_positive",
+        "D": [
+            [0, 2, 1, 1, 2, 3],
+            [2, 0, 2, 3, 1, 1],
+            [1, 2, 0, 1, 3, 2],
+            [1, 3, 1, 0, 2, 2],
+            [2, 1, 3, 2, 0, 1],
+            [3, 1, 2, 2, 1, 0],
+        ],
+        "order": [0, 1, 2, 5, 3, 4],
+        "is_circular_robinson": False,
+        "passes_farthest_crossing": True,
+    },
 ]
 
 
@@ -133,5 +168,8 @@ def test_recorded_counterexamples_match_predicates():
             assert _paired_farthest_order(D, len(D)) == tuple(example["paired_farthest_order"])
         if "pc_tree_kind" in example:
             T = balanced_pc_tree(len(D), kind=example["pc_tree_kind"])
+            if "canonical_witness_represented" in example:
+                canonical_witness = example["paired_farthest_order"]
+                assert represents_order(T, canonical_witness) is example["canonical_witness_represented"]
             assert represents_order(T, order) is example["witness_represented"]
             assert exact_oracle_pc_tree(D, T)["exists"] is example["pc_tree_oracle_exists"]

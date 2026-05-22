@@ -79,6 +79,33 @@ Résultat T020 :
 - un contre-exemple `n=4` montre qu'un témoin paired-farthest cR non représenté
   ne doit pas être accepté pour un PC-tree non-star.
 
+Résultat T021 :
+
+- sur `balanced` et `mixed` fanout 2, les nœuds internes binaires rendent `P`
+  et `C` localement équivalents dans le scaffold courant ;
+- scan seeds `0..999` sur `paired_farthest` :
+  - `n=6` : `202` témoins canoniques représentés, `96` cas où le canonique
+    est non représenté mais l'oracle est `True`, `702` oracle `False` ;
+  - `n=8` : `36` canoniques représentés, `20` positifs non canoniques,
+    `944` oracle `False` ;
+  - `n=10` : `6` canoniques représentés, `12` positifs non canoniques,
+    `982` oracle `False` ;
+- shrink par permutations : pas de phénomène "canonique non représenté mais
+  oracle True" à `n=4`; il apparaît minimalement à `n=6` ;
+- régression positive ajoutée : `n=6 seed=1`, le témoin canonique
+  `(0,1,3,5,4,2)` est non représenté, mais l'ordre représenté
+  `(0,1,2,5,4,3)` est cR et l'oracle PC-tree répond `True` ;
+- régression négative ajoutée : `n=6 seed=21`, l'ordre
+  `(0,1,2,5,3,4)` passe la condition brute de croisement farthest, mais viole
+  cR sur le quadruplet `(0,1,2,5)`.
+
+Une probe locale a testé une génération d'ordres side-by-side dérivés des
+rotations des frontiers représentées. Elle retrouve tous les positifs oracle
+observés sur `paired_farthest` `n=6/8`, mais la version naïve devient trop
+coûteuse en grande taille ; une version bornée trouve peu de hits au-delà de
+`n=10`. Cette idée reste donc hors `candidate.py` tant qu'elle n'a pas de preuve
+de complétude ou de borne utile.
+
 ## Sous-cas universel par témoins mauvais
 
 Statut : sous-cas prouvé intégré à `candidate.py`.
@@ -169,5 +196,6 @@ Utiliser `paired_farthest` pour casser tout filtre local ou farthest-like.
 Utiliser `permuted_cycle` comme sous-cas où un futur solver devrait reconnaître
 un témoin caché sans brute force star.
 Chercher ensuite un sous-cas plus structuré que le critère universel, par
-exemple paired-farthest représenté par PC-tree non-star, planted-cycle
-représenté par un vrai PC-tree Hsu/McConnell, ou degré interne borné.
+exemple paired-farthest représenté par PC-tree non-star avec choix de témoin
+prouvé, planted-cycle représenté par un vrai PC-tree Hsu/McConnell, ou degré
+interne borné.

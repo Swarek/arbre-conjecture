@@ -14,8 +14,8 @@ ensembles `I_x(v)` sur les branches d'un gros nœud `P`.
 
 | Piste | Fichier | Statut courant |
 | --- | --- | --- |
-| A - Contraintes locales P/C | `piste_a_local_pc_constraints.md` | Diagnostic utile ajouté ; pas solver |
-| B - DP sur PC-tree | `piste_b_dp_pc_tree.md` | Signature de bloc testée ; quasi injective sur familles stress |
+| A - Contraintes locales P/C | `piste_a_local_pc_constraints.md` | Projections `I_x(v)` utiles comme diagnostic ; pas solver |
+| B - DP sur PC-tree | `piste_b_dp_pc_tree.md` | Signatures compactées réfutées sur familles stress |
 | C - SAT/CSP | `piste_c_sat_csp.md` | Benchmark interne ajouté ; compilation encore dominante |
 | D - Circular-ones / intersection | `piste_d_circular_ones.md` | Non testée expérimentalement |
 | E - Obstructions farthest/quartets | `piste_e_farthest_quartets.md` | Farthest seul réfuté ; cR quartets restent centraux |
@@ -58,6 +58,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T018 | 2026-05-23 | F/Sources | Témoin minimum-cycle star ajouté ; faux positif `n=6` régressé ; capture Prop. 4.4 vendored | `candidate_minimum_distance_cycle_witness` |
 | T019 | 2026-05-23 | F/D | Membership PC-tree non énumératif pour certifier les témoins minimum-cycle non-star | `represents_order` |
 | T020 | 2026-05-23 | F/E | Témoin paired-farthest structurel ajouté ; garde représentation PC-tree régressé | `candidate_paired_farthest_matching_witness` |
+| T021 | 2026-05-23 | A/B/F | Paired-farthest non-star : canonique incomplet, high-cross insuffisant, diagnostics locaux/DP non décisifs | régressions `paired_farthest` `n=6` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

@@ -883,3 +883,59 @@ Décision : conserver comme sous-cas positif prouvé pour star et pour tout
 PC-tree qui représente le témoin canonique. Ne pas conclure négatif quand le
 témoin n'est pas représenté ; les subagents ont trouvé de petits cas non-star
 où un autre ordre représenté peut exister.
+
+## ExecPlan 2026-05-23 - paired-farthest non-star counterexamples
+
+But : comprendre pourquoi `paired_farthest/mixed` reste incomplet après le
+témoin canonique T020, et produire des artefacts durables avant d'intégrer une
+nouvelle branche candidate.
+
+Hypothèse : pour un PC-tree non-star, l'ordre paired-farthest canonique
+`A, mate(A)` peut ne pas être représenté, mais il peut exister un autre ordre
+représenté et cR. Une recherche positive basée seulement sur les cordes `high`
+qui se croisent risque d'être trop faible.
+
+Fichiers à modifier : `tests/test_regression_counterexamples.py`,
+`docs/tracks/piste_f_complexity_subcases.md`,
+`docs/tracks/piste_a_local_pc_constraints.md`,
+`docs/tracks/piste_b_dp_pc_tree.md`, `docs/tracks/README.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`,
+`docs/proof_obligations.md`.
+
+Algorithme pressenti : ne pas modifier `candidate.py` dans cette tentative.
+Ajouter les contre-exemples minimaux et documenter les résultats subagents.
+Tester localement une reconstruction d'ordres side-by-side dérivés de
+frontiers représentées, mais la garder hors candidate tant que la version
+grande taille n'est pas bornée et prouvée.
+
+Tests à exécuter : test ciblé `tests/test_regression_counterexamples.py`,
+`make quick`, puis `make bench-piste-f` si les régressions passent.
+
+Risques : transformer une heuristique qui marche sur `n=6/8` en faux solver ;
+confondre condition nécessaire "cordes high croisées" et cR ; oublier que les
+nœuds balanced/mixed du scaffold fanout 2 rendent `P` et `C` localement
+équivalents.
+
+Plan de contre-exemples : intégrer le cas positif minimal `n=6 seed=1` où le
+témoin canonique est non représenté mais l'oracle PC-tree est `True`, et le cas
+`n=6 seed=21` où les cordes farthest passent mais cR échoue. Garder le cas
+`n=4 seed=5` déjà enregistré comme faux positif de représentation.
+
+Plan subagents : cinq explorateurs lecture seule. Piste A projette les
+ensembles `I_x(v)` ; Piste B teste des signatures DP compactes ; Piste C
+cherche une extension CSP minimale ; Piste E/F shrinke `paired_farthest`
+non-star ; sources relit les PDF vendorizés et les obligations.
+
+Résultats observés : avant modification, `make quick` passe (`75 passed`,
+`JUSTE`). Les six PDF demandés et la capture Proposition 4.4 sont déjà
+versionnés dans `docs/source_materials/` avec hashes listés. Probe locale :
+une génération naïve d'ordres side-by-side depuis rotations de frontiers
+récupère tous les positifs oracle observés sur `paired_farthest` `n=6/8`, mais
+elle devient trop coûteuse si non bornée en grande taille. Version bornée :
+peu de hits au-delà de `n=10`, temps déjà ~`0.25s` pour `n=40` sur seulement
+16 candidats.
+
+Décision : intégrer seulement les régressions et la documentation. La prochaine
+tentative utile doit soit prouver une famille d'ordres représentés
+paired-farthest non-star, soit basculer vers un diagnostic local/CSP qui produit
+des obstructions sans prétendre décider l'existence.

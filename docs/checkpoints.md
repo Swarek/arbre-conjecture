@@ -87,6 +87,11 @@ Dernier commit green avant T009 : `07120e4`.
   `380` checks, `make quick`, `make check`, `make hunt-counterexamples`,
   `make bench-piste-f`, `make bench-quick`, `make bench` (`0` timeout, `42`
   incomplets visibles, fit polynomial empirique `p ~= 3.24`).
+- Checkpoint T021 courant : commit contenant les régressions
+  `paired_farthest` non-star `n=6`, la documentation des résultats subagents
+  Piste A/B/F, et la décision de ne pas intégrer la génération side-by-side
+  non bornée dans `candidate.py`. Validation observée : test ciblé
+  `tests/test_regression_counterexamples.py`, `make quick`, `make bench-piste-f`.
 
 ## Rollback
 
