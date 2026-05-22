@@ -43,9 +43,14 @@ Dernier commit green avant T009 : `07120e4`.
   Backtracking pruné par nogoods compilés ajouté. Validation observée :
   `make quick`, `make check`, `make bench-quick`, probe pruned-nogood sans
   désaccord sur 640 instances.
-- Checkpoint T013 courant : commit contenant le benchmark interne Piste C ; son
-  hash est à lire avec `git log -1` et doit être reporté dans le compte rendu
-  final de la session.
+- Checkpoint T013 : `1b0ad1c` (`checkpoint: add csp internal benchmark`).
+  Benchmark interne Piste C ajouté. Validation observée : `make quick`,
+  `make check`, `make bench-csp-quick`, `make bench-quick`.
+- Checkpoint T014 courant : commit contenant le diagnostic bad-side fixed-order
+  Piste B ; son hash est à lire avec `git log -1` et doit être reporté dans le
+  compte rendu final de la session. Validation observée : `make unit`, probe
+  bad-side `715875` comparaisons, `make quick`, `make check`,
+  `make bench-quick`.
 
 ## Rollback
 

@@ -367,3 +367,46 @@
   décider entre compilation non énumérative, DP, ou sous-cas.
 - Next action : produire une décision Piste C vs Piste B/F et tester une
   signature DP/collision avant de raffiner davantage le CSP énumératif.
+
+## 2026-05-23 bad-side fixed-order DP diagnostic
+
+- Date/heure : 2026-05-23, Europe/Paris.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : pour un ordre circulaire fixé, la condition pre-circular cR
+  est équivalente à l'absence d'une paire `{a,b}` ayant un témoin mauvais
+  `w` sur chacun des deux arcs, avec
+  `max(D[a][w], D[w][b]) > D[a][b]`.
+- Changement fait : ajout de `is_bad_witness`,
+  `bad_witnesses_by_pair`, `bad_side_signature`,
+  `find_bad_side_cr_violation` et `passes_bad_side_cr_test` dans
+  `src/pc_circular/solvers/dp_experiments.py`; ajout de
+  `tests/test_dp_experiments.py`; mise à jour Piste B, obligations de preuve,
+  plans et checkpoints.
+- Plan subagents : trois explorateurs lecture seule. Résultats : preuve
+  fixed-order confirmée ; aucun contre-exemple trouvé ; risque DP principal
+  identifié comme explosion de signature en paires globales ; variante `>=`
+  réfutée par les égal-distance.
+- Commande exécutée avant modification : `make quick`.
+- Résultat correction : `38 passed in 0.22s`, puis `JUSTE`.
+- Commande exécutée : `make unit`.
+- Résultat correction : `44 passed in 0.49s`.
+- Commande exécutée : probe bad-side avec `PYTHONPATH=src`, exhaustif `n=4,5`,
+  valeurs `{1,2,3}`, puis random `n=6,7`.
+- Résultat correction : `OK checked=715875`, aucun désaccord avec
+  `is_precircular_order_cR`.
+- Résultat subagent contre-exemples : `926775` comparaisons sur familles
+  variées jusqu'à `n=9`, `0` désaccord.
+- Commande exécutée : `make quick`.
+- Résultat correction : `44 passed in 0.48s`, puis `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark : `reports/complexity_report_quick.json` écrit ; 8 tailles,
+  `0` timeout, `20` runs incomplets explicitement marqués pour `n > 8`,
+  médiane `n=20` environ `0.00354s`.
+- Conclusion : l'invariant bad-side est une réécriture exacte pour ordre fixé et
+  un bon point de départ Piste B. Il ne décide pas l'existence dans un PC-tree :
+  la signature de sous-arbre compacte reste à tester/falsifier.
+- Next action : implémenter `find_signature_collision` ou un rapport
+  `#signatures / #frontiers` pour mesurer si la piste DP compacte survit.

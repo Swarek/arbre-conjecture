@@ -422,3 +422,61 @@ Décision : Piste C reste correcte expérimentalement, mais la compilation
 énumérative domine déjà le solve sur petites tailles. Ne pas intégrer dans
 `candidate.py`. La prochaine itération doit soit trouver une compilation
 non-énumérative, soit basculer vers Piste B/F avec cette limite documentée.
+
+## ExecPlan 2026-05-23 - bad-side fixed-order DP signature
+
+But : établir un invariant exact pour un ordre circulaire fixé qui reformule la
+condition pre-circular cR en termes de paires d'extrémités et de témoins mauvais
+sur les deux arcs. L'objectif immédiat est un diagnostic Piste B, pas un solver
+d'existence dans un PC-tree.
+
+Hypothèse : pour une paire `{a,b}` et un témoin `w`, définir
+`bad(a,b,w)` par `max(D[a][w], D[w][b]) > D[a][b]`. Un ordre viole cR ssi il
+existe une paire `{a,b}` telle que l'un des deux arcs entre `a` et `b` contient
+un témoin mauvais et l'autre arc contient aussi un témoin mauvais. Si l'invariant
+est exact, il peut servir de base à une future signature DP.
+
+Fichiers à modifier : `src/pc_circular/solvers/dp_experiments.py`,
+`tests/test_dp_experiments.py`, `docs/tracks/piste_b_dp_pc_tree.md`,
+`docs/experiment_log.md`, `docs/proof_obligations.md`,
+`docs/tracks/README.md`, `docs/checkpoints.md`.
+
+Algorithme pressenti : pour chaque paire non ordonnée `{a,b}`, calculer les deux
+arcs ouverts dans l'ordre circulaire. Chercher un témoin `w` de chaque côté avec
+`bad(a,b,w)`. Si les deux côtés existent, retourner un certificat qui se lit
+comme un quadruplet cyclique `(a, w_left, b, w_right)`. Sinon l'ordre passe le
+diagnostic.
+
+Tests à exécuter : `make unit`, un probe exhaustif `n=4` valeurs `{1,2,3}` sur
+tous les ordres, un probe random borné `n<=6`, `make quick`, `make check`, puis
+`make bench-quick` pour conserver le checkpoint même si `candidate.py` ne change
+pas.
+
+Risques : erreur d'orientation des deux arcs ; mauvais traitement des égalités
+dans le strict `>` ; croire que l'invariant d'ordre fixé suffit déjà pour
+l'existence PC-tree ; signature DP future possiblement explosive parce qu'elle
+reste indexée par toutes les paires globales.
+
+Plan de contre-exemples : comparer systématiquement le diagnostic à
+`is_precircular_order_cR` sur petits ordres exhaustifs et matrices aléatoires.
+Si un désaccord apparaît, enregistrer `D`, l'ordre et le certificat dans les
+régressions avant toute autre extension.
+
+Plan subagents : trois explorateurs lecture seule tournent en parallèle :
+preuve/cas d'égalité de l'invariant, chasse de contre-exemples, et projection
+vers une signature DP ou circular-ones. L'intégration reste locale.
+
+Résultats observés : diagnostic ajouté dans `dp_experiments.py` avec
+`is_bad_witness`, `bad_witnesses_by_pair`, `bad_side_signature`,
+`find_bad_side_cr_violation` et `passes_bad_side_cr_test`. Tests unitaires
+ajoutés pour égal-distance, exemple quatre points non cR, cycle metric,
+égalités strictes, exhaustif `n=4` et random `n=5,6`. Probe principal :
+exhaustif `n=4,5`, valeurs `{1,2,3}`, puis random `n=6,7`, `715875`
+comparaisons sans désaccord. Un subagent contre-exemple a aussi rapporté
+`926775` comparaisons sans désaccord sur familles variées `n=6..9`.
+Gates : `make unit`, `make quick`, `make check`, `make bench-quick` verts.
+
+Décision : continuer Piste B comme invariant fixed-order prouvé par réécriture
+et validé expérimentalement. Ne pas intégrer dans `candidate.py` avant une
+signature de sous-arbre testée ; prochaine étape : chercher collisions de
+signature ou mesurer l'explosion `#signatures / #frontiers`.

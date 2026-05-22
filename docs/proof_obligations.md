@@ -178,3 +178,44 @@ tant que la compilation reste fondée sur l’énumération complète des
 affectations. La prochaine obligation est soit de prouver/implémenter une
 compilation non énumérative, soit de basculer vers une signature DP ou un
 sous-cas polynomial.
+
+### Caractérisation bad-side d'un ordre fixé
+
+Statut : conséquence directe pour ordre fixé + preuve expérimentale.
+
+Pour une paire `{a,b}` et un point `w` distinct des endpoints, définir
+`bad(a,b,w)` par :
+
+```text
+max(D[a][w], D[w][b]) > D[a][b]
+```
+
+Pour un ordre circulaire fixé, la condition pre-circular cR est équivalente à
+l'absence d'une paire `{a,b}` dont chacun des deux arcs ouverts contient au moins
+un témoin mauvais. En effet, une violation cR est un quadruplet cyclique
+`a, y, b, t` tel que les deux maxima de côté sont strictement supérieurs à
+`D[a][b]`; réciproquement, deux mauvais témoins sur les deux arcs donnent ce
+quadruplet.
+
+Ce que cela couvre :
+
+- obligation 1 fixed-order : les témoins mauvais sur deux arcs sont nécessaires,
+  directement par réécriture de l'inégalité cR ;
+- obligation 2 fixed-order : ils sont suffisants pour un ordre complet fixé ;
+- obligation 6 fixed-order : les égalités sont traitées par le `>` strict, donc
+  `max(...) == D[a][b]` ne crée pas d'obstruction.
+
+Limites restantes :
+
+- aucune décision d'existence dans un PC-tree compact ;
+- aucune preuve que la signature de sous-arbre issue de cet invariant reste de
+  taille polynomiale ;
+- les obligations 3, 4 et 5 restent ouvertes pour une vraie candidate générale.
+
+Preuve expérimentale T014 : tests unitaires et probe exhaustif `n=4,5`, valeurs
+`{1,2,3}`, puis random `n=6,7`, sans désaccord avec
+`is_precircular_order_cR` sur `715875` comparaisons. Un probe subagent
+indépendant a ajouté des familles `random/cycle/permuted_cycle/block/
+ultrametric/equal/non_strict/paired_farthest/mixed` jusqu'à `n=9`, sans
+désaccord sur `926775` comparaisons. La variante non stricte `>=` est
+explicitement exclue, car elle rejette les égal-distance.
