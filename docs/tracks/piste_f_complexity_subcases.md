@@ -138,6 +138,44 @@ Résultat T016 : probe large-n `n=9..30` sur star/balanced/mixed, `33` checks,
 témoin cR et représenté/échantillonné ; le faux ami à arête basse reste
 placeholder incomplet.
 
+## Sous-cas strict
+
+Statut : prometteur, mais pas encore implémentable sans transcription validée
+des sources.
+
+Résultat exploratoire T022 :
+
+- dans le strict, les inégalités deviennent strictes (`scR`, `sqcR`) ;
+- pour un ordre fixé, le papier donne un test `O(n^2)` via unimodalité stricte
+  et obstructions farthest de type Prop. 4.5 ;
+- Algorithm 5.2 produit un ordre compatible en `O(n log n)` si l'espace est
+  strict quasi-circular/strict circular, avec reconnaissance complète après
+  vérification `O(n^2)` ;
+- Prop. 5.9 indique qu'un strict quasi-circular possède seulement un ou deux
+  ordres compatibles modulo opposés, et qu'un strict circular en possède un.
+
+Limite importante : une transcription naïve en probe rate `cycle_metric(6)` et
+produit des mismatches sur des matrices `n=4`, valeurs `{1,2,3}`. Ce n'est pas
+une réfutation du papier ; cela montre que les choix de `J`-sets, ties et
+orientations doivent être codés avec une preuve/test avant toute intégration.
+
+API expérimentale envisagée :
+
+- `is_strict_quasi_circular_order(D, order)` ;
+- `is_strict_precircular_order_cR(D, order)` ;
+- `strict_algorithm52_candidates(D) -> report` ;
+- `strict_subcase_solve(D, pc_tree=None, quasi_orders=None)` seulement quand
+  tous les candidats stricts sont générés et vérifiés représentés/cR.
+
+Tests requis avant `candidate.py` :
+
+- exemple Fig. 2.2 du PDF : ordre strict quasi non cR et autre ordre cR ;
+- `cycle_metric(n)` pour `n=5,6,7` ;
+- exhaustif `n=4`, valeurs `{1,2,3}`, contre définition directe ;
+- comparaison oracle PC-tree sur star/balanced/mixed petits `n` ;
+- cas non applicables : equal-distance, non strict, random hors strict ;
+- régression témoin strict cR mais non représenté par `T`.
+
 ## Témoin cycle par distances minimales
 
 Statut : certificat positif intégré pour tout PC-tree du scaffold où le témoin

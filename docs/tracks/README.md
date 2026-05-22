@@ -14,7 +14,7 @@ ensembles `I_x(v)` sur les branches d'un gros nœud `P`.
 
 | Piste | Fichier | Statut courant |
 | --- | --- | --- |
-| A - Contraintes locales P/C | `piste_a_local_pc_constraints.md` | Projections `I_x(v)` utiles comme diagnostic ; pas solver |
+| A - Contraintes locales P/C | `piste_a_local_pc_constraints.md` | Rapport `I_x(v)` implémenté comme diagnostic ; pas solver |
 | B - DP sur PC-tree | `piste_b_dp_pc_tree.md` | Signatures compactées réfutées sur familles stress |
 | C - SAT/CSP | `piste_c_sat_csp.md` | Benchmark interne ajouté ; compilation encore dominante |
 | D - Circular-ones / intersection | `piste_d_circular_ones.md` | Non testée expérimentalement |
@@ -59,6 +59,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T019 | 2026-05-23 | F/D | Membership PC-tree non énumératif pour certifier les témoins minimum-cycle non-star | `represents_order` |
 | T020 | 2026-05-23 | F/E | Témoin paired-farthest structurel ajouté ; garde représentation PC-tree régressé | `candidate_paired_farthest_matching_witness` |
 | T021 | 2026-05-23 | A/B/F | Paired-farthest non-star : canonique incomplet, high-cross insuffisant, diagnostics locaux/DP non décisifs | régressions `paired_farthest` `n=6` |
+| T022 | 2026-05-23 | A/D/F | Projection des farthest sets ajoutée ; sous-cas strict préparé mais non intégré | `project_farthest_sets_to_pc_nodes` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

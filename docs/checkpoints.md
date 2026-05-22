@@ -92,6 +92,11 @@ Dernier commit green avant T009 : `07120e4`.
   Piste A/B/F, et la décision de ne pas intégrer la génération side-by-side
   non bornée dans `candidate.py`. Validation observée : test ciblé
   `tests/test_regression_counterexamples.py`, `make quick`, `make bench-piste-f`.
+- Checkpoint T022 courant : commit contenant
+  `project_farthest_sets_to_pc_nodes` comme diagnostic Piste A/D, tests
+  égal-distance et nœud `C`, et documentation de non-décision. Validation
+  observée : `tests/test_local_constraints.py`, `make unit`, `make quick`,
+  `make bench-quick` (`0` timeout, `0` incomplet).
 
 ## Rollback
 

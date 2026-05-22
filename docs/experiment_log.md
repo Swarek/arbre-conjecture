@@ -778,3 +778,55 @@
   représentés se génèrent polynomialement, soit ajouter un rapport
   `project_farthest_sets_to_pc_nodes` pour guider les obstructions sans servir
   de solver.
+
+## 2026-05-23 farthest set projection diagnostic
+
+- Date/heure : 2026-05-23, Europe/Paris.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les projections locales
+  `I_x(v) = {i : B_i intersecte F_x}` ne décident pas l'existence, mais peuvent
+  fournir un rapport reproductible d'obstructions locales : laminarité,
+  intervalle dans l'ordre local déclaré et circular-ones exact à petit degré.
+- Changement fait : ajout de `project_farthest_sets_to_pc_nodes` dans
+  `src/pc_circular/solvers/local_constraints.py`; ajout de tests pour le cas
+  égal-distance/star non laminaire mais intervalle/circular-ones compatible, et
+  pour une violation d'intervalle déclarée sur un nœud `C`. Mise à jour
+  `PLANS.md`, Piste A, index des pistes, obligations et checkpoints.
+- Commande exécutée avant modification : `make quick`.
+- Résultat correction : `75 passed in 0.53s`, puis `JUSTE`.
+- Plan subagents : deux explorateurs lecture seule. L'un vérifie la forme
+  minimale du diagnostic et les tests ; l'autre prépare le sous-cas strict pour
+  décider si la suite doit basculer vers Piste F.
+- Résultat subagent diagnostic : champs recommandés ajoutés ou conservés :
+  `branch_sizes`, `child_label_sets`, `projection_size`, statut circular-ones
+  et témoin d'ordre quand compatible. Le subagent recommande un futur test de
+  faux silence avant toute promotion du diagnostic.
+- Résultat subagent strict : le sous-cas strict est prometteur, mais une
+  transcription naïve de l'Algorithm 5.2 rate `cycle_metric(6)` et produit des
+  mismatches sur matrices `n=4`; il faut d'abord un module expérimental validé
+  contre la définition directe et l'oracle, pas une intégration candidate.
+- Probe exécutée : `project_farthest_sets_to_pc_nodes` sur familles
+  `equal/cycle/random/paired_farthest`, arbres `star/mixed`, `n=8`.
+- Résultat probe : `equal/star` produit `proper=8`, `laminar=28`,
+  `interval=0`, `circular_ones_false=0`; `random/star` produit `proper=7`,
+  `laminar=8`, `interval=6`, `circular_ones_false=1`; `random/mixed` et
+  `paired_farthest/mixed` sont muets sur le scaffold binaire (`proper=0`).
+- Commande exécutée : `pytest -q tests/test_local_constraints.py`.
+- Résultat correction : `5 passed`.
+- Commande exécutée : `make unit`.
+- Résultat correction : `77 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `77 passed in 0.52s`, puis `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark : `reports/complexity_report_quick.json` écrit ; `0`
+  timeout, `0` incomplet ; dernier `n=20` via
+  `candidate_universal_bad_witness_bound_all_orders` et
+  `candidate_validated_sampled_witness`, fit polynomial empirique rapide
+  `p ~= 2.70`.
+- Conclusion : outil utile pour explorer Piste A/D et produire des signaux
+  locaux, mais impropre à une décision directe. Il n'est pas appelé par
+  `candidate.py`.
+- Next action : soit tester le sous-cas strict à partir des sources, soit
+  formaliser un rapport circular-ones/intersection qui relie ces projections à
+  des contraintes prouvées plutôt qu'à de simples signaux.

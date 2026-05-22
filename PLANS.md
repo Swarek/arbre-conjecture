@@ -939,3 +939,62 @@ Décision : intégrer seulement les régressions et la documentation. La prochai
 tentative utile doit soit prouver une famille d'ordres représentés
 paired-farthest non-star, soit basculer vers un diagnostic local/CSP qui produit
 des obstructions sans prétendre décider l'existence.
+
+## ExecPlan 2026-05-23 - farthest set projection diagnostic
+
+But : ajouter un outil expérimental Piste A/D qui projette les ensembles de plus
+lointains voisins sur les branches de chaque nœud PC-tree, afin de guider les
+obstructions locales sans modifier `candidate.py`.
+
+Hypothèse : les ensembles `I_x(v) = {i : B_i intersecte F_x}` peuvent signaler
+des contraintes locales utiles, en particulier violations d'intervalle sur
+nœuds `C`, non-laminarité sur gros `P`, ou échec d'un test circular-ones exact
+à petit degré. Les itérations précédentes montrent déjà que ces signaux ne sont
+pas suffisants pour décider l'existence.
+
+Fichiers à modifier : `src/pc_circular/solvers/local_constraints.py`,
+`tests/test_local_constraints.py`, `docs/tracks/piste_a_local_pc_constraints.md`,
+`docs/tracks/README.md`, `docs/experiment_log.md`, `docs/checkpoints.md`,
+éventuellement `docs/proof_obligations.md`.
+
+Algorithme pressenti : pour chaque nœud interne, calculer les labels de chaque
+branche, puis pour chaque point `x` projeter `F_x` sur les indices de branches.
+Rapporter histogramme des tailles, ensembles propres non triviaux, violations
+laminaires, violations d'intervalle dans l'ordre local déclaré, et compatibilité
+circular-ones par brute force seulement si le degré est borné (`<= 8`).
+
+Tests à exécuter : test ciblé `tests/test_local_constraints.py`, probe sur
+familles `equal/cycle/random/paired_farthest` en `star` et `mixed`,
+`make unit`, `make quick`, puis `make bench-quick` si aucun rapport lourd n'est
+généré.
+
+Risques : surinterpréter le diagnostic comme critère nécessaire/suffisant ;
+rejeter à tort les cas non stricts égal-distance par laminarité ; ne rien voir
+sur les arbres binaires où beaucoup de projections sont singletons.
+
+Plan de contre-exemples : verrouiller dans les tests le cas égal-distance star,
+où la laminarité échoue alors que tous les ordres sont cR, et un nœud `C` où un
+point a projection `{0,2}` non intervalle dans l'ordre déclaré.
+
+Plan subagents : deux explorateurs lecture seule en parallèle. L'un vérifie la
+forme minimale du diagnostic et les tests pertinents. L'autre prépare le sous-cas
+strict pour décider si la prochaine itération doit basculer vers Piste F.
+
+Résultats observés : `project_farthest_sets_to_pc_nodes` ajouté dans
+`local_constraints.py` avec rapport par nœud, tailles de branches,
+`projection_size`, statut circular-ones et témoin d'ordre de branches quand
+compatible. Tests ajoutés pour égal-distance/star non laminaire mais
+circular-ones compatible, et pour une violation d'intervalle déclarée sur nœud
+`C`. Probe `n=8` :
+`equal/star` signale `laminar=28`, `random/star` signale `laminar=8`,
+`interval=6`, `circular_ones_false=1`, tandis que `random/mixed` et
+`paired_farthest/mixed` sont muets sur le scaffold binaire. `make unit` :
+`77 passed`; `make quick` : `77 passed`, `JUSTE`; `make bench-quick` : `0`
+timeout, `0` incomplet, dernier `n=20` via sous-cas universel et témoins
+échantillonnés. Subagent strict : l'Algorithm 5.2 doit être transcrit dans un
+module expérimental avant toute intégration candidate, car une probe naïve rate
+`cycle_metric(6)` et produit des mismatches `n=4`.
+
+Décision : conserver comme diagnostic Piste A/D. Ne pas modifier `candidate.py`.
+La prochaine itération peut basculer vers le sous-cas strict ou vers une famille
+de contraintes circular-ones avec preuve locale plus forte.

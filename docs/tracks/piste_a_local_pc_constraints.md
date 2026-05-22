@@ -89,6 +89,47 @@ besoin d'un diagnostic, avec histogrammes `|I_x|`, violations laminaires,
 violations d'intervalles pour `C`, et circular-ones exact seulement pour petit
 degré. Ne pas intégrer comme filtre dans `candidate.py`.
 
+## T022 - Rapport `project_farthest_sets_to_pc_nodes`
+
+Statut : diagnostic implémenté, explicitement non décisionnel.
+
+Artefact ajouté : `project_farthest_sets_to_pc_nodes(D, T)` dans
+`src/pc_circular/solvers/local_constraints.py`.
+
+Pour chaque nœud interne, le rapport contient :
+
+- `path`, `kind`, `degree`, `label_count` ;
+- tailles de branches et ensembles de labels enfants ;
+- histogramme des tailles `|I_x(v)|` ;
+- projection de chaque `F_x` sur les branches ;
+- ensembles propres non triviaux ;
+- nombre et exemples de violations laminaires ;
+- nombre et exemples de violations d'intervalle dans l'ordre local déclaré ;
+- statut circular-ones brute force si le degré est au plus `8`, avec témoin
+  d'ordre de branches quand un ordre compatible est trouvé, `unsupported_degree`
+  sinon.
+
+Tests ajoutés :
+
+- égal-distance sur star : tous les `I_x` sont de taille `n-1`, la laminarité
+  échoue, mais les projections restent des intervalles circulaires ; cela
+  empêche de transformer la laminarité en filtre ;
+- nœud `C` à cinq feuilles : un point avec `F_x = {0,2}` produit une violation
+  d'intervalle dans l'ordre déclaré.
+
+Probe rapide `n=8` :
+
+- `equal/star` : `proper=8`, `laminar=28`, `interval=0` ;
+- `random/star` : `proper=7`, `laminar=8`, `interval=6`,
+  `circular_ones_false=1` ;
+- `random/mixed` et `paired_farthest/mixed` : diagnostic muet sur ce scaffold
+  binaire (`proper=0`) ;
+- `cycle` : pas de signal sur l'instance naturelle testée.
+
+Conclusion : l'outil est utile pour produire des signaux d'obstruction et pour
+orienter Piste C/D sur des gros nœuds, mais il est trop faible ou trop bruyant
+pour décider l'existence. Il ne doit pas être appelé par `candidate.py`.
+
 ## Prochaine action
 
 Construire un outil qui énumère tous les mauvais ordres représentés par un petit

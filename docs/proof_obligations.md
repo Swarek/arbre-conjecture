@@ -474,3 +474,36 @@ prouver à la fois :
   low/mid ou bad-side nécessaires ;
 - que le coût de génération est borné sans retomber sur une énumération cachée
   des frontiers.
+
+### Projection locale des farthest sets
+
+Statut : outil expérimental / aucune obligation de suffisance satisfaite.
+
+`project_farthest_sets_to_pc_nodes(D, T)` calcule pour chaque nœud interne les
+ensembles de branches
+
+```text
+I_x(v) = { i : B_i intersecte F_x }
+```
+
+et mesure laminarité, intervalle dans l'ordre local déclaré et compatibilité
+circular-ones brute force à petit degré.
+
+Ce que cela couvre :
+
+- obligation expérimentale : les signaux sont reproductibles et attachés à des
+  nœuds précis du PC-tree ;
+- obligation négative : la laminarité n'est pas nécessaire, car les cas
+  égal-distance peuvent être cR pour tout ordre tout en violant massivement la
+  laminarité ;
+- obligation de séparation : le rapport n'est pas utilisé dans `candidate.py` et
+  ne prouve ni existence ni non-existence.
+
+Limites :
+
+- les projections peuvent être triviales sur les arbres binaires ou les
+  farthest sets singletons ;
+- un échec circular-ones local peut guider une obstruction, mais aucune preuve
+  ne relie encore ce signal à une décision d'existence globale ;
+- les égalités et cas non stricts imposent de garder les clauses dégénérées
+  séparées.
