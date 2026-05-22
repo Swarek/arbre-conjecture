@@ -24,6 +24,8 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from pc_circular.generators import benchmark_pc_tree, instance_by_kind  # noqa: E402
+from pc_circular.pc_tree import enumerate_frontiers  # noqa: E402
+from pc_circular.predicates import is_precircular_order_cR, passes_farthest_crossing_condition  # noqa: E402
 
 
 class TimeoutExpired(Exception):
@@ -127,6 +129,24 @@ def result_field(result: Any, field: str, default=None):
     return default
 
 
+def exact_frontier_diagnostics(D, T) -> dict[str, Any]:
+    orders = enumerate_frontiers(T, canonical=True)
+    valid_order_count = 0
+    farthest_pass_count = 0
+    for order in orders:
+        if is_precircular_order_cR(D, order):
+            valid_order_count += 1
+        if passes_farthest_crossing_condition(D, order):
+            farthest_pass_count += 1
+    return {
+        "frontier_count": len(orders),
+        "valid_order_count": valid_order_count,
+        "farthest_pass_count": farthest_pass_count,
+        "valid_fraction": valid_order_count / len(orders) if orders else None,
+        "farthest_false_positive_count": max(0, farthest_pass_count - valid_order_count),
+    }
+
+
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--candidate", required=True)
@@ -137,6 +157,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--pc-tree", default="star")
     parser.add_argument("--output", required=True)
     parser.add_argument("--seed", type=int, default=20260521)
+    parser.add_argument("--diagnostics-up-to", type=int, default=0)
     return parser.parse_args(argv)
 
 
@@ -152,9 +173,12 @@ def main(argv: list[str]) -> int:
         exists_true = 0
         incomplete = 0
         solvers: dict[str, int] = {}
+        diagnostics = None
         for _ in range(args.repeats):
             D = instance_by_kind(n, kind=args.instance_kind, rng=rng)
             T = benchmark_pc_tree(args.pc_tree, n)
+            if diagnostics is None and args.diagnostics_up_to and n <= args.diagnostics_up_to:
+                diagnostics = exact_frontier_diagnostics(D, T)
             outcome = timed_call(candidate, D, T, args.timeout)
             if outcome["timeout"]:
                 timeouts += 1
@@ -168,8 +192,7 @@ def main(argv: list[str]) -> int:
             solver_name = str(result_field(result, "solver", "unknown"))
             solvers[solver_name] = solvers.get(solver_name, 0) + 1
 
-        rows.append(
-            {
+        row = {
                 "n": n,
                 "repeats": args.repeats,
                 "timeouts": timeouts,
@@ -182,7 +205,10 @@ def main(argv: list[str]) -> int:
                 "incomplete_runs": incomplete,
                 "solver_counts": solvers,
             }
-        )
+        if diagnostics is not None:
+            row.update(diagnostics)
+            row["diagnostics_sample"] = "first_instance_for_size"
+        rows.append(row)
 
     report = {
         "candidate": args.candidate,
@@ -191,6 +217,7 @@ def main(argv: list[str]) -> int:
         "timeout_seconds": args.timeout,
         "instance_kind": args.instance_kind,
         "pc_tree": args.pc_tree,
+        "diagnostics_up_to": args.diagnostics_up_to,
         "baseline_warning": (
             "candidate.py is exact only for n <= 8; larger runs may be "
             "incomplete placeholders and are benchmarked as such"

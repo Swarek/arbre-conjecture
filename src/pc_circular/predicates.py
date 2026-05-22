@@ -133,9 +133,15 @@ def is_precircular_order_cR(D: Matrix, order: Order) -> bool:
         d(x,z) >= min(max(d(x,y), d(y,z)), max(d(x,t), d(t,z))).
     """
 
+    return find_precircular_cR_violation(D, order) is None
+
+
+def find_precircular_cR_violation(D: Matrix, order: Order) -> dict | None:
+    """Return the first cyclic quadruple violating the cR inequality."""
+
     n = _validate_order_for_D(D, order)
     if n < 4:
-        return True
+        return None
 
     seq = tuple(order)
     for i in range(n):
@@ -152,8 +158,18 @@ def is_precircular_order_cR(D: Matrix, order: Order) -> bool:
                         max(D[x][t], D[t][z]),
                     )
                     if lhs < rhs:
-                        return False
-    return True
+                        return {
+                            "quadruple": (x, y, z, t),
+                            "positions": (i, (i + off_y) % n, (i + off_z) % n, (i + off_t) % n),
+                            "lhs_pair": (x, z),
+                            "lhs": lhs,
+                            "rhs": rhs,
+                            "d_xy": D[x][y],
+                            "d_yz": D[y][z],
+                            "d_xt": D[x][t],
+                            "d_tz": D[t][z],
+                        }
+    return None
 
 
 def farthest_sets(D: Matrix) -> dict[int, set[int]]:
@@ -191,6 +207,16 @@ def passes_farthest_crossing_condition(D: Matrix, order: Order) -> bool:
     ``is_precircular_order_cR``.
     """
 
+    return find_farthest_crossing_violation(D, order) is None
+
+
+def find_farthest_crossing_violation(D: Matrix, order: Order) -> dict | None:
+    """Return the first non-crossing farthest-neighbor chord pair.
+
+    This is an experimental diagnostic.  In non-strict cases, farthest-neighbor
+    degeneracies may make this condition fail even for a cR order.
+    """
+
     n = _validate_order_for_D(D, order)
     position = {value: idx for idx, value in enumerate(order)}
     farthest = farthest_sets(D)
@@ -209,5 +235,15 @@ def passes_farthest_crossing_condition(D: Matrix, order: Order) -> bool:
                         position[yp],
                         n,
                     ):
-                        return False
-    return True
+                        return {
+                            "chords": ((x, xp), (y, yp)),
+                            "positions": (
+                                position[x],
+                                position[xp],
+                                position[y],
+                                position[yp],
+                            ),
+                            "farthest_x": sorted(farthest[x]),
+                            "farthest_y": sorted(farthest[y]),
+                        }
+    return None

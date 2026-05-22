@@ -103,6 +103,12 @@ caractérisation purement farthest.
 Prochain essai concret : séparer strict, non strict et égal-distance dans les
 générateurs.
 
+État 2026-05-22 : la condition farthest-crossing brute est déjà réfutée comme
+critère autonome. Deux contre-exemples minimaux à 4 points sont enregistrés :
+un cas égal-distance circular Robinson où la condition brute échoue, et un cas à
+farthest unique où la condition brute passe mais cR échoue. La piste reste utile
+comme source d’obstructions, pas comme solver suffisant.
+
 ## Piste F : complexité / NP-difficulté / contre-exemples à la tractabilité
 
 Intuition : l’existence dans un PC-tree compact peut être plus dure que le test
@@ -122,6 +128,17 @@ Hsu/McConnell peut rendre le problème plus rigide que les PC-trees arbitraires.
 
 Prochain essai concret : comparer PC-trees arbitraires et PC-trees obtenus à
 partir de dissimilarités quasi-circulaires.
+
+État 2026-05-22 : deux familles explicites ont été ajoutées sans modifier
+`mixed` :
+
+- `permuted_cycle` : sous-cas planted-cycle où le témoin est caché par
+  relabellisation ;
+- `paired_farthest` : famille à appariements farthest uniques, rareté d’ordres
+  cR et faux positifs farthest.
+
+Le benchmark peut maintenant ajouter des diagnostics exacts jusqu’à une taille
+bornée via `--diagnostics-up-to`.
 
 ## Sous-cas
 

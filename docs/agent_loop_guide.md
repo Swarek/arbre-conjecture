@@ -133,3 +133,11 @@ Toujours écrire explicitement si un résultat est :
 
 Un solver qui passe tous les tests n’est pas une solution tant que
 `docs/proof_obligations.md` n’est pas rempli.
+
+## Sortie alternative du Goal courant
+
+Le Goal actif demande une exploration beaucoup plus large avant abandon honnête :
+si aucune voie valide ne reste, il faut documenter au moins 50 pistes actives ou
+tentatives distinctes avant d’arrêter sur un rapport de blocage. Les règles de
+bascule après deux itérations restent valables localement, mais elles ne suffisent
+pas à conclure que le Goal global est bloqué.

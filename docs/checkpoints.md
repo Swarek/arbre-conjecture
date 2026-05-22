@@ -15,6 +15,10 @@ Un commit stable doit satisfaire :
 - Statut attendu : baseline exacte `n <= 8`, placeholder incomplet au-delà.
 - Validation initiale : `make quick` vert et `make bench-quick` sans timeout,
   avec runs incomplets explicitement comptés pour `n > 8`.
+- Checkpoint Goal 2026-05-22 : à reporter après commit. Diagnostics
+  d’obstructions, contre-exemples farthest, familles Piste F et benchmark ciblé
+  ajoutés. Validation observée : `make quick`, `make hunt-counterexamples`,
+  `make check`, `make bench-quick`, `make bench-piste-f`.
 
 ## Rollback
 

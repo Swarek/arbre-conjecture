@@ -24,6 +24,7 @@ make check
 make hunt-counterexamples
 make bench-quick
 make bench
+make bench-piste-f
 make acceptance
 ```
 
@@ -35,6 +36,11 @@ version plus lourde.
 `make hunt-counterexamples` lance une recherche aléatoire plus longue avec
 shrink. Elle est faite pour les moments où une candidate semble marcher et doit
 être attaquée avant d’être considérée comme un progrès stable.
+
+`make bench-piste-f` lance des benchmarks ciblés sur deux familles explicites :
+`permuted_cycle` comme sous-cas planted-cycle, et `paired_farthest` comme famille
+hard-looking à appariements farthest. Ces familles ne sont pas ajoutées au
+`mixed` par défaut.
 
 Dans `tools/pc_circular_conjecture_test.py`, la sortie `JUSTE` signifie seulement
 que la candidate a été égale à l’oracle exact sur les instances générées par ce

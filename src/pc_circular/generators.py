@@ -36,6 +36,24 @@ def cycle_metric(n: int) -> list[list[int]]:
     return D
 
 
+def _permute_labels(D: list[list[int]], *, rng: random.Random | None = None) -> list[list[int]]:
+    rng = rng or random.Random()
+    n = len(D)
+    labels = list(range(n))
+    rng.shuffle(labels)
+    permuted = _zero_matrix(n)
+    for hidden_i, label_i in enumerate(labels):
+        for hidden_j, label_j in enumerate(labels):
+            permuted[label_i][label_j] = D[hidden_i][hidden_j]
+    return permuted
+
+
+def permuted_cycle_metric(n: int, *, rng: random.Random | None = None) -> list[list[int]]:
+    """Cycle metric with a hidden planted circular order."""
+
+    return _permute_labels(cycle_metric(n), rng=rng)
+
+
 def block_cycle(n: int, *, blocks: int | None = None) -> list[list[int]]:
     blocks = blocks or max(2, min(5, n // 2 or 1))
     block_of = [min(blocks - 1, i * blocks // n) for i in range(n)]
@@ -81,6 +99,44 @@ def non_strict_large_farthest_instance(n: int) -> list[list[int]]:
         for j in range(half, n):
             D[i][j] = D[j][i] = 2
     return D
+
+
+def paired_farthest_matching(n: int, *, rng: random.Random | None = None) -> list[list[int]]:
+    """Hard-looking family with planted unique farthest pairs.
+
+    For even ``n=2m``, hidden labels are paired ``A_i, B_i``.  Paired points
+    have distance 3, same-side points have distance 1, and cross-pair points
+    have distance 2.  For odd ``n``, one neutral point is added at distance 1
+    from all others.
+    """
+
+    if n <= 1:
+        return _zero_matrix(n)
+
+    D = _zero_matrix(n)
+    paired_n = n if n % 2 == 0 else n - 1
+    neutral = n - 1 if n % 2 == 1 else None
+    side = {}
+    pair = {}
+    for i in range(paired_n // 2):
+        a = 2 * i
+        b = 2 * i + 1
+        side[a] = "A"
+        side[b] = "B"
+        pair[a] = pair[b] = i
+
+    for i in range(n):
+        for j in range(i + 1, n):
+            if neutral is not None and (i == neutral or j == neutral):
+                value = 1
+            elif pair[i] == pair[j]:
+                value = 3
+            elif side[i] == side[j]:
+                value = 1
+            else:
+                value = 2
+            D[i][j] = D[j][i] = value
+    return _permute_labels(D, rng=rng)
 
 
 def quasi_circular_not_circular_four_point() -> list[list[int]]:
@@ -132,6 +188,8 @@ def instance_by_kind(
         return random_dissimilarity(n, values=values, rng=rng)
     if kind == "cycle":
         return cycle_metric(n)
+    if kind == "permuted_cycle":
+        return permuted_cycle_metric(n, rng=rng)
     if kind == "block":
         return block_cycle(n)
     if kind == "ultrametric":
@@ -140,6 +198,8 @@ def instance_by_kind(
         return equal_distance_instance(n)
     if kind == "non_strict":
         return non_strict_large_farthest_instance(n)
+    if kind == "paired_farthest":
+        return paired_farthest_matching(n, rng=rng)
     if kind == "mixed":
         return mixed_instance(n, rng=rng, values=values)
     raise ValueError(f"unknown instance kind: {kind}")

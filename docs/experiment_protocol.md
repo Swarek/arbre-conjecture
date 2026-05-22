@@ -63,6 +63,17 @@ Les benchmarks mesurent médiane, p95, timeouts, nombre de runs incomplets et un
 ajustement grossier `time ~= C * n^p`, comparé à un modèle exponentiel. Les
 timeouts et résultats incomplets doivent rester visibles dans le JSON.
 
+Benchmarks ciblés Piste F :
+
+```bash
+make bench-piste-f
+```
+
+Cette commande écrit des rapports dédiés aux familles `permuted_cycle` et
+`paired_farthest`, avec diagnostics exacts jusqu’à `n <= 8` pour compter les
+frontiers, les ordres cR valides, les ordres passant farthest, et les faux
+positifs farthest.
+
 ## Interprétation
 
 Un algorithme qui passe les gates peut encore être faux. Après chaque succès, il
@@ -106,5 +117,10 @@ Règles de recherche :
    complexité/réduction NP-hard ou un sous-cas polynomial clairement prouvé.
 8. Toute note doit séparer théorème prouvé, conséquence directe, conjecture,
    preuve expérimentale et intuition.
+
+Pour le Goal courant, une sortie alternative honnête exige une exploration
+documentée d’au moins 50 pistes ou tentatives actives avant de conclure qu’aucune
+voie valide ne reste. Cette barre ne réduit pas les gates de correction ; elle
+évite seulement un abandon trop précoce.
 
 Toute modification des tests doit être justifiée dans `docs/experiment_log.md`.

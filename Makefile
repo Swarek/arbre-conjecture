@@ -1,7 +1,7 @@
 PYTHON ?= $(shell if [ -x .venv/bin/python ]; then echo .venv/bin/python; elif command -v python3 >/dev/null 2>&1; then echo python3; else echo python; fi)
 PYTEST ?= $(PYTHON) -m pytest
 
-.PHONY: quick check hunt-counterexamples bench-quick bench unit acceptance
+.PHONY: quick check hunt-counterexamples bench-quick bench bench-piste-f unit acceptance
 
 unit:
 	$(PYTEST) -q
@@ -59,6 +59,36 @@ bench:
 	  --instance-kind mixed \
 	  --pc-tree star \
 	  --output reports/complexity_report.json
+
+bench-piste-f:
+	mkdir -p reports && \
+	$(PYTHON) tools/pc_circular_complexity_benchmark.py \
+	  --candidate src/pc_circular/solvers/candidate.py:solve \
+	  --sizes 4,5,6,8,10,12,16,20 \
+	  --repeats 10 \
+	  --timeout 2.0 \
+	  --instance-kind permuted_cycle \
+	  --pc-tree star \
+	  --diagnostics-up-to 8 \
+	  --output reports/complexity_permuted_cycle_star.json && \
+	$(PYTHON) tools/pc_circular_complexity_benchmark.py \
+	  --candidate src/pc_circular/solvers/candidate.py:solve \
+	  --sizes 4,6,8,10,12,16,20,30,40 \
+	  --repeats 10 \
+	  --timeout 2.0 \
+	  --instance-kind paired_farthest \
+	  --pc-tree star \
+	  --diagnostics-up-to 8 \
+	  --output reports/complexity_paired_farthest_star.json && \
+	$(PYTHON) tools/pc_circular_complexity_benchmark.py \
+	  --candidate src/pc_circular/solvers/candidate.py:solve \
+	  --sizes 4,6,8,10,12,16,20 \
+	  --repeats 10 \
+	  --timeout 2.0 \
+	  --instance-kind paired_farthest \
+	  --pc-tree mixed \
+	  --diagnostics-up-to 8 \
+	  --output reports/complexity_paired_farthest_mixed.json
 
 acceptance:
 	make check && make bench
