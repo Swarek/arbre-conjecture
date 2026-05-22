@@ -262,6 +262,55 @@ def find_farthest_prop_4_4_violation(D: Matrix, order: Order, *, strict: bool = 
     return None
 
 
+def passes_farthest_prop_4_5_order_test(D: Matrix, order: Order, *, strict: bool = False) -> bool:
+    """Return whether no Proposition 4.5 farthest obstruction is found.
+
+    Proposition 4.5 applies to a fixed compatible quasi-circular order.  This
+    predicate intentionally does not check quasi-circularity itself; callers
+    must keep that precondition explicit.
+    """
+
+    return find_farthest_prop_4_5_obstruction(D, order, strict=strict) is None
+
+
+def find_farthest_prop_4_5_obstruction(D: Matrix, order: Order, *, strict: bool = False) -> dict | None:
+    """Return a farthest-neighbor obstruction of the form in Proposition 4.5."""
+
+    n = _validate_order_for_D(D, order)
+    position = {value: idx for idx, value in enumerate(order)}
+    farthest = farthest_sets(D)
+
+    for x in range(n):
+        for y in range(n):
+            if x == y:
+                continue
+            for xp in farthest[x]:
+                for yp in farthest[y]:
+                    if len({x, xp, y, yp}) < 4:
+                        continue
+                    if not strict and (({x, xp} & farthest[y]) or ({y, yp} & farthest[x])):
+                        continue
+                    pattern = _prop_4_5_pattern_from_x(position, x, y, xp, yp, n)
+                    if pattern is not None:
+                        return {
+                            "x": x,
+                            "y": y,
+                            "x_farthest": xp,
+                            "y_farthest": yp,
+                            "pattern": pattern,
+                            "positions": (
+                                position[x],
+                                position[xp],
+                                position[y],
+                                position[yp],
+                            ),
+                            "strict": strict,
+                            "farthest_x": sorted(farthest[x]),
+                            "farthest_y": sorted(farthest[y]),
+                        }
+    return None
+
+
 def _prop_4_4_alternates_from_x(position: dict[int, int], x: int, y: int, xp: int, yp: int, n: int) -> bool:
     if len({x, y, xp, yp}) < 4:
         return False
@@ -271,6 +320,18 @@ def _prop_4_4_alternates_from_x(position: dict[int, int], x: int, y: int, xp: in
 
     after_x = sorted((y, xp, yp), key=offset)
     return after_x == [y, xp, yp] or after_x == [yp, xp, y]
+
+
+def _prop_4_5_pattern_from_x(position: dict[int, int], x: int, y: int, xp: int, yp: int, n: int) -> str | None:
+    def offset(point: int) -> int:
+        return (position[point] - position[x]) % n
+
+    after_x = sorted((xp, y, yp), key=offset)
+    if after_x == [xp, y, yp]:
+        return "x_xp_y_yp"
+    if after_x == [yp, y, xp]:
+        return "x_yp_y_xp"
+    return None
 
 
 def find_farthest_crossing_violation(D: Matrix, order: Order) -> dict | None:

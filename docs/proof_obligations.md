@@ -49,6 +49,21 @@ Observation expérimentale initiale : sur les ordres quasi-circulaires exhaustif
 testés en petit `n`, la version Proposition 4.4 n’a pas montré de faux négatif
 cR. Cela reste une vérification expérimentale, pas une preuve interne au dépôt.
 
+### Proposition 4.5 sur ordre quasi-circulaire fixé
+
+Statut : preuve expérimentale, précondition quasi-circularité explicite.
+
+`find_farthest_prop_4_5_obstruction` cherche un certificat farthest d’échec cR
+du type décrit dans `strongly-circular-sidma-1.pdf`. Sur tous les ordres
+quasi-circulaires exhaustifs testés pour `n <= 5`, valeurs `{1,2,3}`, l’absence
+d’un tel certificat coïncide avec `is_precircular_order_cR`.
+
+Limites :
+
+- ce résultat concerne un ordre fixé ;
+- il dépend de la précondition quasi-circularité ;
+- il ne décide pas encore l’existence d’un bon ordre dans un PC-tree compact.
+
 ### Projection locale des obstructions
 
 Statut : outil expérimental.

@@ -104,3 +104,50 @@ Décision : ne pas poursuivre la condition farthest-crossing brute comme solver
 autonome. Continuer Piste E seulement comme outil de génération
 d’obstructions, et comparer avec Piste C/Piste B pour ajouter les contraintes
 manquantes.
+
+## ExecPlan 2026-05-22 - Prop 4.5 fixed-order diagnostic
+
+But : transformer les notes source `strongly-circular-sidma-1.pdf` en diagnostic
+exécutable pour un ordre fixé quasi-circulaire.
+
+Hypothèse : pour les ordres quasi-circulaires, l’absence de certificat farthest
+du type Proposition 4.5 coïncide avec `is_precircular_order_cR` sur les petites
+instances exhaustives. Si c’est vrai expérimentalement, ce diagnostic devient un
+accélérateur et un générateur d’obstructions pour les pistes B/C, mais pas un
+solver d’existence dans PC-tree.
+
+Fichiers à modifier : `src/pc_circular/predicates.py`,
+`tests/test_predicates.py`, éventuellement `docs/source_notes.md`,
+`docs/tracks/piste_e_farthest_quartets.md`, `docs/proof_obligations.md` et
+`docs/experiment_log.md`.
+
+Algorithme pressenti : ajouter `find_farthest_prop_4_5_obstruction(D, order)`,
+qui cherche `x, y, x' in F_x, y' in F_y` avec l’un des patterns
+`x < x' < y < y'` ou `x < y' < y < x'`, en appliquant la clause non stricte
+`x,x' notin F_y` et `y,y' notin F_x` quand `strict=False`.
+
+Tests à exécuter : `make unit`, `make quick`, puis un script borné exhaustif
+sur `n <= 5`, valeurs `{1,2,3}`, restreint aux ordres
+`is_quasi_circular_order`.
+
+Risques : mal interpréter les relations cycliques, appliquer le critère hors
+quasi-circularité, ou confondre un test d’ordre fixé avec l’existence dans un
+PC-tree.
+
+Plan de contre-exemples : si le diagnostic diverge de `is_precircular_order_cR`
+sur un ordre quasi-circulaire, enregistrer la matrice et l’ordre dans les
+régressions. Chercher aussi un exemple hors quasi-circularité où le diagnostic
+échoue, pour documenter la limite.
+
+Plan subagents : pas de nouveau fanout immédiat ; les retours précédents
+convergent sur cette étape locale.
+
+Résultats observés : `find_farthest_prop_4_5_obstruction` et
+`passes_farthest_prop_4_5_order_test` ajoutés. Tests unitaires ciblés ajoutés.
+Probe exhaustif sur `n <= 5`, valeurs `{1,2,3}`, restreint aux ordres
+quasi-circulaires : 0 désaccord avec `is_precircular_order_cR` ; `n=5` contient
+`73272` ordres quasi-circulaires vérifiés.
+
+Décision : conserver Prop. 4.5 comme diagnostic d’ordre fixé et source
+d’obstructions exactes pour Piste B/C. Ne pas l’intégrer dans `candidate.py`
+tant qu’il ne traite pas directement l’existence dans PC-tree.

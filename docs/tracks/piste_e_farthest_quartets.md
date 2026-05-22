@@ -34,6 +34,8 @@ Artefacts :
 - `find_precircular_cR_violation`;
 - `find_farthest_crossing_violation`.
 - `passes_farthest_prop_4_4_condition`.
+- `find_farthest_prop_4_5_obstruction`.
+- `passes_farthest_prop_4_5_order_test`.
 
 ## Données observées
 
@@ -56,6 +58,30 @@ La version Proposition 4.4 est une condition nécessaire pour un ordre cR
 compatible. Elle n’est pas utilisée comme oracle global. Le prochain test utile
 est de vérifier expérimentalement le couple Prop. 4.4/4.5 sur les ordres
 quasi-circulaires.
+
+## Prop. 4.5 sur ordre fixé
+
+Statut : preuve expérimentale, ordre fixé seulement.
+
+Le diagnostic `passes_farthest_prop_4_5_order_test` cherche l’absence de
+certificat farthest du type :
+
+- `x < x' < y < y'`, ou
+- `x < y' < y < x'`,
+
+avec `x' in F_x` et `y' in F_y`, et avec la clause non stricte qui exclut les
+dégénérescences autorisées.
+
+Résultat observé :
+
+- aucun désaccord avec `is_precircular_order_cR` sur les ordres
+  quasi-circulaires pour `n <= 5`, valeurs `{1,2,3}`;
+- un test de régression exhaustif verrouille déjà le cas `n=4`;
+- hors quasi-circularité, le diagnostic n’est pas suffisant et ne doit pas être
+  utilisé comme oracle.
+
+Prochaine action : utiliser ce diagnostic comme accélérateur ou générateur
+d’obstructions pour le CSP/DP, sans le confondre avec l’existence dans PC-tree.
 
 ## Prochaine action
 

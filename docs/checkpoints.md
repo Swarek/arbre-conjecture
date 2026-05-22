@@ -19,6 +19,9 @@ Un commit stable doit satisfaire :
   d’obstructions, contre-exemples farthest, familles Piste F et benchmark ciblé
   ajoutés. Validation observée : `make quick`, `make hunt-counterexamples`,
   `make check`, `make bench-quick`, `make bench-piste-f`.
+- Checkpoint Prop. 4.5 : à reporter après commit. Diagnostic d’ordre fixé
+  quasi-circulaire ajouté. Validation observée : `make quick`, `make check`,
+  probe exhaustif `n <= 5` sur ordres quasi-circulaires sans désaccord.
 
 ## Rollback
 

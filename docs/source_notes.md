@@ -66,9 +66,11 @@ Impact pour le Goal :
 
 - cela concerne le test d’un ordre donné, pas encore l’existence dans un
   PC-tree ;
-- la piste utile est de remplacer le test `O(n^4)` d’un ordre par un test
-  expérimental `O(n^2)` conditionné par quasi-circularité, puis de vérifier
-  l’équivalence contre l’oracle sur petits `n` ;
+- `find_farthest_prop_4_5_obstruction` et
+  `passes_farthest_prop_4_5_order_test` encodent maintenant ce diagnostic ;
+- première vérification expérimentale : aucun désaccord avec
+  `is_precircular_order_cR` sur tous les ordres quasi-circulaires pour
+  `n <= 5`, valeurs `{1,2,3}` ;
 - il faut garder séparés : ordre fixé, existence dans PC-tree, universalité.
 
 ## Modules et PQ-trees

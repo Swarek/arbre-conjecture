@@ -174,3 +174,30 @@
   `docs/source_notes.md`.
 - Next action : si la capture d’écran Proposition 4.4 est fournie comme fichier
   stable, l’ajouter dans `docs/source_materials/images/`.
+
+## 2026-05-22 Proposition 4.5 fixed-order diagnostic
+
+- Date/heure : 2026-05-22, Europe/Paris.
+- Commit hash : pending until checkpoint commit is created.
+- Hypothèse testée : sous précondition quasi-circularité d’un ordre fixé,
+  l’absence de certificat farthest Proposition 4.5 coïncide avec le prédicat
+  exact `is_precircular_order_cR`.
+- Changement fait : ajout de `find_farthest_prop_4_5_obstruction` et
+  `passes_farthest_prop_4_5_order_test`; ajout de tests unitaires ciblés et
+  d’un test exhaustif `n=4` sur les ordres quasi-circulaires.
+- Commande exécutée : `make unit`.
+- Résultat correction : `24 passed in 0.09s`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `24 passed in 0.08s`, puis `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : probe exhaustif local `n <= 5`, valeurs `{1,2,3}`,
+  restreint aux ordres quasi-circulaires.
+- Résultat correction : 0 désaccord ; `n=5` a vérifié `73272` ordres
+  quasi-circulaires.
+- Résultat benchmark : non applicable, test d’ordre fixé.
+- Conclusion : le diagnostic Prop. 4.5 est une bonne piste pour accélérer le
+  test d’un ordre donné et générer des obstructions exactes, mais ne résout pas
+  l’existence dans le PC-tree.
+- Next action : utiliser ce certificat dans Piste C ou B pour contraindre les
+  choix de branches plutôt que de tester les frontiers une par une.

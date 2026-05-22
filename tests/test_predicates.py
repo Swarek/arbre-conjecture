@@ -1,14 +1,18 @@
+import itertools
+
 from pc_circular.generators import cycle_metric, quasi_circular_not_circular_four_point
 from pc_circular.predicates import (
     all_circular_orders,
     farthest_sets,
     find_farthest_crossing_violation,
     find_farthest_prop_4_4_violation,
+    find_farthest_prop_4_5_obstruction,
     find_precircular_cR_violation,
     is_precircular_order_cR,
     is_quasi_circular_order,
     passes_farthest_crossing_condition,
     passes_farthest_prop_4_4_condition,
+    passes_farthest_prop_4_5_order_test,
 )
 
 
@@ -78,3 +82,39 @@ def test_prop_4_4_is_not_sufficient_without_quasi_circularity():
     assert not is_quasi_circular_order(D, order)
     assert not is_precircular_order_cR(D, order)
     assert passes_farthest_prop_4_4_condition(D, order)
+
+
+def test_prop_4_5_finds_obstruction_for_quasi_circular_non_cr_order():
+    D = quasi_circular_not_circular_four_point()
+    order = (0, 1, 2, 3)
+    assert is_quasi_circular_order(D, order)
+    assert not is_precircular_order_cR(D, order)
+    obstruction = find_farthest_prop_4_5_obstruction(D, order)
+    assert obstruction is not None
+    assert obstruction["pattern"] in {"x_xp_y_yp", "x_yp_y_xp"}
+    assert not passes_farthest_prop_4_5_order_test(D, order)
+
+
+def test_prop_4_5_has_no_obstruction_for_cycle_metric_order():
+    D = cycle_metric(6)
+    order = (0, 1, 2, 3, 4, 5)
+    assert is_quasi_circular_order(D, order)
+    assert is_precircular_order_cR(D, order)
+    assert find_farthest_prop_4_5_obstruction(D, order) is None
+    assert passes_farthest_prop_4_5_order_test(D, order)
+
+
+def test_prop_4_5_matches_cr_on_exhaustive_quasi_circular_orders_n4():
+    n = 4
+    pairs = list(itertools.combinations(range(n), 2))
+    checked_quasi = 0
+    for values in itertools.product((1, 2, 3), repeat=len(pairs)):
+        D = [[0] * n for _ in range(n)]
+        for (i, j), value in zip(pairs, values):
+            D[i][j] = D[j][i] = value
+        for order in all_circular_orders(n):
+            if not is_quasi_circular_order(D, order):
+                continue
+            checked_quasi += 1
+            assert passes_farthest_prop_4_5_order_test(D, order) is is_precircular_order_cR(D, order)
+    assert checked_quasi == 1134
