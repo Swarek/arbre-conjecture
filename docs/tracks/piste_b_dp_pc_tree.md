@@ -109,7 +109,47 @@ Retour subagents :
   sous-frontiers ou mesurer le ratio `#signatures / #frontiers` sur arbres
   balanced et familles `random` / `paired_farthest`.
 
+## Résultats T015
+
+Statut : preuve expérimentale d'une limite de compacité pour cette signature.
+
+Artefacts ajoutés :
+
+- `block_bad_side_signature` : signature de bloc orienté avec endpoints,
+  masques `inside/external` et masques `inside/inside` ;
+- `forced_bad_side_pairs_in_block` : paires déjà mauvaises sur les deux côtés du
+  bloc ;
+- `block_signature_bucket_report` : métriques `#signatures / #frontiers`,
+  plus gros bucket et frontiers forcées ;
+- `find_signature_collision` : cherche deux frontiers de même signature qui
+  divergent dans un même contexte externe.
+
+Probe borné sur blocs de taille `4,5,6`, univers `n=6,7,8`, familles
+`equal/cycle/block/random/paired_farthest` :
+
+- `equal` compresse fortement : ratio `0.5`, `0.1667`, puis `0.0417` ;
+- `cycle` est déjà injectif sur ces blocs : ratio `1.0` ;
+- `block` compresse partiellement : ratios observés `0.5667..0.8333` ;
+- `random` est quasi injectif : ratios observés `0.95..1.0` ;
+- `paired_farthest` est quasi injectif : ratios observés `0.9944..1.0` ;
+- aucune collision réelle trouvée dans les contextes testés ;
+- les collisions avec signature volontairement faible et endpoints-only sont
+  détectées, donc le chercheur de collisions est opérationnel.
+- probe subagent indépendante : collisions de signature simples trouvées, mais
+  aucune collision sémantique sur `37924` checks de même contexte ; ratios
+  équilibrés `random` dans `0.936121..1.0` et `paired_farthest` dans
+  `0.949627..1.0`.
+
+Interprétation :
+
+Cette signature est utile pour comprendre les contraintes, mais elle est trop
+fine sur les familles stress. Elle ressemble davantage à une réénumération
+encodée qu'à une compression DP exploitable.
+
 ## Prochaine action
 
-Implémenter un mode expérimental `find_signature_collision` avant tout usage
-dans `candidate.py`.
+Ne pas intégrer cette signature dans `candidate.py`. La suite Piste B doit soit
+proposer une signature moins globale, soit être mise en pause au profit de
+Piste F/sous-cas. Une expérience raisonnable restante est de chercher un
+sous-cas où les masques se factorisent, par exemple degré PC-tree borné ou
+familles laminaire/equal-block.

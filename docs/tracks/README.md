@@ -9,7 +9,7 @@ idées, essais, résultats, contre-exemples et prochaines actions par axe.
 | Piste | Fichier | Statut courant |
 | --- | --- | --- |
 | A - Contraintes locales P/C | `piste_a_local_pc_constraints.md` | Diagnostic utile ajouté ; pas solver |
-| B - DP sur PC-tree | `piste_b_dp_pc_tree.md` | Diagnostic bad-side fixed-order ajouté ; signature DP à falsifier |
+| B - DP sur PC-tree | `piste_b_dp_pc_tree.md` | Signature de bloc testée ; quasi injective sur familles stress |
 | C - SAT/CSP | `piste_c_sat_csp.md` | Benchmark interne ajouté ; compilation encore dominante |
 | D - Circular-ones / intersection | `piste_d_circular_ones.md` | Non testée expérimentalement |
 | E - Obstructions farthest/quartets | `piste_e_farthest_quartets.md` | Farthest seul réfuté ; cR quartets restent centraux |
@@ -46,6 +46,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T012 | 2026-05-22 | C | Backtracking pruné par signatures de nogoods complètes | `solve_pruned_nogood_csp` |
 | T013 | 2026-05-22 | C | Benchmark interne compile/solve/direct/pruning | `make bench-csp-quick` |
 | T014 | 2026-05-23 | B | cR fixed-order reformulé par mauvais témoins sur deux arcs | `passes_bad_side_cr_test` |
+| T015 | 2026-05-23 | B | Signature de bloc mesurée ; compression faible hors égal-distance | `block_signature_bucket_report` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

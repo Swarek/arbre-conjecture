@@ -480,3 +480,70 @@ Décision : continuer Piste B comme invariant fixed-order prouvé par réécritu
 et validé expérimentalement. Ne pas intégrer dans `candidate.py` avant une
 signature de sous-arbre testée ; prochaine étape : chercher collisions de
 signature ou mesurer l'explosion `#signatures / #frontiers`.
+
+## ExecPlan 2026-05-23 - block signature collision metrics
+
+But : transformer le diagnostic bad-side fixed-order en expérience falsifiable
+sur des sous-frontiers contiguës, afin de savoir si une DP PC-tree peut compacter
+les états ou si la signature devient quasi injective.
+
+Hypothèse : une sous-frontier orientée peut exposer une signature minimale
+composée des endpoints, des masques `inside/external` et des masques
+`inside/inside`. Si deux sous-frontiers ont la même signature mais divergent
+dans un même contexte externe pour `is_precircular_order_cR`, la signature est
+réfutée. Si le ratio `#signatures / #frontiers` est proche de `1` sur les
+familles stress, la piste DP compacte est suspecte même sans collision.
+
+Fichiers à modifier : `src/pc_circular/solvers/dp_experiments.py`,
+`tests/test_dp_experiments.py`, `docs/tracks/piste_b_dp_pc_tree.md`,
+`docs/experiment_log.md`, `docs/proof_obligations.md`,
+`docs/tracks/README.md`, `docs/checkpoints.md`.
+
+Algorithme pressenti : pour un bloc `sigma` et un univers global, calculer :
+
+- `endpoints = (sigma[0], sigma[-1])`;
+- `EI_mask[a,e]` pour `a` dans le bloc et `e` hors bloc : bit gauche/droite
+  selon l'existence d'un témoin mauvais interne de chaque côté de `a`;
+- `II_mask[x,z]` pour deux labels internes : bits selon l'existence de témoins
+  mauvais sur les deux arcs internes induits par `sigma`.
+
+Grouper les frontiers par signature, reporter nombre de signatures, ratio,
+plus gros bucket et rejets forcés. Ajouter aussi un chercheur de collision qui
+teste deux frontiers de même signature dans les mêmes contextes externes.
+
+Tests à exécuter : `make unit`, probes bornés sur familles `random`,
+`paired_farthest`, `cycle`, `equal` avec blocs de taille `4..6`, puis
+`make quick`, `make check`, `make bench-quick`.
+
+Risques : l'expérience mesure une signature candidate, pas toutes les DP
+possibles ; un ratio élevé n'est pas une preuve de dureté ; les contextes
+testés peuvent manquer une collision ; les masques `II` autour des bords du bloc
+peuvent être interprétés avec une mauvaise orientation.
+
+Plan de contre-exemples : le chercheur doit accepter une signature volontairement
+faible pour vérifier qu'il détecte bien une collision connue. Ensuite utiliser
+la signature candidate sur petites familles ; toute collision réelle sera ajoutée
+comme régression durable.
+
+Plan subagents : deux explorateurs lecture seule tournent en parallèle :
+validation de la définition de signature et recherche de collisions/mesures
+indépendantes. L'intégration reste locale.
+
+Résultats observés : `block_bad_side_signature`,
+`forced_bad_side_pairs_in_block`, `block_signature_bucket_report` et
+`find_signature_collision` ajoutés dans `dp_experiments.py`. Les masques
+`inside/inside` ont été corrigés pour être relatifs au bord du bloc :
+`between` versus `through-boundary`. Tests ajoutés pour masques
+`inside/external`, rapport de buckets, collision détectée avec une signature
+volontairement faible, collision endpoints-only, et absence de collision sur
+égal-distance. Probe borné sur blocs de taille `4,5,6`, familles
+`equal/cycle/block/random/paired_farthest`, `27` lignes : `equal` compresse
+(`ratio` jusqu'à `0.0417` à `k=6`), `block` compresse partiellement
+(`0.5667..0.8333` dans la probe), mais `cycle`, `random` et
+`paired_farthest` restent quasi injectifs (`ratio` environ `0.95..1.0`) avec
+beaucoup de frontiers déjà forcément rejetées.
+
+Décision : la signature candidate est cohérente et falsifiable, mais trop
+globale pour suggérer une DP compacte telle quelle. Continuer Piste B seulement
+si une signature moins indexée par paires globales est proposée ; sinon basculer
+vers Piste F ou un sous-cas polynomial.

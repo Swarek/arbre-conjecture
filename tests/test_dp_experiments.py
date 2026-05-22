@@ -11,6 +11,10 @@ from pc_circular.predicates import all_circular_orders, is_precircular_order_cR
 from pc_circular.solvers.dp_experiments import (
     bad_side_signature,
     bad_witnesses_by_pair,
+    block_bad_side_signature,
+    block_signature_bucket_report,
+    find_signature_collision,
+    forced_bad_side_pairs_in_block,
     find_bad_side_cr_violation,
     is_bad_witness,
     passes_bad_side_cr_test,
@@ -81,3 +85,77 @@ def test_bad_side_matches_precircular_cr_on_random_small_orders():
             D = random_dissimilarity(n, rng=rng, values=(1, 2, 3, 4))
             for order in orders:
                 assert passes_bad_side_cr_test(D, order) is is_precircular_order_cR(D, order)
+
+
+def test_block_signature_tracks_forced_inside_external_pair():
+    D = [
+        [0, 3, 1, 1],
+        [3, 0, 1, 1],
+        [1, 1, 0, 3],
+        [1, 1, 3, 0],
+    ]
+    block = (1, 0, 2)
+    forced = forced_bad_side_pairs_in_block(D, block, universe=range(4))
+    assert forced["inside_external"] == ((0, 3),)
+    assert block_bad_side_signature(D, block, universe=range(4))[3] == (1, 2)
+
+
+def test_block_signature_bucket_report_exposes_compression_ratio():
+    D = equal_distance_instance(5)
+    frontiers = [
+        (0, 1, 2, 3),
+        (0, 2, 1, 3),
+        (3, 1, 2, 0),
+    ]
+    report = block_signature_bucket_report(D, frontiers, universe=range(5))
+    assert report["frontier_count"] == 3
+    assert report["signature_count"] == 2
+    assert report["largest_bucket_size"] == 2
+    assert report["collision_bucket_count"] == 1
+    assert report["forced_reject_frontiers"] == 0
+    assert report["frontiers_per_signature"] == 1.5
+    assert report["median_bucket_size"] == 1.5
+    assert any(item["endpoints"] == (0, 3) and item["signature_ratio"] == 0.5 for item in report["endpoint_conditioned"])
+
+
+def test_signature_collision_finder_catches_intentionally_weak_signature():
+    D = quasi_circular_not_circular_four_point()
+    frontiers = [(0, 1, 2, 3), (0, 2, 1, 3)]
+    collision = find_signature_collision(
+        D,
+        frontiers,
+        contexts=[()],
+        universe=range(4),
+        signature_func=lambda _frontier: ("weak",),
+    )
+    assert collision is not None
+    assert collision["cr_a"] is not collision["cr_b"]
+    assert collision["violation_a"] is not None
+
+
+def test_signature_collision_finder_catches_endpoints_only_collision():
+    D = [
+        [0, 4, 3, 4, 2, 2],
+        [4, 0, 2, 2, 1, 1],
+        [3, 2, 0, 2, 4, 3],
+        [4, 2, 2, 0, 3, 2],
+        [2, 1, 4, 3, 0, 1],
+        [2, 1, 3, 2, 1, 0],
+    ]
+    collision = find_signature_collision(
+        D,
+        [(0, 2, 3, 1), (0, 3, 2, 1)],
+        contexts=[(5, 4)],
+        universe=range(6),
+        signature_func=lambda frontier: (frontier[0], frontier[-1]),
+    )
+    assert collision is not None
+    assert collision["cr_a"] is True
+    assert collision["cr_b"] is False
+    assert collision["violation_b"]["quadruple"] == (0, 3, 2, 1)
+
+
+def test_default_block_signature_has_no_collision_on_equal_distance_context():
+    D = equal_distance_instance(5)
+    frontiers = [(0, 1, 2, 3), (0, 2, 1, 3)]
+    assert find_signature_collision(D, frontiers, contexts=[(4,)], universe=range(5)) is None

@@ -219,3 +219,42 @@ indépendant a ajouté des familles `random/cycle/permuted_cycle/block/
 ultrametric/equal/non_strict/paired_farthest/mixed` jusqu'à `n=9`, sans
 désaccord sur `926775` comparaisons. La variante non stricte `>=` est
 explicitement exclue, car elle rejette les égal-distance.
+
+### Signature bad-side de bloc
+
+Statut : outil expérimental / limite de compacité observée.
+
+`block_bad_side_signature` applique l'invariant bad-side à une sous-frontier
+orientée supposée contiguë. La signature conserve :
+
+- les endpoints du bloc ;
+- les masques `inside/external`, indiquant si des témoins mauvais internes sont
+  à gauche, à droite, ou des deux côtés d'un label interne face à un endpoint
+  externe ;
+- les masques `inside/inside`, avec un bit `between` et un bit
+  `through-boundary`, indiquant si les témoins mauvais internes sont entre les
+  deux endpoints du bloc ou sur le côté qui rejoint le contexte externe.
+
+Ce que cela couvre :
+
+- obligation 1 expérimentale : les masques enregistrent des obstructions
+  nécessaires issues directement de la caractérisation fixed-order ;
+- obligation 6 expérimentale : les égalités restent gouvernées par le `>` strict
+  hérité de `is_bad_witness`.
+
+Limites :
+
+- cette signature n'est pas prouvée suffisante pour composer des sous-arbres ;
+- elle n'établit aucune complexité polynomiale ;
+- la probe T015 montre qu'elle devient quasi injective sur `cycle`, `random` et
+  `paired_farthest`, donc elle ne constitue pas en l'état une compression DP.
+
+Preuve expérimentale T015 : sur blocs de taille `4,5,6`, familles
+`equal/cycle/block/random/paired_farthest`, aucune collision réelle n'a été
+trouvée dans les contextes testés, mais le ratio `#signatures / #frontiers` vaut
+souvent `0.95..1.0` hors égal-distance et block partiel. Le chercheur de
+collisions détecte bien des collisions lorsque la signature est volontairement
+affaiblie ou réduite aux endpoints. Une probe subagent indépendante a trouvé des
+collisions de signature simples mais aucune collision sémantique sur `37924`
+checks de même contexte, ce qui suggère une signature cohérente mais peu
+compressive.

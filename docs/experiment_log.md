@@ -410,3 +410,52 @@
   la signature de sous-arbre compacte reste à tester/falsifier.
 - Next action : implémenter `find_signature_collision` ou un rapport
   `#signatures / #frontiers` pour mesurer si la piste DP compacte survit.
+
+## 2026-05-23 block signature collision metrics
+
+- Date/heure : 2026-05-23, Europe/Paris.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : une signature de sous-frontier orientée fondée sur
+  endpoints, masques `inside/external` et masques `inside/inside` peut compacter
+  les frontiers sans perdre les interactions bad-side nécessaires à cR.
+- Changement fait : ajout de `block_bad_side_signature`,
+  `forced_bad_side_pairs_in_block`, `block_signature_bucket_report` et
+  `find_signature_collision` dans `src/pc_circular/solvers/dp_experiments.py`;
+  les masques `inside/inside` sont relatifs au bord du bloc (`between` /
+  `through-boundary`) ; ajout de tests de masques, buckets, collision
+  volontairement faible, collision endpoints-only et contexte égal-distance.
+- Commande exécutée avant modification : `make quick`.
+- Résultat correction : `44 passed in 0.49s`, puis `JUSTE`.
+- Commande exécutée : `make unit`.
+- Résultat correction : `49 passed in 0.66s`.
+- Commande exécutée : probe signature de blocs avec `PYTHONPATH=src`, blocs de
+  taille `4,5,6`, univers `n=6,7,8`, familles
+  `equal/cycle/block/random/paired_farthest`.
+- Résultat correction/complexité : `27` lignes, aucune collision réelle trouvée
+  dans les contextes testés. Ratios `#signatures / #frontiers` : `equal`
+  descend à `0.0417` pour `k=6`, `block` est partiellement compressé
+  (`0.5667..0.8333`), mais `cycle`, `random` et `paired_farthest` sont
+  quasi injectifs (`0.95..1.0`) ; beaucoup de frontiers sont déjà forcées
+  rejetées.
+- Résultat subagents : convention `II` corrigée en `between` /
+  `through-boundary`; métriques ajoutées `frontiers_per_signature`,
+  `median_bucket_size` et `log2_signature_count`; une collision endpoints-only
+  a été transformée en test. Une probe indépendante a trouvé des collisions de
+  signature simples mais aucune collision sémantique sur `37924` checks de même
+  contexte ; ratios équilibrés `random` `0.936121..1.0` et `paired_farthest`
+  `0.949627..1.0`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `49 passed in 0.47s`, puis `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark : `reports/complexity_report_quick.json` écrit ; 8 tailles,
+  `0` timeout, `20` runs incomplets explicitement marqués pour `n > 8`,
+  médiane `n=20` environ `0.00352s`.
+- Conclusion : la signature candidate est cohérente et falsifiable, mais trop
+  fine pour une DP compacte générale. Elle ressemble à une réénumération sur les
+  familles stress.
+- Next action : ne pas intégrer cette signature dans `candidate.py`. Basculer
+  soit vers une signature moins globale/sous-cas borné, soit vers Piste F pour
+  formaliser une obstruction de compacité.
