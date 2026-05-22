@@ -12,7 +12,7 @@ from pc_circular.predicates import (
 )
 from pc_circular.oracle import exact_oracle_pc_tree
 from pc_circular.pc_tree import balanced_pc_tree, represents_order
-from pc_circular.solvers.candidate import _minimum_distance_cycle_order
+from pc_circular.solvers.candidate import _minimum_distance_cycle_order, _paired_farthest_order
 
 COUNTEREXAMPLES = [
     {
@@ -86,7 +86,24 @@ COUNTEREXAMPLES = [
         "passes_farthest_crossing": True,
         "minimum_cycle_order": [0, 4, 1, 2, 3, 5],
         "pc_tree_kind": "mixed",
-        "minimum_cycle_represented": False,
+        "witness_represented": False,
+        "pc_tree_oracle_exists": False,
+    },
+    {
+        "name": "paired_farthest_witness_not_sufficient_without_representation",
+        "kind": "paired_farthest_representation_false_positive",
+        "D": [
+            [0, 3, 2, 1],
+            [3, 0, 1, 2],
+            [2, 1, 0, 3],
+            [1, 2, 3, 0],
+        ],
+        "order": [0, 3, 1, 2],
+        "is_circular_robinson": True,
+        "passes_farthest_crossing": True,
+        "paired_farthest_order": [0, 3, 1, 2],
+        "pc_tree_kind": "C",
+        "witness_represented": False,
         "pc_tree_oracle_exists": False,
     },
 ]
@@ -112,7 +129,9 @@ def test_recorded_counterexamples_match_predicates():
             assert find_farthest_crossing_violation(D, order) is not None
         if "minimum_cycle_order" in example:
             assert _minimum_distance_cycle_order(D, len(D)) == tuple(example["minimum_cycle_order"])
+        if "paired_farthest_order" in example:
+            assert _paired_farthest_order(D, len(D)) == tuple(example["paired_farthest_order"])
         if "pc_tree_kind" in example:
             T = balanced_pc_tree(len(D), kind=example["pc_tree_kind"])
-            assert represents_order(T, order) is example["minimum_cycle_represented"]
+            assert represents_order(T, order) is example["witness_represented"]
             assert exact_oracle_pc_tree(D, T)["exists"] is example["pc_tree_oracle_exists"]

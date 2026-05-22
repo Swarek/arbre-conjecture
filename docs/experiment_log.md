@@ -657,3 +657,58 @@
 - Next action : attaquer `paired_farthest` ou chercher une contrainte
   structurelle qui génère un ordre candidat représenté, pas seulement qui teste
   un ordre déjà connu.
+
+## 2026-05-23 paired-farthest structural witness
+
+- Date/heure : 2026-05-23, Europe/Paris.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : une matrice three-level où les arêtes maximales forment un
+  matching, les arêtes minimales forment deux cliques de même taille et un
+  neutre éventuel, admet un témoin cR construit en plaçant une clique puis ses
+  mates dans le même ordre.
+- Changement fait : ajout de `_paired_farthest_order` et
+  `candidate_paired_farthest_matching_witness` dans `candidate.py`. La branche
+  est ignorée quand `quasi_orders` est fourni ; avec `pc_tree`, elle vérifie
+  `represents_order` avant de retourner un positif. Tests ajoutés pour grandes
+  tailles star, neutre impair, perturbation d'une clique low, non-contournement
+  de `quasi_orders`, petites instances seeded, et contre-exemple PC-tree non
+  représenté.
+- Plan subagents : trois explorateurs lecture seule. Résultats : formule
+  constructive confirmée par bad-side ; aucun faux positif cR trouvé pour le
+  détecteur strict ; contre-exemple minimal `n=4` fourni si le garde
+  `represents_order` est absent ; sur balanced/mixed, beaucoup de témoins cR ne
+  sont pas représentés.
+- Commande exécutée : `make unit`.
+- Résultat correction : `75 passed in 0.55s`.
+- Commande exécutée : probe `paired_farthest` avec `PYTHONPATH=src`, tailles
+  `9,10,11,12,20,40,80,100`, seeds `0..9`, plus balanced/mixed et random.
+- Résultat correction/complexité : `OK checks 380`; solver
+  `candidate_paired_farthest_matching_witness` sur `paired_farthest/star`
+  jusqu'à `n=100`; temps observé `n=100` environ `0.0056s`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `75 passed`, puis `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make hunt-counterexamples`.
+- Résultat correction : `JUSTE` sur exhaustif `n=4`, `5000` random,
+  `max-n=8`, seed `314159`, shrink actif.
+- Commande exécutée : `make bench-piste-f`.
+- Résultat benchmark : `paired_farthest/star` passe à `0` timeout et `0`
+  incomplet ; `candidate_paired_farthest_matching_witness` est utilisé pour
+  tous les `n > 8`. `paired_farthest/mixed` garde `40` incomplets grande taille
+  car le témoin reconstruit n'est pas représenté par ces PC-trees.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark : `reports/complexity_report_quick.json` écrit ; 8 tailles,
+  `0` timeout, `0` incomplet.
+- Commande exécutée : `make bench`.
+- Résultat benchmark : `reports/complexity_report.json` écrit ; tailles jusqu'à
+  `n=100`, `0` timeout, `42` runs incomplets visibles ; médiane `n=100`
+  environ `2.14s`, fit polynomial empirique `p ~= 3.24` (`r2 ~= 0.92`). Le
+  benchmark mixed/star ne contient pas `paired_farthest`, donc les incomplets
+  sont inchangés.
+- Conclusion : sous-cas positif large-n prouvé et utile pour la famille stress
+  star. Il ne donne pas de rejet et ne résout pas paired-farthest non-star.
+- Next action : attaquer la représentation non-star de paired-farthest ou
+  basculer vers une piste A/C qui construit un ordre représenté sous contraintes
+  plutôt que seulement un témoin canonique.

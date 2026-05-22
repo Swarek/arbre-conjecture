@@ -8,6 +8,12 @@ Les détails vivants par piste sont dans `docs/tracks/README.md`. Ce fichier
 reste le portefeuille synthétique ; les fichiers `docs/tracks/piste_*.md`
 contiennent les essais, résultats, artefacts et prochaines actions.
 
+Complément externe : `docs/external_analysis_digest.md` résume une analyse GPT
+5.5 Pro fournie par l'utilisateur. À intégrer dans les prochaines itérations
+surtout pour trois axes : universalité comme variante polynomial-looking mais
+distincte de l'existence, sous-cas strict, et projection des ensembles
+`I_x(v) = {i : B_i intersecte F_x}` sur les branches d'un nœud `P`.
+
 ## Piste A : contraintes locales sur nœuds P/C
 
 Intuition : les croisements de cordes farthest-neighbor imposent peut-être des
@@ -27,6 +33,12 @@ plusieurs nœuds.
 
 Prochain essai concret : journaliser les quartets farthest qui réfutent chaque
 ordre et mesurer leur support minimal dans le PC-tree.
+
+Question ajoutée depuis l'analyse externe : pour un nœud `P` de branches
+`B_1,...,B_k`, mesurer si les projections `I_x(v)` des farthest sets sont
+laminaires ou intervalles circulaires dans les ordres admissibles des branches.
+Un résultat positif pointerait vers circular-ones local ; un résultat négatif
+alimenterait la piste NP-difficulté.
 
 ## Piste B : programmation dynamique sur le PC-tree
 
@@ -87,6 +99,11 @@ arcs indépendants.
 Prochain essai concret : cataloguer les violations minimales non représentables
 par une simple contrainte d’arc.
 
+Sous-piste à garder séparée : les contraintes de 2-balls/clusters de
+Brucker-Osswald peuvent être traitables par hypercycles/circular-ones, mais la
+condition cR actuelle est une contrainte de croisement de cordes, pas une simple
+contrainte de consécutivité.
+
 ## Piste E : obstructions interdites par quartets farthest-neighbor
 
 Intuition : les mauvais ordres pourraient être caractérisés par une famille
@@ -132,6 +149,11 @@ Hsu/McConnell peut rendre le problème plus rigide que les PC-trees arbitraires.
 
 Prochain essai concret : comparer PC-trees arbitraires et PC-trees obtenus à
 partir de dissimilarités quasi-circulaires.
+
+Sous-cas ajouté : explorer le cas strict comme algorithme spécialisé
+potentiellement polynomial. Ne pas l'intégrer à `candidate.py` avant d'avoir une
+détection stricte et une génération de candidats stricts vérifiées contre les
+PDF/source notes.
 
 État 2026-05-22 : deux familles explicites ont été ajoutées sans modifier
 `mixed` :

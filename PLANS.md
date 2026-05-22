@@ -811,3 +811,75 @@ Décision : conserver l'extension comme certificat positif sûr pour ordre fixé
 représenté. Elle améliore les PC-trees non-star quand le cycle est compatible
 avec les blocs du scaffold, sans résoudre les cas négatifs ni les vrais
 PC-trees Hsu/McConnell.
+
+## ExecPlan 2026-05-23 - paired-farthest structural witness
+
+But : attaquer la famille `paired_farthest` qui reste incomplète en grande
+taille, en reconstruisant depuis `D` un témoin positif pour le sous-cas
+structurel "matching farthest unique + deux cliques low-distance + neutre
+éventuel".
+
+Hypothèse : si les distances positives ont trois niveaux `low < mid < high`,
+si les arêtes `high` forment un matching parfait sur tous les sommets sauf
+éventuellement un neutre, et si les arêtes `low` sur les sommets appariés
+forment deux cliques disjointes de même taille, alors l'ordre
+`A_0, ..., A_{m-1}, mate(A_0), ..., mate(A_{m-1})` avec le neutre à la fin
+est cR par la caractérisation bad-side. La candidate ne doit l'accepter qu'après
+`represents_order` si un PC-tree est fourni ; le check cR direct est remplacé
+par l'obligation de preuve documentée pour éviter le coût `O(n^4)`.
+
+Fichiers à modifier : `src/pc_circular/solvers/candidate.py`,
+`tests/test_candidate.py`, `docs/tracks/piste_f_complexity_subcases.md`,
+`docs/experiment_log.md`, `docs/proof_obligations.md`,
+`docs/tracks/README.md`, `docs/checkpoints.md`.
+
+Algorithme pressenti : détecter les trois niveaux positifs ; construire le
+matching des arêtes maximales ; identifier au plus un neutre sans arête
+maximale ; retirer le neutre ; vérifier que les arêtes minimales induisent
+exactement deux composantes cliques de même taille ; vérifier que chaque mate
+maximal est dans l'autre composante et que les distances restantes valent
+`mid`. Construire l'ordre avec une composante triée par label, puis les mates
+dans le même ordre, puis le neutre. Tester représentation si `pc_tree` est
+fourni.
+
+Tests à exécuter : `make unit`, probes `paired_farthest` star/balanced/mixed
+sur seeds et tailles grandes, `make quick`, `make check`,
+`make hunt-counterexamples`, `make bench-piste-f`, `make bench-quick`, et si
+vert `make bench`.
+
+Risques : optimiser uniquement la famille générée ; à mitiger en documentant
+le sous-cas structurel en termes de distances, pas de nom de générateur, et en
+gardant la vérification cR/représentation comme seule raison d'accepter.
+Autre risque : les cas `m=1` ou dégénérés à deux niveaux ; ils restent couverts
+par brute force `n <= 8` et le sous-cas universel.
+
+Plan de contre-exemples : perturber une distance `mid` en `low` ou `high` et
+vérifier que le détecteur ne prétend pas au sous-cas ; vérifier avec
+`quasi_orders` fourni que la branche ne contourne pas une famille explicite ;
+tester PC-tree mixed où le témoin reconstruit est souvent non représenté.
+
+Plan subagents : trois explorateurs lecture seule : caractérisation
+paired-farthest, taux de représentation par PC-tree, attaque de faux positifs
+du détecteur structurel.
+
+Résultats observés : `_paired_farthest_order` détecte les matrices three-level
+à matching farthest maximal, reconstruit les deux cliques low-distance, et
+renvoie l'ordre side-by-side avec les mates synchronisés. La candidate accepte
+ce témoin seulement quand `quasi_orders is None` et quand il est représenté par
+le PC-tree éventuel. Le sous-cas est documenté comme preuve bad-side, donc la
+branche évite le check cR `O(n^4)` sur grandes tailles positives.
+
+Validation observée : `make unit` : `75 passed`; probe `paired_farthest` :
+`380` checks, solver `candidate_paired_farthest_matching_witness` jusqu'à
+`n=100` en `~0.0056s`; `make quick` : `75 passed`, `JUSTE`; `make check` :
+`JUSTE`; `make hunt-counterexamples` : `JUSTE`; `make bench-piste-f` :
+`paired_farthest/star` passe à `0` timeout et `0` incomplet avec la nouvelle
+branche pour tous les `n > 8`, tandis que `paired_farthest/mixed` garde `40`
+incomplets ; `make bench-quick` : `0` timeout et `0` incomplet ; `make bench` :
+`0` timeout jusqu'à `n=100`, `42` incomplets visibles, fit polynomial
+empirique `p ~= 3.24`.
+
+Décision : conserver comme sous-cas positif prouvé pour star et pour tout
+PC-tree qui représente le témoin canonique. Ne pas conclure négatif quand le
+témoin n'est pas représenté ; les subagents ont trouvé de petits cas non-star
+où un autre ordre représenté peut exister.

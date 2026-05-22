@@ -41,6 +41,44 @@ Résultat observé mixed :
 
 - aucun ordre cR valide dans les diagnostics `n=4,6,8` du premier benchmark.
 
+## Témoin paired-farthest par matching maximal
+
+Statut : sous-cas structurel intégré à `candidate.py` pour positifs
+représentés.
+
+Le détecteur ne regarde pas le nom du générateur. Il reconnaît une structure à
+trois niveaux `low < mid < high` :
+
+- les arêtes `high` forment un matching parfait sur les sommets appariés ;
+- il y a au plus un neutre sans arête `high`, à distance `low` de tous ;
+- les arêtes `low` entre sommets appariés forment deux cliques disjointes de
+  même taille ;
+- les mates `high` sont dans des cliques opposées ;
+- les autres arêtes entre cliques opposées valent `mid`.
+
+Pour une clique `A = (a_0, ..., a_{m-1})`, l'ordre construit est :
+
+```text
+a_0, ..., a_{m-1}, mate(a_0), ..., mate(a_{m-1}), neutral?
+```
+
+Raison de correction : par la caractérisation bad-side d'un ordre fixé, les
+seuls témoins mauvais d'une paire même côté sont tous dans l'autre bloc ; les
+seuls témoins mauvais d'une paire croisée non mate `{A_i, B_j}` sont
+`B_i` et `A_j`, qui sont du même côté de la corde grâce au même ordre des
+paires dans les deux blocs. Une paire mate à distance `high` n'a pas de témoin
+mauvais.
+
+Résultat T020 :
+
+- `paired_farthest/star` grandes tailles passe par
+  `candidate_paired_farthest_matching_witness` pour tous les `n > 8` ;
+- benchmark ciblé : `0` timeout et `0` incomplet pour `paired_farthest/star` ;
+- `paired_farthest/mixed` reste incomplet en grande taille dans le scaffold
+  lorsque le témoin reconstruit n'est pas représenté ;
+- un contre-exemple `n=4` montre qu'un témoin paired-farthest cR non représenté
+  ne doit pas être accepté pour un PC-tree non-star.
+
 ## Sous-cas universel par témoins mauvais
 
 Statut : sous-cas prouvé intégré à `candidate.py`.
@@ -120,6 +158,7 @@ Résultat T019 :
 - `has_at_most_one_bad_witness_per_pair`;
 - `sample_frontier`;
 - `candidate_minimum_distance_cycle_witness`;
+- `candidate_paired_farthest_matching_witness`;
 - `represents_order` non énumératif quand `limit is None`;
 - `--diagnostics-up-to` dans `tools/pc_circular_complexity_benchmark.py`;
 - `make bench-piste-f`.
@@ -130,5 +169,5 @@ Utiliser `paired_farthest` pour casser tout filtre local ou farthest-like.
 Utiliser `permuted_cycle` comme sous-cas où un futur solver devrait reconnaître
 un témoin caché sans brute force star.
 Chercher ensuite un sous-cas plus structuré que le critère universel, par
-exemple planted-cycle représenté par un vrai PC-tree Hsu/McConnell, ou degré
-interne borné.
+exemple paired-farthest représenté par PC-tree non-star, planted-cycle
+représenté par un vrai PC-tree Hsu/McConnell, ou degré interne borné.

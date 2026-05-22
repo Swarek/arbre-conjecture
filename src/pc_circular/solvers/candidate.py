@@ -10,6 +10,8 @@ The current implementation is deliberately conservative:
   ``complete=False``.
 * when the minimum-distance graph exposes a cycle, it accepts the reconstructed
   order only after direct cR and PC-tree representation verification.
+* for a three-level unique-farthest matching sub-case it reconstructs a
+  side-by-side paired witness and accepts it only after the same verification.
 
 This is not a solution to the general problem.  Future goals should replace
 the large-n placeholder with a proved algorithm or a clearly scoped sub-case.
@@ -105,6 +107,101 @@ def _minimum_cycle_witness_result(D, n: int, pc_tree: Optional[PCNode]):
     }
 
 
+def _paired_farthest_order(D, n: int) -> tuple[int, ...] | None:
+    positive_values = sorted({D[i][j] for i in range(n) for j in range(i + 1, n) if D[i][j] > 0})
+    if len(positive_values) != 3:
+        return None
+    low, mid, high = positive_values
+
+    high_neighbors = {
+        i: [j for j in range(n) if i != j and D[i][j] == high]
+        for i in range(n)
+    }
+    neutral = [i for i, neighbors in high_neighbors.items() if not neighbors]
+    if len(neutral) > 1:
+        return None
+    if any(len(neighbors) not in {0, 1} for neighbors in high_neighbors.values()):
+        return None
+
+    paired = [i for i in range(n) if high_neighbors[i]]
+    if len(paired) < 4 or len(paired) % 2:
+        return None
+    paired_set = set(paired)
+    mate = {i: high_neighbors[i][0] for i in paired}
+    if any(mate.get(mate[i]) != i for i in paired):
+        return None
+
+    if neutral:
+        z = neutral[0]
+        if any(D[z][v] != low for v in range(n) if v != z):
+            return None
+
+    unseen = set(paired)
+    components: list[set[int]] = []
+    while unseen:
+        start = min(unseen)
+        stack = [start]
+        component: set[int] = set()
+        unseen.remove(start)
+        while stack:
+            current = stack.pop()
+            component.add(current)
+            for other in list(unseen):
+                if D[current][other] == low:
+                    unseen.remove(other)
+                    stack.append(other)
+        components.append(component)
+
+    if len(components) != 2 or len(components[0]) != len(components[1]):
+        return None
+
+    for component in components:
+        values = sorted(component)
+        for idx, a in enumerate(values):
+            for b in values[idx + 1 :]:
+                if D[a][b] != low:
+                    return None
+
+    comp_index = {}
+    for idx, component in enumerate(components):
+        for value in component:
+            comp_index[value] = idx
+    if any(comp_index[i] == comp_index[mate[i]] for i in paired):
+        return None
+
+    for i in range(len(paired)):
+        a = paired[i]
+        for b in paired[i + 1 :]:
+            if mate[a] == b:
+                expected = high
+            elif comp_index[a] == comp_index[b]:
+                expected = low
+            else:
+                expected = mid
+            if D[a][b] != expected:
+                return None
+
+    first_side = sorted(min(components, key=lambda values: tuple(sorted(values))))
+    second_side = [mate[value] for value in first_side]
+    order = first_side + second_side + neutral
+    return tuple(order)
+
+
+def _paired_farthest_witness_result(D, n: int, pc_tree: Optional[PCNode]):
+    order = _paired_farthest_order(D, n)
+    if order is None:
+        return None
+    if pc_tree is not None and not represents_order(pc_tree, order):
+        return None
+    return {
+        "exists": True,
+        "order": list(order),
+        "complete": True,
+        "solver": "candidate_paired_farthest_matching_witness",
+        "note": "three-level unique-farthest matching structure has a represented side-by-side cR witness",
+    }
+
+
 def _universal_order_result(n: int, quasi_orders, pc_tree: Optional[PCNode]):
     if quasi_orders is not None:
         iterator = iter(quasi_orders)
@@ -159,6 +256,9 @@ def solve(D, quasi_orders=None, pc_tree=None):
         cycle_result = _minimum_cycle_witness_result(D, n, pc_tree)
         if cycle_result is not None:
             return cycle_result
+        paired_result = _paired_farthest_witness_result(D, n, pc_tree)
+        if paired_result is not None:
+            return paired_result
 
     tried = 0
     for order in _sample_orders(n, quasi_orders, pc_tree):

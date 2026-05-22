@@ -1,6 +1,11 @@
 import random
 
-from pc_circular.generators import cycle_metric, equal_distance_instance, permuted_cycle_metric
+from pc_circular.generators import (
+    cycle_metric,
+    equal_distance_instance,
+    paired_farthest_matching,
+    permuted_cycle_metric,
+)
 from pc_circular.pc_tree import (
     balanced_pc_tree,
     enumerate_frontiers,
@@ -11,7 +16,11 @@ from pc_circular.pc_tree import (
     star_pc_tree,
 )
 from pc_circular.predicates import canonical_circular_order, is_precircular_order_cR
-from pc_circular.solvers.candidate import _minimum_distance_cycle_order, solve
+from pc_circular.solvers.candidate import (
+    _minimum_distance_cycle_order,
+    _paired_farthest_order,
+    solve,
+)
 
 
 def _one_high_edge_instance(n):
@@ -135,6 +144,56 @@ def test_candidate_does_not_bypass_explicit_quasi_orders_with_pc_tree():
     T = balanced_pc_tree(10, kind="mixed")
     bad_first_orders = [(0, 2, 4, 6, 8, 1, 3, 5, 7, 9)]
     result = solve(D, quasi_orders=bad_first_orders, pc_tree=T)
+    assert result["exists"] is False
+    assert result["complete"] is False
+    assert result["solver"] == "candidate_large_n_placeholder"
+
+
+def test_candidate_finds_large_paired_farthest_witness_in_star_tree():
+    D = paired_farthest_matching(20, rng=random.Random(5))
+    order = _paired_farthest_order(D, 20)
+    assert order is not None
+    result = solve(D, pc_tree=star_pc_tree(20))
+    assert result["exists"] is True
+    assert result["complete"] is True
+    assert result["solver"] == "candidate_paired_farthest_matching_witness"
+    assert result["order"] == list(order)
+    assert is_precircular_order_cR(D, result["order"])
+
+
+def test_paired_farthest_constructed_witness_is_cr_on_small_seeded_instances():
+    for n in range(4, 13):
+        for seed in range(3):
+            D = paired_farthest_matching(n, rng=random.Random(seed))
+            order = _paired_farthest_order(D, n)
+            assert order is not None
+            assert is_precircular_order_cR(D, order)
+
+
+def test_paired_farthest_witness_handles_neutral_point():
+    D = paired_farthest_matching(21, rng=random.Random(8))
+    order = _paired_farthest_order(D, 21)
+    assert order is not None
+    result = solve(D, pc_tree=star_pc_tree(21))
+    assert result["solver"] == "candidate_paired_farthest_matching_witness"
+    assert result["order"] == list(order)
+    assert is_precircular_order_cR(D, result["order"])
+
+
+def test_paired_farthest_detector_rejects_perturbed_side_clique():
+    D = paired_farthest_matching(12, rng=random.Random(6))
+    order = _paired_farthest_order(D, 12)
+    assert order is not None
+    a, b = order[0], order[1]
+    D[a][b] = D[b][a] = 2
+    assert _paired_farthest_order(D, 12) is None
+
+
+def test_candidate_does_not_bypass_explicit_quasi_orders_for_paired_farthest():
+    D = paired_farthest_matching(10, rng=random.Random(5))
+    bad_order = tuple(range(10))
+    assert not is_precircular_order_cR(D, bad_order)
+    result = solve(D, quasi_orders=[bad_order], pc_tree=star_pc_tree(10))
     assert result["exists"] is False
     assert result["complete"] is False
     assert result["solver"] == "candidate_large_n_placeholder"

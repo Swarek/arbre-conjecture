@@ -4,6 +4,12 @@ Ce dossier est le tableau de bord lisible par piste. `docs/experiment_log.md`
 reste le journal chronologique global ; les fichiers ci-dessous regroupent les
 idées, essais, résultats, contre-exemples et prochaines actions par axe.
 
+Note transverse : `docs/external_analysis_digest.md` conserve une analyse GPT
+5.5 Pro fournie par l'utilisateur. Elle ajoute surtout quatre rappels à ne pas
+perdre : cas strict polynomial potentiel, diagnostic d'universalité séparé de
+l'existence, projection locale des quartets au nœud décisif, et question des
+ensembles `I_x(v)` sur les branches d'un gros nœud `P`.
+
 ## Index
 
 | Piste | Fichier | Statut courant |
@@ -13,7 +19,7 @@ idées, essais, résultats, contre-exemples et prochaines actions par axe.
 | C - SAT/CSP | `piste_c_sat_csp.md` | Benchmark interne ajouté ; compilation encore dominante |
 | D - Circular-ones / intersection | `piste_d_circular_ones.md` | Non testée expérimentalement |
 | E - Obstructions farthest/quartets | `piste_e_farthest_quartets.md` | Farthest seul réfuté ; cR quartets restent centraux |
-| F - Complexité / sous-cas | `piste_f_complexity_subcases.md` | Sous-cas universel + témoin minimum-cycle représenté intégrés ; familles stress conservées |
+| F - Complexité / sous-cas | `piste_f_complexity_subcases.md` | Sous-cas universel + témoins minimum-cycle/paired-farthest intégrés ; familles stress conservées |
 
 ## Règle d’édition
 
@@ -51,6 +57,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T017 | 2026-05-23 | Candidate | Témoins positifs échantillonnés marqués complets | `candidate_validated_sampled_witness` |
 | T018 | 2026-05-23 | F/Sources | Témoin minimum-cycle star ajouté ; faux positif `n=6` régressé ; capture Prop. 4.4 vendored | `candidate_minimum_distance_cycle_witness` |
 | T019 | 2026-05-23 | F/D | Membership PC-tree non énumératif pour certifier les témoins minimum-cycle non-star | `represents_order` |
+| T020 | 2026-05-23 | F/E | Témoin paired-farthest structurel ajouté ; garde représentation PC-tree régressé | `candidate_paired_farthest_matching_witness` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

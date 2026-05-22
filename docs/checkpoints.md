@@ -71,7 +71,8 @@ Dernier commit green avant T009 : `07120e4`.
   `make quick`, `make check`, `make hunt-counterexamples`,
   `make bench-piste-f`, `make bench-quick`, `make bench` (`0` timeout, `42`
   incomplets visibles, fit polynomial empirique `p ~= 3.25`).
-- Checkpoint T019 courant : commit contenant `represents_order` non énumératif
+- Checkpoint T019 : `1588166` (`checkpoint: certify minimum-cycle witnesses in
+  represented pc trees`). Commit contenant `represents_order` non énumératif
   pour les ordres fixés du scaffold PC-tree, l'extension du témoin
   minimum-cycle aux PC-trees non-star représentés, et le contre-exemple
   régressé où un min-cycle cR non représenté ne doit pas être accepté.
@@ -79,6 +80,13 @@ Dernier commit green avant T009 : `07120e4`.
   `make quick`, `make check`, `make hunt-counterexamples`,
   `make bench-piste-f`, `make bench-quick`, `make bench` (`0` timeout, `42`
   incomplets visibles, fit polynomial empirique `p ~= 3.25`).
+- Checkpoint T020 courant : commit contenant le témoin structurel
+  paired-farthest pour les matrices three-level à matching maximal, et le
+  contre-exemple régressé où ce témoin cR n'est pas représenté par un PC-tree
+  non-star. Validation observée : `make unit`, probe `paired_farthest`
+  `380` checks, `make quick`, `make check`, `make hunt-counterexamples`,
+  `make bench-piste-f`, `make bench-quick`, `make bench` (`0` timeout, `42`
+  incomplets visibles, fit polynomial empirique `p ~= 3.24`).
 
 ## Rollback
 

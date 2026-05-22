@@ -20,6 +20,10 @@ Les fichiers PDF sont conservés dans `docs/source_materials/pdfs/`, et la
 capture est conservée dans `docs/source_materials/images/`. Les hashes sont
 listés dans `docs/source_materials/README.md`.
 
+Une synthèse externe fournie par l'utilisateur est conservée dans
+`docs/external_analysis_digest.md`. Elle doit être lue comme une note de
+recherche à vérifier, pas comme une preuve.
+
 Commandes utilisées :
 
 ```bash

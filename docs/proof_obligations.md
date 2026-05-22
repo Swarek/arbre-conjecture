@@ -399,3 +399,63 @@ tous les `n > 8` dans `make bench-piste-f`, sans timeout ni run incomplet.
 `paired_farthest` reste incomplet en grande taille, ce qui confirme que la
 branche n'est qu'un certificat positif. Le benchmark fort mixed/star T019 garde
 `0` timeout jusqu'à `n=100`, avec `42` runs incomplets visibles.
+
+### Témoin paired-farthest par matching maximal
+
+Statut : théorème prouvé pour le sous-cas three-level détecté + intégré à la
+candidate comme certificat positif.
+
+Hypothèses du sous-cas :
+
+- les distances positives ont trois niveaux `low < mid < high` ;
+- les arêtes de niveau `high` forment un matching sur tous les sommets sauf
+  éventuellement un neutre ;
+- le neutre, s'il existe, est à distance `low` de tous les autres sommets ;
+- en retirant le neutre, les arêtes `low` forment exactement deux cliques de
+  même taille ;
+- chaque arête `high` relie les deux cliques, et toute autre arête entre les
+  deux cliques vaut `mid`.
+
+Pour une clique `A = (a_0, ..., a_{m-1})`, la candidate construit :
+
+```text
+a_0, ..., a_{m-1}, mate(a_0), ..., mate(a_{m-1}), neutral?
+```
+
+Preuve par la caractérisation bad-side d'un ordre fixé :
+
+- une paire mate à distance `high` n'a aucun témoin mauvais ;
+- pour deux points d'une même clique à distance `low`, tous les témoins mauvais
+  sont dans l'autre clique, donc dans un seul bloc et sur un seul arc ;
+- pour deux points non mates de cliques opposées à distance `mid`, les seuls
+  témoins mauvais sont leurs deux mates. Comme les deux blocs utilisent le même
+  ordre des paires, ces deux mates restent sur le même arc ;
+- le neutre n'ajoute pas d'obstruction : pour `{neutral, A_i}`, les témoins
+  mauvais sont dans le bloc `B`, et symétriquement.
+
+Ce que cela couvre :
+
+- obligation 1/2 dans le sous-cas : l'ordre construit satisfait cR par le lemme
+  bad-side ;
+- obligation 4 : avec PC-tree fourni, `represents_order` est vérifié avant tout
+  retour positif ;
+- obligation 5 : la détection structurelle et la construction sont `O(n^2)`,
+  hors coût du test de représentation du scaffold ;
+- obligation 6 : les niveaux sont comparés par égalité aux trois valeurs
+  observées ; les cas d'égalités hors structure sont rejetés.
+
+Limites :
+
+- ce n'est pas une caractérisation générale de l'existence ;
+- si le témoin construit n'est pas représenté par `T`, la candidate ne conclut
+  pas, car un autre ordre représenté pourrait exister ;
+- les petits cas dégénérés restent couverts par brute force `n <= 8`.
+
+Preuve expérimentale T020 : témoins construits vérifiés par le prédicat cR sur
+petites instances seeded `n=4..12`, probe large-n `paired_farthest/star`
+jusqu'à `n=100`, et contre-exemple régressé où le témoin cR n'est pas
+représenté par un PC-tree `C`. `make bench-piste-f` passe
+`paired_farthest/star` à `0` incomplet, tandis que `paired_farthest/mixed`
+reste incomplet lorsque le témoin canonique n'est pas représenté. Le benchmark
+fort mixed/star T020 garde `0` timeout jusqu'à `n=100`, avec `42` runs
+incomplets visibles.
