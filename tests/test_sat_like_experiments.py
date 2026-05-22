@@ -1,7 +1,12 @@
 import itertools
 import random
 
-from pc_circular.generators import cycle_metric, quasi_circular_not_circular_four_point, random_dissimilarity
+from pc_circular.generators import (
+    cycle_metric,
+    equal_distance_instance,
+    quasi_circular_not_circular_four_point,
+    random_dissimilarity,
+)
 from pc_circular.pc_tree import balanced_pc_tree, c_node, enumerate_frontiers, leaf, p_node, star_pc_tree
 from pc_circular.predicates import all_circular_orders, is_precircular_order_cR, is_quasi_circular_order
 from pc_circular.solvers.sat_like_experiments import (
@@ -17,6 +22,7 @@ from pc_circular.solvers.sat_like_experiments import (
     quartet_support_paths,
     solve_compiled_nogood_csp,
     solve_nogood_csp,
+    solve_pruned_nogood_csp,
 )
 
 
@@ -172,3 +178,29 @@ def test_compiled_cr_nogoods_match_direct_cr_csp_on_small_tree():
     assert actual == expected
     assert result["counts"]["false_positive_frontiers"] == 0
     assert result["counts"]["false_negative_frontiers"] == 0
+
+
+def test_pruned_nogood_csp_matches_compiled_and_prunes_cycle_metric():
+    T = balanced_pc_tree(6, kind="mixed")
+    D = cycle_metric(6)
+    compiled = solve_compiled_nogood_csp(D, T, max_p_degree=3)
+    pruned = solve_pruned_nogood_csp(D, T, max_p_degree=3)
+
+    assert {tuple(order) for order in pruned["accepted_frontiers"]} == {
+        tuple(order) for order in compiled["accepted_frontiers"]
+    }
+    assert pruned["counts"]["branches_pruned"] > 0
+    assert pruned["counts"]["leaf_assignments_seen"] < pruned["counts"]["full_assignment_space"]
+    assert pruned["counts"]["validation_false_positive_frontiers"] == 0
+    assert pruned["counts"]["validation_false_negative_frontiers"] == 0
+
+
+def test_pruned_nogood_csp_accepts_all_when_no_cr_atoms_exist():
+    T = balanced_pc_tree(5, kind="mixed")
+    D = equal_distance_instance(5)
+    pruned = solve_pruned_nogood_csp(D, T, max_p_degree=3)
+    direct = accepted_frontiers_by_csp(D, T, source="cr", max_p_degree=3)
+
+    assert pruned["compilation"]["counts"]["unique_nogoods"] == 0
+    assert pruned["counts"]["branches_pruned"] == 0
+    assert {tuple(order) for order in pruned["accepted_frontiers"]} == direct

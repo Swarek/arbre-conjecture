@@ -608,6 +608,160 @@ def solve_compiled_nogood_csp(
     return result
 
 
+def _nogoods_by_last_path(nogoods: Sequence[dict], variable_order: Sequence[Path]) -> dict[Path, list[dict]]:
+    position = {path: idx for idx, path in enumerate(variable_order)}
+    indexed: dict[Path, list[dict]] = {path: [] for path in variable_order}
+    for nogood in nogoods:
+        paths = [path for path, _choice in nogood["signature"]]
+        if not paths:
+            continue
+        last_path = max(paths, key=lambda path: position[path])
+        indexed[last_path].append(nogood)
+    return indexed
+
+
+def _first_matching_completed_nogood(
+    partial_assignment: Assignment,
+    candidates: Sequence[dict],
+) -> dict | None:
+    for nogood in candidates:
+        if _nogood_matches(partial_assignment, nogood["signature"]):
+            return nogood
+    return None
+
+
+def solve_pruned_nogood_csp(
+    D,
+    pc_tree: PCNode,
+    *,
+    max_p_degree: int = 3,
+    validate_against_direct: bool = True,
+) -> dict:
+    """Backtrack through local domains and prune completed nogood signatures.
+
+    Compilation still enumerates complete assignments.  The gain measured here
+    is only in the post-compilation search phase.
+    """
+
+    compilation = compile_cr_nogoods(D, pc_tree, max_p_degree=max_p_degree)
+    counts = {
+        "nodes_visited": 0,
+        "branches_considered": 0,
+        "branches_pruned": 0,
+        "leaf_assignments_seen": 0,
+        "leaf_assignments_pruned_estimate": 0,
+        "full_assignment_space": 0,
+        "unique_frontiers_seen": 0,
+        "duplicate_frontiers": 0,
+        "accepted_frontiers": 0,
+        "false_positive_frontiers": 0,
+        "validation_false_positive_frontiers": 0,
+        "validation_false_negative_frontiers": 0,
+    }
+    result = {
+        "implemented": True,
+        "solver": "pruned_cr_quartet_nogood_experiment",
+        "exists": None,
+        "order": None,
+        "complete": compilation["complete"],
+        "unsupported": compilation["encoding"]["unsupported"],
+        "counts": counts,
+        "accepted_frontiers": [],
+        "first_pruned": None,
+        "first_disagreement": None,
+        "compilation": compilation,
+        "note": "experimental post-compilation pruning; not a proved compact solver",
+    }
+    if result["unsupported"]:
+        result["complete"] = False
+        result["note"] = "unsupported local domain; no negative decision made"
+        return result
+
+    encoding = compilation["encoding"]
+    variable_order = [variable["path"] for variable in encoding["variables"]]
+    domain_sizes = [len(encoding["domains"][path]) for path in variable_order]
+    suffix_products = [1] * (len(variable_order) + 1)
+    for idx in range(len(variable_order) - 1, -1, -1):
+        suffix_products[idx] = suffix_products[idx + 1] * domain_sizes[idx]
+    counts["full_assignment_space"] = suffix_products[0]
+
+    indexed_nogoods = _nogoods_by_last_path(compilation["nogoods"], variable_order)
+    partial: Assignment = {}
+    accepted: list[tuple[int, ...]] = []
+    seen_frontiers: set[tuple[int, ...]] = set()
+
+    def visit(depth: int) -> None:
+        counts["nodes_visited"] += 1
+        if depth == len(variable_order):
+            counts["leaf_assignments_seen"] += 1
+            order = canonical_circular_order(frontier_from_assignment(pc_tree, partial))
+            if order in seen_frontiers:
+                counts["duplicate_frontiers"] += 1
+            else:
+                seen_frontiers.add(order)
+                counts["unique_frontiers_seen"] += 1
+
+            exact = is_precircular_order_cR(D, order)
+            if exact:
+                if order not in accepted:
+                    accepted.append(order)
+                    counts["accepted_frontiers"] += 1
+                    if result["order"] is None:
+                        result["order"] = list(order)
+            else:
+                counts["false_positive_frontiers"] += 1
+                if result["first_disagreement"] is None:
+                    result["first_disagreement"] = {
+                        "kind": "false_positive",
+                        "order": list(order),
+                    }
+            return
+
+        path = variable_order[depth]
+        for choice in encoding["domains"][path]:
+            counts["branches_considered"] += 1
+            partial[path] = choice
+            matched = _first_matching_completed_nogood(partial, indexed_nogoods[path])
+            if matched is not None:
+                counts["branches_pruned"] += 1
+                counts["leaf_assignments_pruned_estimate"] += suffix_products[depth + 1]
+                if result["first_pruned"] is None:
+                    result["first_pruned"] = {
+                        "path": path,
+                        "choice": choice,
+                        "nogood": matched,
+                    }
+                del partial[path]
+                continue
+            visit(depth + 1)
+            del partial[path]
+
+    visit(0)
+    result["exists"] = bool(accepted)
+    result["accepted_frontiers"] = [list(order) for order in accepted]
+    result["counts"]["pruning_rate"] = (
+        counts["branches_pruned"] / counts["branches_considered"]
+        if counts["branches_considered"]
+        else 0.0
+    )
+
+    if validate_against_direct:
+        direct = accepted_frontiers_by_csp(D, pc_tree, source="cr", max_p_degree=max_p_degree)
+        actual = {tuple(order) for order in result["accepted_frontiers"]}
+        extra = actual - direct
+        missing = direct - actual
+        counts["validation_false_positive_frontiers"] = len(extra)
+        counts["validation_false_negative_frontiers"] = len(missing)
+        if (extra or missing) and result["first_disagreement"] is None:
+            result["first_disagreement"] = {
+                "kind": "validation_mismatch",
+                "extra": [list(order) for order in sorted(extra)[:1]],
+                "missing": [list(order) for order in sorted(missing)[:1]],
+            }
+
+    return result
+
+
 def prop45_nogood_frontier_report(
     D,
     *,

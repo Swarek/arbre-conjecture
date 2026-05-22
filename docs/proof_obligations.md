@@ -140,3 +140,26 @@ Limites restantes :
 - le nombre de nogoods peut être grand, et doit être mesuré avant toute
   intégration candidate ;
 - la suffisance globale pour un PC-tree Hsu/McConnell compact reste non prouvée.
+
+### Backtracking pruné par nogoods
+
+Statut : preuve expérimentale / optimisation de scaffold Piste C.
+
+`solve_pruned_nogood_csp` utilise les nogoods compilés pour couper une branche
+dès que toutes les variables du support d’un nogood sont assignées et matchent
+la signature interdite. Les feuilles survivantes sont reconstruites en frontiers
+et revalidées par `is_precircular_order_cR`.
+
+Ce que cela apporte :
+
+- preuve expérimentale que les nogoods compilés peuvent être utilisés avant la
+  construction de toutes les frontiers ;
+- métriques séparant branches prunées, feuilles visitées, affectations complètes
+  possibles et frontiers acceptées.
+
+Limites restantes :
+
+- la compilation des nogoods reste énumérative ;
+- le pruning dépend de l’ordre des variables et peut être faible si les supports
+  sont profonds ou larges ;
+- aucune borne en `n` et `|T|` n’est prouvée.

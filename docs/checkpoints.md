@@ -35,10 +35,15 @@ Dernier commit green avant T009 : `07120e4`.
   Scaffold CSP à domaines locaux `P/C` ajouté. Validation observée :
   `make quick`, `make check`, `make bench-quick`, probe CSP directe sans
   désaccord sur 1600 instances.
-- Checkpoint T011 courant : commit contenant les nogoods compilés de quartets
-  cR; son hash est à lire avec `git log -1` et doit être reporté dans le compte
-  rendu final de la session. Validation observée : `make quick`, `make check`,
-  `make bench-quick`, probe compiled-nogood sans désaccord sur 960 instances.
+- Checkpoint T011 : `53cc4cf` (`checkpoint: compile cr quartet nogoods`).
+  Nogoods compilés de quartets cR ajoutés. Validation observée : `make quick`,
+  `make check`, `make bench-quick`, probe compiled-nogood sans désaccord sur
+  960 instances.
+- Checkpoint T012 courant : commit contenant le backtracking pruné par nogoods
+  compilés ; son hash est à lire avec `git log -1` et doit être reporté dans le
+  compte rendu final de la session. Validation observée : `make quick`,
+  `make check`, `make bench-quick`, probe pruned-nogood sans désaccord sur 640
+  instances.
 
 ## Rollback
 

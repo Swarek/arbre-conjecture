@@ -139,8 +139,36 @@ Prochaine action : mesurer la taille des supports et chercher des familles où l
 nombre de nogoods explose, puis tenter un backtracking qui prune dès qu’une
 signature partielle matche un nogood.
 
+## Tentative T012 - Backtracking pruné par nogoods compilés
+
+Statut : preuve expérimentale / amélioration de recherche, non intégré dans
+`candidate.py`.
+
+Changement : `solve_pruned_nogood_csp` explore les domaines locaux en
+backtracking. Les nogoods sont indexés par la dernière variable de leur support
+selon l’ordre d’exploration ; dès qu’un choix complète une signature de nogood,
+la branche est coupée avant reconstruction de la frontier.
+
+Invariant testé : les frontiers acceptées par le backtracking pruné doivent être
+exactement celles du filtre cR direct. Une validation optionnelle compare le
+résultat final à `accepted_frontiers_by_csp(source="cr")`.
+
+Résultat expérimental : probe sur `640` instances `n=4..7`, arbres
+balanced/mixed, familles `random/cycle/block/ultrametric/equal/non_strict/
+paired_farthest/permuted_cycle` : aucun désaccord avec le filtre cR direct.
+Le backtracking a visité `7396` feuilles contre `19200` affectations complètes
+possibles, avec `4284` branches prunées.
+
+Limite : le pruning arrive après une compilation qui énumère encore toutes les
+affectations pour produire les nogoods. Le gain mesuré concerne donc seulement
+la phase de solve post-compilation.
+
+Prochaine action : mesurer séparément coût de compilation et coût de solve,
+chercher les familles où les nogoods explosent, puis décider si Piste C reste
+prometteuse ou si Piste B/F doit reprendre la priorité.
+
 ## Prochaine action
 
-Mesurer les supports/nogoods et implémenter un backtracking avec pruning par
-signatures partielles, sans appeler `candidate.py` tant que la suffisance et les
-cas non stricts ne sont pas établis.
+Mesurer séparément coût de compilation et coût de solve, puis chercher les
+familles où les nogoods explosent, sans appeler `candidate.py` tant que la
+suffisance et les cas non stricts ne sont pas établis.

@@ -319,3 +319,58 @@ projection de support semble correcte expérimentalement ; le prochain obstacle
 est la taille des nogoods et l’absence de pruning avant énumération complète.
 Prochaine étape : backtracking avec signatures partielles et rapport de
 croissance des nogoods/supports.
+
+## ExecPlan 2026-05-22 - pruned nogood backtracking
+
+But : utiliser les nogoods compilés pour pruner les affectations partielles dès
+qu’un support de nogood est entièrement assigné, et mesurer si ce pruning réduit
+l’espace exploré par rapport à l’énumération complète.
+
+Hypothèse : même si la compilation de nogoods reste énumérative, un backtracking
+qui vérifie les signatures à chaque variable peut rejeter des sous-arbres avant
+construction de frontier. Sur petits PC-trees supportés, les frontiers acceptées
+doivent rester exactement celles de `solve_compiled_nogood_csp` et du filtre cR
+direct.
+
+Fichiers à modifier : `src/pc_circular/solvers/sat_like_experiments.py`,
+`tests/test_sat_like_experiments.py`, `docs/tracks/piste_c_sat_csp.md`,
+`docs/experiment_log.md`, `docs/proof_obligations.md`,
+`docs/tracks/README.md`, `docs/checkpoints.md`.
+
+Algorithme pressenti : indexer les nogoods par leur dernière variable selon
+l’ordre de backtracking. À chaque choix de domaine, vérifier seulement les
+nogoods nouvellement complets ; si l’un matche, couper cette branche. À une
+feuille non coupée, reconstruire la frontier, dédupliquer, et revalider avec
+`is_precircular_order_cR` pour détecter tout faux positif/faux négatif. Reporter
+`nodes_visited`, `branches_pruned`, `leaf_assignments_seen`, frontiers uniques
+et taux de pruning.
+
+Tests à exécuter : `make unit`, `make quick`, `make check`; probe bornée
+comparant backtracking pruné, solveur compilé et CSP cR direct sur arbres
+balanced/mixed et familles variées.
+
+Risques : le pruning ne réduit rien si les supports sont trop grands ; un index
+de nogood mal calculé peut sous-rejeter ; les métriques peuvent être trompeuses
+si elles ne distinguent pas compilation énumérative et solve backtracking.
+
+Plan de contre-exemples : comparer les ensembles acceptés à `source="cr"` sur
+`n <= 7`; si désaccord, enregistrer la matrice, l’arbre, l’affectation partielle
+et le nogood impliqué. Tester aussi une instance sans nogood pour vérifier que
+le pruned solver accepte tout ce que cR accepte.
+
+Plan subagents : pas de nouveau fanout ; la tranche est mécanique et issue du
+retour T011. Un fanout redeviendra utile après les métriques de pruning pour
+choisir entre Piste B et Piste F.
+
+Résultats observés : `solve_pruned_nogood_csp` ajouté. Les nogoods sont indexés
+par la dernière variable de leur support, et chaque branche est coupée dès que
+la signature interdite est complète. Tests ajoutés : cycle metric avec pruning
+strictement positif, et equal-distance sans atoms cR donc sans pruning. Probe
+bornée : `640` instances `n=4..7`, arbres balanced/mixed, huit familles, aucun
+désaccord avec le filtre cR direct ; `4284` branches prunées, `7396` feuilles
+visitées sur `19200` affectations complètes possibles.
+
+Décision : continuer à instrumenter Piste C, mais ne pas intégrer dans
+`candidate.py`. Le pruning post-compilation est réel sur la probe, cependant la
+compilation reste énumérative. Prochaine étape : benchmark interne séparant coût
+de compilation, coût de solve et explosion des nogoods/supports par famille.
