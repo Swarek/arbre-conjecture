@@ -10,6 +10,14 @@
 - Ne confonds pas benchmark et preuve.
 - Ne marque pas une solution comme "trouvée" sans `docs/proof_obligations.md` rempli.
 - Chaque commit doit être un checkpoint compréhensible.
+- Pour un Goal long, commencer par écrire le plan d’attaque, les critères
+  d’arrêt et les hypothèses de succès/échec avant de coder.
+- Pour explorer plusieurs pistes, l’agent principal peut lancer jusqu’à 5
+  subagents en parallèle, chacun avec une hypothèse différente et un livrable
+  borné. L’agent principal garde la synthèse, les commits et la décision finale.
+- Après toute amélioration candidate, chercher activement des contre-exemples
+  avant de conclure : nouveaux générateurs, seeds différentes, PC-trees variés,
+  cas non stricts et shrink minimal.
 - Pour les grandes recherches, utiliser Browser Use pour interroger ChatGPT web avec GPT 5.5 Pro sur les questions très techniques, et Deep Research pour les recherches approfondies.
 - State assumptions, never guess silently.
 - Minimum code, nothing speculative.

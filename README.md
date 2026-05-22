@@ -21,6 +21,7 @@ python3 -m venv .venv
 make unit
 make quick
 make check
+make hunt-counterexamples
 make bench-quick
 make bench
 make acceptance
@@ -30,6 +31,10 @@ make acceptance
 lance la correction forte sur petites instances. `make bench-quick` écrit un
 rapport JSON dans `reports/complexity_report_quick.json`; `make bench` lance une
 version plus lourde.
+
+`make hunt-counterexamples` lance une recherche aléatoire plus longue avec
+shrink. Elle est faite pour les moments où une candidate semble marcher et doit
+être attaquée avant d’être considérée comme un progrès stable.
 
 Dans `tools/pc_circular_conjecture_test.py`, la sortie `JUSTE` signifie seulement
 que la candidate a été égale à l’oracle exact sur les instances générées par ce

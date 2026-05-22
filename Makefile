@@ -1,7 +1,7 @@
 PYTHON ?= $(shell if [ -x .venv/bin/python ]; then echo .venv/bin/python; elif command -v python3 >/dev/null 2>&1; then echo python3; else echo python; fi)
 PYTEST ?= $(PYTHON) -m pytest
 
-.PHONY: quick check bench-quick bench unit acceptance
+.PHONY: quick check hunt-counterexamples bench-quick bench unit acceptance
 
 unit:
 	$(PYTEST) -q
@@ -15,6 +15,17 @@ check:
 	  --max-n 8 \
 	  --self-check \
 	  --shrink
+
+hunt-counterexamples:
+	$(PYTHON) tools/pc_circular_conjecture_test.py \
+	  --candidate src/pc_circular/solvers/candidate.py:solve \
+	  --exhaustive-n 4 \
+	  --values 1,2,3 \
+	  --random 5000 \
+	  --max-n 8 \
+	  --self-check \
+	  --shrink \
+	  --seed 314159
 
 quick:
 	$(PYTEST) -q && \

@@ -9,12 +9,18 @@ modifier l’algorithme. Un plan doit contenir :
 - Algorithme pressenti.
 - Tests à exécuter.
 - Risques.
+- Plan de contre-exemples.
+- Plan subagents, si plusieurs pistes sont explorées.
 - Résultats observés.
 - Décision : continuer / changer de piste / rollback.
 
 Le plan doit rester lié au portefeuille d’hypothèses. Si une expérience réfute
 une conjecture, le résultat doit produire un artefact : test, générateur,
 contre-exemple minimal, lemme négatif ou entrée de journal.
+
+Dans un Goal long, le plan doit aussi définir le critère d’arrêt : succès
+mesurable, réfutation, blocage théorique, ou bascule vers une autre piste. Ne pas
+laisser un Goal tourner comme une recherche ouverte sans sortie concrète.
 
 ## ExecPlan initial
 

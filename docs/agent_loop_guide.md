@@ -25,6 +25,45 @@ make quick
 Si `make quick` ne passe pas sur le dernier checkpoint green, corriger d’abord
 le harnais ou l’environnement avant de proposer une nouvelle hypothèse.
 
+## Mode Goal
+
+Ce dépôt est prévu pour être repris dans un Goal long. Avant de démarrer ce
+Goal, écrire explicitement :
+
+- objectif borné ;
+- critères de succès ;
+- critères d’arrêt ou de bascule ;
+- hypothèses qui seront testées ;
+- artefacts attendus, même en cas d’échec.
+
+Ne pas démarrer par "optimiser le solver" de façon générale. Le Goal doit viser
+un résultat concret : contre-exemple minimal, sous-cas prouvé, invariant réfuté,
+amélioration validée, ou preuve d’une obstruction.
+
+## Exploration par subagents
+
+Quand plusieurs pistes sont plausibles, l’agent principal peut lancer jusqu’à 5
+subagents en parallèle. Le fanout recommandé est :
+
+- 1 subagent sur contraintes locales P/C ;
+- 1 subagent sur DP PC-tree ;
+- 1 subagent sur encodage SAT/CSP ;
+- 1 subagent sur génération et shrink de contre-exemples ;
+- 1 subagent sur complexité ou sous-cas prouvable.
+
+Chaque subagent doit recevoir une hypothèse distincte, un budget borné, les
+fichiers à lire, les commandes autorisées et le livrable attendu. Les subagents
+ne doivent pas tous essayer de faire passer la même candidate.
+
+L’agent principal garde la responsabilité de :
+
+- comparer les résultats ;
+- détecter les contradictions ;
+- intégrer seulement les changements utiles ;
+- lancer les gates ;
+- écrire `docs/experiment_log.md` ;
+- créer le commit checkpoint.
+
 ## Rôle des tailles de benchmark
 
 `make bench-quick` utilise 8 tailles :
@@ -52,12 +91,20 @@ Pour chaque tentative non triviale :
 
 1. Choisir une piste active dans `docs/hypothesis_portfolio.md`.
 2. Écrire l’hypothèse testée avant de coder.
-3. Modifier le minimum de fichiers.
-4. Lancer `make quick`.
-5. Si vert, lancer `make bench-quick` quand le changement touche le solver.
-6. Ajouter une entrée à `docs/experiment_log.md`.
-7. Ajouter tout contre-exemple dans les tests ou un fichier de régression.
-8. Committer un checkpoint compréhensible.
+3. Définir comment chercher des contre-exemples si l’hypothèse semble marcher.
+4. Modifier le minimum de fichiers.
+5. Lancer `make quick`.
+6. Si vert et si le changement touche le solver, lancer
+   `make hunt-counterexamples` ou une variante justifiée.
+7. Si toujours vert, lancer `make bench-quick` quand le changement touche la
+   complexité.
+8. Ajouter une entrée à `docs/experiment_log.md`.
+9. Ajouter tout contre-exemple dans les tests ou un fichier de régression.
+10. Committer un checkpoint compréhensible.
+
+La recherche de contre-exemples est un outil de compréhension, pas seulement un
+test de validation. Chaque tentative sérieuse doit essayer de casser sa propre
+hypothèse avec d’autres familles, d’autres seeds et des PC-trees différents.
 
 ## Décisions
 

@@ -35,6 +35,16 @@ Cette commande augmente l’exhaustif à `n = 5`, les tests aléatoires à `1000
 La sortie `JUSTE` signifie que la candidate coïncide avec l’oracle exact sur les
 instances générées par le script. Elle ne prouve pas la correction globale.
 
+Counterexample hunt :
+
+```bash
+make hunt-counterexamples
+```
+
+Cette commande garde l’exhaustif rapide mais augmente fortement la recherche
+aléatoire et active le shrink. Elle doit être utilisée après une amélioration de
+solver qui passe `make quick`, avant de considérer le résultat comme stable.
+
 ## Gates de complexité
 
 Quick benchmark :
@@ -58,6 +68,16 @@ timeouts et résultats incomplets doivent rester visibles dans le JSON.
 Un algorithme qui passe les gates peut encore être faux. Après chaque succès, il
 faut essayer activement de le casser avec de nouveaux générateurs, des PC-arbres
 différents et des cas non stricts avec beaucoup d’égalités.
+
+La bonne boucle n’est pas seulement "faire passer les tests". Elle est :
+proposer une hypothèse, la faire passer sur oracle, chercher des
+contre-exemples, shrinker les désaccords, puis seulement mesurer la complexité.
+
+Pour un Goal long, l’agent principal peut appeler jusqu’à 5 subagents afin de
+tester des idées différentes en parallèle. Les subagents doivent produire des
+résultats comparables : hypothèse, commandes, contre-exemples trouvés ou non,
+raison d’échec, et prochaine décision. L’agent principal reste responsable de la
+synthèse et des commits.
 
 Solutions interdites :
 
