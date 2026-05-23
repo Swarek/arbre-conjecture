@@ -218,6 +218,17 @@ Dernier commit green avant T009 : `07120e4`.
   `make bench`, plus benchmarks ciblés chain/complete low-hub star jusqu'à
   `n=80`. Résultat observé : `mixed/star` reste `0` timeout et `0` incomplet
   jusqu'à `n=100`; les familles positives ciblées sont acceptées sans timeout.
+- Checkpoint T038 courant : commit contenant
+  `passes_bad_side_precircular_cR` et
+  `find_bad_side_precircular_cR_violation` dans `predicates.py`, utilisés par
+  `candidate.py` et `low_hub_strong_ordering_report` pour valider les ordres en
+  `O(n^3)` tout en gardant les tools d'oracle sur les quadruplets. Validation
+  observée : tests ciblés prédicats/DP/candidate/local-constraints,
+  probe local `6058` comparaisons, probe subagent `153291` comparaisons,
+  `make unit`, `make quick`, `make hunt-counterexamples`, `make check`,
+  `make bench-quick`, `make bench`, et benchmarks ciblés chain/complete
+  low-hub star jusqu'à `n=100`. Résultat observé : `mixed/star` reste `0`
+  timeout et `0` incomplet jusqu'à `n=100`, médiane `0.0275s` à `n=100`.
 
 ## Rollback
 

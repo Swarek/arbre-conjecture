@@ -181,7 +181,8 @@ sous-cas polynomial.
 
 ### Caractérisation bad-side d'un ordre fixé
 
-Statut : conséquence directe pour ordre fixé + preuve expérimentale.
+Statut : conséquence directe pour ordre fixé + prédicat central exact depuis
+T038.
 
 Pour une paire `{a,b}` et un point `w` distinct des endpoints, définir
 `bad(a,b,w)` par :
@@ -219,6 +220,18 @@ indépendant a ajouté des familles `random/cycle/permuted_cycle/block/
 ultrametric/equal/non_strict/paired_farthest/mixed` jusqu'à `n=9`, sans
 désaccord sur `926775` comparaisons. La variante non stricte `>=` est
 explicitement exclue, car elle rejette les égal-distance.
+
+Conséquence T038 : `passes_bad_side_precircular_cR` et
+`find_bad_side_precircular_cR_violation` sont maintenant dans `predicates.py`.
+La candidate les utilise pour valider les témoins produits ou énumérés en
+`O(n^3)` au lieu de scanner les quadruplets. Les tools de correction gardent
+`is_precircular_order_cR` comme oracle indépendant par quadruplets.
+
+Preuve expérimentale T038 : tests exhaustifs `n=4`, rotations/renversements,
+égal-distance, cas avec deux mauvais témoins sur le même arc, probe local
+`6058` comparaisons et probe subagent `153291` comparaisons, sans désaccord.
+La complexité observée de `make bench` sur `mixed/star` descend à une médiane
+`0.0275s` à `n=100`, sans timeout ni incomplet.
 
 ### Signature bad-side de bloc
 

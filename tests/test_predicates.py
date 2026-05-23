@@ -7,11 +7,13 @@ from pc_circular.predicates import (
     find_farthest_crossing_violation,
     find_farthest_prop_4_4_violation,
     find_farthest_prop_4_5_obstruction,
+    find_bad_side_precircular_cR_violation,
     find_precircular_cR_violation,
     has_at_most_one_bad_witness_per_pair,
     is_constant_off_diagonal,
     is_precircular_order_cR,
     is_quasi_circular_order,
+    passes_bad_side_precircular_cR,
     passes_farthest_crossing_condition,
     passes_farthest_prop_4_4_condition,
     passes_farthest_prop_4_5_order_test,
@@ -79,6 +81,63 @@ def test_four_point_order_can_be_quasi_circular_but_not_circular_robinson():
     assert is_quasi_circular_order(D, order)
     assert not is_precircular_order_cR(D, order)
     assert find_precircular_cR_violation(D, order)["quadruple"] == (0, 1, 2, 3)
+    assert not passes_bad_side_precircular_cR(D, order)
+    assert find_bad_side_precircular_cR_violation(D, order)["quadruple"] == (0, 1, 2, 3)
+
+
+def test_bad_side_precircular_matches_quadruple_definition_on_exhaustive_n4():
+    n = 4
+    pairs = list(itertools.combinations(range(n), 2))
+    checked = 0
+    for values in itertools.product((1, 2, 3), repeat=len(pairs)):
+        D = [[0] * n for _ in range(n)]
+        for (i, j), value in zip(pairs, values):
+            D[i][j] = D[j][i] = value
+        for order in all_circular_orders(n):
+            checked += 1
+            assert passes_bad_side_precircular_cR(D, order) is is_precircular_order_cR(D, order)
+            assert (find_bad_side_precircular_cR_violation(D, order) is None) is (
+                find_precircular_cR_violation(D, order) is None
+            )
+    assert checked == 2187
+
+
+def test_bad_side_precircular_keeps_equalities_non_strict():
+    D = [[0 if i == j else 1 for j in range(6)] for i in range(6)]
+    order = (0, 1, 2, 3, 4, 5)
+
+    assert is_precircular_order_cR(D, order)
+    assert passes_bad_side_precircular_cR(D, order)
+    assert find_bad_side_precircular_cR_violation(D, order) is None
+
+
+def test_bad_side_precircular_detects_wrapping_rotations_and_reversal():
+    D = quasi_circular_not_circular_four_point()
+    base = (0, 1, 2, 3)
+    variants = []
+    for order in (base, tuple(reversed(base))):
+        for cut in range(len(order)):
+            variants.append(order[cut:] + order[:cut])
+
+    for order in variants:
+        assert not is_precircular_order_cR(D, order)
+        assert not passes_bad_side_precircular_cR(D, order)
+        assert find_bad_side_precircular_cR_violation(D, order) is not None
+
+
+def test_bad_side_precircular_accepts_two_bad_witnesses_on_same_side():
+    D = [
+        [0, 2, 1, 1, 1],
+        [2, 0, 3, 1, 1],
+        [1, 3, 0, 2, 1],
+        [1, 1, 2, 0, 1],
+        [1, 1, 1, 1, 0],
+    ]
+    order = (0, 2, 4, 1, 3)
+
+    assert is_precircular_order_cR(D, order)
+    assert passes_bad_side_precircular_cR(D, order)
+    assert find_bad_side_precircular_cR_violation(D, order) is None
 
 
 def test_farthest_sets_and_crossing_condition_on_square_cycle():

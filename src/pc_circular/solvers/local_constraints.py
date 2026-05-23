@@ -9,6 +9,7 @@ from pc_circular.predicates import (
     find_farthest_crossing_violation,
     find_precircular_cR_violation,
     is_precircular_order_cR,
+    passes_bad_side_precircular_cR,
     validate_dissimilarity,
 )
 from pc_circular.pc_tree import PCNode, labels
@@ -211,7 +212,7 @@ def low_hub_strong_ordering_report(D, *, max_permutation_pairs: int = 100_000):
             "part_a": (),
             "part_b": (),
             "witness_order": order,
-            "witness_order_is_cr": is_precircular_order_cR(D, order),
+            "witness_order_is_cr": passes_bad_side_precircular_cR(D, order),
         }
     if len(positive_values) != 2:
         return {
@@ -254,7 +255,7 @@ def low_hub_strong_ordering_report(D, *, max_permutation_pairs: int = 100_000):
             "part_a": (),
             "part_b": (),
             "witness_order": order,
-            "witness_order_is_cr": is_precircular_order_cR(D, order),
+            "witness_order_is_cr": passes_bad_side_precircular_cR(D, order),
         }
 
     components = _bipartite_components(high_vertices, neighbors)
@@ -316,7 +317,7 @@ def low_hub_strong_ordering_report(D, *, max_permutation_pairs: int = 100_000):
                     "part_a": tuple(A_order),
                     "part_b": tuple(B_order),
                     "witness_order": witness_order,
-                    "witness_order_is_cr": is_precircular_order_cR(D, witness_order),
+                    "witness_order_is_cr": passes_bad_side_precircular_cR(D, witness_order),
                 }
 
     return {

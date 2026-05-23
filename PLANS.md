@@ -2013,3 +2013,91 @@ limite factorielle ou l'absence de représentation PC-tree restent incomplets.
 Prochaine étape : prouver ou réfuter la suffisance du strong ordering, puis
 remplacer l'énumération factorielle par une reconnaissance polynomial-time ou
 isoler des sous-cas positifs plus étroits comme matching/chain avec preuve.
+
+## ExecPlan 2026-05-23 - fast bad-side fixed-order predicate
+
+But : accélérer les validations de témoins dans `candidate.py` sans changer le
+problème décidé : promouvoir la reformulation bad-side exacte d'un ordre fixé
+comme prédicat central `O(n^3)`, en gardant l'oracle fort comme comparaison
+indépendante via le prédicat de quadruplets existant.
+
+Hypothèse : pour un ordre circulaire fixé, la condition pre-circular/cR est
+équivalente au fait qu'aucune paire `{a,b}` n'a de mauvais témoins sur les deux
+arcs ouverts entre `a` et `b`. Un mauvais témoin `w` vérifie
+`max(d(a,w), d(w,b)) > d(a,b)`. Cette reformulation est déjà expérimentée en
+Piste B ; l'intégrer dans `predicates.py` permet de valider les témoins
+large-n plus vite.
+
+Fichiers à modifier : `src/pc_circular/predicates.py`,
+`src/pc_circular/solvers/candidate.py`,
+`src/pc_circular/solvers/local_constraints.py`, `tests/test_predicates.py`,
+`tests/test_candidate.py` si nécessaire, `docs/proof_obligations.md`,
+`docs/tracks/piste_b_dp_pc_tree.md`, `docs/tracks/piste_f_complexity_subcases.md`,
+`docs/tracks/README.md`, `docs/experiment_log.md`, `docs/checkpoints.md`,
+`PLANS.md`.
+
+Algorithme pressenti : ajouter `find_bad_side_precircular_cR_violation` et
+`passes_bad_side_precircular_cR` dans `predicates.py`. Le prédicat parcourt les
+paires de positions d'un ordre, cherche un mauvais témoin sur chaque arc ouvert
+et retourne une violation `(a,y,b,t)` si les deux côtés sont non vides. Utiliser
+ce prédicat dans la candidate pour valider les témoins et les ordres
+échantillonnés ; ne pas modifier l'oracle exact des outils tant que les tests
+d'équivalence sont la garde.
+
+Plan de contre-exemples : comparer au test de quadruplets sur exhaustif `n=4`
+valeurs `{1,2,3}`, random `n=5..7`, familles equal-distance, cycle,
+quasi-non-cR, low-hub chain/complete/matching, et ordres PC-tree non
+représentés. Si un désaccord apparaît, l'ajouter en régression et ne pas
+intégrer à la candidate.
+
+Plan subagents : trois sidecars lecture seule. Un audite la preuve et les cas
+non stricts ; un cherche des contre-exemples par scripts temporaires ; un
+audite les lignes candidate/local_constraints et les benchmarks de performance.
+
+Tests à exécuter : `pytest -q tests/test_predicates.py tests/test_dp_experiments.py
+tests/test_candidate.py tests/test_local_constraints.py`, probe d'équivalence
+random bornée, benchmarks ciblés low-hub chain/complete avant/après,
+`make unit`, `make quick`, `make hunt-counterexamples`, `make check`,
+`make bench-quick`; `make bench` si la candidate change ses validations
+large-n.
+
+Risques : déplacer trop tôt un prédicat expérimental dans le cœur ; modifier
+l'oracle au lieu de garder une comparaison indépendante ; perdre les détails de
+diagnostic de `find_precircular_cR_violation`; oublier que la stricte
+inégalité `>` dans mauvais témoin est nécessaire pour les égalités.
+
+Résultats observés : `find_bad_side_precircular_cR_violation` et
+`passes_bad_side_precircular_cR` ont été ajoutés dans `predicates.py`.
+`candidate.py` et `low_hub_strong_ordering_report` utilisent ce prédicat pour
+valider les témoins, tandis que `is_precircular_order_cR` et les tools
+d'oracle restent sur la définition par quadruplets. Les tests ajoutés couvrent
+exhaustif `n=4`, égal-distance, rotations/renversements avec wrapping, et un
+cas où deux mauvais témoins sont du même côté et ne doivent pas être rejetés.
+
+Preuve/contre-exemples : les subagents ont confirmé la preuve directe et n'ont
+trouvé aucun désaccord. Probe local : `6058` comparaisons ordre fixé sans
+mismatch. Probe subagent indépendant : `153291` comparaisons, incluant
+exhaustif `n=4`, random `n=5..7`, familles exactes `n=4..8`, et échantillons
+`n=9,10,12`, sans mismatch. La variante `>=` a été réfutée immédiatement sur
+égal-distance, confirmant le besoin du `>` strict.
+
+Validation ciblée : `pytest -q tests/test_predicates.py
+tests/test_dp_experiments.py tests/test_candidate.py tests/test_local_constraints.py`
+donne `83 passed`. Benchmarks ciblés, tailles `20,40,80,100`, répétitions `5` :
+`chain_high_graph_plus_low_hub/star` passe à médiane `0.2485s` à `n=100`,
+`complete_bipartite_high_graph_plus_low_hub/star` à `0.3284s`, `0` timeout et
+`0` incomplet. Le micro-benchmark subagent estime l'ancien chemin quadruplets à
+`4.306s` et `4.456s` à `n=100` sur ces deux familles.
+
+Validation gates : `make unit` `159 passed`; `make quick` `159 passed` puis
+`JUSTE`; `make hunt-counterexamples` `JUSTE`; `make check` `JUSTE`;
+`make bench-quick` `0` timeout, `0` incomplet ; `make bench` `0` timeout,
+`0` incomplet jusqu'à `n=100`, médiane `0.0275s`, p95 `0.0362s`, fit
+polynomial empirique `p ~= 1.73`.
+
+Décision : intégrer comme accélérateur exact d'ordre fixé et comme validation
+candidate. Ce n'est pas un solveur d'existence PC-tree : il accélère seulement
+les ordres déjà produits ou énumérés. Garder l'oracle par quadruplets comme
+comparaison indépendante dans les tools. Prochaine étape : utiliser ce gain
+pour tester plus agressivement la reconnaissance strong-ordering low-hub ou les
+familles matching/PC-tree non-star.

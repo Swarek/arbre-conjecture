@@ -173,6 +173,35 @@ une meilleure représentation pour Piste C, mais ne débloque pas encore une
 signature DP compacte. Pour Piste B, la prochaine avancée doit réduire le
 support ou prouver une factorisation par structure de PC-tree.
 
+## Résultats T038
+
+Statut : la caractérisation bad-side d'un ordre fixé est promue en prédicat
+central exact, mais pas en DP compacte.
+
+Artefacts :
+
+- `find_bad_side_precircular_cR_violation` dans `predicates.py` retourne une
+  paire `{a,b}` et deux mauvais témoins placés sur les deux arcs ;
+- `passes_bad_side_precircular_cR` donne le test booléen exact en `O(n^3)` ;
+- `candidate.py` utilise ce prédicat pour valider les témoins déjà produits ou
+  énumérés ;
+- les tools de correction gardent le test de quadruplets comme oracle
+  indépendant.
+
+Validation :
+
+- exhaustif `n=4`, valeurs `{1,2,3}`, `2187` comparaisons dans les tests ;
+- probes locales et subagents : `153291` comparaisons ordre fixé sans
+  désaccord ;
+- égal-distance confirme que l'inégalité stricte `>` est nécessaire ;
+- wrapping par rotations/renversements et cas "deux témoins mauvais du même
+  côté" sont en régression.
+
+Conclusion : T038 accélère fortement le test d'un ordre fixé et les validations
+de témoins, mais ne résout pas encore la question DP : il faut toujours produire
+ou représenter un ordre. La prochaine tentative Piste B doit exploiter cette
+forme pour réduire le support des états, pas seulement accélérer l'énumération.
+
 ## Résultats T021
 
 Statut : résultat négatif expérimental sur signatures compactées.

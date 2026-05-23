@@ -1626,3 +1626,70 @@
   réduire sa reconnaissance à un bipartite permutation graph polynomial ; en
   parallèle, ajouter une famille matching low-hub positive pour casser les
   simplifications trop spécifiques aux chain/complete.
+
+## 2026-05-23 fast bad-side fixed-order predicate
+
+- Date/heure : 2026-05-23 05:21:34 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : pour un ordre fixé, la condition pre-circular/cR est
+  équivalente à l'absence d'une paire `{a,b}` dont les deux arcs ouverts
+  contiennent chacun un mauvais témoin `w` avec
+  `max(D[a][w], D[w][b]) > D[a][b]`. Cette forme doit accélérer la validation
+  de témoins sans changer l'oracle.
+- Changement fait : ajout de `find_bad_side_precircular_cR_violation` et
+  `passes_bad_side_precircular_cR` dans `predicates.py`; remplacement des
+  validations de témoins/échantillons dans `candidate.py`; remplacement de la
+  vérification de témoin dans `low_hub_strong_ordering_report`. Les tools de
+  correction continuent à utiliser `is_precircular_order_cR` par quadruplets.
+- Commande exécutée avant modification : `make quick`.
+- Résultat correction avant modification : `155 passed`, puis `JUSTE`.
+- Plan subagents : trois sidecars lecture seule. Résultats : preuve
+  d'équivalence confirmée ; aucun contre-exemple trouvé ; micro-benchmark à
+  `n=100` estime un gain global `13.9x..17.5x` sur les familles low-hub
+  chain/complete ; recommandation de garder l'oracle par quadruplets
+  indépendant.
+- Contre-exemples cherchés : exhaustif `n=4`, random `n=5..7`, familles exactes
+  `n=4..8`, échantillons `n=9,10,12`, égal-distance, rotations/renversements
+  et cas où deux mauvais témoins sont sur le même arc.
+- Résultat contre-exemples : aucun désaccord sur le prédicat strict `>` ; la
+  variante fautive `>=` est réfutée par égal-distance.
+- Commande exécutée : `pytest -q tests/test_predicates.py tests/test_dp_experiments.py tests/test_candidate.py tests/test_local_constraints.py`.
+- Résultat correction : `83 passed`.
+- Commande exécutée : probe local d'équivalence random/familles avec
+  `PYTHONPATH=src rtk .venv/bin/python -c ...`.
+- Résultat probe local : `6058` comparaisons ordre fixé, `0` mismatch.
+- Résultat probe subagent : `153291` comparaisons ordre fixé, `0` mismatch.
+- Commande exécutée : benchmark ciblé
+  `chain_high_graph_plus_low_hub/star`, tailles `20,40,80,100`, répétitions `5`.
+- Résultat benchmark ciblé :
+  `reports/complexity_chain_low_hub_bad_side_quick.json` écrit ; `0` timeout,
+  `0` incomplet ; à `n=100`, médiane `0.2485s`, p95 `0.2504s`.
+- Commande exécutée : benchmark ciblé
+  `complete_bipartite_high_graph_plus_low_hub/star`, tailles `20,40,80,100`,
+  répétitions `5`.
+- Résultat benchmark ciblé :
+  `reports/complexity_complete_low_hub_bad_side_quick.json` écrit ; `0`
+  timeout, `0` incomplet ; à `n=100`, médiane `0.3284s`, p95 `0.3306s`.
+- Commande exécutée : `make unit`.
+- Résultat correction : `159 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `159 passed`, puis `JUSTE`.
+- Commande exécutée : `make hunt-counterexamples`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark rapide : `reports/complexity_report_quick.json` écrit ;
+  `0` timeout, `0` incomplet ; à `n=20`, médiane `0.00099s`.
+- Commande exécutée : `make bench`.
+- Résultat benchmark fort : `reports/complexity_report.json` écrit ; `0`
+  timeout, `0` incomplet jusqu'à `n=100`, médiane `0.0275s` à `n=100`, p95
+  `0.0362s`, fit polynomial empirique `p ~= 1.73`.
+- Conclusion : T038 améliore le coût du test d'ordre fixé et des validations
+  candidate, sans résoudre l'existence dans PC-tree. Le résultat est une
+  conséquence directe de la condition cR, pas une conjecture.
+- Next action : utiliser ce gain pour tester une reconnaissance low-hub
+  strong-ordering plus ambitieuse, ajouter matching low-hub comme stress
+  positif, ou reprendre la Piste B sur une signature de sous-arbre moins
+  globale.

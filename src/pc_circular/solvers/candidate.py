@@ -34,7 +34,7 @@ from typing import Iterable, Optional, Sequence
 from pc_circular.pc_tree import PCNode, enumerate_frontiers, labels, represents_order, sample_frontier
 from pc_circular.predicates import (
     has_at_most_one_bad_witness_per_pair,
-    is_precircular_order_cR,
+    passes_bad_side_precircular_cR,
     validate_dissimilarity,
 )
 from pc_circular.solvers import brute_force
@@ -121,7 +121,7 @@ def _bounded_pc_tree_exact_result(D, n: int, pc_tree: Optional[PCNode]):
 
     orders = enumerate_frontiers(pc_tree, canonical=True)
     for order in orders:
-        if is_precircular_order_cR(D, order):
+        if passes_bad_side_precircular_cR(D, order):
             return {
                 "exists": True,
                 "order": list(order),
@@ -163,7 +163,7 @@ def _bounded_quasi_orders_exact_result(D, n: int, quasi_orders):
     for raw_order in quasi_orders:
         tried += 1
         order = _validate_order_shape(raw_order, n)
-        if is_precircular_order_cR(D, order):
+        if passes_bad_side_precircular_cR(D, order):
             return {
                 "exists": True,
                 "order": list(order),
@@ -352,7 +352,7 @@ def _minimum_cycle_witness_result(D, n: int, pc_tree: Optional[PCNode]):
         return None
     if pc_tree is not None and not represents_order(pc_tree, order):
         return None
-    if not is_precircular_order_cR(D, order):
+    if not passes_bad_side_precircular_cR(D, order):
         return None
     return {
         "exists": True,
@@ -449,7 +449,7 @@ def _paired_farthest_witness_result(D, n: int, pc_tree: Optional[PCNode]):
         return None
     if pc_tree is not None and not represents_order(pc_tree, order):
         return None
-    if not is_precircular_order_cR(D, order):
+    if not passes_bad_side_precircular_cR(D, order):
         return None
     return {
         "exists": True,
@@ -468,7 +468,7 @@ def _low_hub_strong_ordering_witness_result(D, n: int, pc_tree: Optional[PCNode]
     if report["strong_ordering_exists"] is not True or report["witness_order"] is None:
         return None
     order = _validate_order_shape(report["witness_order"], n)
-    if not report["witness_order_is_cr"] or not is_precircular_order_cR(D, order):
+    if not report["witness_order_is_cr"] or not passes_bad_side_precircular_cR(D, order):
         return None
     if pc_tree is not None and not represents_order(pc_tree, order):
         return None
@@ -565,7 +565,7 @@ def solve(D, quasi_orders=None, pc_tree=None):
     tried = 0
     for order in _sample_orders(n, quasi_orders, pc_tree):
         tried += 1
-        if is_precircular_order_cR(D, order):
+        if passes_bad_side_precircular_cR(D, order):
             return {
                 "exists": True,
                 "order": list(order),

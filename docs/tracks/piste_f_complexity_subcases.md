@@ -480,6 +480,20 @@ Limites T037 :
 - il manque encore une famille matching low-hub positive en benchmark ciblé
   pour éviter de suradapter les prochaines preuves aux chain/complete.
 
+Résultat T038 :
+
+- les validations d'ordre fixé dans la candidate passent par
+  `passes_bad_side_precircular_cR`, équivalent exact de cR mais en `O(n^3)` ;
+- le benchmark fort `mixed/star` reste `0` timeout et `0` incomplet jusqu'à
+  `n=100`, avec médiane `0.0275s` et p95 `0.0362s` à `n=100` ;
+- les benchmarks ciblés low-hub strong-ordering passent à `0.2485s` médiane
+  pour chain et `0.3284s` pour complete à `n=100`, contre environ `4.3s` et
+  `4.5s` dans le micro-benchmark simulant l'ancien test de quadruplets.
+
+Limite T038 : le gain ne produit pas de nouveaux ordres et ne prouve pas la
+reconnaissance strong-ordering. Il rend seulement les prochaines attaques
+large-n moins chères.
+
 ## Témoin cycle par distances minimales
 
 Statut : certificat positif intégré pour tout PC-tree du scaffold où le témoin

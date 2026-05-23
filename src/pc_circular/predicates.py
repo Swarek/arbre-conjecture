@@ -73,6 +73,10 @@ def has_at_most_one_bad_witness_per_pair(D: Matrix) -> bool:
     return True
 
 
+def _is_bad_witness(D: Matrix, a: int, b: int, w: int) -> bool:
+    return w != a and w != b and max(D[a][w], D[w][b]) > D[a][b]
+
+
 def _validate_order_for_D(D: Matrix, order: Order) -> int:
     n = validate_dissimilarity(D)
     if len(order) != n or set(order) != set(range(n)):
@@ -195,6 +199,19 @@ def is_precircular_order_cR(D: Matrix, order: Order) -> bool:
     return find_precircular_cR_violation(D, order) is None
 
 
+def passes_bad_side_precircular_cR(D: Matrix, order: Order) -> bool:
+    """Exact fixed-order cR test via bad witnesses on the two arcs.
+
+    For a pair ``{a,b}``, a bad witness is a point ``w`` with
+    ``max(d(a,w), d(w,b)) > d(a,b)``.  The pre-circular/cR inequality fails
+    exactly when one bad witness lies on each open arc between ``a`` and ``b``.
+    This is equivalent to ``is_precircular_order_cR`` but scans triples instead
+    of quadruples.
+    """
+
+    return find_bad_side_precircular_cR_violation(D, order) is None
+
+
 def is_strict_precircular_order_cR(D: Matrix, order: Order) -> bool:
     """Test the strict one-side Robinson condition ``scR`` for one order."""
 
@@ -261,6 +278,49 @@ def find_precircular_cR_violation(D: Matrix, order: Order) -> dict | None:
                             "d_xt": D[x][t],
                             "d_tz": D[t][z],
                         }
+    return None
+
+
+def find_bad_side_precircular_cR_violation(D: Matrix, order: Order) -> dict | None:
+    """Return a cR violation as a pair with bad witnesses on both arcs."""
+
+    n = _validate_order_for_D(D, order)
+    if n < 4:
+        return None
+
+    seq = tuple(order)
+    position = {label: index for index, label in enumerate(seq)}
+    for left_index in range(n):
+        a = seq[left_index]
+        for right_index in range(left_index + 1, n):
+            b = seq[right_index]
+            arc_a_to_b = seq[left_index + 1 : right_index]
+            arc_b_to_a = seq[right_index + 1 :] + seq[:left_index]
+            bad_a_to_b = next((w for w in arc_a_to_b if _is_bad_witness(D, a, b, w)), None)
+            if bad_a_to_b is None:
+                continue
+            bad_b_to_a = next((w for w in arc_b_to_a if _is_bad_witness(D, a, b, w)), None)
+            if bad_b_to_a is None:
+                continue
+
+            y = bad_a_to_b
+            t = bad_b_to_a
+            rhs_y = max(D[a][y], D[y][b])
+            rhs_t = max(D[a][t], D[t][b])
+            return {
+                "pair": (a, b),
+                "quadruple": (a, y, b, t),
+                "positions": (left_index, position[y], right_index, position[t]),
+                "lhs_pair": (a, b),
+                "lhs": D[a][b],
+                "rhs": min(rhs_y, rhs_t),
+                "a_to_b_bad_witness": y,
+                "b_to_a_bad_witness": t,
+                "d_ay": D[a][y],
+                "d_yb": D[y][b],
+                "d_at": D[a][t],
+                "d_tb": D[t][b],
+            }
     return None
 
 

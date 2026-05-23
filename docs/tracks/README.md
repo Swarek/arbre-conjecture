@@ -75,6 +75,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T035 | 2026-05-23 | E/F | Les graphes hauts bipartis ne suffisent pas ; cycle haut pair induit `>=6` certifié négatif | `candidate_even_high_cycle_low_hub_obstruction` |
 | T036 | 2026-05-23 | E/F | Diagnostic strong-ordering borné pour le cas binaire hub bas ; pas intégré à la candidate | `low_hub_strong_ordering_report` |
 | T037 | 2026-05-23 | E/F | Diagnostic strong-ordering intégré seulement comme témoin positif vérifié et représenté | `candidate_low_hub_strong_ordering_witness` |
+| T038 | 2026-05-23 | B/F | Test fixed-order bad-side exact promu en prédicat `O(n^3)` pour accélérer les validations candidate | `passes_bad_side_precircular_cR` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les
