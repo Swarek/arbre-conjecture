@@ -577,6 +577,56 @@ Preuve expérimentale T041 :
   `candidate.py` doit donc continuer la recherche après un témoin positif non
   représenté, jamais conclure `False`.
 
+### Sous-cas union de composantes chain/Ferrers high graph avec hub bas
+
+Statut : théorème prouvé pour un certificat positif ; sous-cas suffisant, pas
+caractérisation complète.
+
+Dans une matrice binaire `low/high` avec hubs bas, supposons que le graphe haut
+privé des hubs ait des composantes biparties `C_1,...,C_k`, et que chaque
+composante admette un ordre Ferrers local `A_c,B_c`. En concaténant les
+composantes dans le même ordre côté `A` et côté `B`, tout couple d'arêtes
+croisées entre deux composantes distinctes devient impossible : l'ordre côté
+`A` impose `p <= q` tandis que l'ordre côté `B` impose `q <= p`, donc les deux
+arêtes croisées viennent de la même composante. Le strong ordering local donne
+alors les deux arêtes droites. Par le lemme bad-side T040, l'ordre
+`hubs, A_1,...,A_k, B_1,...,B_k` est circular Robinson.
+
+Ce que cela couvre :
+
+- obligations 1/2 positives : le strong ordering component-wise est suffisant
+  pour obtenir un témoin cR par le lemme bad-side ;
+- obligation 4 : `candidate.py` accepte seulement si l'ordre est représenté par
+  `represents_order(T, order)` quand un PC-tree est fourni ;
+- obligation 5 dans ce sous-cas : bipartition, reconnaissance Ferrers locale,
+  concaténation et validation directe sont polynomiales ; la validation
+  fixed-order `passes_bad_side_precircular_cR` reste le coût dominant du
+  scaffold ;
+- obligation 6 : `low=0`, hubs multiples et égalités binaires restent traités
+  par le `>` strict des mauvais témoins ; les singletons sans arête haute sont
+  des hubs, pas des composantes privées.
+
+Limites :
+
+- le critère n'est pas nécessaire : il existe des graphes bipartis
+  strong-ordering positifs connectés qui ne sont pas Ferrers ;
+- l'ordre des composantes doit être le même côté `A` et côté `B`; deux arêtes
+  disjointes désalignées suffisent à créer une violation ;
+- sur PC-tree non-star, un témoin component-wise non représenté ne prouve pas
+  `exists=False` ;
+- aucun échec `not_component_ferrers_high_graph` ne doit être converti en
+  rejet.
+
+Preuve expérimentale T042 :
+
+- `permuted_disjoint_chain_high_graph_plus_low_hub/star` est accepté après
+  permutation des labels jusqu'à `n=101`, avec `0` timeout et `0` incomplet ;
+- un cas non-star `n=9` verrouille que la candidate continue après un témoin
+  component-wise cR mais non représenté ;
+- un cas matching non-star `n=17` documente une limite restante : un témoin
+  représenté est connu, mais la candidate peut rester incomplète si la recherche
+  factorielle ne l'atteint pas.
+
 ### Témoins positifs échantillonnés
 
 Statut : conséquence directe / clarification de la candidate.

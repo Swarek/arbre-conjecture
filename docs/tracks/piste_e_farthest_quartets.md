@@ -270,10 +270,20 @@ autres témoins. Un contre-exemple non-star est ajouté côté candidate : le
 témoin Ferrers canonique peut être non représenté, donc la recherche doit
 continuer vers un autre témoin représenté.
 
+Résultat T042 : `low_hub_component_ferrers_strong_ordering_report` étend le
+certificat positif aux unions disjointes de composantes chain/Ferrers. Les
+composantes sont concaténées dans le même ordre côté `A` et côté `B`, puis le
+témoin est revalidé par bad-side et par `represents_order`. Deux arêtes
+disjointes désalignées forment une régression de limite : l'ordre des
+composantes est une condition nécessaire de cette preuve. Les cas non-star où
+le témoin component-wise n'est pas représenté restent une recherche incomplète,
+pas un rejet.
+
 ## Prochaine action
 
 Utiliser les témoins `find_precircular_cR_violation` comme source principale
 d’obstructions. Pour low-hub, chercher une réduction polynomial-time de
 reconnaissance strong-ordering générale ou un diagnostic d'intersection PC-tree
-plus compact. Prochaine option raisonnable : rapport CSP non-star hors candidate
-ou extension positive à une classe plus large de graphes bipartis permutation.
+plus compact. Prochaine option raisonnable : intersecter le PC-tree avec les
+ordres component-Ferrers/strong-ordering, ou préparer hors candidate une
+reconnaissance bipartite permutation avec témoin.

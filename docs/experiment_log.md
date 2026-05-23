@@ -1875,3 +1875,65 @@
   graphes bipartis à strong-ordering compatibles PC-tree, ou produire un
   rapport CSP non-star hors candidate pour mesurer les conflits de
   représentation.
+
+## 2026-05-23 component Ferrers low-hub witness
+
+- Date/heure : 2026-05-23 06:38:19 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : pour une matrice binaire `low/high` avec hubs bas, si
+  chaque composante du graphe haut privé est chain/Ferrers, alors concaténer les
+  composantes dans le même ordre côté `A` et côté `B` produit un strong ordering
+  global ; par le lemme bad-side T040, `hubs,A,B` est cR.
+- Changement fait : ajout de `disjoint_chain_high_graph_plus_low_hub` et
+  `permuted_disjoint_chain_high_graph_plus_low_hub`; ajout de
+  `low_hub_component_ferrers_strong_ordering_report`; intégration dans
+  `candidate.py` comme certificat positif vérifié ; régressions pour trois
+  composantes permutées, matching dégénéré, graphe non-Ferrers, `low=0` avec
+  hubs multiples, composantes désalignées, et PC-tree non-star où le témoin
+  component-wise est cR mais non représenté.
+- Commande exécutée avant modification : `make quick`.
+- Résultat correction avant modification : `171 passed`, puis `JUSTE`.
+- Plan subagents : cinq sidecars lecture seule. Résultats : preuve
+  component-wise validée sous l'hypothèse du même ordre de composantes côté
+  `A/B`; contre-exemple minimal deux arêtes désalignées ; mesure de l'explosion
+  pré-T042 (`n=17` atteint la limite `100000` et devient placeholder) ;
+  comparaison avec les graphes bipartis permutation montrant que T042 est un
+  sous-cas strict ; checklist documentaire fournie.
+- Commande exécutée : `pytest -q tests/test_candidate.py tests/test_local_constraints.py tests/test_generators.py`.
+- Résultat correction : `86 passed`.
+- Commande exécutée : probe exact petits cas
+  `permuted_disjoint_chain_high_graph_plus_low_hub/star` pour `n=5..8`, seeds
+  `0..9`.
+- Résultat correction : aucun mismatch avec l'oracle exact ; tous les témoins
+  positifs renvoyés sont cR.
+- Commande exécutée : benchmark ciblé
+  `permuted_disjoint_chain_high_graph_plus_low_hub/star`, tailles
+  `13,17,21,31,41,81,101`, répétitions `10`, timeout `2.0`.
+- Résultat benchmark ciblé :
+  `reports/complexity_disjoint_chain_low_hub_star.json` écrit ; `0` timeout,
+  `0` incomplet ; à `n=101`, médiane `0.2433s`, p95 `0.2454s`, fit polynomial
+  empirique `p ~= 3.12`.
+- Commande exécutée : `make unit`.
+- Résultat correction : `181 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `181 passed`, puis `JUSTE`.
+- Commande exécutée : `make hunt-counterexamples`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark rapide : `reports/complexity_report_quick.json` écrit ;
+  `0` timeout, `0` incomplet ; à `n=20`, médiane `0.00111s`, p95 `0.00123s`.
+- Commande exécutée : `make bench`.
+- Résultat benchmark fort : `reports/complexity_report.json` écrit ; `0`
+  timeout, `0` incomplet jusqu'à `n=100`, médiane `0.0295s`, p95 `0.0359s`,
+  fit polynomial empirique `p ~= 1.76`.
+- Conclusion : T042 élargit le certificat positif low-hub de Ferrers connexe à
+  unions de composantes Ferrers et supprime une nouvelle explosion factorielle
+  sur star. Ce n'est pas une reconnaissance générale des graphes bipartis à
+  strong ordering, et les conflits de représentation PC-tree non-star restent
+  incomplets.
+- Next action : construire une intersection PC-tree avec les ordres
+  component-Ferrers/strong-ordering ou ajouter hors candidate un rapport de
+  reconnaissance bipartite permutation produisant un témoin vérifiable.

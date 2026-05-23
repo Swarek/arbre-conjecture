@@ -14,6 +14,7 @@ from pc_circular.generators import (
     padded_five_local_non_cr,
     padded_four_local_non_cr,
     permuted_chain_high_graph_plus_low_hub,
+    permuted_disjoint_chain_high_graph_plus_low_hub,
     permuted_cycle_metric,
     quasi_circular_not_circular_four_point,
     random_dissimilarity,
@@ -43,7 +44,10 @@ from pc_circular.solvers.candidate import (
     solve,
 )
 from pc_circular.solvers import brute_force
-from pc_circular.solvers.local_constraints import low_hub_ferrers_strong_ordering_report
+from pc_circular.solvers.local_constraints import (
+    low_hub_component_ferrers_strong_ordering_report,
+    low_hub_ferrers_strong_ordering_report,
+)
 
 
 def _one_high_edge_instance(n):
@@ -344,6 +348,38 @@ def test_candidate_low_hub_ferrers_witness_accepts_permuted_chain_star():
     assert represents_order(star_pc_tree(21), result["order"])
 
 
+def test_candidate_low_hub_component_ferrers_witness_accepts_permuted_disjoint_chain_star():
+    D = permuted_disjoint_chain_high_graph_plus_low_hub(21, rng=random.Random(0))
+    result = solve(D, pc_tree=star_pc_tree(21))
+
+    assert result["exists"] is True
+    assert result["complete"] is True
+    assert result["solver"] == "candidate_low_hub_strong_ordering_witness"
+    assert result["checked_permutation_pairs"] == 0
+    assert result["component_count"] == 2
+    assert is_precircular_order_cR(D, result["order"])
+    assert represents_order(star_pc_tree(21), result["order"])
+
+
+def test_candidate_low_hub_component_ferrers_continues_after_nonrepresented_nonstar_witness():
+    D = permuted_disjoint_chain_high_graph_plus_low_hub(9, rng=random.Random(0))
+    T = p_node([c_node([leaf(0), leaf(1)]), *[leaf(i) for i in (2, 3, 4, 5, 6, 7, 8)]])
+    component_report = low_hub_component_ferrers_strong_ordering_report(D)
+
+    assert component_report["status"] == "component_ferrers_strong_ordering_found"
+    assert component_report["witness_order_is_cr"] is True
+    assert not represents_order(T, component_report["witness_order"])
+
+    result = solve(D, pc_tree=T)
+
+    assert result["exists"] is True
+    assert result["complete"] is True
+    assert result["solver"] == "candidate_low_hub_strong_ordering_witness"
+    assert result["checked_permutation_pairs"] > 0
+    assert is_precircular_order_cR(D, result["order"])
+    assert represents_order(T, result["order"])
+
+
 def test_candidate_low_hub_strong_ordering_witness_accepts_complete_bipartite_star():
     D = complete_bipartite_high_graph_plus_low_hub(11)
     result = solve(D, pc_tree=star_pc_tree(11))
@@ -361,7 +397,7 @@ def test_candidate_low_hub_strong_ordering_witness_accepts_permuted_matching_sta
     assert result["exists"] is True
     assert result["complete"] is True
     assert result["solver"] == "candidate_low_hub_strong_ordering_witness"
-    assert result["checked_permutation_pairs"] == 1
+    assert result["checked_permutation_pairs"] == 0
     assert is_precircular_order_cR(D, result["order"])
     assert represents_order(star_pc_tree(21), result["order"])
 
@@ -389,6 +425,27 @@ def test_candidate_low_hub_strong_ordering_searches_for_represented_nonstar_witn
     assert result["checked_permutation_pairs"] > 1
     assert is_precircular_order_cR(D, result["order"])
     assert represents_order(T, result["order"])
+
+
+def test_candidate_low_hub_component_ferrers_large_nonstar_known_witness_is_not_rejected():
+    D = matching_high_graph_plus_low_hub(17)
+    T = c_node(
+        [
+            leaf(0),
+            p_node([leaf(i) for i in range(1, 9)]),
+            c_node([leaf(i) for i in (9, 11, 13, 15, 10, 12, 14, 16)]),
+        ]
+    )
+    represented_witness = (0, 1, 3, 5, 7, 2, 4, 6, 8, 9, 11, 13, 15, 10, 12, 14, 16)
+
+    assert _pc_tree_frontier_upper_bound(T) > EXACT_PC_TREE_FRONTIER_LIMIT
+    assert is_precircular_order_cR(D, represented_witness)
+    assert represents_order(T, represented_witness)
+
+    result = solve(D, pc_tree=T)
+
+    assert result["exists"] is True or result["complete"] is False
+    assert not (result["exists"] is False and result["complete"] is True)
 
 
 def test_candidate_low_hub_ferrers_nonrepresented_witness_continues_search():

@@ -567,6 +567,34 @@ Limites T041 :
   voisinages ;
 - un échec Ferrers ne prouve rien et ne doit pas être converti en rejet.
 
+Résultat T042 :
+
+- `permuted_disjoint_chain_high_graph_plus_low_hub` ajoute la famille où le
+  graphe haut est une union de composantes chain/Ferrers relabellisées ;
+- avant T042, cette famille saturait la limite de `100000` couples de
+  permutations dès `n=17` et la candidate restait placeholder sur star ;
+- `low_hub_component_ferrers_strong_ordering_report` reconnaît chaque composante
+  Ferrers, concatène les composantes dans le même ordre côté `A` et côté `B`,
+  puis construit un témoin strong-ordering ;
+- `candidate.py` l'utilise seulement comme témoin positif vérifié par
+  `passes_bad_side_precircular_cR` et `represents_order` ;
+- benchmark ciblé `permuted_disjoint_chain_high_graph_plus_low_hub/star`,
+  tailles `13,17,21,31,41,81,101`, répétitions `10`, timeout `2s` : `0`
+  timeout et `0` incomplet ; à `n=101`, médiane `0.2433s`, p95 `0.2454s`.
+
+Limites T042 :
+
+- union de composantes Ferrers est un sous-cas strict des graphes bipartis à
+  strong ordering ; un petit graphe connecté non-Ferrers strong-ordering reste
+  hors certificat ;
+- si l'ordre des composantes diffère côté `A` et côté `B`, la preuve est fausse
+  et deux arêtes disjointes suffisent à produire une violation ;
+- un cas non-star `n=17` avec matching high graph a un témoin représenté connu,
+  mais la candidate actuelle peut rester incomplète parce que l'intersection
+  PC-tree/ordres component-wise n'est pas encore résolue ;
+- un échec component-Ferrers ne prouve rien et ne doit pas être converti en
+  rejet.
+
 ## Témoin cycle par distances minimales
 
 Statut : certificat positif intégré pour tout PC-tree du scaffold où le témoin

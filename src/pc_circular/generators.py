@@ -301,6 +301,44 @@ def permuted_chain_high_graph_plus_low_hub(n: int, *, rng: random.Random | None 
     return _permute_labels(chain_high_graph_plus_low_hub(n), rng=rng)
 
 
+def disjoint_chain_high_graph_plus_low_hub(n: int, *, components: int = 2) -> list[list[int]]:
+    """Binary family: several disjoint nested-neighborhood high components."""
+
+    if components < 2:
+        raise ValueError("disjoint_chain_high_graph_plus_low_hub requires at least two components")
+    if n - 1 < 2 * components:
+        raise ValueError("disjoint_chain_high_graph_plus_low_hub needs at least two high vertices per component")
+
+    D = equal_distance_instance(n, value=1)
+    labels = list(range(1, n))
+    start = 0
+    for component_index in range(components):
+        remaining_labels = len(labels) - start
+        remaining_components = components - component_index
+        size = remaining_labels // remaining_components
+        chunk = labels[start : start + size]
+        start += size
+        split = max(1, len(chunk) // 2)
+        left = chunk[:split]
+        right = chunk[split:]
+        for index, a in enumerate(left):
+            degree = max(1, len(right) - index)
+            for b in right[:degree]:
+                D[a][b] = D[b][a] = 2
+    return D
+
+
+def permuted_disjoint_chain_high_graph_plus_low_hub(
+    n: int,
+    *,
+    components: int = 2,
+    rng: random.Random | None = None,
+) -> list[list[int]]:
+    """Relabelled disjoint chain/Ferrers high components plus a low hub."""
+
+    return _permute_labels(disjoint_chain_high_graph_plus_low_hub(n, components=components), rng=rng)
+
+
 def matching_high_graph_plus_low_hub(n: int, *, rng: random.Random | None = None) -> list[list[int]]:
     """Binary family: high-distance matching plus one or more low hubs."""
 
@@ -332,6 +370,7 @@ def small_paper_like_instances() -> list[list[list[int]]]:
         complete_bipartite_high_graph_plus_low_hub(6),
         chain_high_graph_plus_low_hub(6),
         permuted_chain_high_graph_plus_low_hub(6, rng=random.Random(0)),
+        permuted_disjoint_chain_high_graph_plus_low_hub(8, rng=random.Random(0)),
         matching_high_graph_plus_low_hub(6),
         non_strict_large_farthest_instance(5),
     ]
@@ -409,6 +448,10 @@ def instance_by_kind(
         return chain_high_graph_plus_low_hub(n)
     if kind == "permuted_chain_high_graph_plus_low_hub":
         return permuted_chain_high_graph_plus_low_hub(n, rng=rng)
+    if kind == "disjoint_chain_high_graph_plus_low_hub":
+        return disjoint_chain_high_graph_plus_low_hub(n)
+    if kind == "permuted_disjoint_chain_high_graph_plus_low_hub":
+        return permuted_disjoint_chain_high_graph_plus_low_hub(n, rng=rng)
     if kind == "matching_high_graph_plus_low_hub":
         return matching_high_graph_plus_low_hub(n, rng=rng)
     if kind == "mixed":

@@ -2,10 +2,12 @@ from itertools import combinations
 import random
 
 from pc_circular.generators import (
+    disjoint_chain_high_graph_plus_low_hub,
     equal_distance_instance,
     even_high_cycle_plus_low_hub,
     matching_high_graph_plus_low_hub,
     permuted_chain_high_graph_plus_low_hub,
+    permuted_disjoint_chain_high_graph_plus_low_hub,
     quasi_circular_not_circular_four_point,
 )
 from pc_circular.oracle import exact_oracle_pc_tree
@@ -22,6 +24,7 @@ from pc_circular.solvers import brute_force
 from pc_circular.solvers.local_constraints import (
     classify_order_obstructions,
     iter_low_hub_strong_ordering_witnesses,
+    low_hub_component_ferrers_strong_ordering_report,
     low_hub_ferrers_strong_ordering_report,
     low_hub_strong_ordering_report,
     measure_obstruction_support,
@@ -210,6 +213,75 @@ def test_low_hub_ferrers_report_rejects_matching_as_non_ferrers_subcase():
 
     assert report["status"] == "not_ferrers_high_graph"
     assert report["strong_ordering_exists"] is None
+
+
+def test_low_hub_component_ferrers_report_accepts_disjoint_chain_without_factorial_search():
+    D = permuted_disjoint_chain_high_graph_plus_low_hub(21, rng=random.Random(0))
+    report = low_hub_component_ferrers_strong_ordering_report(D)
+
+    assert report["status"] == "component_ferrers_strong_ordering_found"
+    assert report["strong_ordering_exists"] is True
+    assert report["component_count"] == 2
+    assert report["witness_order_is_cr"] is True
+
+
+def test_low_hub_component_ferrers_report_accepts_three_permuted_components():
+    D = permuted_disjoint_chain_high_graph_plus_low_hub(16, components=3, rng=random.Random(7))
+    report = low_hub_component_ferrers_strong_ordering_report(D)
+
+    assert report["status"] == "component_ferrers_strong_ordering_found"
+    assert report["component_count"] == 3
+    assert report["witness_order_is_cr"] is True
+
+
+def test_low_hub_component_ferrers_report_handles_empty_high_graph():
+    D = equal_distance_instance(9)
+    report = low_hub_component_ferrers_strong_ordering_report(D)
+
+    assert report["status"] == "empty_high_graph"
+    assert report["strong_ordering_exists"] is True
+    assert report["component_count"] == 0
+    assert report["witness_order_is_cr"] is True
+
+
+def test_low_hub_component_ferrers_requires_same_component_order_on_both_sides():
+    D = _binary_low_hub_from_edges(4, [(1, 3), (2, 4)])
+
+    assert passes_bad_side_precircular_cR(D, (0, 1, 2, 3, 4))
+    assert not passes_bad_side_precircular_cR(D, (0, 1, 2, 4, 3))
+
+
+def test_low_hub_component_ferrers_report_accepts_matching_as_degenerate_components():
+    D = matching_high_graph_plus_low_hub(12)
+    report = low_hub_component_ferrers_strong_ordering_report(D)
+
+    assert report["status"] == "component_ferrers_strong_ordering_found"
+    assert report["strong_ordering_exists"] is True
+    assert report["witness_order_is_cr"] is True
+
+
+def test_low_hub_component_ferrers_report_rejects_non_ferrers_component():
+    D = even_high_cycle_plus_low_hub(7)
+    report = low_hub_component_ferrers_strong_ordering_report(D)
+
+    assert report["status"] == "not_component_ferrers_high_graph"
+    assert report["strong_ordering_exists"] is None
+
+
+def test_low_hub_component_ferrers_report_handles_low_zero_and_multiple_hubs():
+    D = disjoint_chain_high_graph_plus_low_hub(12)
+    for i in range(11):
+        D[i][11] = D[11][i] = 1
+    for i in range(12):
+        for j in range(i + 1, 12):
+            if D[i][j] == 1:
+                D[i][j] = D[j][i] = 0
+    report = low_hub_component_ferrers_strong_ordering_report(D)
+
+    assert report["low_value"] == 0
+    assert len(report["hub_labels"]) == 2
+    assert report["status"] == "component_ferrers_strong_ordering_found"
+    assert report["witness_order_is_cr"] is True
 
 
 def test_low_hub_strong_ordering_rejects_tree_counterexample():

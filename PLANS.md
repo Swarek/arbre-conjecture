@@ -2351,3 +2351,91 @@ représenté par un PC-tree non-star, et tout échec du détecteur reste
 non-conclusif. Prochaine piste recommandée : rapport CSP non-star hors
 candidate ou extension positive aux graphes bipartis permutation/strong-ordering
 sans énumération factorielle.
+
+## ExecPlan 2026-05-23 - component Ferrers low-hub witness
+
+But : étendre le certificat positif low-hub au cas où le graphe haut privé des
+hubs est une union disjointe de composantes biparties chain/Ferrers, y compris
+après permutation des labels.
+
+Hypothèse : si chaque composante non-hub admet un ordre Ferrers local
+`A_c,B_c`, alors concaténer les composantes dans le même ordre côté `A` et côté
+`B` donne un strong ordering global. Par le lemme bad-side T040, l'ordre
+`hubs, A_1,...,A_k, B_1,...,B_k` est cR. Comme pour T041, la candidate ne peut
+accepter qu'après validation cR directe et contrôle `represents_order` si un
+PC-tree est fourni.
+
+Fichiers à modifier : `src/pc_circular/solvers/local_constraints.py`,
+`src/pc_circular/solvers/candidate.py` si un nouveau rapport est séparé,
+`src/pc_circular/generators.py`, `tests/test_local_constraints.py`,
+`tests/test_candidate.py`, `tests/test_generators.py`,
+`docs/proof_obligations.md`, `docs/tracks/piste_e_farthest_quartets.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/tracks/README.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `PLANS.md`.
+
+Algorithme pressenti : ajouter un générateur
+`permuted_disjoint_chain_high_graph_plus_low_hub`. Ajouter un rapport positif
+polynomial qui bipartit chaque composante, essaie les deux orientations
+Ferrers, vérifie l'emboîtement des voisinages dans la composante, concatène les
+ordres component-wise, puis vérifie `_has_strong_ordering` et
+`passes_bad_side_precircular_cR`. Ne jamais utiliser l'échec de ce rapport
+comme rejet.
+
+Plan de contre-exemples : tester les tailles `13,17,21,31,41,81,101` où la
+candidate actuelle échoue dès `n=17`; varier nombre de composantes, tailles
+impaires, labels permutés, plusieurs hubs, `low=0`, PC-tree star et PC-tree
+non-star qui ne représente pas le premier témoin. Vérifier que graphes non
+Ferrers, cycles hauts pairs/impairs et tree négatif restent non acceptés par ce
+certificat.
+
+Plan subagents : jusqu'à cinq sidecars lecture seule. Un audite la preuve
+component-wise, un cherche des contre-exemples/ties/PC-tree non-star, un mesure
+l'explosion actuelle et les benchmarks ciblés, un compare avec la piste CSP/BPG
+pour la suite, un audite les risques de documentation et d'obligations.
+
+Tests à exécuter : tests ciblés candidate/local-constraints/generators,
+benchmark ciblé `permuted_disjoint_chain_high_graph_plus_low_hub/star` jusqu'à
+`n=101`, `make unit`, `make quick`, `make hunt-counterexamples`, `make check`,
+`make bench-quick`; `make bench` si `candidate.py` change.
+
+Risques : concaténer les composantes dans des ordres incompatibles côté `A` et
+`B`; accepter un témoin non représenté par un PC-tree non-star ; confondre
+union de composantes Ferrers avec reconnaissance générale des graphes bipartis
+permutation ; transformer un échec de certificat en faux négatif.
+
+Résultats observés : avant T042, la famille
+`permuted_disjoint_chain_high_graph_plus_low_hub` seed `0` échouait par limite
+factorielle dès `n=17` sur PC-tree star : `unsupported_permutation_limit` à
+`100000` couples, puis `candidate_large_n_placeholder`. À `n=13`, le premier
+témoin arrivait déjà après environ `79k` couples. Le nouveau rapport trouve le
+témoin component-wise avant l'itérateur avec `checked_permutation_pairs=0`.
+Benchmark ciblé star, tailles `13,17,21,31,41,81,101`, répétitions `10`,
+timeout `2s` : `0` timeout et `0` incomplet ; à `n=101`, médiane `0.2433s`,
+p95 `0.2454s`, fit polynomial empirique `p ~= 3.12`.
+
+Résultats subagents : l'audit preuve valide l'argument component-wise à
+condition que les composantes soient concaténées dans le même ordre côté `A` et
+côté `B`; deux arêtes disjointes désalignées donnent déjà une violation. La
+recherche de contre-exemples fournit un cas non-star `n=9` où le témoin
+component-wise est cR mais non représenté, alors que la candidate trouve un
+autre témoin représenté après `326` couples. Elle fournit aussi un cas limite
+matching non-star `n=17` où un témoin représenté est connu mais la candidate
+reste incomplète, ce qui motive une future intersection PC-tree/component-wise.
+Le sidecar CSP confirme que T042 reste strictement plus faible qu'une
+reconnaissance bipartite permutation/strong-ordering générale.
+
+Validation : tests ciblés `tests/test_candidate.py tests/test_local_constraints.py
+tests/test_generators.py` donnent `86 passed`. `make unit` donne `181 passed`.
+`make quick` donne `181 passed` puis `JUSTE`. `make hunt-counterexamples` et
+`make check` donnent `JUSTE`. `make bench-quick` donne `0` timeout et `0`
+incomplet ; à `n=20`, médiane `0.00111s`, p95 `0.00123s`. `make bench` donne
+`0` timeout et `0` incomplet jusqu'à `n=100`; à `n=100`, médiane `0.0295s`,
+p95 `0.0359s`, fit polynomial empirique `p ~= 1.76`.
+
+Décision : intégrer T042 comme certificat positif polynomial pour les unions
+disjointes de composantes chain/Ferrers low-hub, en gardant les limites :
+ce n'est pas une reconnaissance bipartite permutation générale, un témoin
+component-wise non représenté ne prouve rien, et un échec du rapport reste
+non conclusif. Prochaine piste recommandée : intersection PC-tree avec les
+ordres component-Ferrers/strong-ordering, ou rapport polynomial expérimental
+bipartite permutation hors candidate.

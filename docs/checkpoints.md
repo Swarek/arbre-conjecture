@@ -262,6 +262,19 @@ Dernier commit green avant T009 : `07120e4`.
   Résultat observé : `mixed/star` reste `0` timeout et `0` incomplet jusqu'à
   `n=100`, médiane `0.0287s` à `n=100`; la chaîne Ferrers permutée star a `0`
   timeout et médiane `0.2606s` à `n=101`.
+- Checkpoint T042 courant : commit contenant
+  `permuted_disjoint_chain_high_graph_plus_low_hub`,
+  `low_hub_component_ferrers_strong_ordering_report`, et l'intégration
+  candidate du certificat positif pour unions de composantes Ferrers low-hub.
+  Il ajoute les régressions trois composantes permutées, matching dégénéré,
+  composantes désalignées, `low=0` avec hubs multiples, non-Ferrers, et PC-tree
+  non-star où le témoin component-wise est non représenté. Validation observée :
+  tests ciblés candidate/local-constraints/generators, probe exact petits cas,
+  `make unit`, `make quick`, `make hunt-counterexamples`, `make check`,
+  `make bench-quick`, `make bench`, et benchmark ciblé disjoint-chain star
+  jusqu'à `n=101`. Résultat observé : `mixed/star` reste `0` timeout et `0`
+  incomplet jusqu'à `n=100`, médiane `0.0295s` à `n=100`; la disjoint-chain
+  star a `0` timeout et médiane `0.2433s` à `n=101`.
 
 ## Rollback
 
