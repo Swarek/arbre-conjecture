@@ -173,3 +173,9 @@ ordre. Les idées retenues sont re-routées vers un portefeuille large :
 - catalogue de relations binaires entre petits nœuds `P` pour évaluer la piste
   NP-hardness ;
 - collision de second ordre contre les signatures ouvertes T057.
+
+L'addendum
+`docs/external_reviews/gpt55_global_strategy_addendum_2026-05-23.md` formalise
+ce recadrage : T057 est une piste de compression, tandis que T059/T060 doivent
+également nourrir bad-side, CSP quartets, 2-SAT/treewidth, circular-ones et
+catalogue non booléen.

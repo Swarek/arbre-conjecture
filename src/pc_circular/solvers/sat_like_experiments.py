@@ -563,6 +563,252 @@ def _minimal_determining_scope(
     return None
 
 
+def _quartet_support_rows(
+    D,
+    pc_tree: PCNode,
+    domains: dict[Path, tuple[tuple[int, ...], ...]],
+    quartet: Sequence[int],
+) -> tuple[tuple[Path, ...], tuple[tuple[int, ...], ...], int, list[dict]]:
+    """Return support-local rows for one quartet relation."""
+
+    support = quartet_support_paths(pc_tree, quartet)
+    allowed_types = quartet_allowed_types(D, quartet)
+    support_domain_product = 1
+    for path in support:
+        support_domain_product *= len(domains[path])
+
+    support_paths = tuple(support)
+    support_domain_lists = [domains[path] for path in support_paths]
+    support_rows: list[dict] = []
+    for values in product(*support_domain_lists):
+        assignment = dict(zip(support_paths, values))
+        projected = _project_labels_order_from_support_assignment(pc_tree, quartet, assignment)
+        type_order = quartet_type(projected)
+        support_rows.append(
+            {
+                "assignment": assignment,
+                "type": type_order,
+                "accepted": type_order in allowed_types,
+            }
+        )
+
+    return support_paths, allowed_types, support_domain_product, support_rows
+
+
+def _scope_domain_product(
+    domains: dict[Path, tuple[tuple[int, ...], ...]],
+    scope: Sequence[Path],
+) -> int:
+    result = 1
+    for path in scope:
+        result *= len(domains[path])
+    return result
+
+
+def _all_scope_signatures(
+    domains: dict[Path, tuple[tuple[int, ...], ...]],
+    scope: Sequence[Path],
+) -> set[NogoodSignature]:
+    scope_tuple = tuple(scope)
+    if not scope_tuple:
+        return {()}
+    return {
+        tuple(zip(scope_tuple, values))
+        for values in product(*(domains[path] for path in scope_tuple))
+    }
+
+
+def _signature_indices(
+    domains: dict[Path, tuple[tuple[int, ...], ...]],
+    scope: Sequence[Path],
+    signature: NogoodSignature,
+) -> tuple[int, ...]:
+    choices = dict(signature)
+    return tuple(domains[path].index(choices[path]) for path in scope)
+
+
+def _relation_catalog_key(
+    domains: dict[Path, tuple[tuple[int, ...], ...]],
+    scope: Sequence[Path],
+    accepted_signatures: set[NogoodSignature],
+) -> tuple:
+    domain_sizes = tuple(len(domains[path]) for path in scope)
+    accepted_indices = tuple(
+        sorted(_signature_indices(domains, scope, signature) for signature in accepted_signatures)
+    )
+    return (domain_sizes, accepted_indices)
+
+
+def _relation_kind(
+    domains: dict[Path, tuple[tuple[int, ...], ...]],
+    scope: Sequence[Path],
+    accepted_signatures: set[NogoodSignature],
+) -> str:
+    arity = len(scope)
+    domain_sizes = [len(domains[path]) for path in scope]
+    domain_product = _scope_domain_product(domains, scope)
+    accepted_count = len(accepted_signatures)
+    if accepted_count == domain_product:
+        return "constant_accept"
+    if accepted_count == 0:
+        return "constant_reject"
+    if arity == 1:
+        return "unary_boolean" if domain_sizes[0] <= 2 else "unary_non_boolean"
+    if arity == 2:
+        return "binary_boolean_2sat" if all(size <= 2 for size in domain_sizes) else "binary_non_boolean_catalog"
+    return "high_arity"
+
+
+def _relation_summary(
+    domains: dict[Path, tuple[tuple[int, ...], ...]],
+    scope: Sequence[Path],
+    accepted_signatures: set[NogoodSignature],
+) -> dict:
+    scope_tuple = tuple(scope)
+    domain_sizes = tuple(len(domains[path]) for path in scope_tuple)
+    domain_product = _scope_domain_product(domains, scope_tuple)
+    accepted_count = len(accepted_signatures)
+    rejected_count = domain_product - accepted_count
+    summary = {
+        "scope": scope_tuple,
+        "arity": len(scope_tuple),
+        "domain_sizes": domain_sizes,
+        "domain_product": domain_product,
+        "accepted_signature_count": accepted_count,
+        "rejected_signature_count": rejected_count,
+        "density": accepted_count / domain_product if domain_product else 0.0,
+        "relation_kind": _relation_kind(domains, scope_tuple, accepted_signatures),
+        "is_boolean_scope": all(size <= 2 for size in domain_sizes),
+        "is_2sat_candidate": len(scope_tuple) <= 2 and all(size <= 2 for size in domain_sizes),
+    }
+    if len(scope_tuple) == 2:
+        summary["relation_catalog_key"] = _relation_catalog_key(domains, scope_tuple, accepted_signatures)
+    return summary
+
+
+def _accepted_signatures_for_scope(
+    rows: Sequence[dict],
+    scope: Sequence[Path],
+) -> tuple[set[NogoodSignature], list[dict]]:
+    values_by_signature: dict[NogoodSignature, bool] = {}
+    conflicts = []
+    for row in rows:
+        signature = _nogood_signature(row["assignment"], scope)
+        accepted = row["accepted"]
+        previous = values_by_signature.get(signature)
+        if previous is not None and previous != accepted:
+            conflicts.append(
+                {
+                    "signature": signature,
+                    "previous": previous,
+                    "new": accepted,
+                }
+            )
+        values_by_signature[signature] = accepted
+    return {signature for signature, accepted in values_by_signature.items() if accepted}, conflicts
+
+
+def _edge_key(a: Path, b: Path) -> tuple[Path, Path]:
+    return tuple(sorted((a, b)))
+
+
+def _fill_edge_count(graph: dict[Path, set[Path]], node: Path) -> int:
+    neighbors = tuple(graph[node])
+    missing = 0
+    for idx, left in enumerate(neighbors):
+        for right in neighbors[idx + 1 :]:
+            if right not in graph[left]:
+                missing += 1
+    return missing
+
+
+def _greedy_treewidth_upper_bound(graph: dict[Path, set[Path]], *, strategy: str) -> int:
+    if strategy not in {"min_fill", "min_degree"}:
+        raise ValueError("strategy must be min_fill or min_degree")
+    working = {node: set(neighbors) for node, neighbors in graph.items()}
+    width = 0
+    while working:
+        if strategy == "min_fill":
+            node = min(
+                working,
+                key=lambda item: (_fill_edge_count(working, item), len(working[item]), item),
+            )
+        else:
+            node = min(working, key=lambda item: (len(working[item]), _fill_edge_count(working, item), item))
+        neighbors = tuple(working[node])
+        width = max(width, len(neighbors))
+        for idx, left in enumerate(neighbors):
+            for right in neighbors[idx + 1 :]:
+                working[left].add(right)
+                working[right].add(left)
+        for neighbor in neighbors:
+            working[neighbor].discard(node)
+        del working[node]
+    return width
+
+
+def _primal_graph_metrics(
+    domains: dict[Path, tuple[tuple[int, ...], ...]],
+    scopes: Sequence[Sequence[Path]],
+) -> dict:
+    active_vertices = {path for scope in scopes for path in scope}
+    graph = {path: set() for path in active_vertices}
+    edge_multiplicity: dict[tuple[Path, Path], int] = {}
+    high_arity_scope_count = 0
+    for scope in scopes:
+        scope_tuple = tuple(scope)
+        if len(scope_tuple) > 2:
+            high_arity_scope_count += 1
+        for left, right in combinations(scope_tuple, 2):
+            graph.setdefault(left, set()).add(right)
+            graph.setdefault(right, set()).add(left)
+            key = _edge_key(left, right)
+            edge_multiplicity[key] = edge_multiplicity.get(key, 0) + 1
+        for path in scope_tuple:
+            graph.setdefault(path, set())
+
+    unseen = set(graph)
+    component_sizes = []
+    while unseen:
+        start = min(unseen)
+        stack = [start]
+        unseen.remove(start)
+        size = 0
+        while stack:
+            node = stack.pop()
+            size += 1
+            for neighbor in graph[node]:
+                if neighbor in unseen:
+                    unseen.remove(neighbor)
+                    stack.append(neighbor)
+        component_sizes.append(size)
+
+    min_fill_width = _greedy_treewidth_upper_bound(graph, strategy="min_fill") if graph else 0
+    min_degree_width = _greedy_treewidth_upper_bound(graph, strategy="min_degree") if graph else 0
+    edge_multiplicity_histogram: dict[int, int] = {}
+    for count in edge_multiplicity.values():
+        edge_multiplicity_histogram[count] = edge_multiplicity_histogram.get(count, 0) + 1
+    component_size_histogram: dict[int, int] = {}
+    for size in component_sizes:
+        component_size_histogram[size] = component_size_histogram.get(size, 0) + 1
+
+    return {
+        "variable_count": len(domains),
+        "active_variable_count": len(active_vertices),
+        "edge_count": len(edge_multiplicity),
+        "edge_multiplicity_histogram": dict(sorted(edge_multiplicity_histogram.items())),
+        "max_edge_multiplicity": max(edge_multiplicity.values(), default=0),
+        "max_degree": max((len(neighbors) for neighbors in graph.values()), default=0),
+        "component_count": len(component_sizes),
+        "component_size_histogram": dict(sorted(component_size_histogram.items())),
+        "treewidth_upper_bound_min_fill": min_fill_width,
+        "treewidth_upper_bound_min_degree": min_degree_width,
+        "treewidth_upper_bound": min(min_fill_width, min_degree_width),
+        "max_bag_size_upper_bound": min(min_fill_width, min_degree_width) + 1 if graph else 0,
+        "high_arity_scope_count": high_arity_scope_count,
+    }
+
+
 def quartet_pc_scope_report(
     D,
     pc_tree: PCNode,
@@ -637,26 +883,13 @@ def quartet_pc_scope_report(
 
     domains = encoding["domains"]
     for quartet in quartets_to_profile:
-        support = quartet_support_paths(pc_tree, quartet)
-        allowed_types = quartet_allowed_types(D, quartet)
-        support_domain_product = 1
-        for path in support:
-            support_domain_product *= len(domains[path])
-
-        support_rows: list[dict] = []
-        support_paths = tuple(support)
-        support_domain_lists = [domains[path] for path in support_paths]
-        for values in product(*support_domain_lists):
-            assignment = dict(zip(support_paths, values))
-            projected = _project_labels_order_from_support_assignment(pc_tree, quartet, assignment)
-            type_order = quartet_type(projected)
-            support_rows.append(
-                {
-                    "assignment": assignment,
-                    "type": type_order,
-                    "accepted": type_order in allowed_types,
-                }
-            )
+        support_paths, allowed_types, support_domain_product, support_rows = _quartet_support_rows(
+            D,
+            pc_tree,
+            domains,
+            quartet,
+        )
+        support = support_paths
 
         report["counts"]["support_assignments_seen"] += len(support_rows)
         support_size = len(support)
@@ -768,6 +1001,292 @@ def quartet_pc_scope_report(
         sorted(report["counts"]["effective_acceptance_scope_size_histogram"].items())
     )
     report["complete"] = not truncated
+    return report
+
+
+def quartet_effective_relation_report(
+    D,
+    pc_tree: PCNode,
+    *,
+    max_p_degree: int = 3,
+    limit: Optional[int] = None,
+    max_min_scope_search_size: int = 8,
+    validate: bool = True,
+) -> dict:
+    """Build an exact effective-relation report for quartet constraints.
+
+    This is a diagnostic CSP object, not a solver.  It materializes the
+    effective acceptance relation of each quartet, merges relations with the
+    same scope by intersection, builds the primal graph of the merged scopes,
+    and optionally validates the finite supported scaffold against the direct
+    fixed-order cR predicate on complete local assignments.
+    """
+
+    n = validate_dissimilarity(D)
+    if limit is not None and limit < 0:
+        raise ValueError("limit must be non-negative or None")
+    if max_min_scope_search_size < 0:
+        raise ValueError("max_min_scope_search_size must be non-negative")
+
+    encoding = build_local_domains(pc_tree, max_p_degree=max_p_degree)
+    all_quartets = list(combinations(range(n), 4))
+    report = {
+        "implemented": True,
+        "method": "quartet_effective_relation_report",
+        "encoding": encoding,
+        "complete": True,
+        "row_class": "unknown",
+        "two_sat_candidate": False,
+        "quartet_relations": [],
+        "merged_relations": [],
+        "first_scope_conflict": None,
+        "first_validation_mismatch": None,
+        "counts": {
+            "quartet_count": len(all_quartets),
+            "quartets_profiled": 0,
+            "full_assignments_seen": 0,
+            "support_assignments_seen": 0,
+            "min_scope_search_skipped_count": 0,
+            "scope_conflict_count": 0,
+            "effective_acceptance_scope_size_histogram": {},
+            "quartet_relation_kind_histogram": {},
+            "merged_relation_kind_histogram": {},
+            "quartet_relation_binary_boolean_count": 0,
+            "quartet_relation_binary_non_boolean_count": 0,
+            "quartet_relation_high_arity_count": 0,
+            "quartet_relation_constant_accept_count": 0,
+            "quartet_relation_constant_reject_count": 0,
+            "quartet_relation_two_sat_candidate_count": 0,
+            "merged_relation_scope_count": 0,
+            "merged_relation_binary_boolean_count": 0,
+            "merged_relation_binary_non_boolean_count": 0,
+            "merged_relation_high_arity_count": 0,
+            "merged_relation_constant_accept_count": 0,
+            "merged_relation_constant_reject_count": 0,
+            "merged_relation_two_sat_candidate_count": 0,
+            "merged_relation_non_boolean_count": 0,
+            "merged_relation_domain_product_total": 0,
+            "merged_relation_accepted_signature_total": 0,
+            "merged_relation_rejected_signature_total": 0,
+            "max_relation_domain_product": 0,
+            "binary_relation_catalog_key_count": 0,
+            "validation_performed": False,
+            "validation_assignments_seen": 0,
+            "relation_accept_assignments": 0,
+            "direct_cr_assignments": 0,
+            "validation_mismatch_count": 0,
+        },
+        "primal_graph": {
+            "variable_count": 0,
+            "active_variable_count": 0,
+            "edge_count": 0,
+            "edge_multiplicity_histogram": {},
+            "max_edge_multiplicity": 0,
+            "max_degree": 0,
+            "component_count": 0,
+            "component_size_histogram": {},
+            "treewidth_upper_bound_min_fill": 0,
+            "treewidth_upper_bound_min_degree": 0,
+            "treewidth_upper_bound": 0,
+            "max_bag_size_upper_bound": 0,
+            "high_arity_scope_count": 0,
+        },
+    }
+    if encoding["unsupported"]:
+        report["complete"] = False
+        report["row_class"] = "unsupported"
+        return report
+
+    domains = encoding["domains"]
+    full_assignments = list(iter_local_assignments(encoding))
+    report["counts"]["full_assignments_seen"] = len(full_assignments)
+
+    truncated = False
+    quartets_to_profile = all_quartets
+    if limit is not None and len(all_quartets) > limit:
+        quartets_to_profile = all_quartets[:limit]
+        truncated = True
+
+    merged: dict[tuple[Path, ...], dict] = {}
+    binary_catalog_keys = set()
+    for quartet in quartets_to_profile:
+        support, allowed_types, support_domain_product, support_rows = _quartet_support_rows(
+            D,
+            pc_tree,
+            domains,
+            quartet,
+        )
+        report["counts"]["support_assignments_seen"] += len(support_rows)
+        if len(support) > max_min_scope_search_size:
+            report["counts"]["min_scope_search_skipped_count"] += 1
+            continue
+
+        effective_scope = _minimal_determining_scope(support, support_rows, "accepted")
+        assert effective_scope is not None
+        accepted_signatures, conflicts = _accepted_signatures_for_scope(support_rows, effective_scope)
+        if conflicts:
+            report["counts"]["scope_conflict_count"] += len(conflicts)
+            if report["first_scope_conflict"] is None:
+                report["first_scope_conflict"] = {
+                    "quartet": quartet,
+                    "support": support,
+                    "effective_scope": effective_scope,
+                    "conflict": conflicts[0],
+                }
+
+        summary = _relation_summary(domains, effective_scope, accepted_signatures)
+        scope_size = len(effective_scope)
+        report["counts"]["effective_acceptance_scope_size_histogram"][scope_size] = (
+            report["counts"]["effective_acceptance_scope_size_histogram"].get(scope_size, 0) + 1
+        )
+        relation_kind = summary["relation_kind"]
+        report["counts"]["quartet_relation_kind_histogram"][relation_kind] = (
+            report["counts"]["quartet_relation_kind_histogram"].get(relation_kind, 0) + 1
+        )
+        if relation_kind == "binary_boolean_2sat":
+            report["counts"]["quartet_relation_binary_boolean_count"] += 1
+        elif relation_kind == "binary_non_boolean_catalog":
+            report["counts"]["quartet_relation_binary_non_boolean_count"] += 1
+        elif relation_kind == "high_arity":
+            report["counts"]["quartet_relation_high_arity_count"] += 1
+        elif relation_kind == "constant_accept":
+            report["counts"]["quartet_relation_constant_accept_count"] += 1
+        elif relation_kind == "constant_reject":
+            report["counts"]["quartet_relation_constant_reject_count"] += 1
+        if summary["is_2sat_candidate"]:
+            report["counts"]["quartet_relation_two_sat_candidate_count"] += 1
+        if "relation_catalog_key" in summary:
+            binary_catalog_keys.add(repr(summary["relation_catalog_key"]))
+
+        merged_entry = merged.setdefault(
+            tuple(effective_scope),
+            {
+                "scope": tuple(effective_scope),
+                "accepted_signatures": _all_scope_signatures(domains, effective_scope),
+                "quartet_count": 0,
+                "quartets": [],
+            },
+        )
+        merged_entry["accepted_signatures"] &= accepted_signatures
+        merged_entry["quartet_count"] += 1
+        merged_entry["quartets"].append(tuple(quartet))
+
+        relation_row = {
+            "quartet": tuple(quartet),
+            "support": support,
+            "support_domain_product": support_domain_product,
+            "allowed_types": allowed_types,
+            **summary,
+        }
+        if len(accepted_signatures) <= 16:
+            relation_row["accepted_signatures"] = tuple(sorted(accepted_signatures))
+        report["quartet_relations"].append(relation_row)
+
+    merged_summaries = []
+    for scope, entry in sorted(merged.items()):
+        accepted_signatures = entry["accepted_signatures"]
+        summary = _relation_summary(domains, scope, accepted_signatures)
+        relation_kind = summary["relation_kind"]
+        report["counts"]["merged_relation_kind_histogram"][relation_kind] = (
+            report["counts"]["merged_relation_kind_histogram"].get(relation_kind, 0) + 1
+        )
+        if relation_kind == "binary_boolean_2sat":
+            report["counts"]["merged_relation_binary_boolean_count"] += 1
+        elif relation_kind == "binary_non_boolean_catalog":
+            report["counts"]["merged_relation_binary_non_boolean_count"] += 1
+        elif relation_kind == "high_arity":
+            report["counts"]["merged_relation_high_arity_count"] += 1
+        elif relation_kind == "constant_accept":
+            report["counts"]["merged_relation_constant_accept_count"] += 1
+        elif relation_kind == "constant_reject":
+            report["counts"]["merged_relation_constant_reject_count"] += 1
+        if summary["is_2sat_candidate"]:
+            report["counts"]["merged_relation_two_sat_candidate_count"] += 1
+        if not summary["is_boolean_scope"]:
+            report["counts"]["merged_relation_non_boolean_count"] += 1
+        report["counts"]["merged_relation_domain_product_total"] += summary["domain_product"]
+        report["counts"]["merged_relation_accepted_signature_total"] += summary[
+            "accepted_signature_count"
+        ]
+        report["counts"]["merged_relation_rejected_signature_total"] += summary[
+            "rejected_signature_count"
+        ]
+        report["counts"]["max_relation_domain_product"] = max(
+            report["counts"]["max_relation_domain_product"],
+            summary["domain_product"],
+        )
+        merged_row = {
+            **summary,
+            "quartet_count": entry["quartet_count"],
+            "quartets": tuple(entry["quartets"]),
+        }
+        if len(accepted_signatures) <= 32:
+            merged_row["accepted_signatures"] = tuple(sorted(accepted_signatures))
+        report["merged_relations"].append(merged_row)
+        merged_summaries.append((scope, accepted_signatures))
+
+    report["counts"]["quartets_profiled"] = len(quartets_to_profile)
+    report["counts"]["merged_relation_scope_count"] = len(merged_summaries)
+    report["counts"]["binary_relation_catalog_key_count"] = len(binary_catalog_keys)
+    report["counts"]["effective_acceptance_scope_size_histogram"] = dict(
+        sorted(report["counts"]["effective_acceptance_scope_size_histogram"].items())
+    )
+    report["counts"]["quartet_relation_kind_histogram"] = dict(
+        sorted(report["counts"]["quartet_relation_kind_histogram"].items())
+    )
+    report["counts"]["merged_relation_kind_histogram"] = dict(
+        sorted(report["counts"]["merged_relation_kind_histogram"].items())
+    )
+    report["primal_graph"] = _primal_graph_metrics(
+        domains,
+        [scope for scope, _ in merged_summaries],
+    )
+
+    complete = (
+        not truncated
+        and report["counts"]["min_scope_search_skipped_count"] == 0
+        and report["counts"]["scope_conflict_count"] == 0
+    )
+    report["complete"] = complete
+    if validate and complete:
+        report["counts"]["validation_performed"] = True
+        for assignment in full_assignments:
+            relation_accept = True
+            for scope, accepted_signatures in merged_summaries:
+                if _nogood_signature(assignment, scope) not in accepted_signatures:
+                    relation_accept = False
+                    break
+            frontier = canonical_circular_order(frontier_from_assignment(pc_tree, assignment))
+            direct_cr = is_precircular_order_cR(D, frontier)
+            report["counts"]["validation_assignments_seen"] += 1
+            if relation_accept:
+                report["counts"]["relation_accept_assignments"] += 1
+            if direct_cr:
+                report["counts"]["direct_cr_assignments"] += 1
+            if relation_accept != direct_cr:
+                report["counts"]["validation_mismatch_count"] += 1
+                if report["first_validation_mismatch"] is None:
+                    report["first_validation_mismatch"] = {
+                        "assignment": tuple(sorted(assignment.items())),
+                        "frontier": frontier,
+                        "relation_accept": relation_accept,
+                        "direct_cr": direct_cr,
+                    }
+
+    if not complete:
+        report["row_class"] = "incomplete"
+    elif report["counts"]["validation_mismatch_count"]:
+        report["row_class"] = "relation_validation_mismatch"
+    elif report["counts"]["merged_relation_high_arity_count"]:
+        report["row_class"] = "high_arity_relation"
+    elif all(row["is_2sat_candidate"] for row in report["merged_relations"]):
+        report["row_class"] = "two_sat_candidate"
+        report["two_sat_candidate"] = True
+    elif all(row["arity"] <= 2 for row in report["merged_relations"]):
+        report["row_class"] = "non_boolean_relation_catalog"
+    else:
+        report["row_class"] = "mixed_relation_catalog"
+
     return report
 
 

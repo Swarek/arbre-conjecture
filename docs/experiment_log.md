@@ -2916,3 +2916,59 @@
   générale.
 - Next action : construire les relations effectives par scope, le graphe primal
   et une première classification 2-SAT / treewidth / relation non booléenne.
+
+## 2026-05-23 effective quartet relation CSP
+
+- Date/heure : 2026-05-23 13:21:13 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : le diagnostic de portée T058 peut être transformé en CSP
+  relationnel exact sur le scaffold supporté : une relation par quartet, puis
+  fusion par scope effectif, avec validation contre le prédicat cR direct.
+- Changement fait : ajout de `quartet_effective_relation_report` hors
+  `candidate.py`, extraction de la génération des rows support-local de
+  quartet, ajout du graphe primal et de bornes greedy de treewidth, câblage
+  dans `tools/pc_csp_internal_benchmark.py`, et documentation T059 dans les
+  pistes C/F, obligations de preuve, plans et revue externe addendum.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop` propre
+  au commit `c7dac6e`; `245 passed`, puis `JUSTE`.
+- Plan subagents : trois sidecars lecture seule. Résultats : Piste C confirme
+  que T059 doit matérialiser les relations exactes et ne pas devenir une suite
+  de T057 ; Piste F recommande les métriques primal/treewidth/2-SAT et le
+  catalogue non booléen ; Piste E fournit les tests adversariaux bad-side,
+  CSP/quartets, C-only/2-SAT et P-node non booléen.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`.
+- Résultat correction ciblée : `67 passed`.
+- Tests ajoutés : relation-CSP vs cR sur cycle balanced/mixed ; tautologie
+  equal-distance C-only ; relation constante rejetante ; UNSAT C-only via
+  `four_local_non_cr_core`; nœud `P3` non booléen non 2-SAT ; trois blocs `P3`
+  avec relations binaires non booléennes et treewidth observée.
+- Commande exécutée : `make bench-csp-quick`.
+- Résultat benchmark interne : `reports/csp_internal_benchmark_quick.json`
+  écrit ; `192` lignes supportées, `0` mismatch, `0`
+  `quartet_scope_projection_mismatches`, `0`
+  `quartet_relation_validation_mismatches`. Résumé relationnel :
+  `quartet_relation_row_class_histogram={'two_sat_candidate': 192}`,
+  `quartet_relation_scope_count=650`,
+  `quartet_relation_binary_boolean_count=433`,
+  `quartet_relation_binary_non_boolean_count=0`,
+  `quartet_primal_max_treewidth_upper_bound=4`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `251 passed`, puis `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `8` tailles, `40/40` runs réussis, `0` timeout et `0` incomplet.
+  `candidate.py` n'a pas été modifié.
+- Conclusion : T059 fournit une base CSP exacte et falsifiable pour plusieurs
+  pistes : 2-SAT booléen, DP treewidth, catalogue non booléen et recherche de
+  contre-exemples. Cela ne prouve pas le problème général et ne résout pas les
+  grands `P`; les domaines `P3` restent explicitement catalogués comme non
+  2-SAT dans les tests ciblés.
+- Next action : implémenter un sous-cas exact à partir de cette base, en
+  priorité C-only/2-SAT ou DP par treewidth bornée, puis chercher des familles
+  non booléennes qui cassent ou enrichissent le catalogue.

@@ -1043,3 +1043,46 @@ Prochaine mesure complexité : construire le graphe primal des relations
 effectives et calculer une borne de treewidth. Sans cette largeur, le fait que
 les contraintes soient binaires ne suffit pas à garantir un algorithme
 polynomial efficace sur grands `P`.
+
+## Résultat T059 - Graphe primal et catalogue relationnel
+
+Statut : mesure empirique de largeur et de relations, hors candidate.
+
+T059 ajoute `quartet_effective_relation_report`, qui passe des portées T058 aux
+relations CSP fusionnées par scope effectif. Les métriques de complexité
+importantes sont maintenant visibles dans `make bench-csp-quick` :
+
+- nombre de relations fusionnées ;
+- classes de relations : constantes, unaires, binaires booléennes, binaires non
+  booléennes, haute arité ;
+- `row_class` séparant clairement candidat 2-SAT et catalogue non booléen ;
+- graphe primal des scopes fusionnés ;
+- bornes greedy min-fill/min-degree de treewidth ;
+- compteur de mismatches relation-CSP vs cR direct.
+
+Sur les tests ciblés :
+
+- `cycle_metric(5)` avec `balanced_pc_tree(5, kind="mixed")` donne `3`
+  relations binaires booléennes fusionnées, treewidth upper bound `2`, et `0`
+  mismatch ;
+- `equal_distance_instance(6)` C-only donne une tautologie de scope vide et
+  aucun sommet actif ;
+- `four_local_non_cr_core()` C-only donne une relation constante rejetante :
+  c'est un UNSAT réel, pas un cas `unsupported` ;
+- trois blocs `P3` sur `cycle_metric(9)` donnent `6` relations binaires non
+  booléennes fusionnées, treewidth upper bound `3`, et un catalogue non 2-SAT ;
+- trois blocs `P3` sur `paired_farthest_matching(9, seed=7)` gardent aussi les
+  relations non booléennes visibles et trouvent `0` affectation cR.
+
+Interprétation complexité : la portée binaire ne suffit pas à conclure 2-SAT.
+Le critère 2-SAT exige en plus que tous les domaines effectifs soient booléens.
+Les nœuds `P3` produisent des domaines de taille `6`, donc ils alimentent la
+piste relation-catalog / dureté potentielle. La treewidth mesurée est une borne
+heuristique sur le graphe primal du scaffold, pas une preuve de complexité.
+
+Prochaine action Piste F : comparer les catalogues non booléens sur familles
+random, cycle, paired-farthest, equal-distance et gros `P`, puis chercher une
+relation de type égalité/disequality/permutation sur domaines `3+` qui pourrait
+servir de gadget de dureté. Toute hypothèse NP-hard doit rester marquée
+conjecture tant que les contraintes parasites dues à la globalité de `D` ne
+sont pas contrôlées.

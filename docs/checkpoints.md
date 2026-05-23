@@ -463,6 +463,16 @@ Dernier commit green avant T009 : `07120e4`.
   quartets ont un support structurel conservateur de taille `3`, mais une
   portée effective de type toujours `2` et une portée effective d'acceptation
   `0` ou `2`; aucun changement dans `candidate.py`.
+- Checkpoint T059 courant : commit contenant le rapport de relations effectives
+  de quartets hors candidate. Validation observée :
+  `tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`
+  (`67 passed`), `make bench-csp-quick` (`192` lignes supportées, `0`
+  mismatch, `quartet_relation_validation_mismatches=0`), `make quick`
+  (`251 passed`, puis `JUSTE`), `make check` (`JUSTE`) et
+  `make bench-quick` (`40/40` runs, `0` timeout, `0` incomplet). Résultat
+  observé : le CSP relationnel fusionné valide exactement le filtre cR sur le
+  scaffold supporté, expose un graphe primal/treewidth, distingue le sous-cas
+  2-SAT des domaines non booléens `P3`, et ne modifie pas `candidate.py`.
 
 ## Rollback
 

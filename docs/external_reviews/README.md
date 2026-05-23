@@ -12,3 +12,11 @@ Regles :
   checkpoint ;
 - transformer chaque idee retenue en artefact : doc de piste, test, generateur,
   contre-exemple ou obligation de preuve.
+
+Fichiers courants :
+
+- `gpt55_global_strategy_2026-05-23.md` : revue globale post-T057, reroutee
+  vers plusieurs pistes.
+- `gpt55_global_strategy_addendum_2026-05-23.md` : rappel que la revue ne doit
+  pas enfermer le Goal dans T056/T057 ; elle liste les experiences a garder
+  separees.

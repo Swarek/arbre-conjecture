@@ -33,6 +33,7 @@ from pc_circular.solvers.sat_like_experiments import (  # noqa: E402
     compile_cr_nogoods,
     component_mask_quotient_context_collision_profile,
     component_mask_open_boundary_profile,
+    quartet_effective_relation_report,
     quartet_pc_scope_report,
     solve_pruned_nogood_csp_from_compilation,
 )
@@ -163,7 +164,13 @@ def _sum_histograms(rows: Sequence[dict], field: str) -> dict[str, int]:
         for key, value in row[field].items():
             text_key = str(key)
             result[text_key] = result.get(text_key, 0) + value
-    return dict(sorted(result.items(), key=lambda item: int(item[0])))
+    def sort_key(item: tuple[str, int]) -> tuple[int, int | str]:
+        try:
+            return (0, int(item[0]))
+        except ValueError:
+            return (1, item[0])
+
+    return dict(sorted(result.items(), key=sort_key))
 
 
 def run_benchmark(
@@ -279,6 +286,14 @@ def run_benchmark(
                     )
                     quartet_scope_seconds = time.perf_counter() - quartet_scope_start
 
+                    quartet_relation_start = time.perf_counter()
+                    quartet_relation_profile = quartet_effective_relation_report(
+                        D,
+                        T,
+                        max_p_degree=max_p_degree,
+                    )
+                    quartet_relation_seconds = time.perf_counter() - quartet_relation_start
+
                     first_hit_solve_start = time.perf_counter()
                     first_hit_solve_result = solve_pruned_nogood_csp_from_compilation(
                         D,
@@ -330,6 +345,8 @@ def run_benchmark(
                     context_collision_counts = context_collision_profile["counts"]
                     open_boundary_counts = open_boundary_profile["counts"]
                     quartet_scope_counts = quartet_scope_profile["counts"]
+                    quartet_relation_counts = quartet_relation_profile["counts"]
+                    quartet_relation_primal = quartet_relation_profile["primal_graph"]
                     signatures = _signature_set(compilation)
                     support_signatures = _signature_set(support_compilation)
                     grouped_signatures = _signature_set(grouped_compilation)
@@ -363,6 +380,7 @@ def run_benchmark(
                             "context_collision_profile_seconds": context_collision_seconds,
                             "open_boundary_profile_seconds": open_boundary_seconds,
                             "quartet_scope_report_seconds": quartet_scope_seconds,
+                            "quartet_relation_report_seconds": quartet_relation_seconds,
                             "first_hit_solve_seconds": first_hit_solve_seconds,
                             "direct_seconds": direct_seconds,
                             "atoms": len(compilation["atoms"]),
@@ -685,6 +703,100 @@ def run_benchmark(
                             "quartet_scope_effective_acceptance_scope_size_histogram": (
                                 quartet_scope_counts["effective_acceptance_scope_size_histogram"]
                             ),
+                            "quartet_relation_complete": quartet_relation_profile["complete"],
+                            "quartet_relation_row_class": quartet_relation_profile["row_class"],
+                            "quartet_relation_two_sat_candidate": quartet_relation_profile[
+                                "two_sat_candidate"
+                            ],
+                            "quartet_relation_quartets_profiled": quartet_relation_counts[
+                                "quartets_profiled"
+                            ],
+                            "quartet_relation_validation_mismatch_count": quartet_relation_counts[
+                                "validation_mismatch_count"
+                            ],
+                            "quartet_relation_validation_assignments_seen": quartet_relation_counts[
+                                "validation_assignments_seen"
+                            ],
+                            "quartet_relation_accept_assignments": quartet_relation_counts[
+                                "relation_accept_assignments"
+                            ],
+                            "quartet_relation_direct_cr_assignments": quartet_relation_counts[
+                                "direct_cr_assignments"
+                            ],
+                            "quartet_relation_scope_count": quartet_relation_counts[
+                                "merged_relation_scope_count"
+                            ],
+                            "quartet_relation_binary_boolean_count": quartet_relation_counts[
+                                "merged_relation_binary_boolean_count"
+                            ],
+                            "quartet_relation_binary_non_boolean_count": quartet_relation_counts[
+                                "merged_relation_binary_non_boolean_count"
+                            ],
+                            "quartet_relation_high_arity_count": quartet_relation_counts[
+                                "merged_relation_high_arity_count"
+                            ],
+                            "quartet_relation_constant_accept_count": quartet_relation_counts[
+                                "merged_relation_constant_accept_count"
+                            ],
+                            "quartet_relation_constant_reject_count": quartet_relation_counts[
+                                "merged_relation_constant_reject_count"
+                            ],
+                            "quartet_relation_non_boolean_count": quartet_relation_counts[
+                                "merged_relation_non_boolean_count"
+                            ],
+                            "quartet_relation_domain_product_total": quartet_relation_counts[
+                                "merged_relation_domain_product_total"
+                            ],
+                            "quartet_relation_accepted_signature_total": quartet_relation_counts[
+                                "merged_relation_accepted_signature_total"
+                            ],
+                            "quartet_relation_rejected_signature_total": quartet_relation_counts[
+                                "merged_relation_rejected_signature_total"
+                            ],
+                            "quartet_relation_max_domain_product": quartet_relation_counts[
+                                "max_relation_domain_product"
+                            ],
+                            "quartet_relation_binary_catalog_key_count": quartet_relation_counts[
+                                "binary_relation_catalog_key_count"
+                            ],
+                            "quartet_relation_kind_histogram": quartet_relation_counts[
+                                "merged_relation_kind_histogram"
+                            ],
+                            "quartet_relation_effective_acceptance_scope_size_histogram": (
+                                quartet_relation_counts["effective_acceptance_scope_size_histogram"]
+                            ),
+                            "quartet_primal_variable_count": quartet_relation_primal[
+                                "variable_count"
+                            ],
+                            "quartet_primal_active_variable_count": quartet_relation_primal[
+                                "active_variable_count"
+                            ],
+                            "quartet_primal_edge_count": quartet_relation_primal["edge_count"],
+                            "quartet_primal_edge_multiplicity_histogram": (
+                                quartet_relation_primal["edge_multiplicity_histogram"]
+                            ),
+                            "quartet_primal_max_edge_multiplicity": quartet_relation_primal[
+                                "max_edge_multiplicity"
+                            ],
+                            "quartet_primal_max_degree": quartet_relation_primal["max_degree"],
+                            "quartet_primal_component_count": quartet_relation_primal[
+                                "component_count"
+                            ],
+                            "quartet_primal_component_size_histogram": quartet_relation_primal[
+                                "component_size_histogram"
+                            ],
+                            "quartet_primal_treewidth_upper_bound_min_fill": (
+                                quartet_relation_primal["treewidth_upper_bound_min_fill"]
+                            ),
+                            "quartet_primal_treewidth_upper_bound_min_degree": (
+                                quartet_relation_primal["treewidth_upper_bound_min_degree"]
+                            ),
+                            "quartet_primal_treewidth_upper_bound": quartet_relation_primal[
+                                "treewidth_upper_bound"
+                            ],
+                            "quartet_primal_max_bag_size_upper_bound": quartet_relation_primal[
+                                "max_bag_size_upper_bound"
+                            ],
                             "profile_ambiguous_no_hit_assignments": profile_counts[
                                 "ambiguous_no_hit_assignments"
                             ],
@@ -781,6 +893,9 @@ def run_benchmark(
             ),
             "median_quartet_scope_report_seconds": _median(
                 [row["quartet_scope_report_seconds"] for row in supported_rows]
+            ),
+            "median_quartet_relation_report_seconds": _median(
+                [row["quartet_relation_report_seconds"] for row in supported_rows]
             ),
             "median_solve_seconds": _median([row["solve_seconds"] for row in supported_rows]),
             "median_support_solve_seconds": _median(
@@ -1034,6 +1149,80 @@ def run_benchmark(
             "quartet_scope_effective_acceptance_scope_size_histogram": _sum_histograms(
                 supported_rows, "quartet_scope_effective_acceptance_scope_size_histogram"
             ),
+            "quartet_relation_incomplete_rows": sum(
+                1 for row in supported_rows if not row["quartet_relation_complete"]
+            ),
+            "quartet_relation_validation_mismatches": sum(
+                row["quartet_relation_validation_mismatch_count"] for row in supported_rows
+            ),
+            "quartet_relation_two_sat_candidate_rows": sum(
+                1 for row in supported_rows if row["quartet_relation_two_sat_candidate"]
+            ),
+            "quartet_relation_row_class_histogram": dict(
+                sorted(
+                    {
+                        row_class: sum(
+                            1 for row in supported_rows if row["quartet_relation_row_class"] == row_class
+                        )
+                        for row_class in {row["quartet_relation_row_class"] for row in supported_rows}
+                    }.items()
+                )
+            ),
+            "quartet_relation_quartets_profiled": sum(
+                row["quartet_relation_quartets_profiled"] for row in supported_rows
+            ),
+            "quartet_relation_scope_count": sum(
+                row["quartet_relation_scope_count"] for row in supported_rows
+            ),
+            "quartet_relation_binary_boolean_count": sum(
+                row["quartet_relation_binary_boolean_count"] for row in supported_rows
+            ),
+            "quartet_relation_binary_non_boolean_count": sum(
+                row["quartet_relation_binary_non_boolean_count"] for row in supported_rows
+            ),
+            "quartet_relation_high_arity_count": sum(
+                row["quartet_relation_high_arity_count"] for row in supported_rows
+            ),
+            "quartet_relation_constant_accept_count": sum(
+                row["quartet_relation_constant_accept_count"] for row in supported_rows
+            ),
+            "quartet_relation_constant_reject_count": sum(
+                row["quartet_relation_constant_reject_count"] for row in supported_rows
+            ),
+            "quartet_relation_non_boolean_count": sum(
+                row["quartet_relation_non_boolean_count"] for row in supported_rows
+            ),
+            "quartet_relation_accepted_signature_total": sum(
+                row["quartet_relation_accepted_signature_total"] for row in supported_rows
+            ),
+            "quartet_relation_rejected_signature_total": sum(
+                row["quartet_relation_rejected_signature_total"] for row in supported_rows
+            ),
+            "quartet_relation_max_domain_product": max(
+                [row["quartet_relation_max_domain_product"] for row in supported_rows],
+                default=0,
+            ),
+            "quartet_relation_binary_catalog_key_count": sum(
+                row["quartet_relation_binary_catalog_key_count"] for row in supported_rows
+            ),
+            "quartet_relation_kind_histogram": _sum_histograms(
+                supported_rows, "quartet_relation_kind_histogram"
+            ),
+            "quartet_relation_effective_acceptance_scope_size_histogram": _sum_histograms(
+                supported_rows, "quartet_relation_effective_acceptance_scope_size_histogram"
+            ),
+            "quartet_primal_max_treewidth_upper_bound": max(
+                [row["quartet_primal_treewidth_upper_bound"] for row in supported_rows],
+                default=0,
+            ),
+            "quartet_primal_max_edge_count": max(
+                [row["quartet_primal_edge_count"] for row in supported_rows],
+                default=0,
+            ),
+            "quartet_primal_max_degree": max(
+                [row["quartet_primal_max_degree"] for row in supported_rows],
+                default=0,
+            ),
             "profile_pair_side_split_work_ratio": (
                 sum(row["profile_pair_side_split_checks"] for row in supported_rows)
                 / sum(row["profile_classification_atom_checks"] for row in supported_rows)
@@ -1177,6 +1366,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         or report["summary"]["grouped_first_hit_signature_mismatches"]
         or report["summary"]["profile_pair_side_split_mismatches"]
         or report["summary"]["quartet_scope_projection_mismatches"]
+        or report["summary"]["quartet_relation_validation_mismatches"]
         else 0
     )
 

@@ -878,6 +878,54 @@ Prochaine action : grouper les quartets par portée effective, construire les
 tables de relations, le graphe primal, et séparer trois sorties : 2-SAT booléen,
 DP treewidth, relation-catalog pour domaines non booléens.
 
+## Tentative T059 - Relations effectives de quartets
+
+Statut : diagnostic relationnel exact sur le scaffold supporté, hors
+`candidate.py`.
+
+Changement : ajout de `quartet_effective_relation_report`. Le rapport réutilise
+les projections support-local de T058, calcule pour chaque quartet la table
+acceptée sur la portée effective d'acceptation, fusionne les quartets ayant le
+même scope par intersection de tables, puis valide la conjonction de relations
+contre `is_precircular_order_cR` sur toutes les affectations locales complètes
+supportées.
+
+Ce que le rapport matérialise :
+
+- `quartet_relations` : table effective par quartet, avec arité, tailles de
+  domaine, densité, tuples acceptés/rejetés et classe de relation ;
+- `merged_relations` : relation finale par scope effectif après intersection ;
+- `primal_graph` : graphe primal des scopes fusionnés, degrés, composantes,
+  multiplicité d'arêtes et bornes greedy min-fill/min-degree de treewidth ;
+- `row_class` : `two_sat_candidate`, `non_boolean_relation_catalog`,
+  `high_arity_relation`, `incomplete` ou `relation_validation_mismatch`.
+
+Tests ciblés ajoutés :
+
+- cycle `n=5` balanced/mixed : relation-CSP exact, candidat 2-SAT, `0`
+  mismatch de validation ;
+- equal-distance C-only : toutes les contraintes fusionnent en tautologie de
+  scope vide, sans arêtes primal ;
+- quartet wrapping non-cR : relation constante rejetante visible, sans marquer
+  `unsupported` ;
+- `four_local_non_cr_core` C-only : UNSAT 2-SAT réel, pas échec de support ;
+- nœud `P3` : relation unaire non booléenne cataloguée, donc pas 2-SAT ;
+- trois blocs `P3` : relations binaires non booléennes cataloguées avec
+  treewidth observée `3`.
+
+Interprétation : T059 transforme le signal T058 en objet CSP vérifiable. Il ne
+résout pas le problème général : la validation reste énumérative, les gros
+`P` hors domaine restent unsupported, et aucune preuve de portée `<=2` pour
+les vrais PC-trees Hsu/McConnell n'est encore écrite. En revanche, il fournit
+un point commun pour quatre pistes indépendantes : 2-SAT booléen, DP par
+treewidth, catalogue de relations non booléennes et contre-exemples de
+composition.
+
+Prochaine action : implémenter soit le sous-cas C-only/2-SAT à partir des
+relations fusionnées, soit un solveur exact par DP de treewidth bornée, sans
+modifier `candidate.py` tant que les obligations de preuve ne sont pas
+remplies.
+
 ## Tentative T021 - Repair positive-only pour paired-farthest
 
 Statut : idée saine comme générateur expérimental vérifié, mais non intégrée à

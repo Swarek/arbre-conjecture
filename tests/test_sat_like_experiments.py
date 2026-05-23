@@ -4,7 +4,9 @@ import random
 from pc_circular.generators import (
     cycle_metric,
     equal_distance_instance,
+    four_local_non_cr_core,
     non_strict_large_farthest_instance,
+    paired_farthest_matching,
     quasi_circular_not_circular_four_point,
     random_dissimilarity,
 )
@@ -45,6 +47,7 @@ from pc_circular.solvers.sat_like_experiments import (
     prop45_nogood_frontier_report,
     prop45_nogood_frontier_search,
     quartet_allowed_types,
+    quartet_effective_relation_report,
     quartet_pc_scope_report,
     quartet_support_paths,
     quartet_type,
@@ -361,6 +364,120 @@ def test_quartet_pc_scope_report_stress_nested_and_dense_blocks():
     assert dense["counts"]["support_size_histogram"] == {2: 99, 3: 27}
     assert dense["counts"]["effective_type_scope_size_histogram"] == {1: 18, 2: 108}
     assert dense["counts"]["effective_acceptance_scope_gt_2_count"] == 0
+
+
+def test_quartet_effective_relation_report_validates_cycle_mixed_as_2sat_candidate():
+    D = cycle_metric(5)
+    T = balanced_pc_tree(5, kind="mixed")
+    report = quartet_effective_relation_report(D, T, max_p_degree=3)
+
+    assert report["complete"]
+    assert report["row_class"] == "two_sat_candidate"
+    assert report["two_sat_candidate"]
+    assert report["counts"]["validation_mismatch_count"] == 0
+    assert report["counts"]["validation_assignments_seen"] == 16
+    assert report["counts"]["relation_accept_assignments"] == report["counts"]["direct_cr_assignments"] == 4
+    assert report["counts"]["merged_relation_scope_count"] == 3
+    assert report["counts"]["merged_relation_binary_boolean_count"] == 3
+    assert report["counts"]["merged_relation_non_boolean_count"] == 0
+    assert report["primal_graph"]["edge_count"] == 3
+    assert report["primal_graph"]["treewidth_upper_bound"] == 2
+
+
+def test_quartet_effective_relation_report_keeps_equal_distance_tautology_small():
+    D = equal_distance_instance(6)
+    T = balanced_pc_tree(6, kind="C")
+    report = quartet_effective_relation_report(D, T, max_p_degree=3)
+
+    assert report["complete"]
+    assert report["row_class"] == "two_sat_candidate"
+    assert report["counts"]["effective_acceptance_scope_size_histogram"] == {0: 15}
+    assert report["counts"]["merged_relation_scope_count"] == 1
+    assert report["counts"]["merged_relation_constant_accept_count"] == 1
+    assert report["counts"]["merged_relation_rejected_signature_total"] == 0
+    assert report["counts"]["relation_accept_assignments"] == report["counts"]["validation_assignments_seen"]
+    assert report["counts"]["direct_cr_assignments"] == report["counts"]["validation_assignments_seen"]
+    assert report["primal_graph"]["active_variable_count"] == 0
+
+
+def test_quartet_effective_relation_report_keeps_constant_reject_visible():
+    D = quasi_circular_not_circular_four_point()
+    T = c_node([leaf(3), leaf(0), leaf(1), leaf(2)])
+    report = quartet_effective_relation_report(D, T, max_p_degree=3)
+
+    assert report["complete"]
+    assert report["row_class"] == "two_sat_candidate"
+    assert report["counts"]["merged_relation_constant_reject_count"] == 1
+    assert report["counts"]["merged_relation_accepted_signature_total"] == 0
+    assert report["counts"]["relation_accept_assignments"] == 0
+    assert report["counts"]["direct_cr_assignments"] == 0
+    assert report["counts"]["validation_mismatch_count"] == 0
+
+
+def test_quartet_effective_relation_report_c_only_negative_is_sat_unsat_not_unsupported():
+    D = four_local_non_cr_core()
+    T = balanced_pc_tree(5, kind="C")
+    report = quartet_effective_relation_report(D, T, max_p_degree=3)
+
+    assert report["complete"]
+    assert not report["encoding"]["unsupported"]
+    assert report["row_class"] == "two_sat_candidate"
+    assert report["counts"]["quartet_relation_two_sat_candidate_count"] == 5
+    assert report["counts"]["merged_relation_constant_reject_count"] == 1
+    assert report["counts"]["relation_accept_assignments"] == 0
+    assert report["counts"]["direct_cr_assignments"] == 0
+    assert report["counts"]["validation_mismatch_count"] == 0
+
+
+def test_quartet_effective_relation_report_non_boolean_p_node_is_catalog_not_2sat():
+    D = quasi_circular_not_circular_four_point()
+    T = c_node([p_node([leaf(0), leaf(1), leaf(2)]), leaf(3)])
+    scope_report = quartet_pc_scope_report(D, T, max_p_degree=3)
+    relation_report = quartet_effective_relation_report(D, T, max_p_degree=3)
+
+    assert scope_report["counts"]["non_boolean_effective_acceptance_scope_count"] == 1
+    assert scope_report["counts"]["two_sat_candidate_quartet_count"] == 0
+    assert scope_report["counts"]["accepted_signature_total"] == 4
+    assert scope_report["counts"]["rejected_signature_total"] == 8
+    assert relation_report["complete"]
+    assert relation_report["row_class"] == "non_boolean_relation_catalog"
+    assert not relation_report["two_sat_candidate"]
+    assert relation_report["counts"]["merged_relation_non_boolean_count"] == 1
+    assert relation_report["counts"]["merged_relation_two_sat_candidate_count"] == 0
+    assert relation_report["counts"]["validation_mismatch_count"] == 0
+
+
+def test_quartet_effective_relation_report_catalogs_dense_p3_relations():
+    T = c_node(
+        [
+            p_node([leaf(0), leaf(1), leaf(2)]),
+            p_node([leaf(3), leaf(4), leaf(5)]),
+            p_node([leaf(6), leaf(7), leaf(8)]),
+        ]
+    )
+    cycle_report = quartet_effective_relation_report(cycle_metric(9), T, max_p_degree=3)
+    paired_report = quartet_effective_relation_report(
+        paired_farthest_matching(9, rng=random.Random(7)),
+        T,
+        max_p_degree=3,
+    )
+
+    assert cycle_report["complete"]
+    assert cycle_report["row_class"] == "non_boolean_relation_catalog"
+    assert cycle_report["counts"]["quartet_relation_binary_non_boolean_count"] == 108
+    assert cycle_report["counts"]["merged_relation_binary_non_boolean_count"] == 6
+    assert cycle_report["counts"]["binary_relation_catalog_key_count"] > 0
+    assert cycle_report["primal_graph"]["treewidth_upper_bound"] == 3
+    assert cycle_report["counts"]["validation_mismatch_count"] == 0
+
+    assert paired_report["complete"]
+    assert paired_report["row_class"] == "non_boolean_relation_catalog"
+    assert paired_report["counts"]["quartet_relation_constant_accept_count"] == 56
+    assert paired_report["counts"]["quartet_relation_binary_non_boolean_count"] == 56
+    assert paired_report["counts"]["merged_relation_constant_reject_count"] == 3
+    assert paired_report["counts"]["relation_accept_assignments"] == 0
+    assert paired_report["counts"]["direct_cr_assignments"] == 0
+    assert paired_report["counts"]["validation_mismatch_count"] == 0
 
 
 def test_quartet_allowed_types_match_direct_full_orders_on_seeded_frontiers():

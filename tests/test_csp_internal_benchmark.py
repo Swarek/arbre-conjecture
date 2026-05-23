@@ -157,6 +157,18 @@ def test_csp_internal_benchmark_reports_separate_compile_and_solve_metrics():
     assert row["quartet_scope_support_size_histogram"] == {3: 5}
     assert row["quartet_scope_effective_type_scope_size_histogram"] == {2: 5}
     assert row["quartet_scope_effective_acceptance_scope_size_histogram"] == {2: 5}
+    assert row["quartet_relation_report_seconds"] >= 0
+    assert row["quartet_relation_complete"]
+    assert row["quartet_relation_row_class"] == "two_sat_candidate"
+    assert row["quartet_relation_two_sat_candidate"]
+    assert row["quartet_relation_validation_mismatch_count"] == 0
+    assert row["quartet_relation_validation_assignments_seen"] == 16
+    assert row["quartet_relation_scope_count"] == 3
+    assert row["quartet_relation_binary_boolean_count"] == 3
+    assert row["quartet_relation_binary_non_boolean_count"] == 0
+    assert row["quartet_relation_high_arity_count"] == 0
+    assert row["quartet_primal_edge_count"] == 3
+    assert row["quartet_primal_treewidth_upper_bound"] == 2
     assert report["summary"]["total_first_hit_position_sum"] == row["first_hit_position_sum"]
     assert report["summary"]["total_first_hit_atom_checks_if_exhaustive_seen"] == row[
         "first_hit_atom_checks_if_exhaustive_seen"
@@ -246,3 +258,16 @@ def test_csp_internal_benchmark_reports_separate_compile_and_solve_metrics():
     assert report["summary"]["quartet_scope_support_size_histogram"] == {"3": 5}
     assert report["summary"]["quartet_scope_effective_type_scope_size_histogram"] == {"2": 5}
     assert report["summary"]["quartet_scope_effective_acceptance_scope_size_histogram"] == {"2": 5}
+    assert report["summary"]["quartet_relation_incomplete_rows"] == 0
+    assert report["summary"]["quartet_relation_validation_mismatches"] == 0
+    assert report["summary"]["quartet_relation_two_sat_candidate_rows"] == 1
+    assert report["summary"]["quartet_relation_row_class_histogram"] == {"two_sat_candidate": 1}
+    assert report["summary"]["quartet_relation_scope_count"] == row[
+        "quartet_relation_scope_count"
+    ]
+    assert report["summary"]["quartet_relation_binary_boolean_count"] == 3
+    assert report["summary"]["quartet_relation_binary_non_boolean_count"] == 0
+    assert report["summary"]["quartet_relation_high_arity_count"] == 0
+    assert report["summary"]["quartet_relation_kind_histogram"] == {"binary_boolean_2sat": 3}
+    assert report["summary"]["quartet_primal_max_treewidth_upper_bound"] == 2
+    assert report["summary"]["quartet_primal_max_edge_count"] == 3

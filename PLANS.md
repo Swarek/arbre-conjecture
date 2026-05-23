@@ -3798,3 +3798,87 @@ quartets : la projection support-local est exacte sur les probes, et la portée
 effective observée est binaire. La suite doit construire les relations par
 scope, le graphe primal et distinguer clairement sous-cas 2-SAT, treewidth et
 relations non booléennes de nœuds `P`.
+
+## ExecPlan 2026-05-23 - effective quartet relation CSP
+
+But : transformer le diagnostic de portée T058 en un rapport relationnel exact
+du CSP de quartets : relations par scope effectif, graphe primal, classification
+2-SAT/treewidth/relation-catalog, et validation contre cR sur frontiers
+complètes.
+
+Hypothèse : si les contraintes de quartets se groupent en relations binaires
+effectives et que leur conjonction accepte exactement les affectations dont le
+frontier est cR, alors on tient une base propre pour un sous-cas 2-SAT, une DP
+treewidth, ou un catalogue de relations non booléennes. Ce rapport doit rester
+hors `candidate.py`.
+
+Fichiers visés :
+`src/pc_circular/solvers/sat_like_experiments.py`,
+`tests/test_sat_like_experiments.py`, `tools/pc_csp_internal_benchmark.py`,
+`tests/test_csp_internal_benchmark.py`, `docs/tracks/piste_c_sat_csp.md`,
+`docs/tracks/piste_f_complexity_subcases.md`,
+`docs/proof_obligations.md`, `docs/experiment_log.md`,
+`docs/checkpoints.md`, `docs/tracks/README.md`, `PLANS.md`.
+
+Algorithme pressenti : ajouter `quartet_effective_relation_report(D, T, ...)`.
+Pour chaque quartet, réutiliser la projection support-local de T058, calculer
+la portée effective d'acceptation, puis construire la table des signatures
+acceptées sur cette portée. Grouper les contraintes par scope et intersecter les
+tables acceptées pour obtenir une relation fusionnée par scope. Construire le
+graphe primal reliant les variables qui apparaissent dans une relation de taille
+au moins deux, calculer des métriques de degré/composantes/treewidth upper bound,
+et valider par énumération complète que les relations acceptent exactement les
+frontiers cR dans le scaffold supporté.
+
+Plan de contre-exemples : chercher un mismatch relation-CSP vs cR direct, des
+relations fusionnées vides qui ne correspondent pas à un rejet global complet,
+des cas equal-distance où toutes les relations doivent être tautologiques, et
+des nœuds `P` fanout `3` donnant des relations binaires non booléennes à
+cataloguer plutôt qu'à coder en 2-SAT.
+
+Plan subagents : trois sidecars lecture seule : Piste C API/invariants du
+rapport relationnel, Piste F métriques primal/treewidth/2-SAT, Piste E tests
+adversariaux equal-distance/non-booléens/mismatch.
+
+Tests à exécuter : tests ciblés
+`tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`,
+`make bench-csp-quick`, puis `make quick`, `make check`, `make bench-quick`.
+`candidate.py` ne doit pas changer.
+
+Risques : fusionner des relations par scope peut masquer quel quartet crée une
+contrainte dure ; l'énumération complète pour validation reste bornée ; une
+borne de treewidth heuristique ne prouve pas la complexité ; le sous-cas 2-SAT
+doit exiger des domaines booléens, pas seulement une portée binaire.
+
+Résultats observés : `quartet_effective_relation_report` ajouté hors
+`candidate.py`. Le rapport construit les tables de relations par quartet,
+fusionne par scope effectif, calcule le graphe primal et valide la conjonction
+relationnelle contre `is_precircular_order_cR` sur toutes les affectations
+locales complètes supportées.
+
+Tests ciblés
+`tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py` :
+`67 passed`. Les tests couvrent :
+
+- cycle balanced/mixed candidat 2-SAT avec `0` mismatch ;
+- equal-distance C-only réduit à une tautologie de scope vide ;
+- quartet non-cR constant reject visible ;
+- `four_local_non_cr_core` C-only UNSAT sans `unsupported` ;
+- nœud `P3` catalogué non booléen et non 2-SAT ;
+- trois blocs `P3` produisant relations binaires non booléennes et treewidth
+  observée `3`.
+
+Sidecars : Piste C insiste sur la validation relation-CSP vs cR direct et sur
+le fait que T059 n'est pas une suite de T057 ; Piste F recommande les métriques
+primal/treewidth/2-SAT et le catalogue non booléen ; Piste E propose les tests
+adversariaux ajoutés ou couverts.
+
+Gates finales : `make bench-csp-quick` (`192` lignes supportées, `0` mismatch,
+`quartet_relation_validation_mismatches=0`), `make quick` (`251 passed`, puis
+`JUSTE`), `make check` (`JUSTE`), `make bench-quick` (`8` tailles,
+`40/40` runs, `0` timeout, `0` incomplet). `candidate.py` n'a pas été modifié.
+
+Décision : continuer la Piste C/F sur un sous-cas exact, avec priorité au
+solveur 2-SAT C-only ou à une DP treewidth bornée. T059 devient le socle commun
+pour plusieurs pistes, pas un solver général et pas une preuve de
+compositionalité T057.

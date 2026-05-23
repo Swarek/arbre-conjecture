@@ -1495,6 +1495,44 @@ Obligations restantes après T058 :
   prouver l'équivalence avec l'existence d'un frontier cR représenté ;
 - hors booléen, mesurer/prouver la treewidth ou cataloguer les relations dures.
 
+T059 satisfait expérimentalement la construction relationnelle dans le scaffold
+supporté, mais ne ferme pas encore les preuves générales :
+
+- `quartet_effective_relation_report` matérialise la relation acceptée de
+  chaque quartet sur sa portée effective d'acceptation ;
+- les relations ayant même scope sont fusionnées par intersection, ce qui donne
+  le CSP effectif par scopes ;
+- la conjonction de ces relations est validée contre
+  `is_precircular_order_cR(frontier_from_assignment(...))` sur toutes les
+  affectations locales complètes supportées ;
+- le rapport distingue explicitement les lignes `two_sat_candidate`, les
+  lignes de catalogue non booléen, les hautes arités, les incomplets et les
+  mismatches de validation.
+
+Obligations partiellement couvertes par T059 :
+
+- obligation 1, dans le scaffold : chaque relation provient des types de
+  quartet cR autorisés par `D`, donc elle est nécessaire pour l'affectation
+  locale profilée ;
+- obligation 2, expérimentale : sur les probes ciblées, la conjonction des
+  relations fusionnées est suffisante pour retrouver exactement le filtre cR
+  des frontiers représentées ;
+- obligation 5, diagnostic : le graphe primal et une borne greedy de treewidth
+  sont maintenant mesurés, mais pas encore utilisés comme algorithme prouvé.
+
+Limites après T059 :
+
+- la validation reste par énumération complète des affectations locales ; elle
+  ne prouve pas une complexité polynomiale ;
+- `row_class="two_sat_candidate"` exige domaines booléens et arité `<=2`, mais
+  aucun solveur 2-SAT séparé n'est encore implémenté ;
+- les nœuds `P3` montrent déjà des relations non booléennes de domaines taille
+  `6`; elles ne doivent pas être appelées 2-SAT ;
+- une borne greedy de treewidth n'est pas une décomposition certifiée ni une
+  preuve de complexité ;
+- les vrais PC-trees Hsu/McConnell non enracinés peuvent avoir des subtilités
+  non capturées par le scaffold `PCNode`.
+
 ### Prédicats stricts d'ordre fixé
 
 Statut : définitions directes implémentées / base expérimentale Piste F.

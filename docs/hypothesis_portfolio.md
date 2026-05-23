@@ -76,8 +76,9 @@ arbres et vérifier si elles sont suffisantes.
 Raisons possibles d’échec : les grands nœuds `P` induisent des contraintes
 d’ordre cyclique non binaires.
 
-Prochain essai concret : isoler les sous-cas où tous les nœuds internes ont
-degré au plus 3.
+Prochain essai concret : à partir de `quartet_effective_relation_report`,
+implémenter le sous-cas booléen/C-only par 2-SAT, puis comparer à l'oracle sur
+petites tailles. Garder séparé le catalogue non booléen des nœuds `P`.
 
 ## Piste D : intersection de contraintes type PC-tree / circular-ones
 
@@ -147,8 +148,10 @@ est rare et où les filtres locaux échouent.
 Raisons possibles d’échec : la structure quasi-circulaire imposée par
 Hsu/McConnell peut rendre le problème plus rigide que les PC-trees arbitraires.
 
-Prochain essai concret : comparer PC-trees arbitraires et PC-trees obtenus à
-partir de dissimilarités quasi-circulaires.
+Prochain essai concret : utiliser le graphe primal et le catalogue de relations
+fusionnées T059 pour comparer PC-trees arbitraires, arbres binaires C-only,
+arbres balanced/mixed et gros nœuds `P`, puis chercher une relation non
+booléenne de type gadget sans masquer les contraintes parasites de `D`.
 
 Sous-cas ajouté : explorer le cas strict comme algorithme spécialisé
 potentiellement polynomial. Ne pas l'intégrer à `candidate.py` avant d'avoir une
