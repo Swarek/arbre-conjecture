@@ -3291,3 +3291,51 @@
 - Next action : lancer une recherche d'élimination de parasites sur une forme
   stable (`partial_bijection` ou `sparse_partial_matching`) ou composer des
   chaînes fonctionnelles pour chercher une obstruction globale non locale.
+
+## 2026-05-23 functional relation chain probe
+
+- Date/heure : 2026-05-23 15:51:25 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les relations fonctionnelles non booléennes observées en
+  T066 peuvent soit produire une corrélation globale utile, soit révéler que les
+  rejets restent expliqués par parasites unaires/constantes.
+- Changement fait : ajout de `tools/pc_relation_chain_probe.py`, de la cible
+  `make bench-relation-chains`, d'un test ciblé et de la documentation T067.
+  L'outil reconstruit le CSP relationnel complet, isole les relations
+  fonctionnelles, mesure leurs composantes/cycles et compare les comptes
+  fonctionnel seul, binaire non booléen seul, parasites seuls et toutes
+  relations.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `267 passed`, puis `JUSTE`.
+- Plan subagents : trois sidecars lecture seule. Résultats : un sidecar
+  recommande les métriques de composition chaînes/cycles ; un sidecar trouve un
+  sweep `paired_farthest` avec relations `permutation_like` sans parasite
+  restrictif ; un sidecar propose le langage documentaire prudent T067.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_csp_internal_benchmark.py::test_relation_chain_probe_finds_permutation_like_near_misses`.
+- Résultat correction ciblée : `1 passed`.
+- Commande exécutée : `make bench-relation-chains`.
+- Résultat benchmark chain probe : `reports/relation_chain_probe.json` écrit ;
+  `40` lignes, `40` complètes, `0` mismatch, `31` lignes avec relations
+  fonctionnelles, `2` lignes `permutation_like`, `2` lignes
+  `permutation_like` sans parasite restrictif, `1` ligne
+  `interaction_unsat`, `2` lignes avec composante fonctionnelle cyclique,
+  `1` obstruction de cycle fonctionnel et `28` lignes avec `constant_reject`.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_csp_internal_benchmark.py`.
+- Résultat correction ciblée élargie : `6 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction finale : `268 passed`, puis `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `8` tailles, `40/40` runs réussis, `0` timeout et `0` incomplet.
+- Conclusion : T067 trouve un signal positif de gadget (`permutation_like`
+  sans parasite restrictif) et un signal de corrélation (`interaction_unsat`
+  non expliqué par constantes seules). Cela reste expérimental dans le scaffold
+  relationnel et ne prouve ni NP-hardness ni polynomialité. `candidate.py` n'a
+  pas été modifié.
+- Next action : minimiser la ligne `interaction_unsat` et lancer une recherche
+  promise-aware autour des deux permutations-like `paired_farthest`.

@@ -189,6 +189,13 @@ restrictif. La prochaine expérience prioritaire est donc soit une recherche
 d'élimination de parasites pour une forme choisie, soit une composition de
 chaînes fonctionnelles qui révèle une corrélation globale.
 
+Mise à jour T067 : un sweep `paired_farthest` ciblé révèle des profils
+`permutation_like` sans parasite restrictif dans le scaffold `P3/P3`, et une
+ligne `interaction_unsat` sans `constant_reject` apparaît sur une obstruction
+paddée. Ces signaux restent expérimentaux, mais ils donnent deux prochaines
+cibles : isoler les permutations-like sous le promise `T(D)` et minimiser
+l'interaction UNSAT entre parasites unaires et relation fonctionnelle.
+
 Sous-cas ajouté : explorer le cas strict comme algorithme spécialisé
 potentiellement polynomial. Ne pas l'intégrer à `candidate.py` avant d'avoir une
 détection stricte et une génération de candidats stricts vérifiées contre les

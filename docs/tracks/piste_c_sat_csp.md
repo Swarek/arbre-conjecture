@@ -1156,6 +1156,33 @@ remplacent pas la relation exacte. Pour Piste F, elles fournissent des cibles de
 gadget, mais seulement si une prochaine expérience supprime ou contrôle les
 parasites.
 
+## Tentative T067 - Composition des relations fonctionnelles
+
+Statut : diagnostic CSP, hors `candidate.py`.
+
+Changement : ajout de `tools/pc_relation_chain_probe.py`, câblé par
+`make bench-relation-chains`. L'outil reconstruit les relations fusionnées
+complètes, isole les relations non booléennes fonctionnelles, construit leurs
+composantes, puis compte les affectations acceptées par plusieurs sous-systèmes
+du CSP : fonctionnel seul, binaire non booléen seul, parasites seuls, et toutes
+les relations.
+
+Résultat `make bench-relation-chains` :
+
+- `40` lignes, toutes complètes ;
+- `0` mismatch de validation ;
+- `31` lignes avec relations fonctionnelles ;
+- `2` lignes `permutation_like` sans parasite restrictif ;
+- `1` ligne `interaction_unsat` sans `constant_reject` ;
+- `1` obstruction de cycle fonctionnel, mais dans une ligne déjà bloquée par
+  `constant_reject`.
+
+Interprétation : T067 expose une vraie corrélation entre contraintes dans le
+CSP matérialisé, mais ne donne pas encore de solver. Pour une intégration
+future, les tuples de relation ne peuvent pas être remplacés par une simple
+statistique de forme ; l'interaction entre unaires et binaires doit rester
+visible.
+
 ## Tentative T021 - Repair positive-only pour paired-farthest
 
 Statut : idée saine comme générateur expérimental vérifié, mais non intégrée à

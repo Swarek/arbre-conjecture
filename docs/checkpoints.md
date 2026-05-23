@@ -535,6 +535,14 @@ Dernier commit green avant T009 : `07120e4`.
   `0` timeout, `0` incomplet). Résultat observé : formes structurées mais
   aucun gadget positif sans parasite restrictif. `candidate.py` n'a pas été
   modifié.
+- Checkpoint T067 courant : commit contenant le diagnostic de composition des
+  relations fonctionnelles non booléennes. Validation observée : test ciblé
+  chain probe (`1 passed`), `make bench-relation-chains` (`40` lignes
+  complètes, `0` mismatch, `2` relations `permutation_like` sans parasite
+  restrictif, `1` ligne `interaction_unsat`), tests ciblés
+  `tests/test_csp_internal_benchmark.py` (`6 passed`), `make quick`
+  (`268 passed`, puis `JUSTE`) et `make bench-quick` (`40/40` runs,
+  `0` timeout, `0` incomplet). `candidate.py` n'a pas été modifié.
 
 ## Rollback
 

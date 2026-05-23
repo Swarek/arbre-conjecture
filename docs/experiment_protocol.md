@@ -139,6 +139,20 @@ composabilité (`unary_gated`, `constant_blocked`, `parasite_free`). Les
 parasite `constant_reject`. Ce rapport oriente la recherche de gadgets ou de
 compressions ; il ne prouve ni NP-difficulté ni polynomialité.
 
+Composition de relations fonctionnelles Piste F/C :
+
+```bash
+make bench-relation-chains
+```
+
+Cette commande écrit `reports/relation_chain_probe.json`. Le rapport construit
+le CSP relationnel complet pour `p3_block_tree(k)`, isole les profils
+fonctionnels non booléens, mesure leurs composantes/cycles, puis compare les
+comptes acceptés par les seules relations fonctionnelles, les seules relations
+binaires non booléennes, les parasites et toutes les relations. Une ligne
+`interaction_unsat` est un signal expérimental de corrélation entre contraintes,
+pas un certificat négatif du problème général.
+
 ## Interprétation
 
 Un algorithme qui passe les gates peut encore être faux. Après chaque succès, il

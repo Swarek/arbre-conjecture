@@ -1,6 +1,7 @@
 from tools.pc_csp_internal_benchmark import run_benchmark
 from tools.pc_csp_width_stress import run_width_stress
 from tools.pc_relation_catalog import run_relation_catalog
+from tools.pc_relation_chain_probe import run_relation_chain_probe
 from tools.pc_relation_shape_search import run_relation_shape_search
 from tools.pc_single_p_domain_stress import run_single_p_domain_stress
 
@@ -490,3 +491,44 @@ def test_relation_shape_search_classifies_non_boolean_relation_profiles():
     assert blocked["accepted_signature_count"] == 8
     assert "constant_blocked" in blocked["composability_tags"]
     assert "relation_unsat_only" in blocked["composability_tags"]
+
+
+def test_relation_chain_probe_finds_permutation_like_near_misses():
+    report = run_relation_chain_probe(
+        block_counts=[2],
+        instance_kinds=["cycle", "paired_farthest", "equal", "four_local_non_cr"],
+        repeats=8,
+        seed=20260550,
+    )
+
+    summary = report["summary"]
+    assert summary["rows"] == 11
+    assert summary["complete_rows"] == 11
+    assert summary["validation_mismatches"] == 0
+    assert summary["assignment_incomplete_rows"] == 0
+    assert summary["rows_with_functional_relations"] == 5
+    assert summary["rows_with_restrictive_parasite_free_functional_candidate"] == 2
+    assert summary["rows_with_permutation_like"] == 2
+    assert summary["rows_with_restrictive_parasite_free_permutation_like"] == 2
+    assert summary["rows_with_constant_reject"] == 5
+    assert summary["full_unsat_explanation_histogram"] == {
+        "constant_reject": 5,
+        "sat": 6,
+    }
+
+    candidates = [
+        row
+        for row in report["rows"]
+        if row["restrictive_parasite_free_functional_candidate"]
+    ]
+    assert len(candidates) == 2
+    assert {row["shape_histogram"]["permutation_like"] for row in candidates} == {1}
+    assert all(row["constant_reject_count"] == 0 for row in candidates)
+    assert all(row["unary_restrictive_count"] == 0 for row in candidates)
+    assert all(row["full_accept_count"] == 12 for row in candidates)
+    assert all(row["functional_accept_count"] == 12 for row in candidates)
+    assert all(row["parasite_accept_count"] == 72 for row in candidates)
+    assert all(
+        row["binary_relation_profiles"][0]["shape"] == "permutation_like"
+        for row in candidates
+    )

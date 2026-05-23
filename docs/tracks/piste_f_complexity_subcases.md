@@ -1280,3 +1280,42 @@ positive n'est encore isolée sans parasite. La piste de dureté doit maintenant
 chercher une élimination de parasites ou une composition de chaînes
 fonctionnelles ; la piste algorithmique doit expliquer pourquoi ces formes
 resteraient compressibles si elle veut aller au-delà d'une classification FPT.
+
+## Résultat T067 - Composition de chaînes/cycles fonctionnels
+
+Statut : diagnostic expérimental, non preuve.
+
+T067 ajoute `make bench-relation-chains`. Le rapport
+`reports/relation_chain_probe.json` reconstruit le CSP relationnel complet sur
+`p3_block_tree(k)`, classe les relations binaires non booléennes avec la
+taxonomie T066, puis compose les profils fonctionnels
+`permutation_like`, `sparse_partial_matching`, `partial_bijection` et
+sélecteurs.
+
+Métriques principales du benchmark T067 :
+
+- `rows=40`, toutes complètes ;
+- `validation_mismatches=0` ;
+- `rows_with_functional_relations=31` ;
+- `rows_with_restrictive_parasite_free_functional_candidate=2` ;
+- `rows_with_restrictive_parasite_free_permutation_like=2` ;
+- `rows_with_global_unsat_not_unary_or_constant=1` ;
+- `rows_with_functional_cycle_components=2` ;
+- `rows_with_functional_cycle_obstruction=1` ;
+- `rows_with_constant_reject=28`.
+
+Interprétation prudente :
+
+- Le sweep ciblé `paired_farthest` trouve deux relations `permutation_like`
+  positives sans parasite restrictif. Elles ont encore le caveat de scaffold et
+  ne prouvent pas un gadget NP-hard.
+- Une ligne `five_local_non_cr` donne `interaction_unsat` : les parasites seuls
+  et la relation fonctionnelle seule acceptent des affectations, mais leur
+  combinaison rejette tout. C'est un contre-signal utile contre les quotients
+  qui sépareraient trop agressivement contraintes unaires et binaires.
+- Une obstruction de cycle fonctionnel apparaît, mais dans une ligne déjà
+  bloquée par `constant_reject`; elle n'est donc pas un gadget autonome.
+
+Prochaine action Piste F : minimiser l'interaction UNSAT et lancer une recherche
+promise-aware autour des deux permutations-like `paired_farthest`, en essayant
+de supprimer aussi le `constant_accept` ou de le montrer inoffensif.

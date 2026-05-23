@@ -4340,3 +4340,72 @@ formes structurées restent contaminées par parasites dans les générateurs
 actuels. Prochaine étape recommandée : choisir une classe stable, idéalement
 `partial_bijection` ou `sparse_partial_matching`, et lancer une recherche
 d'élimination de parasites ou de composition en chaînes fonctionnelles.
+
+## ExecPlan 2026-05-23 - Functional relation chain probe
+
+But : tester si les relations non booléennes fonctionnelles détectées en T066
+se composent en chaînes ou cycles qui créent une contrainte globale nouvelle,
+ou si les échecs observés restent expliqués par des parasites unaires ou
+constantes.
+
+Hypothèse : les classes `sparse_partial_matching`, `partial_bijection`,
+`left_selector`, `right_selector` et `small_domain_bridge` peuvent former un
+graphe de contraintes fonctionnelles entre blocs `P3`. Un cycle de ces
+relations pourrait donner une obstruction globale plus informative que les
+profils unaires/constantes T065/T066.
+
+Fichiers visés : `tools/pc_relation_chain_probe.py`,
+`tests/test_csp_internal_benchmark.py`, `Makefile`, `README.md`,
+`docs/experiment_protocol.md`, `docs/hypothesis_portfolio.md`,
+`docs/tracks/piste_c_sat_csp.md`,
+`docs/tracks/piste_f_complexity_subcases.md`,
+`docs/proof_obligations.md`, `docs/experiment_log.md`,
+`docs/checkpoints.md`, `docs/tracks/README.md`, `PLANS.md`.
+
+Algorithme pressenti : réutiliser `quartet_effective_relation_report` avec
+relations complètes, classifier les relations binaires non booléennes par la
+taxonomie T066, construire le graphe des relations fonctionnelles, puis
+énumérer sous limite les affectations qui satisfont : toutes les relations, les
+seules relations fonctionnelles, les seules relations non booléennes binaires,
+et les seuls parasites. Reporter les composantes, cycles, contradictions et
+explications d'UNSAT.
+
+Plan de contre-exemples : inclure `cycle`, `paired_farthest`, `random`,
+`equal`, `four_local_non_cr`, `five_local_non_cr` sur `p3_block_tree(k)`. Les
+cas recherchés sont : cycle fonctionnel sans solution, full UNSAT non expliqué
+par constante/unaires, ou relation fonctionnelle parasite-free.
+
+Plan subagents : trois sidecars lecture seule : définition des métriques de
+chaînes/cycles, familles adversariales de recherche parasite-free, et langage
+de preuve/limites T067.
+
+Tests à exécuter : test ciblé du chain probe, `make bench-relation-chains`,
+tests ciblés CSP, `make quick`, et `make bench-quick`. `candidate.py` ne doit
+pas changer.
+
+Risques : les chaînes fonctionnelles peuvent rester entièrement expliquées par
+les parasites existants ; dans ce cas le résultat est un lemme négatif
+expérimental utile, pas un échec. Toute ligne dépassant une limite
+d'énumération doit être marquée incomplète, jamais négative.
+
+Résultats observés : ajout de `tools/pc_relation_chain_probe.py`, cible
+`make bench-relation-chains`, test ciblé et documentation T067. Le rapport
+`reports/relation_chain_probe.json` contient `40` lignes complètes,
+`0` mismatch, `31` lignes avec relations fonctionnelles, `2` lignes
+`permutation_like` sans parasite restrictif, `1` ligne `interaction_unsat`,
+`2` lignes avec composante fonctionnelle cyclique et `1` obstruction de cycle
+fonctionnel déjà expliquée par `constant_reject`.
+
+Tests observés : test ciblé chain probe `1 passed`; tests ciblés
+`tests/test_csp_internal_benchmark.py` : `6 passed`; `make
+bench-relation-chains` écrit `reports/relation_chain_probe.json`; `make quick`
+passe avec `268 passed`, puis `JUSTE`; `make bench-quick` garde `40/40` runs
+réussis, `0` timeout et `0` incomplet.
+
+Décision : T067 apporte deux signaux nouveaux. Le premier est positif pour la
+piste gadget : des permutations-like `P3/P3` existent sans parasite restrictif
+dans le scaffold. Le second est négatif pour les compressions locales trop
+faibles : une ligne `interaction_unsat` montre que parasites seuls et relation
+fonctionnelle seule ne suffisent pas à expliquer le rejet. Continuer par une
+minimisation de cette interaction ou par une recherche promise-aware autour des
+permutations-like.

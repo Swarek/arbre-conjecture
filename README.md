@@ -45,6 +45,7 @@ make bench-width-stress
 make bench-single-p-stress
 make bench-relation-catalog
 make bench-relation-shapes
+make bench-relation-chains
 make acceptance
 ```
 
@@ -86,6 +87,12 @@ scaffold. Ce n’est pas une preuve de NP-difficulté.
 formes structurelles (`sparse_partial_matching`, `active_two_regular`,
 sélecteurs, etc.) et garde les tags de composabilité visibles. Ce n’est pas une
 preuve de NP-difficulté ni de polynomialité.
+
+`make bench-relation-chains` écrit `reports/relation_chain_probe.json`. Il
+compose les relations non booléennes fonctionnelles observées entre blocs `P3`
+et compare les comptes satisfaisant les seules relations fonctionnelles, les
+relations binaires, les parasites et tout le CSP matérialisé. C’est un
+diagnostic de corrélation, pas une décision générale.
 
 Dans `tools/pc_circular_conjecture_test.py`, la sortie `JUSTE` signifie seulement
 que la candidate a été égale à l’oracle exact sur les instances générées par ce

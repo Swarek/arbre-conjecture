@@ -239,6 +239,15 @@ mais `0` candidat gadget positif sans parasite restrictif. Cela ne ferme aucune
 obligation de dureté ni de complexité ; cela rend seulement explicites les
 formes à isoler ou à compresser dans une prochaine étape.
 
+T067 ajoute un diagnostic de composition de relations fonctionnelles en chaînes
+et cycles. Il trouve des profils `permutation_like` sans parasite restrictif
+dans un sweep `paired_farthest`, ainsi qu'une ligne `interaction_unsat` où les
+parasites seuls et les relations binaires seules sont satisfaisables mais leur
+combinaison ne l'est pas. Cela reste une preuve expérimentale dans le CSP
+matérialisé : il faut encore prouver la suffisance du modèle relationnel, le
+contrôle des parasites, la réalisation par une matrice globale `D`, le respect
+du promise PC-tree et une borne de complexité.
+
 ### Caractérisation bad-side d'un ordre fixé
 
 Statut : conséquence directe pour ordre fixé + prédicat central exact depuis

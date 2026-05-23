@@ -25,7 +25,7 @@ Elle ne remplace ni les tests ni les obligations de preuve.
 | C - SAT/CSP | `piste_c_sat_csp.md` | Solveurs 2-SAT puis DP treewidth des relations effectives hors candidate |
 | D - Circular-ones / intersection | `piste_d_circular_ones.md` | Boules validées pour quasi ; arcs bad-witness naïfs réfutés |
 | E - Obstructions farthest/quartets | `piste_e_farthest_quartets.md` | Farthest seul réfuté ; bad-witness one-side donne des certificats hub bas |
-| F - Complexité / sous-cas | `piste_f_complexity_subcases.md` | Relations `P3/P3` classées par formes ; aucun gadget parasite-free |
+| F - Complexité / sous-cas | `piste_f_complexity_subcases.md` | Permutation-like parasite-free et interaction UNSAT observées dans le scaffold |
 
 ## Règle d’édition
 
@@ -112,6 +112,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T064 | 2026-05-23 | C/F | Stress single `P`-node : treewidth `0`, domaine `(n-1)!/2`, énumération bornée visible | `make bench-single-p-stress` |
 | T065 | 2026-05-23 | F/C | Catalogue de relations non booléennes `P3` : diversité et parasites visibles | `make bench-relation-catalog` |
 | T066 | 2026-05-23 | F/C | Minage des formes de relations non booléennes : classes structurées mais aucun gadget parasite-free | `make bench-relation-shapes` |
+| T067 | 2026-05-23 | F/C | Composition fonctionnelle : `permutation_like` sans parasite restrictif et interaction UNSAT | `make bench-relation-chains` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les
