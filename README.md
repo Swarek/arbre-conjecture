@@ -41,6 +41,7 @@ make bench-quick
 make bench
 make bench-piste-f
 make bench-csp-quick
+make bench-width-stress
 make acceptance
 ```
 
@@ -61,6 +62,11 @@ appariements farthest. Ces familles ne sont pas ajoutées au `mixed` par défaut
 `make bench-csp-quick` mesure les expériences internes Piste C : compilation de
 nogoods, solve pruné, filtre direct et métriques de pruning. Ce n’est pas la
 gate de la candidate générale.
+
+`make bench-width-stress` écrit `reports/p3_width_stress.json` pour la famille
+`p3_block_tree(k)`. Ce benchmark montre comment les relations de quartets
+restent résolubles à largeur bornée puis deviennent incomplètes sous cap ; il
+sert à documenter les limites de la piste DP/treewidth.
 
 Dans `tools/pc_circular_conjecture_test.py`, la sortie `JUSTE` signifie seulement
 que la candidate a été égale à l’oracle exact sur les instances générées par ce

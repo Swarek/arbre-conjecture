@@ -1026,6 +1026,39 @@ Hsu/McConnell peuvent exiger une preuve séparée, et une famille
 Prochaine action : cataloguer la croissance de largeur sur `p3_block_tree(k)`
 et décider si une intégration positive-only dans `candidate.py` mérite le coût.
 
+## Tentative T062 - Stress de largeur `p3_block_tree(k)`
+
+Statut : benchmark de limite de largeur, hors `candidate.py`.
+
+Changement : ajout de `p3_block_tree(block_count)` et de
+`tools/pc_csp_width_stress.py`, câblé par `make bench-width-stress`. Le rapport
+construit des arbres à racine `C` portant `k` blocs `P3`, puis mesure les
+relations effectives, le graphe primal, la DP treewidth et les incomplétudes
+sous cap.
+
+Résultat `make bench-width-stress` :
+
+- `12` lignes : `k=2,3,4,5` et familles `cycle`, `paired_farthest`, `equal` ;
+- `0` relation incomplète ;
+- `0` mismatch de validation ;
+- `11` lignes DP complètes ;
+- `1` ligne incomplète : `cycle,k=5` avec `treewidth_cap_exceeded` sous cap `4` ;
+- treewidth primal upper bound maximale `5` ;
+- treewidth exacte maximale calculée `4` sous cap ;
+- domaine maximal `6` ;
+- `0` échec de témoin.
+
+Interprétation : la portée binaire des relations ne suffit pas à garantir un
+solveur polynomial. La famille `p3_block_tree(k)` montre une largeur qui croît
+avec le nombre de blocs sur les cycles, tandis que les contrôles equal-distance
+restent tautologiques et les paired-farthest donnent souvent des rejets
+relationnels constants. C'est un stress utile pour toute future intégration
+positive-only ou toute revendication FPT.
+
+Prochaine action : mesurer si `solve_quartet_treewidth_csp` trouve des témoins
+positifs réellement nouveaux pour `candidate.py` sous une garde de coût stricte,
+ou basculer vers le catalogue de relations non booléennes/gadgets.
+
 ## Tentative T021 - Repair positive-only pour paired-farthest
 
 Statut : idée saine comme générateur expérimental vérifié, mais non intégrée à

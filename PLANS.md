@@ -4055,3 +4055,70 @@ booléennes sous largeur bornée au lieu de les jeter hors 2-SAT. Continuer avec
 un catalogue de largeur croissante (`p3_block_tree(k)`) ou une intégration
 positive-only candidate limitée ; ne pas promouvoir les UNSAT relationnels en
 rejets généraux avant preuve du modèle T059.
+
+## ExecPlan 2026-05-23 - P3 block width stress profile
+
+But : transformer l'intuition "la DP treewidth réencode une largeur globale" en
+artefact reproductible : une famille `p3_block_tree(k)` et un rapport JSON
+montrant la croissance de largeur et les incomplets sous cap.
+
+Hypothèse : pour les PC-trees formés d'un nœud `C` portant `k` blocs `P3`, les
+relations de quartets restent souvent binaires/non booléennes mais le graphe
+primal devient dense ; la treewidth croît avec `k`. Cette famille doit servir de
+stress principal contre toute revendication de polynomialité issue de T061.
+
+Fichiers visés :
+`src/pc_circular/pc_tree.py`,
+`src/pc_circular/solvers/sat_like_experiments.py`,
+`tools/pc_csp_width_stress.py`, `tests/test_sat_like_experiments.py`,
+`Makefile`, `README.md`, `docs/tracks/piste_c_sat_csp.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/proof_obligations.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `docs/tracks/README.md`,
+`PLANS.md`.
+
+Algorithme pressenti : ajouter `p3_block_tree(block_count)` comme générateur de
+PC-tree, puis `p3_block_width_profile(...)` qui construit les instances
+`cycle`, `paired_farthest` et `equal`, lance
+`quartet_effective_relation_report(..., store_full_relations=True)` et
+`solve_quartet_treewidth_csp`, et résume treewidth exacte, upper bound, classe
+relationnelle, SAT/UNSAT/incomplet et temps. Ajouter un outil CLI borné qui
+écrit `reports/p3_width_stress.json`.
+
+Plan de contre-exemples : inclure `cycle_metric(3k)` positif, `paired_farthest`
+négatif ou dur-looking, `equal_distance` tautologique comme contrôle, et un cap
+bas qui doit produire `treewidth_cap_exceeded` sans faux rejet.
+
+Plan subagents : les sidecars T061 ont déjà donné le générateur et les risques ;
+pas de nouveau subagent nécessaire pour cette itération bornée.
+
+Tests à exécuter : tests ciblés de profile, `make bench-width-stress`,
+`make quick`, `make check`, `make bench-quick`. `candidate.py` ne doit pas
+changer.
+
+Risques : un profil trop lourd ralentirait la boucle ; garder les defaults à
+`k <= 5`. Une largeur exacte calculée sous cap ne prouve pas une borne générale
+mais documente un stress utile. Les UNSAT restent relationnels, pas globaux.
+
+Résultats observés : ajout de `p3_block_tree(block_count)` dans le scaffold
+PC-tree, ajout de `tools/pc_csp_width_stress.py`, cible `make
+bench-width-stress`, et rapport JSON ignoré `reports/p3_width_stress.json`.
+
+Tests ciblés :
+`tests/test_pc_tree_frontiers.py tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`
+: `89 passed`. Les tests vérifient que le générateur construit des blocs `P3`
+séquentiels sous une racine `C`, et que le stress avec `max_treewidth=3` résout
+`k=3` mais marque `k=4` incomplet par `treewidth_cap_exceeded`.
+
+Benchmark largeur : `make bench-width-stress` écrit
+`reports/p3_width_stress.json` avec `12` lignes (`k=2..5` et familles
+`cycle/paired_farthest/equal`), `0` relation incomplète, `0` mismatch de
+validation, `11` lignes DP complètes, `1` incomplète par cap, treewidth primal
+upper bound max `5`, treewidth exacte max `4` sous cap `4`, domaine max `6` et
+`0` échec de témoin. La ligne `cycle,k=5` est volontairement incomplète :
+`treewidth_cap_exceeded`.
+
+Décision : T062 documente clairement la largeur comme paramètre limitant de la
+Piste C/F. Continuer soit en intégrant seulement des témoins positifs sous
+garde stricte dans `candidate.py`, soit en cherchant des gadgets relationnels
+non booléens plus expressifs ; ne pas présenter la DP treewidth comme
+polynomiale générale.

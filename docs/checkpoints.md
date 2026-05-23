@@ -495,6 +495,17 @@ Dernier commit green avant T009 : `07120e4`.
   `0` incomplet). Résultat observé : les domaines non booléens `P3` sont
   résolus dans le scaffold quand la treewidth exacte est sous cap ; les caps
   restent incomplets et `candidate.py` n'a pas été modifié.
+- Checkpoint T062 courant : commit contenant le générateur `p3_block_tree(k)`
+  et le benchmark de stress de largeur. Validation observée :
+  `tests/test_pc_tree_frontiers.py tests/test_sat_like_experiments.py
+  tests/test_csp_internal_benchmark.py` (`89 passed`),
+  `make bench-width-stress` (`12` lignes, `0` mismatch de validation,
+  `11` lignes DP complètes, `1` incomplète par `treewidth_cap_exceeded`,
+  treewidth upper bound max `5`, `0` échec de témoin),
+  `make quick` (`264 passed`, puis `JUSTE`), `make check` (`JUSTE`) et
+  `make bench-quick` (`40/40` runs, `0` timeout, `0` incomplet). Résultat
+  observé : `p3_block_tree(k)` rend la largeur de T061 visible comme paramètre
+  limitant ; `candidate.py` n'a pas été modifié.
 
 ## Rollback
 

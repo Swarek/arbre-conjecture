@@ -90,6 +90,17 @@ temps de compilation, temps du solve pruné, filtre cR direct, nombre de nogoods
 branches prunées et mismatches. Un mismatch doit être traité comme un
 contre-exemple de la piste expérimentale, pas comme une faiblesse de l’oracle.
 
+Stress largeur Piste C/F :
+
+```bash
+make bench-width-stress
+```
+
+Cette commande écrit `reports/p3_width_stress.json` pour les arbres
+`p3_block_tree(k)`. Elle sert à vérifier que la DP treewidth garde ses limites
+visibles : largeur exacte, caps dépassés, témoins validés, et lignes
+incomplètes. Elle ne valide pas la candidate générale.
+
 ## Interprétation
 
 Un algorithme qui passe les gates peut encore être faux. Après chaque succès, il

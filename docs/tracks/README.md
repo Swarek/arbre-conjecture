@@ -19,7 +19,7 @@ ensembles `I_x(v)` sur les branches d'un gros nœud `P`.
 | C - SAT/CSP | `piste_c_sat_csp.md` | Solveurs 2-SAT puis DP treewidth des relations effectives hors candidate |
 | D - Circular-ones / intersection | `piste_d_circular_ones.md` | Boules validées pour quasi ; arcs bad-witness naïfs réfutés |
 | E - Obstructions farthest/quartets | `piste_e_farthest_quartets.md` | Farthest seul réfuté ; bad-witness one-side donne des certificats hub bas |
-| F - Complexité / sous-cas | `piste_f_complexity_subcases.md` | Non booléen traité sous treewidth bornée ; largeur générale ouverte |
+| F - Complexité / sous-cas | `piste_f_complexity_subcases.md` | Stress `p3_block_tree(k)` montre la largeur comme paramètre limitant |
 
 ## Règle d’édition
 
@@ -100,6 +100,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T059 | 2026-05-23 | C/F/E | Relations effectives de quartets fusionnées : validation cR, graphe primal, 2-SAT booléen et catalogue non booléen séparés | `quartet_effective_relation_report` |
 | T060 | 2026-05-23 | C/F | Solveur 2-SAT exact sur les relations effectives booléennes ; SAT/UNSAT et témoins vérifiés hors candidate | `solve_quartet_2sat` |
 | T061 | 2026-05-23 | C/F | DP/treewidth exacte bornée sur relations effectives, incluant les domaines non booléens `P3` | `solve_quartet_treewidth_csp` |
+| T062 | 2026-05-23 | C/F | Stress `p3_block_tree(k)` ajouté ; largeur croissante et cap incomplet visibles dans un JSON | `make bench-width-stress` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

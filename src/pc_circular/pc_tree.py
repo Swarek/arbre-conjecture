@@ -258,6 +258,19 @@ def balanced_pc_tree(n: int, *, fanout: int = 2, kind: str = "mixed") -> PCNode:
     return build(tuple(range(n)), 0)
 
 
+def p3_block_tree(block_count: int) -> PCNode:
+    """Return a stress PC-tree with a C-root over ``block_count`` P3 blocks."""
+
+    if block_count <= 0:
+        raise ValueError("block_count must be positive")
+    return c_node(
+        [
+            p_node([leaf(3 * idx), leaf(3 * idx + 1), leaf(3 * idx + 2)])
+            for idx in range(block_count)
+        ]
+    )
+
+
 def pc_tree_from_kind(kind: str, n: int) -> PCNode:
     if kind == "star":
         return star_pc_tree(n)

@@ -1,4 +1,5 @@
 from tools.pc_csp_internal_benchmark import run_benchmark
+from tools.pc_csp_width_stress import run_width_stress
 
 
 def test_csp_internal_benchmark_reports_separate_compile_and_solve_metrics():
@@ -302,3 +303,37 @@ def test_csp_internal_benchmark_reports_separate_compile_and_solve_metrics():
     assert report["summary"]["quartet_treewidth_max_exact"] == 2
     assert report["summary"]["quartet_treewidth_max_domain_size"] == 2
     assert report["summary"]["quartet_treewidth_witness_failures"] == 0
+
+
+def test_p3_block_width_stress_reports_growth_and_caps():
+    report = run_width_stress(
+        block_counts=[3, 4],
+        instance_kinds=["cycle"],
+        max_treewidth=3,
+        validate_until_blocks=3,
+    )
+
+    assert report["summary"]["rows"] == 2
+    assert report["summary"]["treewidth_complete_rows"] == 1
+    assert report["summary"]["treewidth_incomplete_rows"] == 1
+    assert report["summary"]["treewidth_reason_histogram"] == {
+        "sat": 1,
+        "treewidth_cap_exceeded": 1,
+    }
+    assert report["summary"]["max_primal_treewidth_upper_bound"] == 4
+    assert report["summary"]["max_treewidth_exact"] == 3
+    assert report["summary"]["witness_failures"] == 0
+
+    complete_row = report["rows"][0]
+    capped_row = report["rows"][1]
+    assert complete_row["block_count"] == 3
+    assert complete_row["relation_row_class"] == "non_boolean_relation_catalog"
+    assert complete_row["treewidth_complete"]
+    assert complete_row["treewidth_exists"] is True
+    assert complete_row["treewidth_exact"] == 3
+    assert complete_row["treewidth_witness_is_cr"]
+    assert capped_row["block_count"] == 4
+    assert capped_row["primal_treewidth_upper_bound"] == 4
+    assert capped_row["treewidth_complete"] is False
+    assert capped_row["treewidth_exists"] is None
+    assert capped_row["treewidth_reason"] == "treewidth_cap_exceeded"

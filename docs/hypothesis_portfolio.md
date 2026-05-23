@@ -76,10 +76,10 @@ arbres et vérifier si elles sont suffisantes.
 Raisons possibles d’échec : les grands nœuds `P` induisent des contraintes
 d’ordre cyclique non binaires.
 
-Prochain essai concret : après T061, mesurer la croissance de largeur sur
-`p3_block_tree(k)` et décider si une intégration positive-only de
+Prochain essai concret : après T062, tester si une intégration positive-only de
 `solve_quartet_2sat` ou `solve_quartet_treewidth_csp` dans `candidate.py`
-apporte de vrais témoins nouveaux sous garde de coût. Garder séparés les UNSAT
+apporte de vrais témoins nouveaux sous garde de coût ; sinon basculer vers le
+catalogue de relations non booléennes/gadgets. Garder séparés les UNSAT
 relationnels tant que la suffisance globale du modèle relationnel n'est pas
 prouvée.
 

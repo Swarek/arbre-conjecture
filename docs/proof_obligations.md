@@ -1586,6 +1586,22 @@ Limites après T061 :
 - une famille de blocs `P3` peut faire croître la largeur, donc la piste n'est
   pas une preuve de polynomialité générale.
 
+T062 matérialise cette dernière limite :
+
+- `p3_block_tree(k)` est une famille de stress où les domaines locaux ont taille
+  `6` sur chaque bloc `P3` ;
+- sur `cycle_metric(3k)`, le graphe primal observé a une largeur qui croît avec
+  `k` dans le rapport borné ;
+- avec le cap de benchmark `max_treewidth=4`, la ligne `cycle,k=5` est
+  correctement marquée incomplète, pas négative ;
+- les contrôles equal-distance restent tautologiques et les témoins SAT sont
+  vérifiés directement quand ils existent.
+
+Conséquence : toute preuve future fondée sur T061 devra être paramétrée par la
+treewidth ou fournir un argument structurel qui borne cette largeur pour les
+PC-trees issus de Hsu/McConnell. Les expériences T061/T062 ne donnent pas un
+algorithme polynomial général.
+
 Limites restantes après T059/T060/T061 :
 
 - la validation reste par énumération complète des affectations locales ; elle

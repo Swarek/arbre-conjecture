@@ -1149,3 +1149,25 @@ domaine local et `w` treewidth du graphe primal. La construction actuelle du
 rapport reste le coût dominant et n'est pas encore une solution polynomiale
 générale. Le générateur `p3_block_tree(k)` doit devenir le stress principal pour
 montrer quand cette piste devient exponentielle.
+
+## Résultat T062 - Largeur croissante des blocs P3
+
+Statut : stress test de complexité, hors candidate.
+
+T062 ajoute `make bench-width-stress`, qui mesure la famille
+`p3_block_tree(k)` sur `cycle`, `paired_farthest` et `equal`.
+
+Résultat du rapport `reports/p3_width_stress.json` :
+
+- `k=2` cycle : treewidth exacte `1` ;
+- `k=3` cycle : treewidth exacte `3` ;
+- `k=4` cycle : treewidth exacte `4` ;
+- `k=5` cycle : treewidth upper bound `5`, mais incomplet sous cap `4` ;
+- contrôles equal-distance : treewidth active `0`, toujours SAT ;
+- paired-farthest : rejets relationnels constants pour `k>=3` dans ce stress ;
+- `0` mismatch de validation et `0` échec de témoin.
+
+Interprétation complexité : cette famille montre que la DP T061 est bien une
+piste FPT par largeur, pas une preuve de tractabilité générale. Elle doit rester
+dans les benchmarks de recherche pour empêcher une confusion entre "relations
+binaires" et "problème facile".

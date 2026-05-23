@@ -3083,3 +3083,50 @@
 - Next action : profiler `p3_block_tree(k)` comme famille de largeur croissante
   et décider si une intégration positive-only dans `candidate.py` apporte un
   gain mesurable sans ralentir `make bench`.
+
+## 2026-05-23 P3 block width stress profile
+
+- Date/heure : 2026-05-23 14:00:06 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les arbres `p3_block_tree(k)` forment une famille de
+  stress où les relations de quartets restent exploitables mais où la treewidth
+  du graphe primal croît avec `k`, rendant la DP T061 FPT plutôt que
+  polynomiale générale.
+- Changement fait : ajout de `p3_block_tree(block_count)`, de
+  `tools/pc_csp_width_stress.py`, de la cible `make bench-width-stress`, de
+  tests de génération/profil de largeur, et documentation T062 dans les pistes,
+  obligations de preuve, protocole, plans et README.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop` propre
+  au commit `ee779a2`; `262 passed`, puis `JUSTE`.
+- Plan subagents : pas de nouveau sidecar ; T062 réutilise les livrables T061
+  qui demandaient explicitement le stress `p3_block_tree(k)`.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_pc_tree_frontiers.py tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`.
+- Résultat correction ciblée : `89 passed`.
+- Tests ajoutés : structure du générateur `p3_block_tree(3)` ; profil largeur
+  avec `max_treewidth=3` où `k=3` cycle est SAT à treewidth exacte `3` et
+  `k=4` cycle devient incomplet `treewidth_cap_exceeded`.
+- Commande exécutée : `make bench-width-stress`.
+- Résultat benchmark largeur : `reports/p3_width_stress.json` écrit ; `12`
+  lignes, `0` relation incomplète, `0` mismatch de validation, `11` lignes DP
+  complètes, `8` SAT, `3` UNSAT relationnels, `1` incomplète par
+  `treewidth_cap_exceeded`, treewidth primal upper bound max `5`, treewidth
+  exacte max calculée `4` sous cap `4`, domaine max `6`, `0` échec de témoin.
+- Commande exécutée : `make quick`.
+- Résultat correction : `264 passed`, puis `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `8` tailles, `40/40` runs réussis, `0` timeout et `0` incomplet.
+  `candidate.py` n'a pas été modifié.
+- Conclusion : T062 fournit un artefact reproductible montrant que la largeur
+  est un vrai paramètre limitant pour T061. La ligne `cycle,k=5` devient
+  incomplète sous cap, donc la DP ne doit pas être présentée comme solution
+  polynomiale générale.
+- Next action : tester l'intérêt réel d'une intégration positive-only dans
+  `candidate.py` sous garde stricte, ou poursuivre le catalogue de relations
+  non booléennes/gadgets.

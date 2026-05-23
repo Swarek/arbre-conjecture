@@ -10,7 +10,15 @@ from pc_circular.generators import (
     quasi_circular_not_circular_four_point,
     random_dissimilarity,
 )
-from pc_circular.pc_tree import balanced_pc_tree, c_node, enumerate_frontiers, leaf, p_node, star_pc_tree
+from pc_circular.pc_tree import (
+    balanced_pc_tree,
+    c_node,
+    enumerate_frontiers,
+    leaf,
+    p_node,
+    p3_block_tree,
+    star_pc_tree,
+)
 from pc_circular.predicates import (
     all_circular_orders,
     canonical_circular_order,
@@ -627,18 +635,9 @@ def test_quartet_2sat_reports_implication_unsat_without_empty_clause():
     assert result["counts"]["empty_clauses"] == 0
 
 
-def _p3_block_tree(block_count):
-    return c_node(
-        [
-            p_node([leaf(3 * idx), leaf(3 * idx + 1), leaf(3 * idx + 2)])
-            for idx in range(block_count)
-        ]
-    )
-
-
 def test_quartet_treewidth_csp_solves_non_boolean_p3_positive_case():
     D = cycle_metric(9)
-    T = _p3_block_tree(3)
+    T = p3_block_tree(3)
     relation_report = quartet_effective_relation_report(
         D,
         T,
@@ -668,7 +667,7 @@ def test_quartet_treewidth_csp_solves_non_boolean_p3_positive_case():
 
 def test_quartet_treewidth_csp_solves_non_boolean_p3_negative_case():
     D = paired_farthest_matching(9, rng=random.Random(7))
-    T = _p3_block_tree(3)
+    T = p3_block_tree(3)
     relation_report = quartet_effective_relation_report(
         D,
         T,
@@ -710,7 +709,7 @@ def test_quartet_treewidth_csp_handles_tautology_and_constant_reject():
 
 def test_quartet_treewidth_csp_reports_width_cap_without_false_negative():
     D = cycle_metric(9)
-    T = _p3_block_tree(3)
+    T = p3_block_tree(3)
     relation_report = quartet_effective_relation_report(
         D,
         T,

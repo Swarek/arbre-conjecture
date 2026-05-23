@@ -7,6 +7,7 @@ from pc_circular.pc_tree import (
     leaf,
     labels,
     p_node,
+    p3_block_tree,
     represents_order,
     sample_frontier,
     star_pc_tree,
@@ -85,3 +86,12 @@ def test_represents_order_does_not_rotate_internal_c_nodes():
     T = p_node([c_node([leaf(0), leaf(1), leaf(2)]), leaf(3)])
     assert represents_order(T, (0, 1, 2, 3))
     assert not represents_order(T, (1, 2, 0, 3))
+
+
+def test_p3_block_tree_builds_sequential_p_blocks_under_c_root():
+    T = p3_block_tree(3)
+    assert T.kind == "C"
+    assert len(T.children) == 3
+    assert all(child.kind == "P" for child in T.children)
+    assert labels(T) == tuple(range(9))
+    assert represents_order(T, tuple(range(9)))
