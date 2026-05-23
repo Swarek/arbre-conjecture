@@ -2335,3 +2335,60 @@
 - Next action : mesurer et factoriser les groupes où le premier hit arrive
   tard, ou construire une table de support symbolique qui évite le scan
   séquentiel.
+
+## 2026-05-23 first-hit position profiling
+
+- Date/heure : 2026-05-23 08:39:35 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : pour savoir quoi optimiser après T049, il faut distinguer
+  les hits précoces, les hits tardifs et les affectations de support sans aucun
+  hit. Si les no-hit dominent, un simple réordonnancement des atoms ne suffira
+  pas.
+- Changement fait : ajout des métriques `first_hit_assignments`,
+  `first_hit_no_hit_assignments`, `first_hit_position_histogram`,
+  `first_hit_max_position`, `first_hit_average_position`,
+  `first_hit_checks_spent_on_no_hit`, `first_hit_checks_saved_on_hits` et
+  `atom_checks_if_exhaustive_seen`; extension du benchmark interne avec ces
+  agrégats ; tests comptables pour les cas complets, limités, equal-distance et
+  les agrégats JSON du benchmark.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre sur `337a2ea`; `222 passed`, puis `JUSTE`.
+- Plan subagents : trois sidecars lecture seule. Résultats déjà reçus : audit
+  de non-interférence confirmant que les compteurs ne changent ni signatures ni
+  frontiers et recommandant de documenter leur dépendance à l'ordre de scan ;
+  probe complexité `960` échantillons, `0` unsupported/incomplet,
+  `34264` affectations de support, `21256` hits, `13008` no-hit,
+  `273880` atom checks et `273288` checks sauvés.
+- Commande exécutée :
+  `pytest -q tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`.
+- Résultat correction : `41 passed`.
+- Commande exécutée : `make bench-csp-quick`.
+- Résultat benchmark interne : `reports/csp_internal_benchmark_quick.json`
+  écrit ; `192` lignes, `0` mismatch, `0` first-hit mismatch,
+  `0` mismatch de signatures ; `total_first_hit_assignments=2904`,
+  `total_first_hit_no_hit_assignments=3320`, ratio no-hit `0.5334`,
+  `total_first_hit_atom_checks=41872`,
+  `total_first_hit_atom_checks_if_exhaustive_seen=72256`,
+  `total_first_hit_atom_checks_saved=30384`,
+  `total_first_hit_checks_spent_on_no_hit=30520`,
+  `total_first_hit_checks_saved_on_hits=30384`,
+  `total_first_hit_position_sum=11352`, max position `36`.
+- Commande exécutée : probe par familles `n=4..8`.
+- Résultat probe : random no-hit `21.9%`, cycle `50.0%`,
+  paired-farthest `44.4%`, matching low-hub `25.7%`, equal-distance `0` atom.
+- Commande exécutée : `make quick`.
+- Résultat correction : `223 passed`, puis `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Résultat benchmark candidate : non relancé ; `candidate.py` n'a pas été
+  modifié par T050.
+- Conclusion : T050 montre que les hits sont souvent précoces, mais que le coût
+  restant de la gate CSP rapide est principalement dans les affectations sans
+  hit. Les métriques sont dépendantes de l'ordre de scan des atoms et ne doivent
+  pas être lues comme invariants mathématiques.
+- Next action : chercher une contrainte agrégée par support qui certifie
+  directement hit/no-hit, ou une borne structurelle sur les familles où le
+  no-hit est fréquent.

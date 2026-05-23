@@ -361,6 +361,18 @@ Dernier commit green avant T009 : `07120e4`.
   `make check`. Résultat observé : `atom_checks` passe de `72256` à `41872` sur
   la gate CSP rapide, mais les diagnostics `atom`/`pair` deviennent des
   représentants de premier témoin et ne sont plus exhaustifs.
+- Checkpoint T050 courant : commit contenant le profil first-hit hors
+  candidate. Les métriques `first_hit_*` mesurent hits, no-hit, positions de
+  premier hit et checks dépensés/sauvés, sans changer les signatures de pruning.
+  Validation observée :
+  `tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`
+  (`41 passed`), `make quick` (`223 passed`, puis `JUSTE`), `make check`,
+  `make bench-csp-quick` (`192` lignes, `0` mismatch,
+  `0` first-hit mismatch, `0` mismatch de signatures), probe par familles
+  `n=4..8`, et audit subagent de non-interférence. Résultat observé :
+  `3320/6224` affectations de support sont no-hit sur la gate CSP rapide et
+  consomment `30520` checks ; les métriques sont dépendantes de l'ordre de scan,
+  pas des invariants mathématiques.
 
 ## Rollback
 

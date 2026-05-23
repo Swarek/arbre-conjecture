@@ -655,7 +655,16 @@ def _compile_nogoods_by_grouped_supports(
             "effective_signature_count": 0,
             "stopped_after_first_hit": stop_after_first_hit,
             "atom_checks_if_exhaustive": 0,
+            "atom_checks_if_exhaustive_seen": 0,
             "atom_checks_saved_by_first_hit": 0,
+            "first_hit_assignments": 0,
+            "first_hit_no_hit_assignments": 0,
+            "first_hit_position_sum": 0,
+            "first_hit_average_position": 0.0,
+            "first_hit_max_position": 0,
+            "first_hit_position_histogram": {},
+            "first_hit_checks_spent_on_no_hit": 0,
+            "first_hit_checks_saved_on_hits": 0,
         },
     }
     if encoding["unsupported"]:
@@ -685,6 +694,7 @@ def _compile_nogoods_by_grouped_supports(
     seen: dict[NogoodSignature, dict] = {}
     atoms_with_hits: set[tuple[int, ...]] = set()
     pairs_with_hits: set[tuple[int, int]] = set()
+    first_hit_position_histogram: dict[int, int] = {}
     truncated = False
     for support, support_atoms in atoms_by_support.items():
         support_product = _domain_product_size(encoding, support)
@@ -702,7 +712,11 @@ def _compile_nogoods_by_grouped_supports(
             report["counts"]["grouped_support_assignments_seen"] += 1
             support_assignment = dict(zip(support, choices))
             signature = _nogood_signature(support_assignment, support)
-            for atom_info in support_atoms:
+            hit_position = 0
+            group_size = len(support_atoms)
+            if stop_after_first_hit:
+                report["counts"]["atom_checks_if_exhaustive_seen"] += group_size
+            for atom_position, atom_info in enumerate(support_atoms, start=1):
                 atom = tuple(atom_info["atom"])
                 report["counts"]["atom_checks"] += 1
                 order = canonical_circular_order(
@@ -710,6 +724,8 @@ def _compile_nogoods_by_grouped_supports(
                 )
                 if not _cyclic_atom_occurs(order, atom):
                     continue
+                if hit_position == 0:
+                    hit_position = atom_position
                 report["counts"]["atom_hits"] += 1
                 atoms_with_hits.add(atom)
                 if "pair" in atom_info:
@@ -731,6 +747,21 @@ def _compile_nogoods_by_grouped_supports(
                 seen[signature] = nogood
                 if stop_after_first_hit:
                     break
+            if stop_after_first_hit:
+                if hit_position:
+                    report["counts"]["first_hit_assignments"] += 1
+                    report["counts"]["first_hit_position_sum"] += hit_position
+                    report["counts"]["first_hit_max_position"] = max(
+                        report["counts"]["first_hit_max_position"],
+                        hit_position,
+                    )
+                    first_hit_position_histogram[hit_position] = (
+                        first_hit_position_histogram.get(hit_position, 0) + 1
+                    )
+                    report["counts"]["first_hit_checks_saved_on_hits"] += group_size - hit_position
+                else:
+                    report["counts"]["first_hit_no_hit_assignments"] += 1
+                    report["counts"]["first_hit_checks_spent_on_no_hit"] += group_size
         if truncated:
             break
 
@@ -749,7 +780,19 @@ def _compile_nogoods_by_grouped_supports(
     report["counts"]["max_support_size"] = max(histogram, default=0)
     ungrouped_total = report["counts"]["support_product_total_if_ungrouped"]
     report["counts"]["atom_checks_if_exhaustive"] = ungrouped_total
-    report["counts"]["atom_checks_saved_by_first_hit"] = ungrouped_total - report["counts"]["atom_checks"]
+    baseline_checks_seen = (
+        report["counts"]["atom_checks_if_exhaustive_seen"]
+        if stop_after_first_hit
+        else ungrouped_total
+    )
+    report["counts"]["atom_checks_saved_by_first_hit"] = baseline_checks_seen - report["counts"]["atom_checks"]
+    report["counts"]["first_hit_position_histogram"] = dict(sorted(first_hit_position_histogram.items()))
+    hit_assignments = report["counts"]["first_hit_assignments"]
+    report["counts"]["first_hit_average_position"] = (
+        report["counts"]["first_hit_position_sum"] / hit_assignments
+        if hit_assignments
+        else 0.0
+    )
     report["counts"]["grouped_vs_ungrouped_support_ratio"] = (
         report["counts"]["grouped_support_product_total"] / ungrouped_total
         if ungrouped_total

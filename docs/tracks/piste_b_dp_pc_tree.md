@@ -309,3 +309,17 @@ contre-exemple minimal `n=4` ajouté aux tests montre que les signatures restent
 identiques alors que `atoms_with_nogoods` et `pairs_with_nogoods` diminuent.
 Une vraie DP doit donc porter une contrainte de support agrégée, pas les
 représentants first-hit.
+
+## Résultats T050
+
+Statut : profil d'implémentation utile pour orienter la DP.
+
+Les métriques T050 montrent que le coût restant de first-hit se divise en deux :
+hits tardifs et affectations sans hit. Sur `make bench-csp-quick`, les no-hit
+représentent `3320/6224` affectations de support et consomment `30520` checks.
+
+Conséquence DP : une table par support qui dit seulement "hit existe" est
+insuffisante si elle est encore construite par scan. Le bon objet serait une
+contrainte agrégée capable de décider directement qu'au moins un atom du groupe
+apparaît, ou de certifier qu'aucun ne peut apparaître, pour une affectation de
+support donnée.

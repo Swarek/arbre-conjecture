@@ -63,6 +63,51 @@ def _nogood_signatures(compilation):
     }
 
 
+def _assert_first_hit_accounting(compilation):
+    counts = compilation["counts"]
+
+    assert (
+        counts["first_hit_assignments"] + counts["first_hit_no_hit_assignments"]
+        == counts["grouped_support_assignments_seen"]
+    )
+    assert counts["atom_hits"] == counts["first_hit_assignments"]
+    assert sum(counts["first_hit_position_histogram"].values()) == counts["first_hit_assignments"]
+    assert counts["first_hit_position_sum"] == sum(
+        position * count
+        for position, count in counts["first_hit_position_histogram"].items()
+    )
+    assert counts["first_hit_max_position"] == max(
+        counts["first_hit_position_histogram"],
+        default=0,
+    )
+    if counts["first_hit_assignments"] == 0:
+        assert counts["first_hit_position_histogram"] == {}
+        assert counts["first_hit_position_sum"] == 0
+        assert counts["first_hit_max_position"] == 0
+        assert counts["first_hit_average_position"] == 0.0
+    else:
+        assert counts["first_hit_average_position"] == (
+            counts["first_hit_position_sum"] / counts["first_hit_assignments"]
+        )
+    assert all(
+        1 <= position <= counts["max_atoms_per_support"]
+        for position in counts["first_hit_position_histogram"]
+    )
+    assert counts["atom_checks"] == (
+        counts["first_hit_position_sum"] + counts["first_hit_checks_spent_on_no_hit"]
+    )
+    assert counts["atom_checks_if_exhaustive_seen"] == (
+        counts["atom_checks"] + counts["first_hit_checks_saved_on_hits"]
+    )
+    assert counts["atom_checks_saved_by_first_hit"] == (
+        counts["atom_checks_if_exhaustive_seen"] - counts["atom_checks"]
+    )
+    assert counts["atom_checks_saved_by_first_hit"] == counts["first_hit_checks_saved_on_hits"]
+    assert 0 <= counts["atom_checks_if_exhaustive_seen"] <= counts["atom_checks_if_exhaustive"]
+    if compilation["complete"]:
+        assert counts["atom_checks_if_exhaustive_seen"] == counts["atom_checks_if_exhaustive"]
+
+
 def test_prop45_nogood_report_rejects_single_bad_quasi_order():
     D = quasi_circular_not_circular_four_point()
     order = (0, 1, 2, 3)
@@ -343,9 +388,11 @@ def test_grouped_first_hit_bad_side_nogoods_match_grouped_signatures():
     assert first_hit["counts"]["stopped_after_first_hit"] is True
     assert first_hit["counts"]["atom_checks"] < grouped["counts"]["atom_checks"]
     assert first_hit["counts"]["atom_checks_if_exhaustive"] == grouped["counts"]["atom_checks"]
+    assert first_hit["counts"]["atom_checks_if_exhaustive_seen"] == grouped["counts"]["atom_checks"]
     assert first_hit["counts"]["atom_checks_saved_by_first_hit"] == (
         grouped["counts"]["atom_checks"] - first_hit["counts"]["atom_checks"]
     )
+    _assert_first_hit_accounting(first_hit)
 
 
 def test_grouped_first_hit_bad_side_solver_matches_direct_and_prunes_cycle_metric():
@@ -379,6 +426,10 @@ def test_grouped_first_hit_keeps_effective_signatures_on_dense_support_groups():
     assert grouped["counts"]["max_atoms_per_support"] > 1
     assert first_hit["counts"]["atom_checks"] < grouped["counts"]["atom_checks"]
     assert first_hit["counts"]["atom_checks_saved_by_first_hit"] > 0
+    assert first_hit["counts"]["first_hit_max_position"] <= grouped["counts"]["max_atoms_per_support"]
+    assert first_hit["counts"]["first_hit_checks_saved_on_hits"] == first_hit["counts"]["atom_checks_saved_by_first_hit"]
+    assert first_hit["counts"]["first_hit_assignments"] > 0
+    _assert_first_hit_accounting(first_hit)
 
 
 def test_grouped_first_hit_solver_matches_direct_on_dense_support_groups():
@@ -416,6 +467,27 @@ def test_grouped_first_hit_preserves_signatures_but_not_exhaustive_diagnostics()
     assert first_hit["counts"]["atom_checks_saved_by_first_hit"] > 0
 
 
+def test_grouped_first_hit_equal_distance_profile_has_no_hits_or_atoms():
+    T = balanced_pc_tree(6, kind="mixed")
+    D = equal_distance_instance(6)
+    first_hit = compile_bad_side_nogoods_grouped_first_hit_support_local(D, T, max_p_degree=3)
+
+    assert first_hit["counts"]["grouped_support_assignments_seen"] == 0
+    assert first_hit["counts"]["first_hit_assignments"] == 0
+    assert first_hit["counts"]["first_hit_no_hit_assignments"] == 0
+    assert first_hit["counts"]["first_hit_average_position"] == 0.0
+    assert first_hit["counts"]["first_hit_position_histogram"] == {}
+    assert first_hit["counts"]["atom_checks"] == 0
+    assert first_hit["counts"]["atom_hits"] == 0
+    assert first_hit["counts"]["first_hit_position_sum"] == 0
+    assert first_hit["counts"]["first_hit_max_position"] == 0
+    assert first_hit["counts"]["first_hit_checks_spent_on_no_hit"] == 0
+    assert first_hit["counts"]["first_hit_checks_saved_on_hits"] == 0
+    assert first_hit["counts"]["atom_checks_if_exhaustive_seen"] == 0
+    assert first_hit["counts"]["atom_checks_saved_by_first_hit"] == 0
+    _assert_first_hit_accounting(first_hit)
+
+
 def test_grouped_support_compilation_reports_limit_without_false_completion():
     T = balanced_pc_tree(6, kind="mixed")
     D = random_dissimilarity(6, values=(1, 2, 3), rng=random.Random(20260524))
@@ -432,6 +504,11 @@ def test_grouped_first_hit_compilation_reports_limit_without_false_completion():
 
     assert first_hit["complete"] is False
     assert first_hit["counts"]["grouped_support_assignments_seen"] == 1
+    assert first_hit["counts"]["atom_checks_if_exhaustive_seen"] <= first_hit["counts"]["atom_checks_if_exhaustive"]
+    assert first_hit["counts"]["atom_checks_saved_by_first_hit"] == (
+        first_hit["counts"]["atom_checks_if_exhaustive_seen"] - first_hit["counts"]["atom_checks"]
+    )
+    _assert_first_hit_accounting(first_hit)
 
 
 def test_grouped_support_reports_unsupported_large_p_without_false_decision():
@@ -457,6 +534,11 @@ def test_grouped_first_hit_reports_unsupported_large_p_without_false_decision():
     assert first_hit["complete"] is False
     assert first_hit["encoding"]["unsupported"]
     assert first_hit["counts"]["unique_nogoods"] == 0
+    assert first_hit["counts"]["first_hit_assignments"] == 0
+    assert first_hit["counts"]["first_hit_no_hit_assignments"] == 0
+    assert first_hit["counts"]["atom_checks"] == 0
+    assert first_hit["counts"]["atom_checks_if_exhaustive_seen"] == 0
+    assert first_hit["counts"]["atom_checks_saved_by_first_hit"] == 0
     assert result["unsupported"]
     assert result["exists"] is None
     assert result["order"] is None

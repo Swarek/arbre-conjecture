@@ -790,3 +790,17 @@ Limite : equal-distance n'a aucun atom bad-side, donc aucun gain ; les cas où
 aucun atom ne hit rapidement paient encore presque tout le groupe. Ce résultat
 ne donne pas de borne asymptotique sans structure sur l'ordre des atoms ou la
 taille des groupes.
+
+## Résultat T050 - No-hit comme coût dominant restant
+
+Statut : diagnostic de complexité empirique.
+
+Le profil T050 montre que la moitié environ des affectations de support de la
+gate CSP rapide n'ont aucun atom hit : `3320/6224`, soit `0.5334`. Ces no-hit
+coûtent `30520` checks, proche des `30384` checks sauvés sur les hits.
+
+Par famille `n=4..8`, le no-hit est faible sur random (`21.9%`) et matching
+low-hub (`25.7%`), mais fort sur cycle (`50.0%`) et paired-farthest (`44.4%`).
+Cela suggère que l'obstacle de complexité restant n'est pas seulement trouver
+un meilleur ordre de scan, mais certifier rapidement l'absence d'atom violé dans
+un groupe.

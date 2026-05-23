@@ -1285,6 +1285,24 @@ Limites T049 :
 - rien n'est intégré à `candidate.py`; les obligations générales de nécessité,
   suffisance et complexité restent ouvertes.
 
+T050 ajoute des métriques de profil first-hit : affectations avec hit, sans
+hit, histogramme de position du premier hit, checks dépensés sur no-hit et
+checks sauvés sur hit. Ces métriques ne changent pas les nogoods ni les
+frontiers acceptées ; elles servent seulement à orienter la prochaine
+compression.
+
+Limites T050 :
+
+- les métriques `first_hit_*` dépendent de l'ordre courant de scan des atoms et
+  ne sont pas des invariants mathématiques du PC-tree ;
+- `position` signifie position ordinale dans la liste d'atoms du groupe, pas
+  position dans l'ordre circulaire ;
+- en mode first-hit, les champs `atom`/`pair` restent des représentants de
+  premier témoin ;
+- si `complete=False`, les compteurs de profilage sont partiels :
+  `atom_checks_if_exhaustive_seen` concerne le préfixe inspecté, tandis que
+  `atom_checks_if_exhaustive` reste la taille totale théorique.
+
 ### Prédicats stricts d'ordre fixé
 
 Statut : définitions directes implémentées / base expérimentale Piste F.

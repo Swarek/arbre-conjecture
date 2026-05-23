@@ -3033,3 +3033,81 @@ signatures de pruning. Cela améliore réellement le coût atom-par-atom de T048
 mais ne donne toujours pas de borne polynomiale générale : il faut ensuite
 caractériser les cas sans hit rapide ou compiler les groupes de support sans
 scanner une liste d'atoms.
+
+## ExecPlan 2026-05-23 - first-hit position profiling
+
+But : transformer T049 en instrument de décision plus précis en mesurant où les
+gains first-hit viennent réellement : hit précoce, hit tardif, ou absence de hit
+dans le groupe.
+
+Hypothèse : le prochain progrès dépend moins du simple ratio global
+`atom_checks_saved` que de la distribution des positions de premier hit. Si la
+majorité du coût restant vient d'affectations sans aucun hit ou de hits très
+tardifs, il faudra une contrainte agrégée par support ; si le coût restant vient
+de quelques grands groupes, un ordre de scan adaptatif ou une partition des
+atoms peut suffire.
+
+Fichiers à modifier : `src/pc_circular/solvers/sat_like_experiments.py`,
+`tests/test_sat_like_experiments.py`, `tools/pc_csp_internal_benchmark.py`,
+`docs/tracks/piste_c_sat_csp.md`, `docs/tracks/piste_b_dp_pc_tree.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/proof_obligations.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `docs/tracks/README.md`,
+`PLANS.md`.
+
+Algorithme pressenti : dans `_compile_nogoods_by_grouped_supports`, ajouter des
+compteurs activés naturellement par first-hit : nombre d'affectations de support
+avec hit, sans hit, histogramme de la position du premier hit, checks sauvés
+par hit, checks dépensés sur no-hit, position maximale et moyenne de premier
+hit. Le benchmark interne doit exposer ces compteurs pour choisir la prochaine
+piste.
+
+Plan de contre-exemples : vérifier que ces métriques ne changent aucune
+signature ni frontier acceptée ; garder les tests T049 signatures/solveur ;
+ajouter des tests qui contrôlent les identités comptables
+`hit_assignments + no_hit_assignments == grouped_support_assignments_seen` et
+`atom_checks_saved_by_first_hit == atom_checks_if_exhaustive_seen -
+atom_checks`.
+
+Plan subagents : un sidecar Piste C audite les invariants comptables ; un
+sidecar Piste F mesure la distribution hit/no-hit sur `n=4..8` ; un sidecar
+contre-exemples vérifie que le profilage ne perturbe pas signatures/frontiers.
+
+Tests à exécuter : tests ciblés `tests/test_sat_like_experiments.py`,
+`make bench-csp-quick`, probe multi-familles, `make quick`, `make check`.
+Pas de `make hunt-counterexamples` prévu car `candidate.py` reste inchangé.
+
+Risques : les métriques peuvent être dépendantes de l'ordre de scan des atoms ;
+elles doivent donc être présentées comme profil d'implémentation, pas comme
+invariant mathématique. Les cas equal-distance ont zéro atom et doivent éviter
+les divisions ambiguës.
+
+Résultats observés : ajout des compteurs
+`first_hit_assignments`, `first_hit_no_hit_assignments`,
+`first_hit_position_histogram`, `first_hit_max_position`,
+`first_hit_average_position`, `first_hit_checks_spent_on_no_hit`,
+`first_hit_checks_saved_on_hits` et
+`atom_checks_if_exhaustive_seen`. Tests ciblés
+`tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py` :
+`41 passed`. `make bench-csp-quick` : `192` lignes, `0` mismatch,
+`0` first-hit mismatch, `0` mismatch de signatures ;
+`total_first_hit_assignments=2904`,
+`total_first_hit_no_hit_assignments=3320`, ratio no-hit `0.5334`,
+`total_first_hit_atom_checks=41872`,
+`total_first_hit_atom_checks_if_exhaustive_seen=72256`,
+`total_first_hit_atom_checks_saved=30384`,
+`total_first_hit_checks_spent_on_no_hit=30520`,
+`total_first_hit_position_sum=11352`, position max `36`, position médiane
+moyenne `3.0`. Probe par familles `n=4..8` : random no-hit `21.9%`, cycle
+`50.0%`, paired-farthest `44.4%`, matching low-hub `25.7%`, equal-distance `0`
+atom. Subagents reçus : audit de non-interférence sans risque de changement de
+signatures/frontiers ; probe complexité `960` échantillons avec `34264`
+affectations de support, `21256` hits, `13008` no-hit, `273880` checks et
+`273288` checks sauvés. `make quick` final : `223 passed`, puis `JUSTE`;
+`make check` final : `JUSTE`. Les métriques `first_hit_*` sont dépendantes de
+l'ordre courant de scan des atoms et ne sont pas des invariants mathématiques.
+
+Décision : conserver T050 comme profilage de complexité Piste C hors
+`candidate.py`. Le prochain progrès ne doit pas seulement accélérer les hits
+précoces : le coût restant est majoritairement dans les affectations sans hit,
+donc la prochaine piste doit viser un test négatif agrégé par support ou une
+preuve structurelle bornant les no-hit.

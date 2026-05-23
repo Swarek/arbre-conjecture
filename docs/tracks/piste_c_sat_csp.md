@@ -400,6 +400,45 @@ Prochaine action : mesurer les cas où le premier hit arrive tard ou n'arrive
 pas, puis tenter de remplacer le scan séquentiel par une contrainte agrégée sur
 les positions relatives des quatre labels.
 
+## Tentative T050 - Profil des positions first-hit
+
+Statut : instrumentation Piste C, non intégrée à `candidate.py`.
+
+Changement : le compilateur first-hit expose désormais les affectations de
+support avec hit, sans hit, l'histogramme des positions de premier hit, la
+position maximale, la position moyenne, les checks dépensés sur no-hit et les
+checks sauvés sur hit. `atom_checks_if_exhaustive_seen` sépare aussi les runs
+bornés/incomplets de la borne exhaustive complète.
+
+Résultats :
+
+- tests ciblés `tests/test_sat_like_experiments.py` : `40 passed` ;
+- `make bench-csp-quick` : `192` lignes, `0` mismatch,
+  `0` first-hit mismatch, `0` mismatch de signatures ;
+- `total_first_hit_assignments=2904`,
+  `total_first_hit_no_hit_assignments=3320`, ratio no-hit `0.5334` ;
+- `total_first_hit_atom_checks=41872` sur une baseline vue `72256` ;
+- `total_first_hit_checks_spent_on_no_hit=30520` contre
+  `total_first_hit_checks_saved_on_hits=30384` ;
+- position maximale de premier hit `36`, position moyenne médiane `3.0`.
+
+Probe par familles `n=4..8` :
+
+- random : no-hit `21.9%`, saved ratio `64.5%`, max position `36` ;
+- cycle : no-hit `50.0%`, saved ratio `38.6%`, max position `17` ;
+- paired-farthest : no-hit `44.4%`, saved ratio `50.5%`, max position `19` ;
+- matching low-hub : no-hit `25.7%`, saved ratio `58.4%`, max position `3` ;
+- equal-distance : aucun atom bad-side, donc aucun coût.
+
+Interprétation : les hits trouvés sont souvent précoces, mais plus de la moitié
+des affectations de support n'ont aucun hit sur la gate rapide. Le coût restant
+est donc principalement un problème de certification "aucun atom du groupe ne
+hit", pas seulement d'ordre de scan des atoms.
+
+Prochaine action : construire une contrainte agrégée par support qui décide
+directement l'existence d'un atom hit pour une affectation, ou isoler les
+familles no-hit dominantes pour chercher une borne structurelle.
+
 ## Tentative T021 - Repair positive-only pour paired-farthest
 
 Statut : idée saine comme générateur expérimental vérifié, mais non intégrée à

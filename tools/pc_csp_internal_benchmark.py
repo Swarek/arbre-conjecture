@@ -263,8 +263,31 @@ def run_benchmark(
                             "first_hit_atom_checks_if_exhaustive": first_hit_compile_counts[
                                 "atom_checks_if_exhaustive"
                             ],
+                            "first_hit_atom_checks_if_exhaustive_seen": first_hit_compile_counts[
+                                "atom_checks_if_exhaustive_seen"
+                            ],
                             "first_hit_atom_checks_saved": first_hit_compile_counts[
                                 "atom_checks_saved_by_first_hit"
+                            ],
+                            "first_hit_assignments": first_hit_compile_counts["first_hit_assignments"],
+                            "first_hit_no_hit_assignments": first_hit_compile_counts[
+                                "first_hit_no_hit_assignments"
+                            ],
+                            "first_hit_max_position": first_hit_compile_counts["first_hit_max_position"],
+                            "first_hit_position_sum": first_hit_compile_counts[
+                                "first_hit_position_sum"
+                            ],
+                            "first_hit_average_position": first_hit_compile_counts[
+                                "first_hit_average_position"
+                            ],
+                            "first_hit_checks_spent_on_no_hit": first_hit_compile_counts[
+                                "first_hit_checks_spent_on_no_hit"
+                            ],
+                            "first_hit_checks_saved_on_hits": first_hit_compile_counts[
+                                "first_hit_checks_saved_on_hits"
+                            ],
+                            "first_hit_position_histogram": first_hit_compile_counts[
+                                "first_hit_position_histogram"
                             ],
                             "atoms_with_nogoods": compile_counts["atoms_with_nogoods"],
                             "max_support_size": compile_counts["max_support_size"],
@@ -363,6 +386,39 @@ def run_benchmark(
             "total_first_hit_atom_checks": sum(row["first_hit_atom_checks"] for row in supported_rows),
             "total_first_hit_atom_checks_saved": sum(
                 row["first_hit_atom_checks_saved"] for row in supported_rows
+            ),
+            "total_first_hit_atom_checks_if_exhaustive_seen": sum(
+                row["first_hit_atom_checks_if_exhaustive_seen"] for row in supported_rows
+            ),
+            "total_first_hit_assignments": sum(row["first_hit_assignments"] for row in supported_rows),
+            "total_first_hit_no_hit_assignments": sum(
+                row["first_hit_no_hit_assignments"] for row in supported_rows
+            ),
+            "total_first_hit_position_sum": sum(
+                row["first_hit_position_sum"] for row in supported_rows
+            ),
+            "total_first_hit_checks_spent_on_no_hit": sum(
+                row["first_hit_checks_spent_on_no_hit"] for row in supported_rows
+            ),
+            "total_first_hit_checks_saved_on_hits": sum(
+                row["first_hit_checks_saved_on_hits"] for row in supported_rows
+            ),
+            "max_first_hit_position": max(
+                [row["first_hit_max_position"] for row in supported_rows],
+                default=0,
+            ),
+            "median_first_hit_average_position": _median(
+                [
+                    row["first_hit_average_position"]
+                    for row in supported_rows
+                    if row["first_hit_assignments"]
+                ]
+            ),
+            "first_hit_no_hit_assignment_ratio": (
+                sum(row["first_hit_no_hit_assignments"] for row in supported_rows)
+                / sum(row["first_hit_support_assignments_seen"] for row in supported_rows)
+                if sum(row["first_hit_support_assignments_seen"] for row in supported_rows)
+                else 0.0
             ),
             "median_support_vs_old_scan_ratio": _median(
                 [row["support_vs_old_scan_ratio"] for row in supported_rows]
