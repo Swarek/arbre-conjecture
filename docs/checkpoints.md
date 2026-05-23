@@ -206,6 +206,18 @@ Dernier commit green avant T009 : `07120e4`.
   `tests/test_local_constraints.py`, probe exhaustive diagnostic `m=6`,
   `make unit`, `make quick`. Résultat observé : le diagnostic coïncide avec
   l'oracle exact jusqu'à `m<=5` et retrouve la frontière T035 à `m=6`.
+- Checkpoint T037 courant : commit contenant
+  `candidate_low_hub_strong_ordering_witness`, intégré seulement comme
+  certificat positif vérifié. Les générateurs
+  `chain_high_graph_plus_low_hub` et
+  `complete_bipartite_high_graph_plus_low_hub` couvrent deux familles
+  positives large-n ; les tests verrouillent le tree négatif, le PC-tree rigide
+  non représentatif et `quasi_orders=[]`. Validation observée : tests ciblés
+  candidats/générateurs/local-constraints/régressions, `make unit`,
+  `make quick`, `make hunt-counterexamples`, `make check`, `make bench-quick`,
+  `make bench`, plus benchmarks ciblés chain/complete low-hub star jusqu'à
+  `n=80`. Résultat observé : `mixed/star` reste `0` timeout et `0` incomplet
+  jusqu'à `n=100`; les familles positives ciblées sont acceptées sans timeout.
 
 ## Rollback
 

@@ -18,8 +18,9 @@ un sous-cas exact où le PC-tree fourni a un nombre de frontiers certifié sous
 une limite explicite, puis un certificat négatif par petite sous-matrice
 interdite de taille 4, 5 ou 6, puis un certificat négatif pour graphe haut
 non biparti avec hub bas, puis un certificat négatif pour cycle haut pair
-induit de longueur au moins 6 avec hub bas, puis échantillonnage incomplet
-documenté au-delà.
+induit de longueur au moins 6 avec hub bas, puis un témoin positif
+strong-ordering low-hub accepté seulement s'il est directement vérifié cR et
+représenté par le PC-tree, puis échantillonnage incomplet documenté au-delà.
 Un témoin positif échantillonné est certifié par vérification directe de
 l'ordre ; un échec d'échantillonnage reste incomplet.
 Les tests servent à protéger les expériences, pas à remplacer une preuve.

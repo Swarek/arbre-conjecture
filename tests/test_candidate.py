@@ -2,6 +2,8 @@ from itertools import combinations
 import random
 
 from pc_circular.generators import (
+    chain_high_graph_plus_low_hub,
+    complete_bipartite_high_graph_plus_low_hub,
     cycle_metric,
     equal_distance_instance,
     even_high_cycle_plus_low_hub,
@@ -31,6 +33,7 @@ from pc_circular.solvers.candidate import (
     SMALL_FORBIDDEN_SUBMATRIX_ORDER,
     SMALL_FORBIDDEN_SUBMATRIX_ORDERS,
     _even_high_cycle_low_hub_result,
+    _low_hub_strong_ordering_witness_result,
     _minimum_distance_cycle_order,
     _paired_farthest_order,
     _pc_tree_frontier_upper_bound,
@@ -315,6 +318,54 @@ def test_candidate_even_high_cycle_low_hub_obstruction_ignores_k33_positive_cont
     assert brute_force.solve(D)["exists"] is True
 
 
+def test_candidate_low_hub_strong_ordering_witness_accepts_chain_star():
+    D = chain_high_graph_plus_low_hub(12)
+    result = solve(D, pc_tree=star_pc_tree(12))
+
+    assert result["exists"] is True
+    assert result["complete"] is True
+    assert result["solver"] == "candidate_low_hub_strong_ordering_witness"
+    assert is_precircular_order_cR(D, result["order"])
+    assert represents_order(star_pc_tree(12), result["order"])
+
+
+def test_candidate_low_hub_strong_ordering_witness_accepts_complete_bipartite_star():
+    D = complete_bipartite_high_graph_plus_low_hub(11)
+    result = solve(D, pc_tree=star_pc_tree(11))
+
+    assert result["exists"] is True
+    assert result["complete"] is True
+    assert result["solver"] == "candidate_low_hub_strong_ordering_witness"
+    assert is_precircular_order_cR(D, result["order"])
+
+
+def test_candidate_low_hub_strong_ordering_witness_does_not_accept_tree_negative():
+    D = equal_distance_instance(8)
+    for a, b in [(1, 2), (1, 5), (2, 3), (2, 4), (3, 6), (4, 7)]:
+        D[a][b] = D[b][a] = 2
+
+    assert _low_hub_strong_ordering_witness_result(D, 8, None) is None
+    assert brute_force.solve(D)["exists"] is False
+
+
+def test_candidate_low_hub_strong_ordering_witness_requires_representation():
+    D = chain_high_graph_plus_low_hub(10)
+    T = c_node([leaf(i) for i in (0, 1, 6, 2, 7, 3, 8, 4, 9, 5)])
+    result = _low_hub_strong_ordering_witness_result(D, 10, T)
+
+    assert result is None
+
+
+def test_candidate_low_hub_strong_ordering_does_not_bypass_explicit_quasi_orders():
+    D = chain_high_graph_plus_low_hub(12)
+    result = solve(D, quasi_orders=[])
+
+    assert result["exists"] is False
+    assert result["complete"] is True
+    assert result["solver"] == "candidate_exact_bounded_quasi_orders"
+    assert result["order"] is None
+
+
 def test_candidate_non_sized_quasi_orders_remain_incomplete_when_sample_misses_witness():
     D = cycle_metric(10)
     bad_order = (0, 2, 4, 6, 8, 1, 3, 5, 7, 9)
@@ -361,7 +412,7 @@ def test_candidate_exact_bounded_pc_tree_proves_large_rigid_negative():
     assert result["frontier_count"] == 1
 
 
-def test_candidate_exact_bounded_pc_tree_skips_large_star_frontier_space_without_false_negative():
+def test_candidate_low_hub_strong_ordering_recovers_large_star_witness_missed_by_sampling():
     D = _extended_non_cr_four_point_instance(9)
     T = star_pc_tree(9)
     sampled = enumerate_frontiers(T, canonical=True, limit=64)
@@ -372,10 +423,11 @@ def test_candidate_exact_bounded_pc_tree_skips_large_star_frontier_space_without
     assert any(is_precircular_order_cR(D, order) for order in all_circular_orders(9))
 
     result = solve(D, pc_tree=T)
-    assert result["exists"] is False
-    assert result["complete"] is False
-    assert result["solver"] == "candidate_large_n_placeholder"
-    assert result["tried_orders"] == 64
+    assert result["exists"] is True
+    assert result["complete"] is True
+    assert result["solver"] == "candidate_low_hub_strong_ordering_witness"
+    assert is_precircular_order_cR(D, result["order"])
+    assert represents_order(T, result["order"])
 
 
 def test_candidate_finds_large_permuted_cycle_witness_in_star_tree():

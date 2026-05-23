@@ -403,8 +403,9 @@ Limites :
 
 ### Strong ordering du graphe haut avec hub bas
 
-Statut : conjecture structurante + diagnostic borné, pas encore théorème
-intégré à la candidate.
+Statut : conjecture structurante + diagnostic borné. T037 en intègre seulement
+la direction positive vérifiée comme générateur de témoin ; ce n'est pas un
+théorème de caractérisation.
 
 Pour une matrice binaire `low/high` avec au moins un hub bas universel, T035
 suggère la conjecture suivante sous star/all-orders : il existe un ordre cR si
@@ -431,6 +432,15 @@ Suffisance conjecturale :
 - il reste à écrire la preuve complète pour toutes les paires, toutes les
   composantes et tous les cas dégénérés avec plusieurs hubs.
 
+Conséquence directe utilisée par la candidate T037 :
+
+- si le diagnostic produit un ordre, que `candidate.py` valide sa forme, que
+  `is_precircular_order_cR(D, order)` est vrai, et que `represents_order(T,
+  order)` est vrai quand un PC-tree est fourni, alors retourner `exists=True`
+  est sound indépendamment de la conjecture strong-ordering ;
+- aucun statut négatif du diagnostic n'est utilisé comme rejet complet, et une
+  limite de permutations reste un résultat incomplet.
+
 Preuve expérimentale T036 :
 
 - contrôles positifs : `C4 + hub`, `K3,3 + hub`, matching, chain/Ferrers ;
@@ -441,7 +451,16 @@ Preuve expérimentale T036 :
 - exhaustif diagnostic `m=6` : `5117` strong-ordering trouvés, `60` graphes
   bipartis sans strong ordering, `27591` graphes non bipartis.
 
-Obligations ouvertes avant intégration candidate :
+Preuve expérimentale T037 :
+
+- chain/Ferrers et complete-bipartite low-hub sous star sont acceptés jusqu'à
+  `n=80` dans les benchmarks ciblés, toujours après vérification directe du
+  témoin ;
+- le tree négatif T036, un PC-tree rigide ne représentant pas le témoin et
+  `quasi_orders=[]` restent des contrôles de non-contournement ;
+- `make check`, `make hunt-counterexamples` et `make bench` restent verts.
+
+Obligations ouvertes avant théorème général :
 
 - prouver la suffisance du strong ordering pour tous les cas binaires hub bas ;
 - remplacer l'énumération factorielle par un algorithme polynomial de

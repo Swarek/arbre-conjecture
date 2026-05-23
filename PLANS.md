@@ -1939,3 +1939,77 @@ Décision : conserver comme diagnostic expérimental et comme candidat de
 caractérisation du cas star/all-orders binaire hub bas. Ne pas intégrer dans
 `candidate.py` avant une preuve écrite, un détecteur polynomial plutôt que
 factoriel, et un garde de représentation PC-tree pour les témoins positifs.
+
+## ExecPlan 2026-05-23 - bounded low-hub strong-ordering witness
+
+But : transformer T036 en progrès de candidate sans prétendre décider les
+négatifs : utiliser le diagnostic strong-ordering uniquement comme générateur
+de témoin positif vérifié.
+
+Hypothèse : si `low_hub_strong_ordering_report` trouve un ordre
+`hubs + A + B`, et si cet ordre est vérifié cR puis représenté par le PC-tree
+fourni, alors `exists=True complete=True` est sound. Si le diagnostic ne trouve
+rien, atteint sa limite, ou si le témoin n'est pas représenté, la candidate ne
+doit pas conclure négativement.
+
+Fichiers à modifier : `src/pc_circular/solvers/candidate.py`,
+`src/pc_circular/generators.py`, `tests/test_candidate.py`,
+`tests/test_generators.py`, `tests/test_regression_counterexamples.py`,
+`docs/proof_obligations.md`, `docs/tracks/piste_f_complexity_subcases.md`,
+`docs/tracks/piste_e_farthest_quartets.md`, `docs/tracks/README.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `PLANS.md`.
+
+Algorithme pressenti : appeler `low_hub_strong_ordering_report` avec une limite
+bornée après les certificats négatifs hub bas et avant les scans exacts
+quasi/PC-tree. Si `strong_ordering_exists=True` et `witness_order_is_cr=True`,
+vérifier la représentation par `represents_order` quand `pc_tree` est fourni,
+puis retourner un certificat positif. Tous les autres statuts retournent `None`.
+
+Plan de contre-exemples : contrôles positifs star/all-orders `K_{p,q}`,
+chain/Ferrers et matching ; contrôles négatifs `C6`, `C8`, tree négatif qui ne
+doivent pas devenir des faux positifs ; contrôle PC-tree non-star où le témoin
+strong-ordering existe mais n'est pas représenté.
+
+Plan subagents : deux sidecars lecture seule. Un audite les risques de faux
+positif et le placement dans `solve`; l'autre propose les familles et
+benchmarks ciblés.
+
+Tests à exécuter : tests candidats/générateurs/régressions ciblés, `make unit`,
+`make quick`, `make hunt-counterexamples`, `make check`, benchmark ciblé sur
+`chain_high_graph_plus_low_hub/star`, `make bench-quick`, et `make bench` si la
+branche change des runs grande taille.
+
+Risques : coût factoriel caché ; accepter un ordre non représenté ; confondre
+échec du diagnostic avec non-existence ; faire dépendre la candidate d'une
+conjecture non prouvée autrement que par la vérification directe du témoin.
+
+Résultats observés : intégration de
+`candidate_low_hub_strong_ordering_witness` comme certificat strictement
+positif. La candidate appelle le diagnostic borné seulement quand
+`quasi_orders is None`, accepte uniquement un `witness_order` de forme valide,
+vérifié par `is_precircular_order_cR`, puis représenté par `represents_order`
+si un PC-tree est fourni. Les familles
+`chain_high_graph_plus_low_hub` et
+`complete_bipartite_high_graph_plus_low_hub` ont été ajoutées pour tester des
+positifs low-hub de grande taille.
+
+Validation ciblée : `pytest -q tests/test_candidate.py tests/test_generators.py
+tests/test_local_constraints.py tests/test_regression_counterexamples.py`
+donne `72 passed`. Benchmarks ciblés `chain_high_graph_plus_low_hub/star` et
+`complete_bipartite_high_graph_plus_low_hub/star`, tailles
+`5,6,8,10,12,16,20,40,80`, répétitions `10` : `0` timeout, `0` incomplet ;
+à `n=80`, médianes respectives `1.7726s` et `1.8263s`, toutes via
+`candidate_low_hub_strong_ordering_witness`.
+
+Validation gates : `make unit` `155 passed`; `make quick` `155 passed` puis
+`JUSTE`; `make hunt-counterexamples` `JUSTE`; `make check` `JUSTE`;
+`make bench-quick` `0` timeout, `0` incomplet ; `make bench` `0` timeout,
+`0` incomplet jusqu'à `n=100`, médiane `2.0845s`, p95 `2.1490s`,
+fit polynomial empirique `p ~= 3.25`.
+
+Décision : conserver dans `candidate.py` comme témoin positif vérifié, pas
+comme caractérisation du cas low-hub. L'échec du diagnostic, l'atteinte de la
+limite factorielle ou l'absence de représentation PC-tree restent incomplets.
+Prochaine étape : prouver ou réfuter la suffisance du strong ordering, puis
+remplacer l'énumération factorielle par une reconnaissance polynomial-time ou
+isoler des sous-cas positifs plus étroits comme matching/chain avec preuve.

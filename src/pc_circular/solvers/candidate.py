@@ -18,6 +18,8 @@ The current implementation is deliberately conservative:
   graphs with a low-universal hub, it can return proved negative certificates.
 * for a binary even high-cycle of length at least 6 with a low-universal hub,
   it can return a proved negative certificate.
+* for a bounded binary low-hub strong-ordering diagnostic it accepts only a
+  represented order that is verified directly as cR.
 
 This is not a solution to the general problem.  Future goals should replace
 the large-n placeholder with a proved algorithm or a clearly scoped sub-case.
@@ -36,6 +38,7 @@ from pc_circular.predicates import (
     validate_dissimilarity,
 )
 from pc_circular.solvers import brute_force
+from pc_circular.solvers.local_constraints import low_hub_strong_ordering_report
 
 
 EXACT_BRUTE_FORCE_LIMIT = 8
@@ -44,6 +47,7 @@ EXACT_QUASI_ORDER_LIMIT = 4096
 SMALL_FORBIDDEN_SUBMATRIX_ORDER = 4
 SMALL_FORBIDDEN_SUBMATRIX_ORDERS = (4, 5, 6)
 SMALL_FORBIDDEN_SUBMATRIX_LIMIT = 4096
+LOW_HUB_STRONG_ORDERING_PERMUTATION_LIMIT = 100_000
 
 
 def _large_n_budget(n: int) -> int:
@@ -456,6 +460,32 @@ def _paired_farthest_witness_result(D, n: int, pc_tree: Optional[PCNode]):
     }
 
 
+def _low_hub_strong_ordering_witness_result(D, n: int, pc_tree: Optional[PCNode]):
+    report = low_hub_strong_ordering_report(
+        D,
+        max_permutation_pairs=LOW_HUB_STRONG_ORDERING_PERMUTATION_LIMIT,
+    )
+    if report["strong_ordering_exists"] is not True or report["witness_order"] is None:
+        return None
+    order = _validate_order_shape(report["witness_order"], n)
+    if not report["witness_order_is_cr"] or not is_precircular_order_cR(D, order):
+        return None
+    if pc_tree is not None and not represents_order(pc_tree, order):
+        return None
+    return {
+        "exists": True,
+        "order": list(order),
+        "complete": True,
+        "solver": "candidate_low_hub_strong_ordering_witness",
+        "checked_permutation_pairs": report.get("checked_permutation_pairs", 0),
+        "permutation_pair_limit": LOW_HUB_STRONG_ORDERING_PERMUTATION_LIMIT,
+        "hub_labels": list(report.get("hub_labels", ())),
+        "part_a": list(report.get("part_a", ())),
+        "part_b": list(report.get("part_b", ())),
+        "note": "bounded low-hub strong-ordering diagnostic produced a represented order that was verified directly as circular Robinson",
+    }
+
+
 def _universal_order_result(n: int, quasi_orders, pc_tree: Optional[PCNode]):
     if quasi_orders is not None:
         iterator = iter(quasi_orders)
@@ -525,6 +555,9 @@ def solve(D, quasi_orders=None, pc_tree=None):
         paired_result = _paired_farthest_witness_result(D, n, pc_tree)
         if paired_result is not None:
             return paired_result
+        strong_ordering_result = _low_hub_strong_ordering_witness_result(D, n, pc_tree)
+        if strong_ordering_result is not None:
+            return strong_ordering_result
         exact_pc_tree_result = _bounded_pc_tree_exact_result(D, n, pc_tree)
         if exact_pc_tree_result is not None:
             return exact_pc_tree_result

@@ -153,7 +153,7 @@ def test_low_hub_strong_ordering_reports_nonapplicable_and_limit_statuses():
     assert low_hub_strong_ordering_report(not_binary)["status"] == "not_binary_two_level"
 
     matching_edges = [(1, 5), (2, 6), (3, 7), (4, 8)]
-    limited = low_hub_strong_ordering_report(_binary_low_hub_from_edges(8, matching_edges), max_permutation_pairs=1)
+    limited = low_hub_strong_ordering_report(_binary_low_hub_from_edges(8, matching_edges), max_permutation_pairs=0)
     assert limited["status"] == "unsupported_permutation_limit"
     assert limited["complete"] is False
 

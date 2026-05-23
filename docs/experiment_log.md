@@ -1562,3 +1562,67 @@
 - Next action : soit prouver la suffisance du strong ordering et remplacer
   l'énumération factorielle par une reconnaissance polynomiale, soit isoler un
   sous-cas positif plus petit avec témoin représenté par le PC-tree.
+
+## 2026-05-23 bounded low-hub strong-ordering witness
+
+- Date/heure : 2026-05-23 05:14:10 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : le diagnostic T036 peut être intégré sans risque comme
+  générateur de témoin positif si la candidate vérifie elle-même l'ordre cR et
+  son appartenance au PC-tree avant de retourner `exists=True`.
+- Changement fait : ajout de
+  `candidate_low_hub_strong_ordering_witness`; ajout des générateurs
+  `chain_high_graph_plus_low_hub` et
+  `complete_bipartite_high_graph_plus_low_hub`; le diagnostic essaie quelques
+  ordres prioritaires avant l'énumération factorielle pour trouver les témoins
+  chain/complete en grande taille.
+- Commande exécutée avant modification : `make quick`.
+- Résultat correction avant modification : `149 passed`, puis `JUSTE`.
+- Plan subagents : deux sidecars lecture seule. Résultats : l'intégration est
+  sound si elle reste strictement positive, placée après les certificats
+  négatifs hub-bas et les témoins positifs déjà prouvés ; elle doit tester les
+  familles `K_{p,q}`/chain, les contrôles `C6`/`C8`/tree négatif, le garde de
+  représentation PC-tree et l'absence de contournement de `quasi_orders`.
+- Contrôles ajoutés : chain et complete-bipartite star acceptés ; tree négatif
+  non accepté ; PC-tree `C` rigide ne représentant pas le témoin refusé ;
+  `quasi_orders=[]` explicite reste décidé par la branche exacte
+  `candidate_exact_bounded_quasi_orders`.
+- Commande exécutée : `pytest -q tests/test_candidate.py tests/test_generators.py tests/test_local_constraints.py tests/test_regression_counterexamples.py`.
+- Résultat correction : `72 passed`.
+- Commande exécutée : benchmark ciblé
+  `chain_high_graph_plus_low_hub/star`, tailles
+  `5,6,8,10,12,16,20,40,80`, répétitions `10`.
+- Résultat benchmark ciblé : `reports/complexity_chain_low_hub_star.json`
+  écrit ; `0` timeout, `0` incomplet ; à `n=80`, médiane `1.7726s`, p95
+  `1.8630s`, branche `candidate_low_hub_strong_ordering_witness`.
+- Commande exécutée : benchmark ciblé
+  `complete_bipartite_high_graph_plus_low_hub/star`, tailles
+  `5,6,8,10,12,16,20,40,80`, répétitions `10`.
+- Résultat benchmark ciblé :
+  `reports/complexity_complete_bipartite_low_hub_star.json` écrit ; `0`
+  timeout, `0` incomplet ; à `n=80`, médiane `1.8263s`, p95 `1.9229s`,
+  branche `candidate_low_hub_strong_ordering_witness`.
+- Commande exécutée : `make unit`.
+- Résultat correction : `155 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `155 passed`, puis `JUSTE`.
+- Commande exécutée : `make hunt-counterexamples`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark rapide : `reports/complexity_report_quick.json` écrit ;
+  `0` timeout, `0` incomplet ; à `n=20`, médiane `0.00379s`.
+- Commande exécutée : `make bench`.
+- Résultat benchmark fort : `reports/complexity_report.json` écrit ; `0`
+  timeout, `0` incomplet jusqu'à `n=100`, médiane `2.0845s` à `n=100`, p95
+  `2.1490s`, fit polynomial empirique `p ~= 3.25`.
+- Conclusion : T037 ajoute un certificat positif utile et vérifié pour des
+  familles low-hub biparties, sans transformer la conjecture strong-ordering en
+  théorème. Les limites factorielle et représentation PC-tree restent
+  explicites.
+- Next action : essayer de prouver la suffisance du strong ordering ou de
+  réduire sa reconnaissance à un bipartite permutation graph polynomial ; en
+  parallèle, ajouter une famille matching low-hub positive pour casser les
+  simplifications trop spécifiques aux chain/complete.

@@ -266,6 +266,35 @@ def non_bipartite_high_graph_plus_low_hub(n: int) -> list[list[int]]:
     return D
 
 
+def complete_bipartite_high_graph_plus_low_hub(n: int) -> list[list[int]]:
+    """Binary family: complete bipartite high graph plus one low hub."""
+
+    if n < 5:
+        raise ValueError("complete_bipartite_high_graph_plus_low_hub requires n >= 5")
+    D = equal_distance_instance(n, value=1)
+    split = 1 + (n - 1) // 2
+    for a in range(1, split):
+        for b in range(split, n):
+            D[a][b] = D[b][a] = 2
+    return D
+
+
+def chain_high_graph_plus_low_hub(n: int) -> list[list[int]]:
+    """Binary family: nested-neighborhood high graph plus one low hub."""
+
+    if n < 5:
+        raise ValueError("chain_high_graph_plus_low_hub requires n >= 5")
+    D = equal_distance_instance(n, value=1)
+    split = 1 + (n - 1) // 2
+    left = list(range(1, split))
+    right = list(range(split, n))
+    for index, a in enumerate(left):
+        degree = max(1, len(right) - index)
+        for b in right[:degree]:
+            D[a][b] = D[b][a] = 2
+    return D
+
+
 def small_paper_like_instances() -> list[list[list[int]]]:
     """Small named examples; extend with paper-derived cases when available."""
 
@@ -277,6 +306,8 @@ def small_paper_like_instances() -> list[list[list[int]]]:
         odd_high_cycle_plus_low_hub(6),
         even_high_cycle_plus_low_hub(7),
         non_bipartite_high_graph_plus_low_hub(6),
+        complete_bipartite_high_graph_plus_low_hub(6),
+        chain_high_graph_plus_low_hub(6),
         non_strict_large_farthest_instance(5),
     ]
 
@@ -347,6 +378,10 @@ def instance_by_kind(
         return even_high_cycle_plus_low_hub(n)
     if kind == "non_bipartite_high_graph_plus_low_hub":
         return non_bipartite_high_graph_plus_low_hub(n)
+    if kind == "complete_bipartite_high_graph_plus_low_hub":
+        return complete_bipartite_high_graph_plus_low_hub(n)
+    if kind == "chain_high_graph_plus_low_hub":
+        return chain_high_graph_plus_low_hub(n)
     if kind == "mixed":
         return mixed_instance(n, rng=rng, values=values)
     raise ValueError(f"unknown instance kind: {kind}")

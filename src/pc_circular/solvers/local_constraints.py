@@ -275,36 +275,49 @@ def low_hub_strong_ordering_report(D, *, max_permutation_pairs: int = 100_000):
                 part_b.extend(right)
         part_a = tuple(sorted(part_a))
         part_b = tuple(sorted(part_b))
-        permutation_pair_count = _factorial(len(part_a)) * _factorial(len(part_b))
-        if checked_permutation_pairs + permutation_pair_count > max_permutation_pairs:
-            return {
-                **base,
-                "complete": False,
-                "status": "unsupported_permutation_limit",
-                "strong_ordering_exists": None,
-                "component_count": len(components),
-                "partition_count": partition_count,
-                "checked_permutation_pairs": checked_permutation_pairs,
-            }
 
         high_edges = {(a, b) for a in part_a for b in part_b if D[a][b] == high}
-        for A_order in permutations(part_a):
-            for B_order in permutations(part_b):
-                checked_permutation_pairs += 1
-                if _has_strong_ordering(A_order, B_order, high_edges):
-                    witness_order = tuple(hubs) + tuple(A_order) + tuple(B_order)
-                    return {
-                        **base,
-                        "status": "strong_ordering_found",
-                        "strong_ordering_exists": True,
-                        "component_count": len(components),
-                        "partition_count": partition_count,
-                        "checked_permutation_pairs": checked_permutation_pairs,
-                        "part_a": tuple(A_order),
-                        "part_b": tuple(B_order),
-                        "witness_order": witness_order,
-                        "witness_order_is_cr": is_precircular_order_cR(D, witness_order),
-                    }
+        priority_a_orders = tuple(dict.fromkeys((part_a, tuple(reversed(part_a)))))
+        priority_b_orders = tuple(dict.fromkeys((part_b, tuple(reversed(part_b)))))
+        priority_pairs = tuple((A_order, B_order) for A_order in priority_a_orders for B_order in priority_b_orders)
+        seen_order_pairs = set()
+
+        def order_pairs():
+            for pair in priority_pairs:
+                yield pair
+            for A_order in permutations(part_a):
+                for B_order in permutations(part_b):
+                    yield A_order, B_order
+
+        for A_order, B_order in order_pairs():
+            if (A_order, B_order) in seen_order_pairs:
+                continue
+            seen_order_pairs.add((A_order, B_order))
+            if checked_permutation_pairs >= max_permutation_pairs:
+                return {
+                    **base,
+                    "complete": False,
+                    "status": "unsupported_permutation_limit",
+                    "strong_ordering_exists": None,
+                    "component_count": len(components),
+                    "partition_count": partition_count,
+                    "checked_permutation_pairs": checked_permutation_pairs,
+                }
+            checked_permutation_pairs += 1
+            if _has_strong_ordering(A_order, B_order, high_edges):
+                witness_order = tuple(hubs) + tuple(A_order) + tuple(B_order)
+                return {
+                    **base,
+                    "status": "strong_ordering_found",
+                    "strong_ordering_exists": True,
+                    "component_count": len(components),
+                    "partition_count": partition_count,
+                    "checked_permutation_pairs": checked_permutation_pairs,
+                    "part_a": tuple(A_order),
+                    "part_b": tuple(B_order),
+                    "witness_order": witness_order,
+                    "witness_order_is_cr": is_precircular_order_cR(D, witness_order),
+                }
 
     return {
         **base,

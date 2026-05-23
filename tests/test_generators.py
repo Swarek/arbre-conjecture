@@ -3,6 +3,8 @@ import random
 
 from pc_circular.generators import (
     MIXED_INSTANCE_KINDS,
+    chain_high_graph_plus_low_hub,
+    complete_bipartite_high_graph_plus_low_hub,
     even_high_cycle_plus_low_hub,
     five_local_non_cr_core,
     four_local_non_cr_core,
@@ -41,6 +43,8 @@ def test_instance_by_kind_accepts_explicit_piste_f_families():
     assert validate_dissimilarity(instance_by_kind(6, kind="odd_high_cycle_plus_low_hub")) == 6
     assert validate_dissimilarity(instance_by_kind(7, kind="even_high_cycle_plus_low_hub")) == 7
     assert validate_dissimilarity(instance_by_kind(6, kind="non_bipartite_high_graph_plus_low_hub")) == 6
+    assert validate_dissimilarity(instance_by_kind(6, kind="complete_bipartite_high_graph_plus_low_hub")) == 6
+    assert validate_dissimilarity(instance_by_kind(6, kind="chain_high_graph_plus_low_hub")) == 6
 
 
 def test_four_local_non_cr_core_is_global_negative_but_four_local_positive():
@@ -107,6 +111,14 @@ def test_even_high_cycle_plus_low_hub_has_no_six_point_obstruction_at_c8():
     for subset in combinations(range(9), 6):
         submatrix = [[D[i][j] for j in subset] for i in subset]
         assert brute_force.solve(submatrix)["exists"]
+
+
+def test_low_hub_strong_ordering_positive_generators_are_valid_large_families():
+    for generator in (complete_bipartite_high_graph_plus_low_hub, chain_high_graph_plus_low_hub):
+        D = generator(11)
+        assert validate_dissimilarity(D) == 11
+        assert any(D[0][j] == 1 for j in range(1, 11))
+        assert any(D[i][j] == 2 for i in range(1, 11) for j in range(i + 1, 11))
 
 
 def test_instance_metadata_preserves_mixed_rng_sequence():

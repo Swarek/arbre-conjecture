@@ -456,6 +456,30 @@ Résultat expérimental T036 :
   reconnaissance polynomial-time, ou comme sous-cas positif borné avec garde
   `represents_order`.
 
+Résultat T037 :
+
+- la candidate intègre maintenant ce diagnostic seulement dans le second sens :
+  si un strong ordering fournit un ordre témoin et que cet ordre est vérifié
+  par `is_precircular_order_cR` puis par `represents_order` quand un PC-tree est
+  fourni, la réponse positive est complète ;
+- les familles `chain_high_graph_plus_low_hub` et
+  `complete_bipartite_high_graph_plus_low_hub` servent de positifs large-n
+  indépendants du brute force ;
+- benchmarks ciblés star, tailles `5,6,8,10,12,16,20,40,80`, répétitions
+  `10` : `0` timeout et `0` incomplet pour les deux familles ; à `n=80`,
+  médianes `1.7726s` et `1.8263s` ;
+- `make bench` reste `0` timeout et `0` incomplet jusqu'à `n=100` sur
+  `mixed/star`, avec médiane `2.0845s` à `n=100`.
+
+Limites T037 :
+
+- aucun échec du diagnostic strong-ordering n'est converti en rejet ;
+- la recherche interne reste bornée et partiellement factorielle ;
+- le témoin positif peut exister sans être représenté par un PC-tree non-star,
+  donc le garde de représentation est obligatoire ;
+- il manque encore une famille matching low-hub positive en benchmark ciblé
+  pour éviter de suradapter les prochaines preuves aux chain/complete.
+
 ## Témoin cycle par distances minimales
 
 Statut : certificat positif intégré pour tout PC-tree du scaffold où le témoin

@@ -213,7 +213,8 @@ régression `test_even_high_cycle_low_hub_subcase_regression`.
 
 ## Strong ordering low-hub
 
-Statut : conjecture expérimentale pour le cas binaire hub bas, hors candidate.
+Statut : conjecture expérimentale pour le cas binaire hub bas ; intégration
+candidate seulement comme témoin positif vérifié.
 
 `low_hub_strong_ordering_report` teste bornément si le graphe haut privé des
 hubs admet un strong ordering. Ce diagnostic explique les certificats T034/T035
@@ -231,7 +232,16 @@ Limite : le rapport est factoriel et marqué incomplet si la limite de
 permutations est atteinte. Il ne prouve pas encore l'existence dans un PC-tree
 compact, car un témoin positif doit aussi être représenté.
 
+Résultat T037 : `candidate_low_hub_strong_ordering_witness` accepte uniquement
+un ordre produit par ce diagnostic après vérification directe cR et contrôle
+`represents_order` si un PC-tree est fourni. Les échecs du diagnostic, les
+limites de permutations et les témoins non représentés restent incomplets. Les
+contrôles ajoutés couvrent chain/Ferrers, complete-bipartite, tree négatif,
+PC-tree rigide non représentatif et `quasi_orders=[]`.
+
 ## Prochaine action
 
 Utiliser les témoins `find_precircular_cR_violation` comme source principale
-d’obstructions. Garder farthest comme diagnostic utile, pas comme oracle.
+d’obstructions. Pour low-hub, chercher une preuve de suffisance du strong
+ordering ou une réduction polynomial-time, puis attaquer cette preuve avec une
+famille matching low-hub indépendante de chain/complete.
