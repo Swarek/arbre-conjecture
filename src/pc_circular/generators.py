@@ -8,6 +8,16 @@ from typing import Sequence
 from .pc_tree import balanced_pc_tree, pc_tree_from_kind, star_pc_tree
 
 
+MIXED_INSTANCE_KINDS = (
+    "random",
+    "cycle",
+    "block",
+    "ultrametric",
+    "equal",
+    "non_strict",
+)
+
+
 def _zero_matrix(n: int) -> list[list[int]]:
     return [[0 for _ in range(n)] for _ in range(n)]
 
@@ -164,17 +174,31 @@ def mixed_instance(
     rng: random.Random | None = None,
     values: Sequence[int] = (1, 2, 3),
 ) -> list[list[int]]:
+    D, _metadata = instance_by_kind_with_metadata(n, kind="mixed", rng=rng, values=values)
+    return D
+
+
+def instance_by_kind_with_metadata(
+    n: int,
+    *,
+    kind: str,
+    rng: random.Random | None = None,
+    values: Sequence[int] = (1, 2, 3),
+) -> tuple[list[list[int]], dict[str, str]]:
+    """Generate an instance and expose the resolved subfamily.
+
+    For ``kind="mixed"``, this preserves the exact RNG draw sequence of
+    ``mixed_instance`` while making the chosen subfamily visible to benchmarks.
+    """
+
     rng = rng or random.Random()
-    choices = [
-        "random",
-        "cycle",
-        "block",
-        "ultrametric",
-        "equal",
-        "non_strict",
-    ]
-    kind = rng.choice(choices)
-    return instance_by_kind(n, kind=kind, rng=rng, values=values)
+    if kind == "mixed":
+        resolved_kind = rng.choice(MIXED_INSTANCE_KINDS)
+        D = instance_by_kind(n, kind=resolved_kind, rng=rng, values=values)
+    else:
+        resolved_kind = kind
+        D = instance_by_kind(n, kind=kind, rng=rng, values=values)
+    return D, {"requested_kind": kind, "resolved_kind": resolved_kind}
 
 
 def instance_by_kind(

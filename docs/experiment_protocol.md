@@ -63,6 +63,11 @@ Les benchmarks mesurent médiane, p95, timeouts, nombre de runs incomplets et un
 ajustement grossier `time ~= C * n^p`, comparé à un modèle exponentiel. Les
 timeouts et résultats incomplets doivent rester visibles dans le JSON.
 
+Pour `--instance-kind mixed`, le rapport doit aussi conserver l'attribution par
+`resolved_kind` : counts de sous-familles, timeouts, incomplets, positifs et
+solvers par sous-famille. Cette attribution sert à choisir la prochaine piste ;
+elle ne transforme pas un benchmark en preuve.
+
 Benchmarks ciblés Piste F :
 
 ```bash

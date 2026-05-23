@@ -23,7 +23,11 @@ if str(SRC) not in sys.path:
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from pc_circular.generators import benchmark_pc_tree, instance_by_kind  # noqa: E402
+from pc_circular.generators import (  # noqa: E402
+    MIXED_INSTANCE_KINDS,
+    benchmark_pc_tree,
+    instance_by_kind_with_metadata,
+)
 from pc_circular.pc_tree import enumerate_frontiers  # noqa: E402
 from pc_circular.predicates import is_precircular_order_cR, passes_farthest_crossing_condition  # noqa: E402
 
@@ -147,6 +151,115 @@ def exact_frontier_diagnostics(D, T) -> dict[str, Any]:
     }
 
 
+def _increment_nested(counter: dict[str, dict[str, int]], outer: str, inner: str) -> None:
+    bucket = counter.setdefault(outer, {})
+    bucket[inner] = bucket.get(inner, 0) + 1
+
+
+def run_benchmark(
+    candidate,
+    *,
+    candidate_label: str,
+    sizes: list[int],
+    repeats: int,
+    timeout: float,
+    instance_kind: str,
+    pc_tree_kind: str,
+    seed: int,
+    diagnostics_up_to: int = 0,
+) -> dict[str, Any]:
+    rng = random.Random(seed)
+    rows: list[dict[str, Any]] = []
+
+    for n in sizes:
+        times: list[float] = []
+        timeouts = 0
+        exists_true = 0
+        incomplete = 0
+        solvers: dict[str, int] = {}
+        resolved_kind_counts: dict[str, int] = {}
+        successful_runs_by_resolved_kind: dict[str, int] = {}
+        timeouts_by_resolved_kind: dict[str, int] = {}
+        exists_true_by_resolved_kind: dict[str, int] = {}
+        incomplete_runs_by_resolved_kind: dict[str, int] = {}
+        solver_counts_by_resolved_kind: dict[str, dict[str, int]] = {}
+        diagnostics = None
+        diagnostics_metadata = None
+        for _ in range(repeats):
+            D, metadata = instance_by_kind_with_metadata(n, kind=instance_kind, rng=rng)
+            resolved_kind = metadata["resolved_kind"]
+            resolved_kind_counts[resolved_kind] = resolved_kind_counts.get(resolved_kind, 0) + 1
+
+            T = benchmark_pc_tree(pc_tree_kind, n)
+            if diagnostics is None and diagnostics_up_to and n <= diagnostics_up_to:
+                diagnostics = exact_frontier_diagnostics(D, T)
+                diagnostics_metadata = metadata
+            outcome = timed_call(candidate, D, T, timeout)
+            if outcome["timeout"]:
+                timeouts += 1
+                timeouts_by_resolved_kind[resolved_kind] = timeouts_by_resolved_kind.get(resolved_kind, 0) + 1
+                continue
+            times.append(outcome["seconds"])
+            successful_runs_by_resolved_kind[resolved_kind] = successful_runs_by_resolved_kind.get(resolved_kind, 0) + 1
+
+            result = outcome["result"]
+            if result_field(result, "exists", False):
+                exists_true += 1
+                exists_true_by_resolved_kind[resolved_kind] = exists_true_by_resolved_kind.get(resolved_kind, 0) + 1
+            if result_field(result, "complete", True) is False:
+                incomplete += 1
+                incomplete_runs_by_resolved_kind[resolved_kind] = (
+                    incomplete_runs_by_resolved_kind.get(resolved_kind, 0) + 1
+                )
+            solver_name = str(result_field(result, "solver", "unknown"))
+            solvers[solver_name] = solvers.get(solver_name, 0) + 1
+            _increment_nested(solver_counts_by_resolved_kind, resolved_kind, solver_name)
+
+        row = {
+                "n": n,
+                "repeats": repeats,
+                "timeouts": timeouts,
+                "successful_runs": len(times),
+                "median_seconds": statistics.median(times) if times else None,
+                "p95_seconds": percentile(times, 0.95),
+                "min_seconds": min(times) if times else None,
+                "max_seconds": max(times) if times else None,
+                "exists_true": exists_true,
+                "incomplete_runs": incomplete,
+                "solver_counts": solvers,
+                "resolved_kind_counts": resolved_kind_counts,
+                "successful_runs_by_resolved_kind": successful_runs_by_resolved_kind,
+                "timeouts_by_resolved_kind": timeouts_by_resolved_kind,
+                "exists_true_by_resolved_kind": exists_true_by_resolved_kind,
+                "incomplete_runs_by_resolved_kind": incomplete_runs_by_resolved_kind,
+                "solver_counts_by_resolved_kind": solver_counts_by_resolved_kind,
+            }
+        if diagnostics is not None:
+            row.update(diagnostics)
+            row["diagnostics_sample"] = "first_instance_for_size"
+            row["diagnostics_sample_metadata"] = diagnostics_metadata
+        rows.append(row)
+
+    return {
+        "candidate": candidate_label,
+        "sizes": sizes,
+        "repeats": repeats,
+        "timeout_seconds": timeout,
+        "instance_kind": instance_kind,
+        "pc_tree": pc_tree_kind,
+        "seed": seed,
+        "mixed_instance_kinds": list(MIXED_INSTANCE_KINDS),
+        "diagnostics_up_to": diagnostics_up_to,
+        "baseline_warning": (
+            "candidate.py is exact for n <= 8 and for documented proved "
+            "sub-cases; other larger runs may be incomplete placeholders and "
+            "are benchmarked as such"
+        ),
+        "rows": rows,
+        "model_fits": fit_models(rows),
+    }
+
+
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--candidate", required=True)
@@ -164,72 +277,21 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 def main(argv: list[str]) -> int:
     args = parse_args(argv)
     candidate = load_candidate(args.candidate)
-    rng = random.Random(args.seed)
-    rows: list[dict[str, Any]] = []
-
-    for n in parse_sizes(args.sizes):
-        times: list[float] = []
-        timeouts = 0
-        exists_true = 0
-        incomplete = 0
-        solvers: dict[str, int] = {}
-        diagnostics = None
-        for _ in range(args.repeats):
-            D = instance_by_kind(n, kind=args.instance_kind, rng=rng)
-            T = benchmark_pc_tree(args.pc_tree, n)
-            if diagnostics is None and args.diagnostics_up_to and n <= args.diagnostics_up_to:
-                diagnostics = exact_frontier_diagnostics(D, T)
-            outcome = timed_call(candidate, D, T, args.timeout)
-            if outcome["timeout"]:
-                timeouts += 1
-                continue
-            times.append(outcome["seconds"])
-            result = outcome["result"]
-            if result_field(result, "exists", False):
-                exists_true += 1
-            if result_field(result, "complete", True) is False:
-                incomplete += 1
-            solver_name = str(result_field(result, "solver", "unknown"))
-            solvers[solver_name] = solvers.get(solver_name, 0) + 1
-
-        row = {
-                "n": n,
-                "repeats": args.repeats,
-                "timeouts": timeouts,
-                "successful_runs": len(times),
-                "median_seconds": statistics.median(times) if times else None,
-                "p95_seconds": percentile(times, 0.95),
-                "min_seconds": min(times) if times else None,
-                "max_seconds": max(times) if times else None,
-                "exists_true": exists_true,
-                "incomplete_runs": incomplete,
-                "solver_counts": solvers,
-            }
-        if diagnostics is not None:
-            row.update(diagnostics)
-            row["diagnostics_sample"] = "first_instance_for_size"
-        rows.append(row)
-
-    report = {
-        "candidate": args.candidate,
-        "sizes": parse_sizes(args.sizes),
-        "repeats": args.repeats,
-        "timeout_seconds": args.timeout,
-        "instance_kind": args.instance_kind,
-        "pc_tree": args.pc_tree,
-        "diagnostics_up_to": args.diagnostics_up_to,
-        "baseline_warning": (
-            "candidate.py is exact for n <= 8 and for documented proved "
-            "sub-cases; other larger runs may be incomplete placeholders and "
-            "are benchmarked as such"
-        ),
-        "rows": rows,
-        "model_fits": fit_models(rows),
-    }
+    report = run_benchmark(
+        candidate,
+        candidate_label=args.candidate,
+        sizes=parse_sizes(args.sizes),
+        repeats=args.repeats,
+        timeout=args.timeout,
+        instance_kind=args.instance_kind,
+        pc_tree_kind=args.pc_tree,
+        seed=args.seed,
+        diagnostics_up_to=args.diagnostics_up_to,
+    )
     output = (ROOT / args.output).resolve()
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print(json.dumps({"output": str(output), "rows": rows}, indent=2, sort_keys=True))
+    print(json.dumps({"output": str(output), "rows": report["rows"]}, indent=2, sort_keys=True))
     return 0
 
 

@@ -142,6 +142,14 @@ Dernier commit green avant T009 : `07120e4`.
   grandes et les itérateurs non dimensionnés restent incomplets en négatif.
   Validation observée : `tests/test_candidate.py`, `make unit`, `make quick`,
   `make hunt-counterexamples`, `make check`, `make bench-quick`.
+- Checkpoint T030 courant : commit contenant l'attribution `resolved_kind` des
+  benchmarks `mixed`, sans changement de `candidate.py`. Le rapport de
+  complexité conserve `seed`, `mixed_instance_kinds`, et les compteurs
+  `resolved_kind_*`. Validation observée : tests générateurs/benchmark ciblés,
+  `make unit`, `make quick`, `make check`, `make bench-quick`, `make bench`.
+  Résultat observé : les `42` incomplets du benchmark fort `mixed/star` sont
+  tous `random`, avec `0` timeout. `make bench-piste-f` passe aussi avec `0`
+  timeout ; `paired_farthest/mixed` reste incomplet seulement pour `n=16,20`.
 
 ## Rollback
 

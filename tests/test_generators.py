@@ -1,7 +1,9 @@
 import random
 
 from pc_circular.generators import (
+    MIXED_INSTANCE_KINDS,
     instance_by_kind,
+    instance_by_kind_with_metadata,
     paired_farthest_matching,
     permuted_cycle_metric,
 )
@@ -25,3 +27,28 @@ def test_paired_farthest_matching_has_unique_pairs_for_even_n():
 def test_instance_by_kind_accepts_explicit_piste_f_families():
     assert validate_dissimilarity(instance_by_kind(5, kind="permuted_cycle", rng=random.Random(3))) == 5
     assert validate_dissimilarity(instance_by_kind(5, kind="paired_farthest", rng=random.Random(4))) == 5
+
+
+def test_instance_metadata_preserves_mixed_rng_sequence():
+    rng_legacy = random.Random(9)
+    rng_metadata = random.Random(9)
+
+    legacy = instance_by_kind(7, kind="mixed", rng=rng_legacy)
+    generated, metadata = instance_by_kind_with_metadata(7, kind="mixed", rng=rng_metadata)
+
+    assert generated == legacy
+    assert metadata["requested_kind"] == "mixed"
+    assert metadata["resolved_kind"] in MIXED_INSTANCE_KINDS
+
+
+def test_instance_metadata_for_explicit_kind_is_self_resolved():
+    for kind in ["random", "cycle", "equal-distance", "paired_farthest"]:
+        rng_legacy = random.Random(3)
+        rng_metadata = random.Random(3)
+
+        legacy = instance_by_kind(7, kind=kind, rng=rng_legacy)
+        generated, metadata = instance_by_kind_with_metadata(7, kind=kind, rng=rng_metadata)
+
+        assert generated == legacy
+        assert validate_dissimilarity(generated) == 7
+        assert metadata == {"requested_kind": kind, "resolved_kind": kind}

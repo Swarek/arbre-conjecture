@@ -1427,3 +1427,79 @@ Décision : intégrer comme sous-cas exact API. Ne pas le présenter comme progr
 sur les benchmarks `pc_tree=star` : ceux-ci n'utilisent pas `quasi_orders`.
 Prochaine cible : `paired_farthest/mixed` ou attribution par sous-famille des
 placeholders `mixed/star`.
+
+## ExecPlan 2026-05-23 - mixed benchmark placeholder attribution
+
+But : rendre les placeholders du benchmark `mixed/star` exploitables en
+attribuant chaque run `mixed` à sa sous-famille effective (`random`, `cycle`,
+`block`, `ultrametric`, `equal`, `non_strict`).
+
+Hypothèse : les `42` incomplets du rapport fort ne sont pas uniformément
+répartis entre les sous-familles. Une attribution reproductible permettra de
+viser le prochain certificat sur la bonne famille au lieu d'optimiser à l'aveugle
+sur `mixed`.
+
+Fichiers à modifier : `src/pc_circular/generators.py`,
+`tools/pc_circular_complexity_benchmark.py`, `tests/test_generators.py`,
+un test benchmark dédié si une fonction `run_benchmark` est exposée,
+`docs/experiment_protocol.md`, `docs/tracks/README.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/experiment_log.md`,
+`docs/checkpoints.md`, `PLANS.md`.
+
+Algorithme pressenti : extraire la liste stable `MIXED_INSTANCE_KINDS` et
+ajouter `instance_by_kind_with_metadata`. Pour un `kind != mixed`, la
+métadonnée `resolved_kind` vaut le kind demandé. Pour `mixed`, tirer exactement
+le même choix qu'avant avec `rng.choice(MIXED_INSTANCE_KINDS)`, générer
+l'instance résolue, puis retourner `{"requested_kind": "mixed",
+"resolved_kind": subkind}`. Le benchmark utilisera cette API et ajoutera aux
+rows JSON : counts d'instances par sous-famille, incomplets par sous-famille,
+timeouts par sous-famille, et solvers par sous-famille.
+
+Plan de contre-exemples : vérifier qu'à seed identique, `instance_by_kind(...,
+kind="mixed")` produit la même matrice que la nouvelle API ; vérifier que les
+counts par sous-famille somment aux repeats ; lancer `bench-quick` et idéalement
+`bench` pour confirmer que le nombre total d'incomplets reste visible et que
+leur attribution est lisible.
+
+Plan subagents : deux explorateurs lecture seule : revue des risques
+reproductibilité/JSON et analyse préparatoire de `paired_farthest/mixed` pour
+T031.
+
+Tests à exécuter : tests générateurs ciblés, test benchmark ciblé si ajouté,
+`make unit`, `make quick`, `make bench-quick`, puis `make bench` si le temps
+reste raisonnable. `make hunt-counterexamples` n'est pas requis car
+`candidate.py` ne change pas.
+
+Risques : changer la distribution RNG de `mixed`; casser les rapports JSON
+existants ; rendre les rapports trop volumineux ; confondre diagnostic de
+benchmark et preuve ; croire qu'une attribution résout les incomplets au lieu de
+seulement guider T031.
+
+Résultats observés : ajout de `MIXED_INSTANCE_KINDS` et
+`instance_by_kind_with_metadata`, qui préserve à seed identique la matrice
+produite par `instance_by_kind(..., kind="mixed")`. Le benchmark expose
+maintenant une fonction `run_benchmark`, ajoute `seed` et `mixed_instance_kinds`
+au rapport, puis agrège par `resolved_kind` :
+`resolved_kind_counts`, `successful_runs_by_resolved_kind`,
+`timeouts_by_resolved_kind`, `incomplete_runs_by_resolved_kind`,
+`exists_true_by_resolved_kind`, `solver_counts_by_resolved_kind`, et
+`diagnostics_sample_metadata` quand les diagnostics exacts sont actifs.
+Validation : tests générateurs/benchmark ciblés `7 passed`, `make unit`
+`119 passed`, `make quick` `119 passed` puis `JUSTE`, `make bench-quick`
+`0` timeout et `0` incomplet, `make check` `JUSTE`, `make bench` `0` timeout
+et `42` incomplets visibles, `make bench-piste-f` `0` timeout.
+
+Résultat benchmark fort T030 : avec seed `20260521`, les `42` incomplets
+`mixed/star` sont tous attribués à `resolved_kind="random"`. Les sous-familles
+`cycle`, `block`, `ultrametric`, `equal` et `non_strict` n'ont aucun placeholder
+dans ce rapport fort.
+
+Résultat ciblé `paired_farthest/mixed` après T028/T030 : `n=10` et `n=12` sont
+maintenant complets par `candidate_exact_bounded_pc_tree_frontiers`; les
+incomplets restants de cette famille ciblée sont `n=16` et `n=20`, tous via
+`candidate_large_n_placeholder`.
+
+Décision : conserver comme instrumentation de complexité. T030 ne résout pas le
+problème d'existence, mais transforme les placeholders `mixed/star` en signal
+exploitable : le prochain effort benchmark général doit viser `random`, tandis
+que `paired_farthest/mixed` reste une famille ciblée séparée pour T031.

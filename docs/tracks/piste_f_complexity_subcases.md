@@ -290,6 +290,38 @@ Limites :
   `pc_tree=star` et sans `quasi_orders` ;
 - l'appelant supporte le coût de construction de la famille explicite.
 
+## Attribution des placeholders `mixed/star`
+
+Statut : diagnostic de benchmark, pas solver.
+
+T030 ajoute une métadonnée `resolved_kind` aux générateurs et au benchmark de
+complexité. Pour `kind="mixed"`, le tirage de sous-famille reste le même qu'avant
+(`random`, `cycle`, `block`, `ultrametric`, `equal`, `non_strict`), mais le
+rapport JSON agrège désormais les timeouts, incomplets et solvers par
+sous-famille résolue.
+
+Résultat T030 sur `make bench` avec seed `20260521` :
+
+- `0` timeout ;
+- `42` incomplets au total, comme avant ;
+- `42/42` incomplets sont des instances `random` ;
+- les sous-familles `cycle`, `block`, `ultrametric`, `equal` et `non_strict`
+  ne produisent aucun placeholder dans ce benchmark fort `mixed/star`.
+
+Conséquence expérimentale : le prochain progrès sur `mixed/star` ne doit pas
+viser les sous-familles structurées déjà couvertes par les certificats existants.
+Il faut soit attaquer `random` directement comme famille de contre-exemples et
+de non-existence potentielle, soit ajouter un benchmark séparé pour isoler un
+sous-cas random prouvable.
+
+Limites :
+
+- cette attribution ne prouve pas que tous les randoms sont négatifs ;
+- elle ne donne pas de certificat pour `paired_farthest/mixed`, qui reste une
+  famille ciblée séparée ; après T028, cette famille est toutefois complète pour
+  `n=10,12` par énumération PC-tree bornée, et reste incomplète à `n=16,20` ;
+- elle dépend du seed et doit rester visible dans le rapport JSON.
+
 ## Témoin cycle par distances minimales
 
 Statut : certificat positif intégré pour tout PC-tree du scaffold où le témoin

@@ -1155,3 +1155,57 @@
 - Next action : attaquer `paired_farthest/mixed` par synthèse représentée dans
   le PC-tree, ou instrumenter le benchmark `mixed/star` pour attribuer les
   placeholders aux sous-familles génératrices avant un nouveau certificat.
+
+## 2026-05-23 mixed benchmark placeholder attribution
+
+- Date/heure : 2026-05-23 03:29:53 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les incomplets du benchmark fort `mixed/star` se
+  concentrent probablement sur une sous-famille précise ; il faut l'attribuer
+  avant de choisir le prochain certificat.
+- Changement fait : ajout de `MIXED_INSTANCE_KINDS` et
+  `instance_by_kind_with_metadata` dans `generators.py`; extraction de
+  `run_benchmark` dans `tools/pc_circular_complexity_benchmark.py`; ajout de
+  `seed`, `mixed_instance_kinds`, `resolved_kind_counts`,
+  `successful_runs_by_resolved_kind`, `timeouts_by_resolved_kind`,
+  `incomplete_runs_by_resolved_kind`, `exists_true_by_resolved_kind`,
+  `solver_counts_by_resolved_kind` et `diagnostics_sample_metadata` au rapport
+  JSON ; ajout de tests ciblés générateur/benchmark.
+- Commande exécutée avant modification : `make quick`.
+- Résultat correction avant modification : `115 passed in 1.95s`, puis
+  `JUSTE`.
+- Plan subagents : deux explorateurs lecture seule. Résultats : préserver le
+  tirage RNG `mixed`, ne pas ajouter `paired_farthest` au mixed par défaut,
+  compter les timeouts par sous-famille même sans résultat candidate, ajouter
+  `seed` au rapport, et garder `paired_farthest/mixed` comme piste T031
+  séparée avec certificat positif vérifié par `represents_order` + cR.
+- Commande exécutée : `pytest -q tests/test_generators.py
+  tests/test_complexity_benchmark.py`.
+- Résultat correction : `7 passed`.
+- Commande exécutée : `make unit`.
+- Résultat correction : `119 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `119 passed in 1.92s`, puis `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark rapide : `reports/complexity_report_quick.json` écrit ;
+  `0` timeout, `0` incomplet, avec champs `resolved_kind_*`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench`.
+- Résultat benchmark fort : `reports/complexity_report.json` écrit ; `0`
+  timeout, `42` incomplets, tous dans `resolved_kind="random"` avec seed
+  `20260521`.
+- Commande exécutée : `make bench-piste-f`.
+- Résultat benchmark ciblé : rapports Piste F écrits ; `0` timeout. Pour
+  `paired_farthest/mixed`, `n=10` et `n=12` sont complets via
+  `candidate_exact_bounded_pc_tree_frontiers`; les incomplets restants sont
+  `n=16` et `n=20`, `10/10` chacun via `candidate_large_n_placeholder`.
+- Conclusion : instrumentation utile. Les placeholders `mixed/star` ne viennent
+  pas des sous-familles structurées `cycle/block/ultrametric/equal/non_strict`
+  dans le benchmark fort courant ; ils viennent tous de `random`. Aucun
+  algorithme nouveau n'est prouvé par cette étape.
+- Next action : T031 peut soit attaquer les randoms avec génération de
+  contre-exemples/oracle et classification positive/négative, soit continuer la
+  famille ciblée `paired_farthest/mixed` avec un certificat positif miroir
+  guidé par la structure du PC-tree.
