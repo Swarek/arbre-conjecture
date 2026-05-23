@@ -42,6 +42,7 @@ from pc_circular.solvers.local_constraints import (
     iter_low_hub_strong_ordering_witnesses,
     low_hub_component_ferrers_strong_ordering_report,
     low_hub_ferrers_strong_ordering_report,
+    pc_tree_guided_low_hub_matching_witness_report,
 )
 
 
@@ -523,6 +524,28 @@ def _low_hub_strong_ordering_witness_result(D, n: int, pc_tree: Optional[PCNode]
                     "component_count": component_ferrers_report.get("component_count"),
                     "note": "binary low-hub component-Ferrers high graph produced a represented strong-ordering witness verified directly as circular Robinson",
                 }
+
+    if pc_tree is not None:
+        matching_report = pc_tree_guided_low_hub_matching_witness_report(D, pc_tree)
+        if matching_report["strong_ordering_exists"] is True and matching_report["witness_order"] is not None:
+            order = _validate_order_shape(matching_report["witness_order"], n)
+            if matching_report["witness_order_is_cr"] and passes_bad_side_precircular_cR(D, order):
+                if represents_order(pc_tree, order):
+                    return {
+                        "exists": True,
+                        "order": list(order),
+                        "complete": True,
+                        "solver": "candidate_low_hub_pc_tree_guided_matching_witness",
+                        "frontier_limit": matching_report.get("frontier_limit"),
+                        "templates_checked": matching_report.get("templates_checked"),
+                        "frontiers_sampled": matching_report.get("frontiers_sampled"),
+                        "segments_checked": matching_report.get("segments_checked"),
+                        "pair_count": matching_report.get("pair_count"),
+                        "hub_labels": list(matching_report.get("hub_labels", ())),
+                        "part_a": list(matching_report.get("part_a", ())),
+                        "part_b": list(matching_report.get("part_b", ())),
+                        "note": "binary low-hub matching high graph produced a PC-tree-guided represented witness verified directly as circular Robinson",
+                    }
 
     for report in iter_low_hub_strong_ordering_witnesses(
         D,

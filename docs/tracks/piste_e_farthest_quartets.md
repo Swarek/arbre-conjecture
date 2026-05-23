@@ -279,11 +279,25 @@ composantes est une condition nécessaire de cette preuve. Les cas non-star où
 le témoin component-wise n'est pas représenté restent une recherche incomplète,
 pas un rejet.
 
+Résultat T043 : `pc_tree_guided_low_hub_matching_witness_report` exploite le
+sous-cas matching haut comme certificat positif PC-tree-guided. Il lit
+`sample_frontier(T)` puis des frontiers canoniques bornées, cherche un segment
+qui contient exactement un endpoint de chaque paire, reconstruit les mates en
+face, puis accepte seulement si `passes_bad_side_precircular_cR` et
+`represents_order` valident l'ordre. Les cas non-star T040/T042 deviennent
+positifs complets sans recherche factorielle.
+
+Limites T043 : un cas split-hubs `n=6` a un témoin représenté que le rapport ne
+trouve pas parce qu'il force les hubs en bloc ; un cas `n=8` ne trouve le témoin
+qu'après avoir relevé `frontier_limit` de `64` à `80`. Ces deux exemples sont
+des contre-exemples à la complétude du certificat, pas à sa soundness, et sont
+verrouillés en tests.
+
 ## Prochaine action
 
 Utiliser les témoins `find_precircular_cR_violation` comme source principale
 d’obstructions. Pour low-hub, chercher une réduction polynomial-time de
 reconnaissance strong-ordering générale ou un diagnostic d'intersection PC-tree
 plus compact. Prochaine option raisonnable : intersecter le PC-tree avec les
-ordres component-Ferrers/strong-ordering, ou préparer hors candidate une
-reconnaissance bipartite permutation avec témoin.
+ordres matching/component-Ferrers/strong-ordering, en commençant par les hubs
+séparés et les frontiers tardives révélés par T043.

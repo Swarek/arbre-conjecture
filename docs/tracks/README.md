@@ -80,6 +80,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T040 | 2026-05-23 | E/F/A/D | Recherche de témoin strong-ordering représenté dans PC-tree non-star ; faux silence local `I_x(v)` régressé | `iter_low_hub_strong_ordering_witnesses` |
 | T041 | 2026-05-23 | E/F | Sous-cas chain/Ferrers low-hub permuté formalisé comme certificat positif vérifié | `permuted_chain_high_graph_plus_low_hub` |
 | T042 | 2026-05-23 | E/F | Union de composantes chain/Ferrers low-hub certifiée positive component-wise | `low_hub_component_ferrers_strong_ordering_report` |
+| T043 | 2026-05-23 | E/F | Témoin matching low-hub guidé par PC-tree ; limites split-hubs/frontier-limit régressées | `pc_tree_guided_low_hub_matching_witness_report` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

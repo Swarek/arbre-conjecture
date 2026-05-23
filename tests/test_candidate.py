@@ -421,13 +421,14 @@ def test_candidate_low_hub_strong_ordering_searches_for_represented_nonstar_witn
 
     assert result["exists"] is True
     assert result["complete"] is True
-    assert result["solver"] == "candidate_low_hub_strong_ordering_witness"
-    assert result["checked_permutation_pairs"] > 1
+    assert result["solver"] == "candidate_low_hub_pc_tree_guided_matching_witness"
+    assert result["templates_checked"] >= 1
+    assert result["frontiers_sampled"] == 0
     assert is_precircular_order_cR(D, result["order"])
     assert represents_order(T, result["order"])
 
 
-def test_candidate_low_hub_component_ferrers_large_nonstar_known_witness_is_not_rejected():
+def test_candidate_low_hub_pc_tree_guided_matching_finds_large_nonstar_witness():
     D = matching_high_graph_plus_low_hub(17)
     T = c_node(
         [
@@ -444,8 +445,15 @@ def test_candidate_low_hub_component_ferrers_large_nonstar_known_witness_is_not_
 
     result = solve(D, pc_tree=T)
 
-    assert result["exists"] is True or result["complete"] is False
-    assert not (result["exists"] is False and result["complete"] is True)
+    assert result["exists"] is True
+    assert result["complete"] is True
+    assert result["solver"] == "candidate_low_hub_pc_tree_guided_matching_witness"
+    assert result["order"] == list(represented_witness)
+    assert result["templates_checked"] == 1
+    assert result["frontiers_sampled"] == 0
+    assert result["pair_count"] == 8
+    assert is_precircular_order_cR(D, result["order"])
+    assert represents_order(T, result["order"])
 
 
 def test_candidate_low_hub_ferrers_nonrepresented_witness_continues_search():

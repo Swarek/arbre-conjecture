@@ -2439,3 +2439,86 @@ component-wise non représenté ne prouve rien, et un échec du rapport reste
 non conclusif. Prochaine piste recommandée : intersection PC-tree avec les
 ordres component-Ferrers/strong-ordering, ou rapport polynomial expérimental
 bipartite permutation hors candidate.
+
+## ExecPlan 2026-05-23 - PC-tree guided matching witness
+
+But : réduire la limite non-star laissée par T042 sur les matchings low-hub,
+où un témoin représenté existe mais le témoin component-wise canonique n'est pas
+représenté et l'itérateur factoriel peut manquer le bon ordre.
+
+Hypothèse : dans un graphe haut matching avec hubs bas, tout ordre
+`hubs, A_1,...,A_m, B_1,...,B_m` alignant les mates dans le même ordre est cR.
+Si le PC-tree expose déjà un segment contigu contenant exactement un endpoint
+de chaque paire, on peut lire ce segment dans un frontier représenté, placer les
+mates en face dans le même ordre, puis vérifier directement cR et
+`represents_order`. C'est un certificat positif guidé par le PC-tree, pas un
+test complet d'intersection.
+
+Fichiers à modifier : `src/pc_circular/solvers/local_constraints.py`,
+`src/pc_circular/solvers/candidate.py`, `tests/test_local_constraints.py`,
+`tests/test_candidate.py`, `docs/proof_obligations.md`,
+`docs/tracks/piste_e_farthest_quartets.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/tracks/README.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `PLANS.md`.
+
+Algorithme pressenti : ajouter un rapport
+`pc_tree_guided_low_hub_matching_witness_report`. Détecter le sous-cas binaire
+low-hub matching, prendre `sample_frontier(T)` et un petit nombre de frontiers
+canoniques bornés, chercher des segments circulaires de longueur `m` contenant
+exactement un endpoint de chaque paire, construire `hubs, mates(segment),
+segment` et l'ordre inverse, puis accepter seulement si
+`passes_bad_side_precircular_cR` et `represents_order(T, order)` sont vrais.
+
+Plan de contre-exemples : tester le matching non-star `n=17` de T042, le
+matching non-star `n=18` déjà régressé, des star controls, un PC-tree où le
+segment lu ne donne pas de témoin représenté, les négatifs `C6/C8/tree`, `low=0`
+et plusieurs hubs. Ajouter une régression pour tout cas où un témoin guidé est
+cR mais non représenté.
+
+Plan subagents : sidecars lecture seule. Un audite la soundness du segment
+matching, un cherche des contre-exemples PC-tree où le segment heuristic est
+insuffisant ou trompeur, un mesure le gain sur les cas non-star T040/T042, un
+propose la documentation et les limites.
+
+Tests à exécuter : tests ciblés candidate/local-constraints, probe exact petits
+matchings PC-tree si possible, `make unit`, `make quick`,
+`make hunt-counterexamples`, `make check`, `make bench-quick`; `make bench` si
+`candidate.py` change.
+
+Risques : confondre segment trouvé dans un frontier avec preuve de complétude ;
+oublier que les hubs doivent rester un bloc représenté ; accepter un ordre non
+représenté ; masquer l'incomplétude quand aucun segment utile n'est trouvé.
+
+Résultats observés : le rapport guidé PC-tree résout les deux cas non-star
+ciblés sans énumération de frontiers. Sur le cas T042 `n=17` racine `C/P/C`,
+la candidate passe de placeholder incomplet à
+`candidate_low_hub_pc_tree_guided_matching_witness`, avec `templates_checked=1`,
+`frontiers_sampled=0`, `segments_checked=10`. Sur le cas T040 `n=18` racine
+`C/P/P`, elle passe du témoin trouvé après `761` couples de permutations à un
+témoin guidé avec `templates_checked=1`, `frontiers_sampled=0`,
+`segments_checked=3`. Les probes `star/mixed` matchings `n=9,11,13,17`, cinq
+seeds, gardent des incomplets mixed visibles (`5/20`) et ne transforment pas
+l'échec du rapport en rejet.
+
+Résultats subagents : l'audit soundness valide le certificat si le graphe haut
+est bien un matching low-hub et si l'ordre construit est revalidé par
+`passes_bad_side_precircular_cR` et `represents_order`. La recherche de
+contre-exemples trouve deux limites durables : un cas split-hubs `n=6` où un
+témoin représenté existe mais T043 ne le trouve pas, et un cas `n=8` où
+`frontier_limit=64` échoue alors que `80` trouve un témoin. Ces limites sont
+ajoutées aux tests pour empêcher toute lecture négative du statut incomplet.
+
+Validation : tests ciblés `tests/test_candidate.py tests/test_local_constraints.py
+tests/test_generators.py` donnent `91 passed`. `make unit` donne `186 passed`.
+`make quick` donne `186 passed` puis `JUSTE`. `make hunt-counterexamples` et
+`make check` donnent `JUSTE`. `make bench-quick` donne `0` timeout et `0`
+incomplet ; à `n=20`, médiane `0.00118s`, p95 `0.00132s`. `make bench` donne
+`0` timeout et `0` incomplet jusqu'à `n=100`; à `n=100`, médiane `0.0314s`,
+p95 `0.0369s`, fit polynomial empirique `p ~= 1.80`.
+
+Décision : intégrer T043 comme certificat positif guidé PC-tree pour matchings
+low-hub, pas comme solveur d'intersection. Le rapport est sample-first et borné ;
+absence de segment/témoin représenté reste `strong_ordering_exists=None` et ne
+devient jamais un rejet. Prochaine piste recommandée : formaliser une vraie
+intersection PC-tree/ordres matching ou component-Ferrers, notamment pour les
+hubs séparés et les frontiers tardives.

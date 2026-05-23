@@ -275,6 +275,18 @@ Dernier commit green avant T009 : `07120e4`.
   jusqu'à `n=101`. Résultat observé : `mixed/star` reste `0` timeout et `0`
   incomplet jusqu'à `n=100`, médiane `0.0295s` à `n=100`; la disjoint-chain
   star a `0` timeout et médiane `0.2433s` à `n=101`.
+- Checkpoint T043 courant : commit contenant
+  `pc_tree_guided_low_hub_matching_witness_report` et l'intégration candidate du
+  certificat positif matching low-hub guidé par PC-tree. Il ajoute les
+  régressions non-star T040/T042 devenues positives complètes, le cas `low=0`,
+  les contrôles négatifs `C6/C8/tree`, et deux limites documentées :
+  split-hubs `n=6` manqué sans rejet, et frontier tardive `n=8` qui exige
+  `frontier_limit=80`. Validation observée : tests ciblés
+  candidate/local-constraints/generators, `make unit`, `make quick`,
+  `make hunt-counterexamples`, `make check`, `make bench-quick`, `make bench`.
+  Résultat observé : `mixed/star` reste `0` timeout et `0` incomplet jusqu'à
+  `n=100`, médiane `0.0314s` à `n=100`; le certificat T043 résout les
+  matchings non-star ciblés avec `frontiers_sampled=0`.
 
 ## Rollback
 

@@ -17,6 +17,7 @@ from pc_circular.pc_tree import (
     enumerate_frontiers,
     leaf,
     p_node,
+    represents_order,
     star_pc_tree,
 )
 from pc_circular.predicates import passes_bad_side_precircular_cR
@@ -28,6 +29,7 @@ from pc_circular.solvers.local_constraints import (
     low_hub_ferrers_strong_ordering_report,
     low_hub_strong_ordering_report,
     measure_obstruction_support,
+    pc_tree_guided_low_hub_matching_witness_report,
     project_farthest_sets_to_pc_nodes,
 )
 
@@ -282,6 +284,73 @@ def test_low_hub_component_ferrers_report_handles_low_zero_and_multiple_hubs():
     assert len(report["hub_labels"]) == 2
     assert report["status"] == "component_ferrers_strong_ordering_found"
     assert report["witness_order_is_cr"] is True
+
+
+def test_pc_tree_guided_low_hub_matching_finds_known_nonstar_witness():
+    D = matching_high_graph_plus_low_hub(17)
+    T = c_node(
+        [
+            leaf(0),
+            p_node([leaf(i) for i in range(1, 9)]),
+            c_node([leaf(i) for i in (9, 11, 13, 15, 10, 12, 14, 16)]),
+        ]
+    )
+    report = pc_tree_guided_low_hub_matching_witness_report(D, T)
+
+    assert report["status"] == "pc_tree_guided_matching_witness_found"
+    assert report["witness_order"] == (0, 1, 3, 5, 7, 2, 4, 6, 8, 9, 11, 13, 15, 10, 12, 14, 16)
+    assert report["templates_checked"] == 1
+    assert report["frontiers_sampled"] == 0
+    assert report["witness_order_is_cr"] is True
+
+
+def test_pc_tree_guided_low_hub_matching_handles_zero_low_value():
+    D = _zero_low_hub_from_edges(4, [(1, 3), (2, 4)])
+    T = c_node([leaf(i) for i in range(5)])
+    report = pc_tree_guided_low_hub_matching_witness_report(D, T)
+
+    assert report["low_value"] == 0
+    assert report["status"] == "pc_tree_guided_matching_witness_found"
+    assert report["frontiers_sampled"] == 0
+    assert report["witness_order_is_cr"] is True
+
+
+def test_pc_tree_guided_low_hub_matching_can_miss_split_hub_positive_without_rejecting():
+    D = matching_high_graph_plus_low_hub(6)
+    T = c_node([leaf(0), p_node([leaf(1), leaf(2)]), leaf(5), p_node([leaf(3), leaf(4)])])
+    nonrepresented_cR = (0, 5, 3, 4, 1, 2)
+    report = pc_tree_guided_low_hub_matching_witness_report(D, T)
+
+    assert exact_oracle_pc_tree(D, T)["exists"] is True
+    assert passes_bad_side_precircular_cR(D, nonrepresented_cR)
+    assert not represents_order(T, nonrepresented_cR)
+    assert report["status"] == "no_pc_tree_guided_matching_witness_found"
+    assert report["strong_ordering_exists"] is None
+
+
+def test_pc_tree_guided_low_hub_matching_frontier_limit_is_incomplete():
+    D = matching_high_graph_plus_low_hub(8)
+    T = p_node([leaf(4), c_node([leaf(1), leaf(2)]), leaf(5), leaf(7), leaf(6), leaf(3), leaf(0)])
+
+    limited = pc_tree_guided_low_hub_matching_witness_report(D, T, frontier_limit=64)
+    extended = pc_tree_guided_low_hub_matching_witness_report(D, T, frontier_limit=80)
+
+    assert exact_oracle_pc_tree(D, T)["exists"] is True
+    assert limited["status"] == "no_pc_tree_guided_matching_witness_found"
+    assert limited["strong_ordering_exists"] is None
+    assert extended["status"] == "pc_tree_guided_matching_witness_found"
+    assert extended["witness_order_is_cr"] is True
+
+
+def test_pc_tree_guided_low_hub_matching_reports_nonapplicable_controls():
+    for D, T in (
+        (even_high_cycle_plus_low_hub(7), star_pc_tree(7)),
+        (even_high_cycle_plus_low_hub(9), star_pc_tree(9)),
+        (_binary_low_hub_from_edges(7, [(1, 2), (1, 5), (2, 3), (2, 4), (3, 6), (4, 7)]), star_pc_tree(8)),
+    ):
+        report = pc_tree_guided_low_hub_matching_witness_report(D, T)
+        assert report["status"] == "not_matching_high_graph"
+        assert report["strong_ordering_exists"] is None
 
 
 def test_low_hub_strong_ordering_rejects_tree_counterexample():

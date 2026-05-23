@@ -595,6 +595,35 @@ Limites T042 :
 - un échec component-Ferrers ne prouve rien et ne doit pas être converti en
   rejet.
 
+Résultat T043 :
+
+- `pc_tree_guided_low_hub_matching_witness_report` ajoute un certificat positif
+  polynomial-like pour le sous-cas matching haut avec hubs bas et PC-tree
+  fourni ;
+- le rapport est sample-first : il teste `sample_frontier(T)` et son inverse
+  avant toute énumération bornée, puis ne parcourt des frontiers canoniques que
+  si ce premier témoin échoue ;
+- `candidate.py` l'utilise seulement après validation directe cR et
+  `represents_order`, avec le solver
+  `candidate_low_hub_pc_tree_guided_matching_witness` ;
+- le cas non-star T042 `n=17` est résolu avec `templates_checked=1`,
+  `frontiers_sampled=0`, `segments_checked=10` ;
+- le cas non-star T040 `n=18` passe d'un témoin trouvé après `761` couples de
+  permutations à `templates_checked=1`, `frontiers_sampled=0`,
+  `segments_checked=3` ;
+- `make bench` reste à `0` timeout et `0` incomplet jusqu'à `n=100`; à `n=100`,
+  médiane `0.0314s`, p95 `0.0369s`, fit polynomial empirique `p ~= 1.80`.
+
+Limites T043 :
+
+- matching haut seulement : ce n'est pas une reconnaissance générale des
+  graphes bipartis à strong ordering ;
+- les hubs peuvent devoir être séparés dans un ordre représenté ; T043 force un
+  bloc de hubs et manque donc un positif split-hubs `n=6` ;
+- `frontier_limit` peut cacher un positif : un cas `n=8` échoue à `64` et
+  réussit à `80` ;
+- aucun échec du rapport ne doit être converti en rejet.
+
 ## Témoin cycle par distances minimales
 
 Statut : certificat positif intégré pour tout PC-tree du scaffold où le témoin
@@ -643,6 +672,7 @@ Résultat T019 :
 - `sample_frontier`;
 - `candidate_minimum_distance_cycle_witness`;
 - `candidate_paired_farthest_matching_witness`;
+- `pc_tree_guided_low_hub_matching_witness_report`;
 - `represents_order` non énumératif quand `limit is None`;
 - `--diagnostics-up-to` dans `tools/pc_circular_complexity_benchmark.py`;
 - `make bench-piste-f`.
@@ -654,5 +684,5 @@ Utiliser `permuted_cycle` comme sous-cas où un futur solver devrait reconnaîtr
 un témoin caché sans brute force star.
 Chercher ensuite un sous-cas plus structuré que le critère universel, par
 exemple paired-farthest représenté par PC-tree non-star avec choix de témoin
-prouvé, planted-cycle représenté par un vrai PC-tree Hsu/McConnell, ou degré
-interne borné.
+prouvé, matching low-hub avec hubs séparés, planted-cycle représenté par un
+vrai PC-tree Hsu/McConnell, ou degré interne borné.

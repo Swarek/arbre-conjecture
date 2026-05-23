@@ -627,6 +627,51 @@ Preuve expérimentale T042 :
   représenté est connu, mais la candidate peut rester incomplète si la recherche
   factorielle ne l'atteint pas.
 
+### Témoin matching low-hub guidé par PC-tree
+
+Statut : conséquence directe / certificat positif sound ; pas une intersection
+complète PC-tree/strong-ordering.
+
+Dans une matrice binaire `low/high` avec hubs bas et graphe haut matching, tout
+ordre `hubs, A_1,...,A_m, B_1,...,B_m` alignant les paires mates dans le même
+ordre est cR par le lemme bad-side : les paires hautes n'ont pas de mauvais
+témoin, les paires basses dans un même côté ont leurs mauvais témoins mates sur
+un seul arc, et les paires croisées non mates ont leurs deux mauvais témoins sur
+un même arc grâce à l'ordre aligné.
+
+T043 ne prouve pas que le PC-tree contient un tel ordre. Il cherche seulement,
+dans `sample_frontier(T)` puis dans un nombre borné de frontiers canoniques, un
+segment avec exactement un endpoint de chaque paire. Chaque ordre construit est
+accepté seulement après validation `passes_bad_side_precircular_cR` et
+`represents_order(T, order)`.
+
+Ce que cela couvre :
+
+- obligation 1/2 positive : le témoin matching aligné est cR ;
+- obligation 4 : le témoin renvoyé est contrôlé par `represents_order` ;
+- obligation 6 : `low=0` et hubs multiples restent sound grâce au `>` strict
+  des mauvais témoins ;
+- obligation de séparation : l'échec du rapport reste incomplet, jamais une
+  preuve de non-existence.
+
+Limites :
+
+- sous-cas matching seulement, pas graphes bipartis strong-ordering généraux ;
+- les hubs peuvent devoir être séparés dans un ordre représenté ; T043 force un
+  bloc de hubs et peut donc manquer des positifs ;
+- la recherche de frontiers est bornée par `frontier_limit` ;
+- un segment dans un frontier représenté ne suffit pas : l'ordre reconstruit
+  peut être cR mais non représenté, d'où le garde obligatoire.
+
+Preuve expérimentale T043 :
+
+- le cas non-star T042 `n=17` devient positif complet avec `frontiers_sampled=0`
+  et `segments_checked=10` ;
+- le cas non-star T040 `n=18` devient positif complet avec `frontiers_sampled=0`
+  et `segments_checked=3` ;
+- un contre-exemple split-hubs `n=6` et un cas de limite `n=8` sont régressés
+  pour documenter que T043 reste incomplet.
+
 ### Témoins positifs échantillonnés
 
 Statut : conséquence directe / clarification de la candidate.

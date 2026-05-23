@@ -1937,3 +1937,59 @@
 - Next action : construire une intersection PC-tree avec les ordres
   component-Ferrers/strong-ordering ou ajouter hors candidate un rapport de
   reconnaissance bipartite permutation produisant un témoin vérifiable.
+
+## 2026-05-23 PC-tree guided matching witness
+
+- Date/heure : 2026-05-23 07:05:01 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : pour une matrice binaire `low/high` avec hubs bas et
+  graphe haut matching, un frontier PC-tree contenant un segment avec exactement
+  un endpoint de chaque paire peut guider la construction d'un témoin
+  `hubs,A,B` représenté. Cette hypothèse ne donne qu'un certificat positif si
+  l'ordre construit est ensuite vérifié cR et représenté.
+- Changement fait : ajout de
+  `pc_tree_guided_low_hub_matching_witness_report`; intégration dans
+  `candidate.py` comme solver
+  `candidate_low_hub_pc_tree_guided_matching_witness`; recherche sample-first
+  avant énumération bornée ; régressions pour les cas non-star T040/T042,
+  `low=0`, contrôles `C6/C8/tree`, split-hubs manqué et frontier tardive
+  dépendante de `frontier_limit`.
+- Commande exécutée avant modification : `make quick`.
+- Résultat correction avant modification : `181 passed`, puis `JUSTE`.
+- Plan subagents : quatre sidecars lecture seule. Résultats : audit soundness
+  validé sous garde matching/bad-side/representation ; mesure T040/T042
+  confirmant un passage de recherche factorielle ou placeholder vers
+  `templates_checked=1`; contre-exemples split-hubs `n=6` et frontier-limit
+  `n=8`; checklist documentaire appliquée.
+- Commande exécutée : `pytest -q tests/test_local_constraints.py tests/test_candidate.py tests/test_generators.py`.
+- Résultat correction : `91 passed`.
+- Commande exécutée : probes ciblées T040/T042 et matchings `star/mixed`
+  `n=9,11,13,17`, seeds `0..4`.
+- Résultat probes : T040 `n=18` et T042 `n=17` sont positifs complets par
+  `candidate_low_hub_pc_tree_guided_matching_witness` avec
+  `frontiers_sampled=0`; les probes mixed gardent `5/20` incomplets visibles,
+  donc l'échec T043 n'est pas caché en rejet.
+- Commande exécutée : `make unit`.
+- Résultat correction : `186 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `186 passed`, puis `JUSTE`.
+- Commande exécutée : `make hunt-counterexamples`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark rapide : `reports/complexity_report_quick.json` écrit ;
+  `0` timeout, `0` incomplet ; à `n=20`, médiane `0.00118s`, p95 `0.00132s`,
+  fit polynomial empirique `p ~= 1.84`.
+- Commande exécutée : `make bench`.
+- Résultat benchmark fort : `reports/complexity_report.json` écrit ; `0`
+  timeout, `0` incomplet jusqu'à `n=100`, médiane `0.0314s`, p95 `0.0369s`,
+  fit polynomial empirique `p ~= 1.80`.
+- Conclusion : T043 améliore les matchings low-hub non-star ciblés et remplace
+  une recherche factorielle par un certificat guidé PC-tree sample-first. Ce
+  n'est pas une intersection complète : split-hubs et frontiers tardives restent
+  des limites explicites, et tout échec du rapport reste incomplet.
+- Next action : formaliser une vraie intersection PC-tree avec les ordres
+  matching/component-Ferrers/strong-ordering, en commençant par les hubs
+  séparés et par une stratégie non bornée pour éviter les témoins tardifs.

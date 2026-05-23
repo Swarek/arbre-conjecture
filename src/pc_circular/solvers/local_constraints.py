@@ -12,7 +12,7 @@ from pc_circular.predicates import (
     passes_bad_side_precircular_cR,
     validate_dissimilarity,
 )
-from pc_circular.pc_tree import PCNode, labels
+from pc_circular.pc_tree import PCNode, enumerate_frontiers, labels, represents_order, sample_frontier
 
 
 def summarize_farthest_degrees(D):
@@ -427,6 +427,176 @@ def low_hub_component_ferrers_strong_ordering_report(D):
         "part_b": B_order,
         "witness_order": witness_order,
         "witness_order_is_cr": passes_bad_side_precircular_cR(D, witness_order),
+    }
+
+
+def _matching_pairs(high_vertices, neighbors):
+    seen = set()
+    pairs = []
+    for vertex in high_vertices:
+        if vertex in seen:
+            continue
+        values = tuple(neighbors[vertex])
+        if len(values) != 1:
+            return None
+        mate = values[0]
+        if mate not in high_vertices or tuple(neighbors[mate]) != (vertex,):
+            return None
+        seen.add(vertex)
+        seen.add(mate)
+        pairs.append(tuple(sorted((vertex, mate))))
+    if seen != set(high_vertices):
+        return None
+    return tuple(sorted(pairs))
+
+
+def _circular_segments(order, length):
+    if length <= 0 or length > len(order):
+        return
+    seq = tuple(order)
+    doubled = seq + seq
+    for start in range(len(seq)):
+        yield doubled[start : start + length]
+
+
+def pc_tree_guided_low_hub_matching_witness_report(D, T: PCNode, *, frontier_limit: int = 64):
+    """Find a represented low-hub matching witness guided by PC-tree frontiers."""
+
+    n = validate_dissimilarity(D)
+    tree_labels = set(labels(T))
+    if tree_labels != set(range(n)):
+        raise ValueError("PC-tree labels must be exactly 0..n-1")
+
+    off_diagonal_values = sorted({D[i][j] for i in range(n) for j in range(i + 1, n)})
+    if len(off_diagonal_values) != 2:
+        return {
+            "method": "pc_tree_guided_low_hub_matching_witness_report",
+            "n": n,
+            "frontier_limit": frontier_limit,
+            "status": "not_binary_two_level",
+            "strong_ordering_exists": None,
+            "witness_order": None,
+            "witness_order_is_cr": None,
+        }
+
+    _low, high = off_diagonal_values
+    neighbors = {
+        i: tuple(j for j in range(n) if i != j and D[i][j] == high)
+        for i in range(n)
+    }
+    hubs = tuple(i for i, values in neighbors.items() if not values)
+    high_vertices = tuple(i for i, values in neighbors.items() if values)
+    base = {
+        "method": "pc_tree_guided_low_hub_matching_witness_report",
+        "n": n,
+        "frontier_limit": frontier_limit,
+        "low_value": _low,
+        "high_value": high,
+        "hub_labels": hubs,
+        "high_graph_labels": high_vertices,
+        "witness_order": None,
+        "witness_order_is_cr": None,
+    }
+    if not hubs:
+        return {**base, "status": "no_low_hub", "strong_ordering_exists": None}
+
+    pairs = _matching_pairs(high_vertices, neighbors)
+    if pairs is None:
+        return {**base, "status": "not_matching_high_graph", "strong_ordering_exists": None}
+    if not pairs:
+        order = tuple(sample_frontier(T))
+        return {
+            **base,
+            "status": "empty_high_graph",
+            "strong_ordering_exists": True,
+            "pair_count": 0,
+            "templates_checked": 1,
+            "segments_checked": 0,
+            "witness_order": order,
+            "witness_order_is_cr": passes_bad_side_precircular_cR(D, order),
+        }
+
+    mate = {}
+    for left, right in pairs:
+        mate[left] = right
+        mate[right] = left
+
+    high_vertex_set = set(high_vertices)
+    checked_segments = 0
+    seen_orders = set()
+    seen_templates = set()
+
+    def try_template(template, *, templates_checked, frontiers_sampled):
+        nonlocal checked_segments
+        hub_order = tuple(label for label in template if label in hubs)
+        for segment in _circular_segments(template, len(pairs)):
+            checked_segments += 1
+            selected = set(segment)
+            if len(selected) != len(segment) or not selected <= high_vertex_set:
+                continue
+            if any((left in selected) == (right in selected) for left, right in pairs):
+                continue
+            opposite = tuple(mate[label] for label in segment)
+            for A_order, B_order in ((opposite, segment), (segment, opposite)):
+                witness_order = tuple(hub_order) + tuple(A_order) + tuple(B_order)
+                if witness_order in seen_orders:
+                    continue
+                seen_orders.add(witness_order)
+                if not passes_bad_side_precircular_cR(D, witness_order):
+                    continue
+                if not represents_order(T, witness_order):
+                    continue
+                return {
+                    **base,
+                    "status": "pc_tree_guided_matching_witness_found",
+                    "strong_ordering_exists": True,
+                    "pair_count": len(pairs),
+                    "templates_checked": templates_checked,
+                    "frontiers_sampled": frontiers_sampled,
+                    "segments_checked": checked_segments,
+                    "part_a": tuple(A_order),
+                    "part_b": tuple(B_order),
+                    "witness_order": witness_order,
+                    "witness_order_is_cr": True,
+                }
+        return None
+
+    templates_checked = 0
+    sampled_frontier = tuple(sample_frontier(T))
+    for template in (sampled_frontier, tuple(reversed(sampled_frontier))):
+        if template in seen_templates:
+            continue
+        seen_templates.add(template)
+        templates_checked += 1
+        report = try_template(template, templates_checked=templates_checked, frontiers_sampled=0)
+        if report is not None:
+            return report
+
+    frontiers_sampled = 0
+    for frontier in enumerate_frontiers(T, canonical=True, limit=frontier_limit):
+        frontiers_sampled += 1
+        for template in (tuple(frontier), tuple(reversed(frontier))):
+            if template in seen_templates:
+                continue
+            seen_templates.add(template)
+            templates_checked += 1
+            report = try_template(
+                template,
+                templates_checked=templates_checked,
+                frontiers_sampled=frontiers_sampled,
+            )
+            if report is not None:
+                return report
+
+    return {
+        **base,
+        "complete": False,
+        "status": "no_pc_tree_guided_matching_witness_found",
+        "strong_ordering_exists": None,
+        "pair_count": len(pairs),
+        "templates_checked": templates_checked,
+        "frontiers_sampled": frontiers_sampled,
+        "segments_checked": checked_segments,
     }
 
 
