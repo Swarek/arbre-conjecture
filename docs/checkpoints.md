@@ -287,6 +287,17 @@ Dernier commit green avant T009 : `07120e4`.
   Résultat observé : `mixed/star` reste `0` timeout et `0` incomplet jusqu'à
   `n=100`, médiane `0.0314s` à `n=100`; le certificat T043 résout les
   matchings non-star ciblés avec `frontiers_sampled=0`.
+- Checkpoint T044 courant : commit contenant le test de projection frontier
+  dans `pc_tree_guided_low_hub_matching_witness_report`. Le certificat accepte
+  un frontier représenté dont les cordes du matching haut croisent toutes après
+  suppression des hubs, puis le revalide cR et `represents_order`. Il ajoute les
+  régressions split-hubs `n=6` devenu positif, split-hubs large `n=12` côté
+  candidate, et non-crossing C `n=6` négatif. Validation observée : tests ciblés
+  candidate/local-constraints/generators, `make quick`,
+  `make hunt-counterexamples`, `make check`, `make bench-quick`, `make bench`.
+  Résultat observé : `mixed/star` reste `0` timeout et `0` incomplet jusqu'à
+  `n=100`, médiane `0.03139s` à `n=100`; la frontier tardive `n=8` reste une
+  limite à `frontier_limit=64`.
 
 ## Rollback
 

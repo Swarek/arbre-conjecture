@@ -293,6 +293,18 @@ qu'après avoir relevé `frontier_limit` de `64` à `80`. Ces deux exemples sont
 des contre-exemples à la complétude du certificat, pas à sa soundness, et sont
 verrouillés en tests.
 
+Résultat T044 : dans le sous-cas matching low-hub, la condition bad-side devient
+exactement "toutes les cordes hautes se croisent après suppression des hubs".
+Le rapport teste donc la projection du frontier avant la construction T043. Le
+split-hubs `n=6` devient positif sans forcer les hubs en bloc, et un cas
+large `n=12` avec hubs séparés est accepté par la candidate avec le frontier
+représenté lui-même.
+
+Limites T044 : le cas non-crossing rigide `n=6` reste négatif, ce qui verrouille
+la nécessité du croisement. Le cas frontier tardive `n=8` reste incomplet à la
+borne `64`, donc T044 ne résout pas l'intersection PC-tree ; il rend seulement
+un certificat positif plus naturel quand le bon frontier est inspecté.
+
 ## Prochaine action
 
 Utiliser les témoins `find_precircular_cR_violation` comme source principale
@@ -300,4 +312,4 @@ d’obstructions. Pour low-hub, chercher une réduction polynomial-time de
 reconnaissance strong-ordering générale ou un diagnostic d'intersection PC-tree
 plus compact. Prochaine option raisonnable : intersecter le PC-tree avec les
 ordres matching/component-Ferrers/strong-ordering, en commençant par les hubs
-séparés et les frontiers tardives révélés par T043.
+séparés et les frontiers tardives révélés par T043/T044.

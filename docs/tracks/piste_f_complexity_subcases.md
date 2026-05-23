@@ -624,6 +624,30 @@ Limites T043 :
   réussit à `80` ;
 - aucun échec du rapport ne doit être converti en rejet.
 
+Résultat T044 :
+
+- le même rapport teste désormais la projection du frontier avant la
+  construction segmentaire : si les endpoints du matching forment
+  `seq + mate(seq)` après suppression des hubs, le frontier lui-même est
+  retourné comme témoin ;
+- le split-hubs `n=6` de T043 devient positif avec
+  `projected_frontiers_checked=1` et `segments_checked=0` ;
+- une régression candidate large `n=12` avec hubs séparés et deux blocs `P`
+  passe par `candidate_low_hub_pc_tree_guided_matching_witness`, alors que le
+  témoin component-Ferrers canonique n'est pas représenté ;
+- le cas non-crossing C `n=6` reste négatif exact ;
+- `make bench` reste à `0` timeout et `0` incomplet jusqu'à `n=100`; à `n=100`,
+  médiane `0.03139s`, p95 `0.03742s`, fit polynomial empirique `p ~= 1.79`.
+
+Limites T044 :
+
+- la caractérisation est pour un ordre fixé dans le sous-cas matching, pas une
+  décision PC-tree compacte ;
+- l'API `PCNode` actuelle sait énumérer des frontiers et tester un ordre, mais
+  pas intersecter directement avec `seq + mate(seq)` ;
+- le cas frontier tardive `n=8` reste manqué à `frontier_limit=64` ;
+- un échec T044 reste incomplet.
+
 ## Témoin cycle par distances minimales
 
 Statut : certificat positif intégré pour tout PC-tree du scaffold où le témoin
@@ -673,6 +697,7 @@ Résultat T019 :
 - `candidate_minimum_distance_cycle_witness`;
 - `candidate_paired_farthest_matching_witness`;
 - `pc_tree_guided_low_hub_matching_witness_report`;
+- `pc_tree_projected_matching_frontier_found`;
 - `represents_order` non énumératif quand `limit is None`;
 - `--diagnostics-up-to` dans `tools/pc_circular_complexity_benchmark.py`;
 - `make bench-piste-f`.

@@ -672,6 +672,49 @@ Preuve expérimentale T043 :
 - un contre-exemple split-hubs `n=6` et un cas de limite `n=8` sont régressés
   pour documenter que T043 reste incomplet.
 
+### Témoin matching low-hub par projection de frontier
+
+Statut : théorème dans le sous-cas matching / certificat positif borné côté
+PC-tree.
+
+Pour une matrice binaire `low/high` avec hubs bas et graphe haut matching, un
+ordre fixé est cR si et seulement si, après suppression des hubs, toutes les
+cordes du matching haut se croisent deux à deux. Preuve bad-side : une paire
+haute n'a aucun mauvais témoin ; une paire contenant un hub en a au plus un ;
+une paire basse entre deux non-hubs non mates a exactement les deux mates comme
+mauvais témoins. Ces deux témoins sont sur le même arc exactement quand les deux
+cordes hautes correspondantes se croisent. Les hubs ne sont jamais mauvais
+témoins et n'affectent pas l'ordre circulaire relatif des non-hubs.
+
+T044 utilise cette caractérisation seulement comme certificat positif : il teste
+un frontier représenté, accepte seulement après `passes_bad_side_precircular_cR`
+et `represents_order`, puis garde la construction segmentaire T043 comme
+fallback.
+
+Ce que cela couvre :
+
+- obligation 1/2 dans le sous-cas : nécessité et suffisance pour un ordre fixé
+  low-hub matching ;
+- obligation 4 : le frontier accepté est représenté par construction puis
+  recontrôlé par `represents_order` ;
+- obligation 6 : `low=0`, égalités binaires et hubs multiples restent couverts
+  par la définition stricte des mauvais témoins ;
+- obligation de séparation : l'existence dans le PC-tree reste bornée par les
+  frontiers inspectées, donc un échec reste incomplet.
+
+Limites :
+
+- ne vaut pas pour un graphe haut non matching ;
+- ne donne pas encore une intersection PC-tree compacte non bornée ;
+- la frontier tardive `n=8` reste manquée à `frontier_limit=64` ;
+- la généralisation aux graphes bipartis à strong ordering reste ouverte.
+
+Preuve expérimentale T044 : le split-hubs `n=6` devient positif au premier
+frontier projeté, un split-hubs large `n=12` force la candidate à passer par ce
+certificat, le cas non-crossing rigide `n=6` reste négatif exact, et les gates
+`make quick`, `make hunt-counterexamples`, `make check`, `make bench-quick` et
+`make bench` restent verts.
+
 ### Témoins positifs échantillonnés
 
 Statut : conséquence directe / clarification de la candidate.

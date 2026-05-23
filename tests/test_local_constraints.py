@@ -20,9 +20,10 @@ from pc_circular.pc_tree import (
     represents_order,
     star_pc_tree,
 )
-from pc_circular.predicates import passes_bad_side_precircular_cR
+from pc_circular.predicates import all_circular_orders, passes_bad_side_precircular_cR
 from pc_circular.solvers import brute_force
 from pc_circular.solvers.local_constraints import (
+    _matching_crossing_parts,
     classify_order_obstructions,
     iter_low_hub_strong_ordering_witnesses,
     low_hub_component_ferrers_strong_ordering_report,
@@ -301,6 +302,7 @@ def test_pc_tree_guided_low_hub_matching_finds_known_nonstar_witness():
     assert report["witness_order"] == (0, 1, 3, 5, 7, 2, 4, 6, 8, 9, 11, 13, 15, 10, 12, 14, 16)
     assert report["templates_checked"] == 1
     assert report["frontiers_sampled"] == 0
+    assert report["projected_frontiers_checked"] == 1
     assert report["witness_order_is_cr"] is True
 
 
@@ -310,12 +312,13 @@ def test_pc_tree_guided_low_hub_matching_handles_zero_low_value():
     report = pc_tree_guided_low_hub_matching_witness_report(D, T)
 
     assert report["low_value"] == 0
-    assert report["status"] == "pc_tree_guided_matching_witness_found"
+    assert report["status"] == "pc_tree_projected_matching_frontier_found"
     assert report["frontiers_sampled"] == 0
+    assert report["segments_checked"] == 0
     assert report["witness_order_is_cr"] is True
 
 
-def test_pc_tree_guided_low_hub_matching_can_miss_split_hub_positive_without_rejecting():
+def test_pc_tree_guided_low_hub_matching_accepts_split_hub_projected_frontier():
     D = matching_high_graph_plus_low_hub(6)
     T = c_node([leaf(0), p_node([leaf(1), leaf(2)]), leaf(5), p_node([leaf(3), leaf(4)])])
     nonrepresented_cR = (0, 5, 3, 4, 1, 2)
@@ -324,8 +327,45 @@ def test_pc_tree_guided_low_hub_matching_can_miss_split_hub_positive_without_rej
     assert exact_oracle_pc_tree(D, T)["exists"] is True
     assert passes_bad_side_precircular_cR(D, nonrepresented_cR)
     assert not represents_order(T, nonrepresented_cR)
+    assert report["status"] == "pc_tree_projected_matching_frontier_found"
+    assert report["strong_ordering_exists"] is True
+    assert report["witness_order"] == (0, 1, 2, 5, 3, 4)
+    assert report["projected_order"] == (1, 2, 3, 4)
+    assert report["segments_checked"] == 0
+    assert report["witness_order_is_cr"] is True
+    assert represents_order(T, report["witness_order"])
+
+
+def test_pc_tree_guided_low_hub_matching_rejects_noncrossing_projected_frontier():
+    D = matching_high_graph_plus_low_hub(6)
+    T = c_node([leaf(0), leaf(1), leaf(3), leaf(2), leaf(4), leaf(5)])
+    report = pc_tree_guided_low_hub_matching_witness_report(D, T, frontier_limit=0)
+
+    assert exact_oracle_pc_tree(D, T)["exists"] is False
     assert report["status"] == "no_pc_tree_guided_matching_witness_found"
     assert report["strong_ordering_exists"] is None
+    assert report["projected_frontiers_checked"] == 2
+
+
+def test_matching_crossing_projection_matches_cr_for_fixed_orders_small():
+    for n in range(5, 9):
+        D = matching_high_graph_plus_low_hub(n)
+        high = max(D[i][j] for i in range(n) for j in range(i + 1, n))
+        neighbors = {
+            i: tuple(j for j in range(n) if i != j and D[i][j] == high)
+            for i in range(n)
+        }
+        pairs = tuple(
+            sorted(
+                tuple(sorted((i, values[0])))
+                for i, values in neighbors.items()
+                if values and i < values[0]
+            )
+        )
+
+        for order in all_circular_orders(n):
+            has_crossing_projection = _matching_crossing_parts(order, pairs) is not None
+            assert has_crossing_projection == passes_bad_side_precircular_cR(D, order)
 
 
 def test_pc_tree_guided_low_hub_matching_frontier_limit_is_incomplete():

@@ -539,6 +539,7 @@ def _low_hub_strong_ordering_witness_result(D, n: int, pc_tree: Optional[PCNode]
                         "frontier_limit": matching_report.get("frontier_limit"),
                         "templates_checked": matching_report.get("templates_checked"),
                         "frontiers_sampled": matching_report.get("frontiers_sampled"),
+                        "projected_frontiers_checked": matching_report.get("projected_frontiers_checked"),
                         "segments_checked": matching_report.get("segments_checked"),
                         "pair_count": matching_report.get("pair_count"),
                         "hub_labels": list(matching_report.get("hub_labels", ())),

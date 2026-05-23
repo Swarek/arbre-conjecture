@@ -456,6 +456,36 @@ def test_candidate_low_hub_pc_tree_guided_matching_finds_large_nonstar_witness()
     assert represents_order(T, result["order"])
 
 
+def test_candidate_low_hub_projected_matching_accepts_large_split_hubs():
+    D = matching_high_graph_plus_low_hub(12)
+    T = c_node(
+        [
+            leaf(0),
+            p_node([leaf(i) for i in range(1, 6)]),
+            leaf(11),
+            p_node([leaf(i) for i in range(6, 11)]),
+        ]
+    )
+    projected_witness = (0, 1, 2, 3, 4, 5, 11, 6, 7, 8, 9, 10)
+    component_report = low_hub_component_ferrers_strong_ordering_report(D)
+
+    assert _pc_tree_frontier_upper_bound(T) > EXACT_PC_TREE_FRONTIER_LIMIT
+    assert component_report["witness_order_is_cr"] is True
+    assert not represents_order(T, component_report["witness_order"])
+    assert is_precircular_order_cR(D, projected_witness)
+    assert represents_order(T, projected_witness)
+
+    result = solve(D, pc_tree=T)
+
+    assert result["exists"] is True
+    assert result["complete"] is True
+    assert result["solver"] == "candidate_low_hub_pc_tree_guided_matching_witness"
+    assert result["order"] == list(projected_witness)
+    assert result["projected_frontiers_checked"] == 1
+    assert result["segments_checked"] == 0
+    assert result["frontiers_sampled"] == 0
+
+
 def test_candidate_low_hub_ferrers_nonrepresented_witness_continues_search():
     D = permuted_chain_high_graph_plus_low_hub(9, rng=random.Random(0))
     T = p_node([c_node([leaf(2), leaf(5)]), *[leaf(i) for i in (0, 1, 3, 4, 6, 7, 8)]])

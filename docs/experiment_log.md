@@ -1993,3 +1993,57 @@
 - Next action : formaliser une vraie intersection PC-tree avec les ordres
   matching/component-Ferrers/strong-ordering, en commençant par les hubs
   séparés et par une stratégie non bornée pour éviter les témoins tardifs.
+
+## 2026-05-23 projected frontier matching witness
+
+- Date/heure : 2026-05-23 07:18:06 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : dans une matrice binaire `low/high` avec hubs bas et
+  graphe haut matching, un ordre fixé est cR si et seulement si la projection
+  sur les non-hubs fait croiser toutes les arêtes hautes deux à deux. On peut
+  donc accepter un frontier PC-tree représenté tel quel si cette projection
+  passe, après revérification cR et `represents_order`.
+- Changement fait : ajout du test de projection `_matching_crossing_parts` dans
+  `pc_tree_guided_low_hub_matching_witness_report`, avant la construction
+  segmentaire T043 ; exposition du compteur `projected_frontiers_checked` dans
+  `candidate.py`; régressions pour split-hubs `n=6`, split-hubs large `n=12`,
+  non-crossing C `n=6`, et équivalence fixed-order sur `n=5..8`.
+- Commande exécutée avant modification : `make quick`.
+- Résultat correction avant modification : `186 passed`, puis `JUSTE`.
+- Plan subagents : cinq sidecars lecture seule. Résultats : preuve bad-side du
+  lemme et de sa réciproque dans le sous-cas matching ; aucun faux positif sur
+  probes exacts `n=5..10` et `400` couples `(D, PC-tree)` petits ; mesure
+  montrant que T044 corrige les hubs séparés mais ne résout ni T040/T042 sans
+  fallback segmentaire, ni les frontiers tardives ; rappel que l'API `PCNode`
+  ne fournit pas encore d'intersection non bornée.
+- Commande exécutée : `pytest -q tests/test_local_constraints.py tests/test_candidate.py tests/test_generators.py`.
+- Résultat correction : `94 passed`.
+- Commande exécutée : probe exact petits matchings `n=5..8` sur star,
+  balanced/mixed, split-hubs, non-crossing C et frontier tardive.
+- Résultat probe : tout témoin positif du rapport est cR et représenté ;
+  split-hubs `n=6` est trouvé au premier frontier projeté ; non-crossing C
+  `n=6` est exact négatif ; frontier tardive `n=8` reste manquée à
+  `frontier_limit=64`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `189 passed`, puis `JUSTE`.
+- Commande exécutée : `make hunt-counterexamples`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark rapide : `reports/complexity_report_quick.json` écrit ;
+  `0` timeout, `0` incomplet ; à `n=20`, médiane `0.00120s`, p95 `0.00136s`,
+  fit polynomial empirique `p ~= 1.85`.
+- Commande exécutée : `make bench`.
+- Résultat benchmark fort : `reports/complexity_report.json` écrit ; `0`
+  timeout, `0` incomplet jusqu'à `n=100`, médiane `0.03139s`, p95 `0.03742s`,
+  fit polynomial empirique `p ~= 1.79`.
+- Conclusion : T044 transforme la limite split-hubs de T043 en certificat
+  positif sound dès qu'un frontier projeté croisé est inspecté, et verrouille la
+  caractérisation fixed-order du sous-cas matching. L'existence dans un PC-tree
+  compact reste non résolue : un échec de projection ou de limite de frontiers
+  reste incomplet.
+- Next action : construire un diagnostic exact petit `seq + mate(seq)` après
+  pruning des hubs pour mesurer la vraie intersection PC-tree/matching, puis
+  tenter un état DP/CSP si les contre-exemples locaux restent contrôlables.

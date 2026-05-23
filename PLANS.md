@@ -2522,3 +2522,85 @@ absence de segment/témoin représenté reste `strong_ordering_exists=None` et n
 devient jamais un rejet. Prochaine piste recommandée : formaliser une vraie
 intersection PC-tree/ordres matching ou component-Ferrers, notamment pour les
 hubs séparés et les frontiers tardives.
+
+## ExecPlan 2026-05-23 - projected frontier matching witness
+
+But : traiter une limite explicite de T043 sur les matchings low-hub avec hubs
+séparés. Dans ces cas, le frontier représenté lui-même peut être cR même si la
+construction T043 `hubs, A, B` n'est pas représentée.
+
+Hypothèse : pour une matrice binaire `low/high` avec hubs bas et graphe haut
+matching, un ordre circulaire est cR dès que, après suppression des hubs, toutes
+les cordes du matching haut se croisent deux à deux. Les hubs peuvent alors être
+intercalés arbitrairement. C'est une conséquence du lemme bad-side, à vérifier
+directement dans le code avant tout retour positif.
+
+Fichiers à modifier : `src/pc_circular/solvers/local_constraints.py`,
+`src/pc_circular/solvers/candidate.py`, `tests/test_local_constraints.py`,
+`tests/test_candidate.py`, `docs/proof_obligations.md`,
+`docs/tracks/piste_e_farthest_quartets.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/tracks/README.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `PLANS.md`.
+
+Algorithme pressenti : factoriser l'analyse binaire low-hub matching déjà faite
+par T043, ajouter un prédicat de projection "toutes les arêtes du matching se
+croisent dans le frontier sans hubs", puis tester `sample_frontier(T)` et des
+frontiers canoniques bornées. Si un frontier représenté passe la projection, le
+retourner directement après `passes_bad_side_precircular_cR` et
+`represents_order`. Garder T043 comme fallback de construction segmentaire.
+
+Plan de contre-exemples : verrouiller le cas split-hubs `n=6` de T043 comme
+positif complet ; tester `low=0`, plusieurs hubs, C6/C8/tree non matching,
+frontier tardive `n=8`, petits PC-trees matching contre oracle exact, et des
+ordres où les cordes ne croisent pas toutes pour éviter un faux positif.
+
+Plan subagents : cinq sidecars lecture seule. Un audite le lemme bad-side avec
+hubs arbitraires ; un cherche des faux positifs ou positifs manqués sur petits
+PC-trees ; un mesure l'impact benchmark/probes T043 ; un explore si la
+condition de projection peut devenir une vraie intersection PC-tree non bornée ;
+un prépare la checklist documentation/preuve.
+
+Tests à exécuter : tests ciblés candidate/local-constraints, probes exactes
+petits matchings PC-tree, `make unit`, `make quick`,
+`make hunt-counterexamples`, `make check`, `make bench-quick`; `make bench` si
+`candidate.py` change.
+
+Risques : croire que la projection matching donne une caractérisation pour des
+graphes hauts non matching ; accepter un frontier sans revérification cR ;
+masquer la borne `frontier_limit` ; dupliquer la logique T043 au lieu de la
+factoriser proprement.
+
+Résultats observés : le rapport T044 teste maintenant la projection matching
+avant la construction segmentaire T043. Le split-hubs `n=6` passe de
+`no_pc_tree_guided_matching_witness_found` à
+`pc_tree_projected_matching_frontier_found` avec `projected_frontiers_checked=1`
+et `segments_checked=0`. Une régression candidate `n=12` avec deux gros blocs
+`P` et hubs séparés est maintenant positive complète par
+`candidate_low_hub_pc_tree_guided_matching_witness`, alors que le témoin
+component-Ferrers canonique n'est pas représenté. Le cas non-crossing rigide
+`n=6` reste négatif exact, et le cas frontier tardive `n=8` reste une limite :
+à `frontier_limit=64`, aucun témoin n'est trouvé.
+
+Résultats subagents : l'audit preuve classe le lemme comme théorème dans le
+sous-cas binaire low-hub matching, avec nécessité et suffisance de croisement
+des cordes après suppression des hubs. Le sidecar intersection rappelle que
+l'API `PCNode` actuelle ne fournit pas d'opération d'intersection non bornée ;
+T044 reste donc une recherche de frontiers bornée, et une vraie décision
+compacte demanderait pruning des hubs puis synchronisation de deux moitiés
+`seq + mate(seq)` par DP/CSP.
+
+Validation : tests ciblés `tests/test_local_constraints.py tests/test_candidate.py
+tests/test_generators.py` donnent `94 passed`. `make quick` donne `189 passed`
+puis `JUSTE`. `make hunt-counterexamples` et `make check` donnent `JUSTE`.
+Probe exact petits matchings `n=5..8` : split-hubs positif au premier frontier,
+non-crossing C négatif, frontier tardive toujours incomplète à `64`.
+`make bench-quick` donne `0` timeout et `0` incomplet ; à `n=20`, médiane
+`0.00120s`, p95 `0.00136s`, fit polynomial empirique `p ~= 1.85`. `make bench`
+donne `0` timeout et `0` incomplet jusqu'à `n=100`; à `n=100`, médiane
+`0.03139s`, p95 `0.03742s`, fit polynomial empirique `p ~= 1.79`.
+
+Décision : intégrer T044 comme amélioration positive du certificat matching
+low-hub. Le résultat prouvé porte sur un ordre fixé/projeté ; l'existence dans
+un PC-tree compact reste bornée par les frontiers inspectées. Prochaine piste :
+diagnostic exact petit `seq + mate(seq)` après pruning des hubs, puis tentative
+DP/CSP d'intersection non bornée si les états restent petits.

@@ -450,6 +450,29 @@ def _matching_pairs(high_vertices, neighbors):
     return tuple(sorted(pairs))
 
 
+def _matching_crossing_parts(order, pairs):
+    mate = {}
+    for left, right in pairs:
+        mate[left] = right
+        mate[right] = left
+    endpoints = set(mate)
+    projected = tuple(label for label in order if label in endpoints)
+    if len(projected) != len(endpoints) or len(set(projected)) != len(projected):
+        return None
+    half = len(pairs)
+    part_a = projected[:half]
+    part_b = projected[half:]
+    if len(part_a) != half or len(part_b) != half:
+        return None
+    if any(mate.get(left) != right for left, right in zip(part_a, part_b)):
+        return None
+    return {
+        "projected_order": projected,
+        "part_a": part_a,
+        "part_b": part_b,
+    }
+
+
 def _circular_segments(order, length):
     if length <= 0 or length > len(order):
         return
@@ -523,11 +546,34 @@ def pc_tree_guided_low_hub_matching_witness_report(D, T: PCNode, *, frontier_lim
 
     high_vertex_set = set(high_vertices)
     checked_segments = 0
+    checked_projected_frontiers = 0
     seen_orders = set()
     seen_templates = set()
 
     def try_template(template, *, templates_checked, frontiers_sampled):
-        nonlocal checked_segments
+        nonlocal checked_projected_frontiers, checked_segments
+        checked_projected_frontiers += 1
+        crossing_parts = _matching_crossing_parts(template, pairs)
+        if crossing_parts is not None:
+            witness_order = tuple(template)
+            if witness_order not in seen_orders:
+                seen_orders.add(witness_order)
+                if passes_bad_side_precircular_cR(D, witness_order) and represents_order(T, witness_order):
+                    return {
+                        **base,
+                        "status": "pc_tree_projected_matching_frontier_found",
+                        "strong_ordering_exists": True,
+                        "pair_count": len(pairs),
+                        "templates_checked": templates_checked,
+                        "frontiers_sampled": frontiers_sampled,
+                        "projected_frontiers_checked": checked_projected_frontiers,
+                        "segments_checked": checked_segments,
+                        "projected_order": crossing_parts["projected_order"],
+                        "part_a": crossing_parts["part_a"],
+                        "part_b": crossing_parts["part_b"],
+                        "witness_order": witness_order,
+                        "witness_order_is_cr": True,
+                    }
         hub_order = tuple(label for label in template if label in hubs)
         for segment in _circular_segments(template, len(pairs)):
             checked_segments += 1
@@ -553,6 +599,7 @@ def pc_tree_guided_low_hub_matching_witness_report(D, T: PCNode, *, frontier_lim
                     "pair_count": len(pairs),
                     "templates_checked": templates_checked,
                     "frontiers_sampled": frontiers_sampled,
+                    "projected_frontiers_checked": checked_projected_frontiers,
                     "segments_checked": checked_segments,
                     "part_a": tuple(A_order),
                     "part_b": tuple(B_order),
@@ -596,6 +643,7 @@ def pc_tree_guided_low_hub_matching_witness_report(D, T: PCNode, *, frontier_lim
         "pair_count": len(pairs),
         "templates_checked": templates_checked,
         "frontiers_sampled": frontiers_sampled,
+        "projected_frontiers_checked": checked_projected_frontiers,
         "segments_checked": checked_segments,
     }
 
