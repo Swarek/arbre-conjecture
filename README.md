@@ -47,6 +47,7 @@ make bench-relation-catalog
 make bench-relation-shapes
 make bench-relation-chains
 make bench-relation-unsat-cores
+make bench-permutation-like
 make acceptance
 ```
 
@@ -100,6 +101,11 @@ diagnostic de corrélation, pas une décision générale.
 `interaction_unsat` de ce CSP matérialisé en noyaux de relations, avec tests de
 suppression et projections brutes. C’est un artefact de diagnostic, pas un
 certificat global de non-existence.
+
+`make bench-permutation-like` écrit `reports/permutation_like_probe.json`. Il
+teste les profils locaux `permutation_like` observés sur `paired_farthest`
+contre les ordres quasi-circulaires exacts en petite taille. C’est un contrôle
+promise-aware borné, pas une reconstruction Hsu/McConnell générale.
 
 Dans `tools/pc_circular_conjecture_test.py`, la sortie `JUSTE` signifie seulement
 que la candidate a été égale à l’oracle exact sur les instances générées par ce

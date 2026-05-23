@@ -1349,3 +1349,29 @@ Interprétation prudente : le signal T067 `interaction_unsat` est maintenant un
 artefact minimal et régressé, mais il n'est pas un gadget NP-hard autonome. Il
 montre surtout qu'une relation fonctionnelle sparse peut devenir contradictoire
 avec une seule contrainte unaire parasite.
+
+## Résultat T069 - Robustesse promise-aware des profils `permutation_like`
+
+Statut : diagnostic expérimental, non preuve.
+
+T069 ajoute `make bench-permutation-like`. Le rapport
+`reports/permutation_like_probe.json` teste les profils `permutation_like`
+`paired_farthest` sur `p3_block_tree(2)` contre une énumération exhaustive des
+ordres quasi-circulaires exacts en `n=6`.
+
+Métriques principales du benchmark T069 :
+
+- `rows=128`, toutes complètes ;
+- `validation_mismatches=0` ;
+- `permutation_like_rows=11` ;
+- `parasite_free_permutation_like_rows=11` ;
+- `permutation_like_exact_quasi_scaffold_rows=11` ;
+- `exact_quasi_scaffold_rows=11` ;
+- `anomaly_count=0`.
+
+Conclusion prudente : les profils `permutation_like` observés sont plus
+prometteurs que de simples artefacts de scaffold arbitraire en petite taille,
+car ils coïncident avec l'exactitude quasi-circulaire du scaffold et les
+affectations acceptées restent quasi. La piste dureté/gadget reste ouverte, mais
+les obligations fortes demeurent : passage à grande taille, reconstruction
+Hsu/McConnell, contrôle des parasites et composition de plusieurs relations.

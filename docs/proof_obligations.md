@@ -257,6 +257,17 @@ les obligations de preuve : elle ne prouve pas que le CSP matérialisé est une
 réduction suffisante générale, ne respecte pas encore le promise
 Hsu/McConnell, et ne donne aucune borne de complexité pour les domaines `P`.
 
+T069 ajoute un contrôle plus proche du promise pour les profils
+`permutation_like` : en `n=6`, le probe énumère tous les ordres circulaires,
+filtre les ordres quasi-circulaires exacts de `D`, et compare cette famille aux
+frontiers du scaffold `P3/P3`. Sur le sweep observé, toutes les lignes
+`permutation_like` parasite-free coïncident avec
+`scaffold_matches_exact_quasi_orders=True`, et toutes les affectations acceptées
+restent quasi-circulaires. Cela ne ferme toujours pas les obligations de preuve
+générales : le test est exhaustif seulement en petite taille, ne fournit pas
+une construction Hsu/McConnell, et ne prouve pas qu'une relation locale
+bijective se compose en gadget global.
+
 ### Caractérisation bad-side d'un ordre fixé
 
 Statut : conséquence directe pour ordre fixé + prédicat central exact depuis

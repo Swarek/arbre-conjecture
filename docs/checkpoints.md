@@ -552,6 +552,16 @@ Dernier commit green avant T009 : `07120e4`.
   runs, `0` timeout, `0` incomplet). Résultat observé : le noyau minimal est un
   conflit local entre une unaire non booléenne et une binaire
   `sparse_partial_matching`; `candidate.py` n'a pas été modifié.
+- Checkpoint T069 courant : commit contenant le contrôle promise-aware borné
+  des profils `permutation_like`. Validation observée : test ciblé
+  permutation-like (`1 passed`), `make bench-permutation-like` (`128` lignes
+  complètes, `0` mismatch, `11` profils `permutation_like`, `11`
+  parasite-free, `0` anomalie), tests ciblés
+  `tests/test_csp_internal_benchmark.py` (`8 passed`), `make quick`
+  (`270 passed`, puis `JUSTE`) et `make bench-quick` (`40/40` runs,
+  `0` timeout, `0` incomplet). Résultat observé : en `n=6`, les profils
+  bijectifs parasite-free coïncident avec l'exactitude quasi-circulaire du
+  scaffold ; `candidate.py` n'a pas été modifié.
 
 ## Rollback
 

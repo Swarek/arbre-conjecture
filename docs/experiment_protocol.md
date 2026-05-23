@@ -167,6 +167,19 @@ tests de suppression et les projections brutes qui expliquent le conflit. Un
 noyau trouvé est un diagnostic local du modèle matérialisé ; il ne prouve ni
 UNSAT global, ni NP-difficulté, ni correction d'un solver.
 
+Contrôle promise-aware des permutations locales Piste F/C :
+
+```bash
+make bench-permutation-like
+```
+
+Cette commande écrit `reports/permutation_like_probe.json`. Le rapport scanne
+les profils locaux `permutation_like` dans `paired_farthest` sur `p3_block_tree`
+et, pour les petites tailles, compare exactement les frontiers du scaffold avec
+tous les ordres quasi-circulaires de `D`. Il reporte les parasites, les hashes,
+les cycles de permutation et les affectations acceptées qui restent quasi. Ce
+contrôle ne reconstruit pas le PC-tree Hsu/McConnell en général.
+
 ## Interprétation
 
 Un algorithme qui passe les gates peut encore être faux. Après chaque succès, il

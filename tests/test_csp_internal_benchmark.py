@@ -4,6 +4,7 @@ from tools.pc_relation_catalog import run_relation_catalog
 from tools.pc_relation_chain_probe import run_relation_chain_probe
 from tools.pc_relation_shape_search import run_relation_shape_search
 from tools.pc_relation_unsat_core_probe import run_relation_unsat_core_probe
+from tools.pc_permutation_like_probe import run_permutation_like_probe
 from tools.pc_single_p_domain_stress import run_single_p_domain_stress
 
 
@@ -596,3 +597,65 @@ def test_relation_unsat_core_probe_minimizes_interaction_unsat():
     assert len(quartet_removals) == 6
     assert any(check["satisfying_assignment_count"] == 0 for check in quartet_removals)
     assert any(check["satisfying_assignment_count"] > 0 for check in quartet_removals)
+
+
+def test_permutation_like_probe_checks_exact_small_quasi_scaffold():
+    report = run_permutation_like_probe(
+        repeats=8,
+        seed=20260550,
+        block_count=2,
+        exact_quasi_max_n=8,
+    )
+
+    summary = report["summary"]
+    assert summary["rows"] == 8
+    assert summary["complete_rows"] == 8
+    assert summary["validation_mismatches"] == 0
+    assert summary["permutation_like_rows"] == 1
+    assert summary["parasite_free_permutation_like_rows"] == 1
+    assert summary["permutation_like_exact_quasi_scaffold_rows"] == 1
+    assert summary["anomaly_count"] == 0
+    assert "not prove NP-hardness" in summary["interpretation"]
+    assert "not a general Hsu/McConnell reconstruction" in summary["promise_caveat"]
+
+    row = next(row for row in report["rows"] if row["has_permutation_like"])
+    assert row["seed"] == 20262574
+    assert row["row_category"] == "permutation_like_parasite_free_exact_quasi_scaffold"
+    assert row["parasite_free"] is True
+    assert row["constant_reject_count"] == 0
+    assert row["unary_restrictive_count"] == 0
+    assert row["high_arity_count"] == 0
+    assert row["full_accept_count"] == row["functional_accept_count"] == 12
+    assert row["binary_non_boolean_accept_count"] == 12
+    assert row["parasite_accept_count"] == 72
+
+    quasi = row["exact_quasi_metrics"]
+    assert quasi["promise_check_method"] == "exact_quasi_order_enumeration"
+    assert quasi["scaffold_frontier_count"] == 18
+    assert quasi["exact_quasi_order_count"] == 18
+    assert quasi["scaffold_non_quasi_count"] == 0
+    assert quasi["missing_quasi_order_count"] == 0
+    assert quasi["scaffold_matches_exact_quasi_orders"] is True
+
+    accept_quasi = row["relation_accept_quasi_metrics"]
+    assert accept_quasi["relation_accept_assignment_count"] == 12
+    assert accept_quasi["relation_accept_quasi_count"] == 12
+    assert accept_quasi["relation_accept_non_quasi_count"] == 0
+    assert accept_quasi["shape_stable_under_quasi_filter"] is True
+
+    profile = row["permutation_like_profiles"][0]
+    assert profile["catalog_hash"] == "2b53bb78399e16b4"
+    assert profile["scope"] == ["0", "1"]
+    assert profile["domain_sizes"] == [6, 6]
+    assert profile["accepted_signature_count"] == 6
+    assert profile["density"] == 1 / 6
+    assert profile["accepted_index_tuples"] == [
+        [0, 3],
+        [1, 2],
+        [2, 5],
+        [3, 4],
+        [4, 0],
+        [5, 1],
+    ]
+    assert profile["cycle_type"] == [3, 3]
+    assert profile["quartet_count"] == 3

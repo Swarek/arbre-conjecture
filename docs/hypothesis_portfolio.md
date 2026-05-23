@@ -203,6 +203,13 @@ projection gauche brute de la binaire est disjointe des valeurs acceptées par
 l'unaire. C'est un diagnostic de conflit uniaire+binaire, pas une preuve de
 dureté globale.
 
+Mise à jour T069 : le probe `permutation_like` vérifie sur `n=6` que les profils
+bijectifs parasite-free de `paired_farthest/P3x2` apparaissent exactement dans
+les lignes où le scaffold `P3/P3` égale l'ensemble exhaustif des ordres
+quasi-circulaires de `D`. Cela renforce le signal promise-aware en petite
+taille, mais ne reconstruit pas Hsu/McConnell en général et ne prouve pas la
+composabilité des gadgets.
+
 Sous-cas ajouté : explorer le cas strict comme algorithme spécialisé
 potentiellement polynomial. Ne pas l'intégrer à `candidate.py` avant d'avoir une
 détection stricte et une génération de candidats stricts vérifiées contre les

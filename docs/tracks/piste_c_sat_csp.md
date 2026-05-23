@@ -1210,6 +1210,34 @@ parasite unaire et une relation binaire sparse. Cela reste utile pour tester les
 compressions relationnelles, mais ce n'est ni un solver, ni une preuve de
 dureté.
 
+## Tentative T069 - `permutation_like` et contrôle quasi exact
+
+Statut : diagnostic CSP matérialisé + contrôle exact petite taille, hors
+`candidate.py`.
+
+Changement : ajout de `tools/pc_permutation_like_probe.py`, câblé par
+`make bench-permutation-like`. L'outil reprend les profils `permutation_like`
+de `paired_farthest/P3x2`, énumère tous les ordres circulaires en `n=6`, filtre
+les ordres quasi-circulaires exacts de `D`, puis compare cette famille aux
+frontiers du scaffold.
+
+Résultat `make bench-permutation-like` :
+
+- `128` lignes, toutes complètes ;
+- `0` mismatch de validation ;
+- `11` lignes `permutation_like` ;
+- `11` lignes `permutation_like` parasite-free ;
+- `11` lignes où le scaffold `P3/P3` égale exactement les ordres quasi de `D` ;
+- `0` anomalie ;
+- hashes observés : `2b53bb78399e16b4`, `879a45396db9d606`,
+  `8f00a6c3d8fbf547`, `95c822d2b89a3b08`.
+
+Interprétation : dans ce sweep `n=6`, les bijections locales ne viennent pas
+d'ordres hors quasi-circularité ; elles apparaissent précisément quand le
+scaffold est exact pour les ordres quasi. Cela rend le signal plus propre, mais
+ne prouve pas que le phénomène se compose ni que le PC-tree Hsu/McConnell serait
+identique en grande taille.
+
 ## Tentative T021 - Repair positive-only pour paired-farthest
 
 Statut : idée saine comme générateur expérimental vérifié, mais non intégrée à

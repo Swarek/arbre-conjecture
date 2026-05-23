@@ -1,7 +1,7 @@
 PYTHON ?= $(shell if [ -x .venv/bin/python ]; then echo .venv/bin/python; elif command -v python3 >/dev/null 2>&1; then echo python3; else echo python; fi)
 PYTEST ?= $(PYTHON) -m pytest
 
-.PHONY: quick check hunt-counterexamples bench-quick bench bench-piste-f bench-csp-quick bench-width-stress bench-single-p-stress bench-relation-catalog bench-relation-shapes bench-relation-chains bench-relation-unsat-cores unit acceptance
+.PHONY: quick check hunt-counterexamples bench-quick bench bench-piste-f bench-csp-quick bench-width-stress bench-single-p-stress bench-relation-catalog bench-relation-shapes bench-relation-chains bench-relation-unsat-cores bench-permutation-like unit acceptance
 
 unit:
 	$(PYTEST) -q
@@ -155,6 +155,15 @@ bench-relation-unsat-cores:
 	  --repeats 8 \
 	  --seed 20260550 \
 	  --output reports/relation_unsat_core_probe.json
+
+bench-permutation-like:
+	mkdir -p reports && \
+	$(PYTHON) tools/pc_permutation_like_probe.py \
+	  --repeats 128 \
+	  --seed 20260550 \
+	  --block-count 2 \
+	  --exact-quasi-max-n 8 \
+	  --output reports/permutation_like_probe.json
 
 acceptance:
 	make check && make bench

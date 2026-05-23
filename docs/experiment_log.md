@@ -3388,3 +3388,51 @@
 - Next action : explorer les profils `permutation_like` `paired_farthest` sous
   contrôle promise-aware, ou shrinker plus finement les quartets source du
   noyau T068.
+
+## 2026-05-23 promise-aware permutation-like probe
+
+- Date/heure : 2026-05-23 16:20:25 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les profils `permutation_like` parasite-free observés en
+  T067 sur `paired_farthest/P3x2` apparaissent précisément quand le scaffold
+  `P3/P3` coïncide avec les ordres quasi-circulaires exacts de `D` en petite
+  taille.
+- Changement fait : ajout de `tools/pc_permutation_like_probe.py`, de la cible
+  `make bench-permutation-like`, d'un test de régression et de la documentation
+  T069. L'outil compare les frontiers du scaffold aux ordres quasi exacts
+  énumérés pour `n=6`, reporte les profils de permutation, les parasites et les
+  affectations acceptées qui restent quasi.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `269 passed`, puis `JUSTE`.
+- Plan subagents : trois sidecars lecture seule. Résultats : un sidecar donne
+  les deux profils exacts T067 et les métriques minimales ; un second confirme
+  que la bonne vérification sans Hsu/McConnell est `frontiers scaffold` versus
+  ordres quasi exacts ; un troisième propose le langage prudent de non-preuve.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_csp_internal_benchmark.py::test_permutation_like_probe_checks_exact_small_quasi_scaffold`.
+- Résultat correction ciblée : `1 passed`.
+- Commande exécutée : `make bench-permutation-like`.
+- Résultat benchmark T069 : `reports/permutation_like_probe.json` écrit ;
+  `128` lignes, `128` complètes, `0` mismatch, `11` lignes
+  `permutation_like`, `11` lignes parasite-free, `11` lignes
+  `permutation_like_exact_quasi_scaffold`, `0` anomalie.
+- Détail : les hashes observés sont `2b53bb78399e16b4`, `879a45396db9d606`,
+  `8f00a6c3d8fbf547` et `95c822d2b89a3b08`. Les affectations acceptées par les
+  profils ciblés sont toutes quasi-circulaires dans les lignes exactes.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_csp_internal_benchmark.py`.
+- Résultat correction ciblée élargie : `8 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction finale : `270 passed`, puis `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `8` tailles, `40/40` runs réussis, `0` timeout et `0` incomplet.
+- Conclusion : T069 renforce le signal local `permutation_like` en petite
+  taille, mais ne prouve ni NP-difficulté, ni composabilité, ni reconstruction
+  Hsu/McConnell générale. `candidate.py` n'a pas été modifié.
+- Next action : construire ou chercher une instance multi-blocs où ces
+  bijections locales se composent sans parasites destructeurs, ou prouver que
+  les égalités de quasi-scaffold restent limitées à `n=6`.

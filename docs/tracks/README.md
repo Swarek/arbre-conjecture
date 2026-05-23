@@ -114,6 +114,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T066 | 2026-05-23 | F/C | Minage des formes de relations non booléennes : classes structurées mais aucun gadget parasite-free | `make bench-relation-shapes` |
 | T067 | 2026-05-23 | F/C | Composition fonctionnelle : `permutation_like` sans parasite restrictif et interaction UNSAT | `make bench-relation-chains` |
 | T068 | 2026-05-23 | F/C | Noyau UNSAT minimal d'interaction : conflit unaire plus `sparse_partial_matching`, diagnostic matérialisé seulement | `make bench-relation-unsat-cores` |
+| T069 | 2026-05-23 | F/C | Contrôle promise-aware borné : `permutation_like` parasite-free seulement quand `P3/P3` égale les ordres quasi exacts en `n=6` | `make bench-permutation-like` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

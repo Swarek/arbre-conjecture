@@ -218,6 +218,8 @@ def _row_from_relation_report(
                 "left_functional": profile["left_functional"],
                 "right_functional": profile["right_functional"],
                 "accepted_index_tuples": profile.get("accepted_index_tuples"),
+                "quartet_count": relation["quartet_count"],
+                "quartets": [list(quartet) for quartet in relation["quartets"]],
             }
         )
         if shape in FUNCTIONAL_SHAPES:

@@ -4478,3 +4478,43 @@ il réfute l'interprétation plus ambitieuse d'un gadget global : le noyau est u
 conflit unaire+binaire local dans le CSP matérialisé. Continuer soit vers la
 recherche promise-aware des profils `permutation_like`, soit vers un shrink de
 quartets source plus fin.
+
+## ExecPlan 2026-05-23 - Promise-aware permutation-like probe
+
+But : tester si les profils `permutation_like` T067 dans `paired_farthest` sont seulement des artefacts du scaffold `P3/P3`, ou s'ils apparaissent précisément quand ce scaffold coïncide avec les ordres quasi-circulaires exacts en petite taille.
+
+Hypothèse : pour `paired_farthest` sur `p3_block_tree(2)`, les profils `permutation_like` parasite-free apparaissent sur les seeds où les frontiers du scaffold sont exactement l'ensemble des ordres quasi-circulaires de `D` pour `n=6`. Si une ligne `permutation_like` existe hors exactitude quasi-circulaire, ce serait un contre-signal immédiat contre l'interprétation promise-aware.
+
+Fichiers visés : `tools/pc_permutation_like_probe.py`, `tests/test_csp_internal_benchmark.py`, `Makefile`, `README.md`, `docs/experiment_protocol.md`, `docs/hypothesis_portfolio.md`, `docs/tracks/piste_c_sat_csp.md`, `docs/tracks/piste_f_complexity_subcases.md`, `docs/proof_obligations.md`, `docs/experiment_log.md`, `docs/checkpoints.md`, `docs/tracks/README.md`, `PLANS.md`.
+
+Algorithme pressenti : réutiliser `run_relation_chain_probe` pour les relations matérialisées, puis pour les petites tailles énumérer tous les ordres circulaires canoniques et toutes les frontiers du scaffold. Reporter `scaffold_matches_exact_quasi_orders`, inclusion dans les deux sens, nombres d'ordres quasi/cR, hashes `permutation_like`, parasites et comptes SAT. Ne jamais reconstruire Hsu/McConnell : le rapport doit dire qu'il s'agit d'un contrôle exact petite taille, pas d'une preuve générale du promise.
+
+Plan de contre-exemples : scanner beaucoup de seeds `paired_farthest` n=6. Chercher trois anomalies : `permutation_like` avec parasite restrictif, `permutation_like` sans exactitude quasi du scaffold, ou exactitude quasi du scaffold sans `permutation_like`. Toute anomalie doit être listée dans le JSON.
+
+Plan subagents : trois sidecars lecture seule : métriques du probe, caveat promise/scaffold, formulation tests/docs. L'agent principal implémente et garde les gates.
+
+Tests à exécuter : test ciblé du nouveau probe, `make bench-permutation-like`, tests CSP ciblés, `make quick`, et `make bench-quick`. `candidate.py` ne doit pas changer.
+
+Risques : `scaffold_matches_exact_quasi_orders` n'est calculable que pour petites tailles ; même quand vrai à `n=6`, cela ne prouve ni la reconstruction Hsu/McConnell, ni la composabilité des relations, ni une réduction de dureté. Les permutations locales de labels peuvent expliquer le phénomène.
+
+Résultats observés : ajout de `tools/pc_permutation_like_probe.py`, cible
+`make bench-permutation-like`, test ciblé et documentation T069. Le rapport
+`reports/permutation_like_probe.json` contient `128` lignes complètes,
+`0` mismatch, `11` lignes `permutation_like`, `11` lignes parasite-free,
+`11` lignes où le scaffold `P3/P3` égale exactement les ordres quasi-circulaires
+de `D` en `n=6`, et `0` anomalie. Les hashes observés sont
+`2b53bb78399e16b4`, `879a45396db9d606`, `8f00a6c3d8fbf547` et
+`95c822d2b89a3b08`.
+
+Tests observés : test ciblé permutation-like `1 passed`; tests ciblés
+`tests/test_csp_internal_benchmark.py` : `8 passed`; `make
+bench-permutation-like` écrit `reports/permutation_like_probe.json` avec les
+résultats ci-dessus ; `make quick` passe avec `270 passed`, puis `JUSTE` ;
+`make bench-quick` garde `40/40` runs réussis, `0` timeout et `0` incomplet.
+
+Décision : T069 renforce le signal promise-aware en petite taille : les profils
+bijectifs parasite-free ne viennent pas d'ordres hors quasi-circularité dans le
+sweep `n=6`. Cela ne prouve pas la composabilité ni la reconstruction
+Hsu/McConnell grande taille. Continuer par une construction multi-blocs
+composable ou par un contrôle de quasi exactitude sur une famille structurée
+plus grande.
