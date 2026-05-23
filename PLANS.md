@@ -4518,3 +4518,42 @@ sweep `n=6`. Cela ne prouve pas la composabilité ni la reconstruction
 Hsu/McConnell grande taille. Continuer par une construction multi-blocs
 composable ou par un contrôle de quasi exactitude sur une famille structurée
 plus grande.
+
+## ExecPlan 2026-05-23 - Multi-block permutation composition probe
+
+But : tester si les relations locales `permutation_like` observées en T069 peuvent se composer sur plusieurs blocs `P3`, ou si les parasites et la non-exactitude quasi du scaffold détruisent immédiatement le signal dès `k >= 3`.
+
+Hypothèse : les bijections locales `P3/P3` sont robustes en `n=6`, mais leur composition sur `p3_block_tree(k)` risque de disparaître ou de devenir contaminée par `constant_reject`/unaires dès `k=3`. Un contre-signal utile serait une ligne avec au moins deux relations `permutation_like` dans une même composante fonctionnelle, sans parasite restrictif, avec un nombre d'affectations satisfaisantes non nul.
+
+Fichiers visés : `tools/pc_permutation_composition_probe.py`, `tests/test_csp_internal_benchmark.py`, `Makefile`, `README.md`, `docs/experiment_protocol.md`, `docs/hypothesis_portfolio.md`, `docs/tracks/piste_c_sat_csp.md`, `docs/tracks/piste_f_complexity_subcases.md`, `docs/proof_obligations.md`, `docs/experiment_log.md`, `docs/checkpoints.md`, `docs/tracks/README.md`, `PLANS.md`.
+
+Algorithme pressenti : réutiliser `run_relation_chain_probe` sur `paired_farthest` et `p3_block_tree(k)` pour `k=2,3,4`, collecter les relations `permutation_like`, leurs composantes, les parasites restrictifs et les comptes SAT. Ajouter un diagnostic ciblé `k=3` qui distingue : aucune bijection, bijection isolée, chemin de deux bijections, cycle de bijections, obstruction expliquée par `constant_reject`, ou vrai candidat parasite-free. Pour `n <= 8`, conserver le contrôle quasi exact ; pour `n=9+`, marquer le promise comme non vérifié.
+
+Plan de contre-exemples : scanner beaucoup de seeds `paired_farthest` pour `k=3`; chercher soit un candidat multi-relation parasite-free, soit prouver expérimentalement que tous les cas `k=3` sont bloqués par constantes/unaires ou perdent la forme `permutation_like`. L'artefact utile peut être un contre-signal négatif si aucun chemin de composition propre n'apparaît.
+
+Plan subagents : trois sidecars lecture seule : métriques de composition, recherche de seeds/familles, langage preuve/limites. L'agent principal implémente le probe et garde les gates.
+
+Tests à exécuter : test ciblé du probe de composition, `make bench-permutation-composition`, tests CSP ciblés, `make quick`, `make bench-quick`. `candidate.py` ne doit pas changer.
+
+Risques : une absence de composition dans les générateurs actuels ne réfute pas l'existence d'un gadget ; une composition dans le scaffold ne prouve pas le promise Hsu/McConnell ni une réduction NP-hard. Le rapport doit donc séparer composabilité relationnelle, parasites, exactitude quasi petite taille et caveat de grande taille.
+
+Résultats observés : ajout de `tools/pc_permutation_composition_probe.py`,
+cible `make bench-permutation-composition`, test ciblé et documentation T070.
+Le rapport `reports/permutation_composition_probe.json` contient `192` lignes
+complètes, `0` mismatch, `6` lignes `permutation_like`, `6` instances de
+relations `permutation_like`, `0` ligne multi-permutation, `0` candidat de
+composition propre, `5` bijections isolées propres en `k=2`, aucune en `k=3`,
+et une bijection isolée bloquée par parasites en `k=4`.
+
+Tests observés : test ciblé composition `1 passed`; tests ciblés
+`tests/test_csp_internal_benchmark.py` : `9 passed`; `make
+bench-permutation-composition` écrit `reports/permutation_composition_probe.json`
+avec les résultats ci-dessus ; `make quick` passe avec `271 passed`, puis
+`JUSTE`; `make bench-quick` garde `40/40` runs réussis, `0` timeout et
+`0` incomplet.
+
+Décision : T070 donne un signal négatif utile contre la composition naïve du
+gadget local T069 : dans `paired_farthest/P3x{k}`, les bijections ne forment pas
+de réseau propre dès qu'on dépasse deux blocs. Continuer soit par un générateur
+construit pour aligner plusieurs blocs, soit basculer vers une autre forme de
+relation non booléenne.

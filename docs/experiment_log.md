@@ -3436,3 +3436,49 @@
 - Next action : construire ou chercher une instance multi-blocs où ces
   bijections locales se composent sans parasites destructeurs, ou prouver que
   les égalités de quasi-scaffold restent limitées à `n=6`.
+
+## 2026-05-23 multi-block permutation composition probe
+
+- Date/heure : 2026-05-23 16:30:48 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les relations locales `permutation_like` T069 peuvent
+  peut-être se composer sur plusieurs blocs `P3` sans parasites restrictifs.
+- Changement fait : ajout de `tools/pc_permutation_composition_probe.py`, de la
+  cible `make bench-permutation-composition`, d'un test de régression et de la
+  documentation T070. L'outil mesure composantes d'arêtes `permutation_like`,
+  parasites, comptes SAT et blocages par taille de scaffold.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `270 passed`, puis `JUSTE`.
+- Plan subagents : trois sidecars lecture seule. Résultats reçus : un sidecar
+  recommande de définir une composition propre comme au moins deux arêtes
+  `permutation_like` dans une même composante sans parasites ; un autre signale
+  que le langage doit rester strictement diagnostic, sans claim de dureté.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_csp_internal_benchmark.py::test_permutation_composition_probe_reports_no_clean_multiblock_candidate`.
+- Résultat correction ciblée : `1 passed`.
+- Commande exécutée : `make bench-permutation-composition`.
+- Résultat benchmark T070 : `reports/permutation_composition_probe.json` écrit ;
+  `192` lignes, `192` complètes, `0` mismatch, `6` lignes
+  `permutation_like`, `0` ligne multi-permutation, `0` candidat de composition,
+  `max_permutation_component_edges=1`.
+- Détail par bloc : `k=2` donne `5` bijections isolées propres ; `k=3` ne donne
+  aucune bijection et `56` lignes avec `constant_reject` ; `k=4` donne une
+  bijection isolée bloquée par parasites et `64` lignes avec `constant_reject`.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_csp_internal_benchmark.py`.
+- Résultat correction ciblée élargie : `9 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction finale : `271 passed`, puis `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `8` tailles, `40/40` runs réussis, `0` timeout et `0` incomplet.
+- Conclusion : T070 est un signal négatif expérimental contre la composition
+  naïve des gadgets locaux T069 dans `paired_farthest/P3x{k}`. Cela ne prouve
+  pas qu'une autre famille globale de `D` ne puisse pas composer des bijections.
+  `candidate.py` n'a pas été modifié.
+- Next action : soit construire un générateur explicitement multi-blocs pour
+  aligner plusieurs bijections locales, soit basculer vers une autre forme
+  relationnelle moins fragile que `permutation_like`.

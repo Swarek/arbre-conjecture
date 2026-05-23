@@ -48,6 +48,7 @@ make bench-relation-shapes
 make bench-relation-chains
 make bench-relation-unsat-cores
 make bench-permutation-like
+make bench-permutation-composition
 make acceptance
 ```
 
@@ -106,6 +107,11 @@ certificat global de non-existence.
 teste les profils locaux `permutation_like` observés sur `paired_farthest`
 contre les ordres quasi-circulaires exacts en petite taille. C’est un contrôle
 promise-aware borné, pas une reconstruction Hsu/McConnell générale.
+
+`make bench-permutation-composition` écrit
+`reports/permutation_composition_probe.json`. Il teste si ces profils
+`permutation_like` se composent sur plusieurs blocs `P3` sans parasites
+restrictifs. C’est un stress de gadget local, pas une preuve de dureté.
 
 Dans `tools/pc_circular_conjecture_test.py`, la sortie `JUSTE` signifie seulement
 que la candidate a été égale à l’oracle exact sur les instances générées par ce

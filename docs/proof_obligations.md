@@ -268,6 +268,15 @@ générales : le test est exhaustif seulement en petite taille, ne fournit pas
 une construction Hsu/McConnell, et ne prouve pas qu'une relation locale
 bijective se compose en gadget global.
 
+T070 teste précisément cette dernière faiblesse par composition multi-blocs. Le
+sweep `paired_farthest` sur `p3_block_tree(k)` pour `k=2,3,4` ne trouve aucun
+réseau propre de plusieurs relations `permutation_like` : les bijections restent
+isolées ou sont bloquées par parasites. Ce résultat ajoute une limite
+expérimentale à la piste gadget. Il ne prouve pas qu'une autre construction
+globale de `D` ne puisse pas composer ces relations, et ne satisfait donc pas
+les obligations de réduction, de contrôle des parasites ni de promise
+Hsu/McConnell.
+
 ### Caractérisation bad-side d'un ordre fixé
 
 Statut : conséquence directe pour ordre fixé + prédicat central exact depuis

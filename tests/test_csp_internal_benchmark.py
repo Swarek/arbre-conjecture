@@ -5,6 +5,7 @@ from tools.pc_relation_chain_probe import run_relation_chain_probe
 from tools.pc_relation_shape_search import run_relation_shape_search
 from tools.pc_relation_unsat_core_probe import run_relation_unsat_core_probe
 from tools.pc_permutation_like_probe import run_permutation_like_probe
+from tools.pc_permutation_composition_probe import run_permutation_composition_probe
 from tools.pc_single_p_domain_stress import run_single_p_domain_stress
 
 
@@ -659,3 +660,39 @@ def test_permutation_like_probe_checks_exact_small_quasi_scaffold():
     ]
     assert profile["cycle_type"] == [3, 3]
     assert profile["quartet_count"] == 3
+
+
+def test_permutation_composition_probe_reports_no_clean_multiblock_candidate():
+    report = run_permutation_composition_probe(
+        block_counts=[2, 3, 4],
+        repeats=16,
+        seed=20260550,
+        assignment_limit=1_000_000,
+        component_product_limit=1_000_000,
+    )
+
+    summary = report["summary"]
+    assert summary["rows"] == 48
+    assert summary["complete_rows"] == 48
+    assert summary["validation_mismatches"] == 0
+    assert summary["assignment_incomplete_rows"] == 0
+    assert summary["permutation_like_rows"] == 1
+    assert summary["permutation_like_relation_instances"] == 1
+    assert summary["multi_permutation_rows"] == 0
+    assert summary["composition_candidate_rows"] == 0
+    assert summary["single_permutation_only_rows"] == 1
+    assert summary["max_permutation_component_edges"] == 1
+    assert "not a proof" in summary["interpretation"]
+
+    assert summary["by_block_count"]["2"]["single_permutation_only_rows"] == 1
+    assert summary["by_block_count"]["3"]["permutation_like_rows"] == 0
+    assert summary["by_block_count"]["4"]["permutation_like_rows"] == 0
+    assert summary["by_block_count"]["3"]["constant_reject_rows"] == 15
+    assert summary["by_block_count"]["4"]["constant_reject_rows"] == 16
+
+    row = next(row for row in report["rows"] if row["permutation_like_count"] == 1)
+    assert row["block_count"] == 2
+    assert row["row_class"] == "single_permutation_only"
+    assert row["parasite_free"] is True
+    assert row["max_permutation_component_edges"] == 1
+    assert row["has_multi_permutation_component"] is False

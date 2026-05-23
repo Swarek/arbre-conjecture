@@ -562,6 +562,15 @@ Dernier commit green avant T009 : `07120e4`.
   `0` timeout, `0` incomplet). Résultat observé : en `n=6`, les profils
   bijectifs parasite-free coïncident avec l'exactitude quasi-circulaire du
   scaffold ; `candidate.py` n'a pas été modifié.
+- Checkpoint T070 courant : commit contenant le probe de composition multi-blocs
+  des profils `permutation_like`. Validation observée : test ciblé composition
+  (`1 passed`), `make bench-permutation-composition` (`192` lignes complètes,
+  `0` mismatch, `6` lignes `permutation_like`, `0` candidat de composition),
+  tests ciblés `tests/test_csp_internal_benchmark.py` (`9 passed`),
+  `make quick` (`271 passed`, puis `JUSTE`) et `make bench-quick` (`40/40`
+  runs, `0` timeout, `0` incomplet). Résultat observé : les bijections restent
+  isolées en `k=2`, disparaissent en `k=3`, ou sont bloquées par parasites en
+  `k=4`; `candidate.py` n'a pas été modifié.
 
 ## Rollback
 

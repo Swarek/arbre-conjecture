@@ -210,6 +210,13 @@ quasi-circulaires de `D`. Cela renforce le signal promise-aware en petite
 taille, mais ne reconstruit pas Hsu/McConnell en général et ne prouve pas la
 composabilité des gadgets.
 
+Mise à jour T070 : le probe de composition multi-blocs ne trouve aucun candidat
+propre sur `paired_farthest/P3x{k}` pour `k=2,3,4` et `64` seeds. Les
+`permutation_like` restent isolées : `5` lignes propres en `k=2`, aucune en
+`k=3`, et une seule ligne en `k=4` bloquée par parasites. C'est un signal
+négatif contre la composition naïve de ce gadget local, pas une preuve
+d'impossibilité.
+
 Sous-cas ajouté : explorer le cas strict comme algorithme spécialisé
 potentiellement polynomial. Ne pas l'intégrer à `candidate.py` avant d'avoir une
 détection stricte et une génération de candidats stricts vérifiées contre les

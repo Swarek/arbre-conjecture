@@ -1238,6 +1238,32 @@ scaffold est exact pour les ordres quasi. Cela rend le signal plus propre, mais
 ne prouve pas que le phénomène se compose ni que le PC-tree Hsu/McConnell serait
 identique en grande taille.
 
+## Tentative T070 - Composition multi-blocs de `permutation_like`
+
+Statut : diagnostic CSP matérialisé, hors `candidate.py`.
+
+Changement : ajout de `tools/pc_permutation_composition_probe.py`, câblé par
+`make bench-permutation-composition`. L'outil scanne `paired_farthest` sur
+`p3_block_tree(k)` pour `k=2,3,4`, extrait les arêtes `permutation_like`, leurs
+composantes, les parasites restrictifs et les comptes d'affectations.
+
+Résultat `make bench-permutation-composition` :
+
+- `192` lignes, toutes complètes ;
+- `0` mismatch ;
+- `6` lignes avec une relation `permutation_like` ;
+- `0` ligne avec au moins deux relations `permutation_like` ;
+- `0` candidat de composition propre ;
+- `max_permutation_component_edges=1` ;
+- par bloc : `k=2` donne `5` bijections isolées propres, `k=3` aucune, `k=4`
+  une bijection isolée bloquée par parasites.
+
+Interprétation : T070 donne un contre-signal à la composition naïve des
+bijective gadgets T069. Dans cette famille, les relations restent isolées ou
+sont bloquées par constantes/unaires. Cela ne prouve pas qu'aucun gadget
+multi-blocs n'existe ; cela indique seulement que `paired_farthest/P3x{k}` ne le
+fournit pas directement.
+
 ## Tentative T021 - Repair positive-only pour paired-farthest
 
 Statut : idée saine comme générateur expérimental vérifié, mais non intégrée à

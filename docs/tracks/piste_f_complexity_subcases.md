@@ -1375,3 +1375,33 @@ car ils coïncident avec l'exactitude quasi-circulaire du scaffold et les
 affectations acceptées restent quasi. La piste dureté/gadget reste ouverte, mais
 les obligations fortes demeurent : passage à grande taille, reconstruction
 Hsu/McConnell, contrôle des parasites et composition de plusieurs relations.
+
+## Résultat T070 - Composition multi-blocs des profils `permutation_like`
+
+Statut : diagnostic expérimental, non preuve.
+
+T070 ajoute `make bench-permutation-composition`. Le rapport
+`reports/permutation_composition_probe.json` cherche des composantes de plusieurs
+arêtes `permutation_like` dans `paired_farthest/P3x{k}`.
+
+Métriques principales du benchmark T070 :
+
+- `rows=192`, toutes complètes ;
+- `validation_mismatches=0` ;
+- `permutation_like_rows=6` ;
+- `permutation_like_relation_instances=6` ;
+- `multi_permutation_rows=0` ;
+- `composition_candidate_rows=0` ;
+- `max_permutation_component_edges=1`.
+
+Par taille de scaffold :
+
+- `k=2` : `5` lignes `permutation_like`, toutes isolées et propres ;
+- `k=3` : `0` ligne `permutation_like`, `56` lignes avec `constant_reject` ;
+- `k=4` : `1` ligne `permutation_like`, bloquée par parasites, et `64` lignes
+  avec `constant_reject`.
+
+Conclusion prudente : le gadget local T069 ne se compose pas directement dans
+ce générateur. La piste dureté doit soit construire une autre famille globale
+de `D`, soit accepter que `paired_farthest/P3x{k}` produit surtout des parasites
+dès que plus de deux blocs interagissent.

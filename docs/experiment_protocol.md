@@ -180,6 +180,20 @@ tous les ordres quasi-circulaires de `D`. Il reporte les parasites, les hashes,
 les cycles de permutation et les affectations acceptées qui restent quasi. Ce
 contrôle ne reconstruit pas le PC-tree Hsu/McConnell en général.
 
+Composition multi-blocs des permutations locales Piste F/C :
+
+```bash
+make bench-permutation-composition
+```
+
+Cette commande écrit `reports/permutation_composition_probe.json`. Le rapport
+cherche des réseaux de relations `permutation_like` sur plusieurs blocs `P3`,
+mesure leurs composantes, les parasites restrictifs et les affectations
+acceptées par le CSP matérialisé. Un candidat propre exigerait au moins deux
+arêtes `permutation_like` dans une même composition, sans parasite restrictif et
+avec des affectations acceptées. L'absence d'un tel candidat dans un sweep est
+un signal négatif expérimental pour cette famille, pas une preuve d'impossibilité.
+
 ## Interprétation
 
 Un algorithme qui passe les gates peut encore être faux. Après chaque succès, il
