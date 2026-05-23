@@ -1,6 +1,11 @@
 import itertools
+import random
 
-from pc_circular.generators import cycle_metric, quasi_circular_not_circular_four_point
+from pc_circular.generators import (
+    cycle_metric,
+    quasi_circular_not_circular_four_point,
+    random_dissimilarity,
+)
 from pc_circular.predicates import (
     all_circular_orders,
     farthest_sets,
@@ -9,6 +14,7 @@ from pc_circular.predicates import (
     find_farthest_prop_4_5_obstruction,
     find_bad_side_precircular_cR_violation,
     find_precircular_cR_violation,
+    find_threshold_clean_side_violation,
     has_at_most_one_bad_witness_per_pair,
     is_constant_off_diagonal,
     is_precircular_order_cR,
@@ -17,6 +23,8 @@ from pc_circular.predicates import (
     passes_farthest_crossing_condition,
     passes_farthest_prop_4_4_condition,
     passes_farthest_prop_4_5_order_test,
+    passes_threshold_clean_side_condition,
+    threshold_common_neighborhood,
 )
 
 
@@ -100,6 +108,46 @@ def test_bad_side_precircular_matches_quadruple_definition_on_exhaustive_n4():
                 find_precircular_cR_violation(D, order) is None
             )
     assert checked == 2187
+
+
+def test_threshold_common_neighborhood_is_clean_complement():
+    D = quasi_circular_not_circular_four_point()
+
+    assert threshold_common_neighborhood(D, 0, 2) == set()
+    assert threshold_common_neighborhood(D, 0, 1) == {2, 3}
+
+
+def test_threshold_clean_side_matches_bad_side_on_exhaustive_n4():
+    n = 4
+    pairs = list(itertools.combinations(range(n), 2))
+    checked = 0
+    for values in itertools.product((1, 2, 3), repeat=len(pairs)):
+        D = [[0] * n for _ in range(n)]
+        for (i, j), value in zip(pairs, values):
+            D[i][j] = D[j][i] = value
+        for order in all_circular_orders(n):
+            checked += 1
+            assert passes_threshold_clean_side_condition(
+                D, order
+            ) is passes_bad_side_precircular_cR(D, order)
+            assert (find_threshold_clean_side_violation(D, order) is None) is (
+                find_bad_side_precircular_cR_violation(D, order) is None
+            )
+    assert checked == 2187
+
+
+def test_threshold_clean_side_matches_bad_side_on_random_orders():
+    rng = random.Random(20260620)
+    checked = 0
+    for n in range(5, 8):
+        for _ in range(15):
+            D = random_dissimilarity(n, values=(1, 2, 3, 4), rng=rng)
+            for order in all_circular_orders(n):
+                checked += 1
+                assert passes_threshold_clean_side_condition(
+                    D, order
+                ) is passes_bad_side_precircular_cR(D, order)
+    assert checked == 6480
 
 
 def test_bad_side_precircular_keeps_equalities_non_strict():

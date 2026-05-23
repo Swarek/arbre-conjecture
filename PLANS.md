@@ -5029,3 +5029,46 @@ Décision : ne pas intégrer la piste stricte dans `candidate.py` maintenant. Le
 mode positive-only n'ajoute aucune couverture sur ce sweep large-n, et son coût
 max observé serait trop élevé sans gain. Changer de piste vers une preuve
 strict structurée ou vers une famille où `candidate.py` reste incomplète.
+
+## ExecPlan T078 - clean-side par seuil
+
+But : transformer la recommandation externe "threshold/round-order" en un
+artefact falsifiable minimal : pour un ordre fixé, comparer cR directe,
+bad-side et clean-side par seuil.
+
+Hypothèse : pour chaque paire `{a,b}`, avec `r = D[a][b]`, le complément des
+mauvais témoins est
+`C_ab = N_r[a] intersect N_r[b]`. Un ordre fixé est cR ssi au moins un des deux
+arcs ouverts entre `a` et `b` est contenu dans `C_ab`, pour toute paire.
+
+Fichiers à modifier : `src/pc_circular/predicates.py`,
+`tests/test_predicates.py`, `tools/pc_threshold_roundness_probe.py`,
+`Makefile`, `README.md`, `docs/experiment_protocol.md`,
+`docs/hypothesis_portfolio.md`, `docs/tracks/piste_d_circular_ones.md`,
+`docs/tracks/piste_e_farthest_quartets.md`,
+`docs/proof_obligations.md`, `docs/experiment_log.md`,
+`docs/checkpoints.md`, `docs/tracks/README.md`, `PLANS.md`.
+
+Algorithme pressenti : ajouter le prédicat clean-side sans toucher à
+`candidate.py`. Pour chaque paire d'endpoints dans un ordre complet, construire
+les deux arcs ouverts. Si aucun des deux arcs n'est entièrement inclus dans le
+voisinage commun au seuil `d(a,b)`, retourner une violation contenant un mauvais
+témoin sur chaque arc. Comparer ce résultat au prédicat bad-side et au scan
+direct des quadruplets.
+
+Tests à exécuter : `tests/test_predicates.py`,
+`make bench-threshold-roundness`, `make quick`, `make bench-quick`.
+
+Risques : cette équivalence peut n'être qu'une réécriture fixed-order sans
+gain algorithmique. Elle ne doit pas être promue en circular-ones standard,
+car l'arc propre est choisi par paire.
+
+Résultats observés : `tests/test_predicates.py` passe (`20 passed`) ;
+`make bench-threshold-roundness` vérifie `6072` ordres sur `53` lignes,
+`0` mismatch, `0` troncature, `max_seconds=0.0307`. Gates finales :
+`make quick` passe avec `283 passed`, puis `JUSTE`; `make bench-quick` garde
+`40/40` runs, `0` timeout, `0` incomplet.
+
+Décision : continuer seulement si les gates globales restent vertes. La suite
+naturelle est le test de représentabilité PC-tree de l'ensemble des ordres cR,
+ou une tentative round-order/seuil imbriqué.

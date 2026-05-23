@@ -1,7 +1,7 @@
 PYTHON ?= $(shell if [ -x .venv/bin/python ]; then echo .venv/bin/python; elif command -v python3 >/dev/null 2>&1; then echo python3; else echo python; fi)
 PYTEST ?= $(PYTHON) -m pytest
 
-.PHONY: quick check hunt-counterexamples bench-quick bench bench-piste-f bench-csp-quick bench-width-stress bench-single-p-stress bench-relation-catalog bench-relation-shapes bench-relation-chains bench-relation-unsat-cores bench-sparse-matching bench-sparse-binary-cores bench-quartet-coverage bench-frontier-obstructions bench-strict-algorithm52 bench-strict-positive-coverage bench-permutation-like bench-permutation-composition bench-relation-components unit acceptance
+.PHONY: quick check hunt-counterexamples bench-quick bench bench-piste-f bench-csp-quick bench-width-stress bench-single-p-stress bench-relation-catalog bench-relation-shapes bench-relation-chains bench-relation-unsat-cores bench-sparse-matching bench-sparse-binary-cores bench-quartet-coverage bench-frontier-obstructions bench-strict-algorithm52 bench-strict-positive-coverage bench-threshold-roundness bench-permutation-like bench-permutation-composition bench-relation-components unit acceptance
 
 unit:
 	$(PYTEST) -q
@@ -217,6 +217,16 @@ bench-strict-positive-coverage:
 	  --max-candidates 20000 \
 	  --seed 20260610 \
 	  --output reports/strict_positive_coverage.json
+
+bench-threshold-roundness:
+	mkdir -p reports && \
+	$(PYTHON) tools/pc_threshold_roundness_probe.py \
+	  --sizes 4,5,6,7 \
+	  --instance-kinds cycle,random,equal,paired_farthest,four_local_non_cr,five_local_non_cr \
+	  --repeats 5 \
+	  --order-limit 5000 \
+	  --seed 20260620 \
+	  --output reports/threshold_roundness_probe.json
 
 bench-permutation-like:
 	mkdir -p reports && \

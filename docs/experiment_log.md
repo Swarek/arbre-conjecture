@@ -3833,3 +3833,43 @@
 - Next action : changer de piste vers une preuve structurée d'un sous-cas strict
   ou vers une famille où la candidate est réellement incomplète, par exemple
   les lignes candidate placeholder vues dans ce probe.
+
+## 2026-05-23 threshold clean-side fixed-order reformulation
+
+- Date/heure : 2026-05-23 21:42:37 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : la caractérisation bad-side d'un ordre fixé peut être
+  réécrite comme une condition de seuil : pour chaque paire `{a,b}`, au moins
+  un arc ouvert entre `a` et `b` est contenu dans
+  `N_{d(a,b)}[a] intersect N_{d(a,b)}[b]`.
+- Changement fait : ajout de `threshold_common_neighborhood`,
+  `passes_threshold_clean_side_condition`,
+  `find_threshold_clean_side_violation`, du probe
+  `tools/pc_threshold_roundness_probe.py`, de la cible
+  `make bench-threshold-roundness`, de tests d'équivalence et de la
+  documentation T078. `candidate.py` n'a pas été modifié.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_predicates.py`.
+- Résultat correction ciblée : `20 passed`.
+- Commande exécutée :
+  `rtk .venv/bin/python -m py_compile src/pc_circular/predicates.py tools/pc_threshold_roundness_probe.py`.
+- Résultat compilation : succès.
+- Commande exécutée : `rtk make bench-threshold-roundness`.
+- Résultat benchmark T078 :
+  `reports/threshold_roundness_probe.json` écrit ; `53` lignes,
+  `6072` ordres vérifiés, `0` mismatch, `0` ligne tronquée,
+  histogramme des niveaux de distance `{"1": 4, "2": 8, "3": 26, "4": 15}`,
+  `max_seconds=0.0307`.
+- Commande exécutée : `make quick`.
+- Résultat correction finale : `283 passed`, puis `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `8` tailles, `40/40` runs réussis, `0` timeout et `0` incomplet.
+- Conclusion provisoire : la reformulation clean-side est cohérente avec
+  bad-side et avec la définition cR directe sur le sweep borné. C'est une brique
+  fixed-order pour les pistes seuil/round-order, pas une décision d'existence
+  dans un PC-tree.
+- Next action : tester si les contraintes `C_ab` par seuil forment une famille
+  représentable par PC-tree/round-order, ou basculer vers le test de
+  PC-représentabilité de l'ensemble des ordres cR.

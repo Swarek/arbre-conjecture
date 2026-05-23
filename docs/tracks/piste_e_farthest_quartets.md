@@ -374,6 +374,18 @@ la dégénérescence equal-distance, les frontiers représentées de plusieurs a
 test cR direct sur deux PC-trees. Cette couverture protège surtout les cas non
 stricts et égalités avant toute réduction 2-SAT.
 
+Complément T078 : le même invariant fixed-order est maintenant exprimé en
+clean-side par seuil. Pour `{a,b}`, poser
+`C_ab = N_{d(a,b)}[a] intersect N_{d(a,b)}[b]`. Un ordre échoue exactement quand
+les deux arcs ouverts entre `a` et `b` contiennent chacun un point hors `C_ab`,
+c'est-à-dire un mauvais témoin. Le probe `make bench-threshold-roundness`
+compare cette version à bad-side et au scan direct des quadruplets :
+`6072` ordres vérifiés, `0` mismatch.
+
+Cette reformulation ne change pas les quartets interdits ; elle donne un
+langage plus adapté aux prochaines expériences de seuils, d'ordres round et
+d'obstructions ordinales.
+
 ## Prochaine action
 
 Utiliser les témoins `find_precircular_cR_violation` comme source principale

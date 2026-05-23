@@ -87,6 +87,19 @@ nécessaire sur les lignes cR, et `B(a,b)` arc produit encore quelques mismatchs
 sur cycles. La conclusion reste qu'il faut une contrainte globale de projection
 ou une relation de séparateur, pas une circular-ones locale indépendante.
 
+Complément T078 : la reformulation clean-side par seuil remplace la vue
+`B(a,b)` par son complément
+`C_ab = N_{d(a,b)}[a] intersect N_{d(a,b)}[b]`. Pour un ordre fixé, la condition
+cR devient : pour toute paire `{a,b}`, au moins un des deux arcs ouverts entre
+`a` et `b` est contenu dans `C_ab`. Le probe `make bench-threshold-roundness`
+compare cette condition à bad-side et à la définition par quadruples. Résultat
+observé : `53` lignes, `6072` ordres vérifiés, `0` mismatch, `0` troncature.
+
+Interprétation : T078 donne une meilleure porte vers les seuils imbriqués,
+round-order et projection-adjacence. Il ne transforme pas encore cR en
+circular-ones standard, car la contrainte porte sur un arc choisi entre deux
+endpoints, pas sur la consécutivité globale de `C_ab`.
+
 ## Risques
 
 - Les contraintes cR peuvent ne pas être exprimables comme contraintes d’arcs
@@ -100,6 +113,8 @@ Deux suites raisonnables :
 
 - construire réellement le PC-tree/circular-ones des boules et l'intersecter
   avec le PC-tree donné, au lieu d'énumérer les frontiers ;
+- tester si les familles de contraintes `C_ab` par seuil sont représentables
+  par une structure round-order ou simultaneous PC/PQ-ordering imbriquée ;
 - exploiter `B(a,b)` arc comme filtre positif suffisant ou obstruction locale,
   sans l'utiliser comme caractérisation, puis chercher les corrélations
   supplémentaires qui restaurent la condition exacte one-side dans un PC-tree.

@@ -73,8 +73,31 @@ def has_at_most_one_bad_witness_per_pair(D: Matrix) -> bool:
     return True
 
 
+def threshold_common_neighborhood(D: Matrix, a: int, b: int) -> set[int]:
+    """Return ``N_r[a] intersect N_r[b]`` without endpoints, for ``r=d(a,b)``.
+
+    This is the clean set in the threshold reformulation: every point outside
+    it is a bad witness for the pair ``{a,b}``.
+    """
+
+    n = validate_dissimilarity(D)
+    if not (0 <= a < n and 0 <= b < n) or a == b:
+        raise ValueError("a and b must be distinct labels in 0..n-1")
+    radius = D[a][b]
+    return {
+        w
+        for w in range(n)
+        if w != a and w != b and D[a][w] <= radius and D[w][b] <= radius
+    }
+
+
 def _is_bad_witness(D: Matrix, a: int, b: int, w: int) -> bool:
     return w != a and w != b and max(D[a][w], D[w][b]) > D[a][b]
+
+
+def _is_threshold_clean(D: Matrix, a: int, b: int, w: int) -> bool:
+    radius = D[a][b]
+    return w != a and w != b and D[a][w] <= radius and D[w][b] <= radius
 
 
 def _validate_order_for_D(D: Matrix, order: Order) -> int:
@@ -212,6 +235,20 @@ def passes_bad_side_precircular_cR(D: Matrix, order: Order) -> bool:
     return find_bad_side_precircular_cR_violation(D, order) is None
 
 
+def passes_threshold_clean_side_condition(D: Matrix, order: Order) -> bool:
+    """Exact fixed-order cR test in threshold clean-side form.
+
+    For pair ``{a,b}``, set ``r=d(a,b)`` and
+    ``C_ab = N_r[a] intersect N_r[b]``.  The order passes iff at least one of
+    the two open circular arcs between ``a`` and ``b`` is contained in
+    ``C_ab`` for every pair.  This is the same fixed-order condition as
+    ``passes_bad_side_precircular_cR`` written with the clean complement of the
+    bad witnesses.
+    """
+
+    return find_threshold_clean_side_violation(D, order) is None
+
+
 def is_strict_precircular_order_cR(D: Matrix, order: Order) -> bool:
     """Test the strict one-side Robinson condition ``scR`` for one order."""
 
@@ -320,6 +357,63 @@ def find_bad_side_precircular_cR_violation(D: Matrix, order: Order) -> dict | No
                 "d_yb": D[y][b],
                 "d_at": D[a][t],
                 "d_tb": D[t][b],
+            }
+    return None
+
+
+def find_threshold_clean_side_violation(D: Matrix, order: Order) -> dict | None:
+    """Return a violation of the threshold clean-side condition."""
+
+    n = _validate_order_for_D(D, order)
+    if n < 4:
+        return None
+
+    seq = tuple(order)
+    position = {label: index for index, label in enumerate(seq)}
+    for left_index in range(n):
+        a = seq[left_index]
+        for right_index in range(left_index + 1, n):
+            b = seq[right_index]
+            arc_a_to_b = seq[left_index + 1 : right_index]
+            arc_b_to_a = seq[right_index + 1 :] + seq[:left_index]
+            clean_a_to_b = all(
+                _is_threshold_clean(D, a, b, w) for w in arc_a_to_b
+            )
+            if clean_a_to_b:
+                continue
+            clean_b_to_a = all(
+                _is_threshold_clean(D, a, b, w) for w in arc_b_to_a
+            )
+            if clean_b_to_a:
+                continue
+
+            bad_a_to_b = next(
+                w for w in arc_a_to_b if not _is_threshold_clean(D, a, b, w)
+            )
+            bad_b_to_a = next(
+                w for w in arc_b_to_a if not _is_threshold_clean(D, a, b, w)
+            )
+            return {
+                "pair": (a, b),
+                "radius": D[a][b],
+                "quadruple": (a, bad_a_to_b, b, bad_b_to_a),
+                "positions": (
+                    left_index,
+                    position[bad_a_to_b],
+                    right_index,
+                    position[bad_b_to_a],
+                ),
+                "a_to_b_bad_witness": bad_a_to_b,
+                "b_to_a_bad_witness": bad_b_to_a,
+                "a_to_b_arc": tuple(arc_a_to_b),
+                "b_to_a_arc": tuple(arc_b_to_a),
+                "threshold_common_neighborhood": sorted(
+                    threshold_common_neighborhood(D, a, b)
+                ),
+                "interpretation": (
+                    "Neither open arc between the pair is contained in the "
+                    "common threshold neighborhood."
+                ),
             }
     return None
 

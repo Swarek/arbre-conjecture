@@ -408,6 +408,24 @@ Preuve expérimentale T038 : tests exhaustifs `n=4`, rotations/renversements,
 La complexité observée de `make bench` sur `mixed/star` descend à une médiane
 `0.0275s` à `n=100`, sans timeout ni incomplet.
 
+Conséquence T078 : la même caractérisation peut être écrite en clean-side par
+seuil. Pour `{a,b}`, avec `r = D[a][b]`, définir
+`C_ab = {w notin {a,b} : D[a][w] <= r and D[w][b] <= r}`. Comme `C_ab` est le
+complément exact des mauvais témoins parmi les points distincts des endpoints,
+un ordre fixé est cR ssi, pour chaque paire `{a,b}`, au moins un des deux arcs
+ouverts entre `a` et `b` est contenu dans `C_ab`.
+
+Preuve expérimentale T078 : `tests/test_predicates.py` compare
+`passes_threshold_clean_side_condition`, `passes_bad_side_precircular_cR` et
+`is_precircular_order_cR` sur l'exhaustif `n=4`, valeurs `{1,2,3}`, puis sur
+des randoms `n=5..7`, sans désaccord. `make bench-threshold-roundness` vérifie
+`6072` ordres sur `53` lignes (`cycle/random/equal/paired_farthest/
+four_local_non_cr/five_local_non_cr`), `0` mismatch et `0` troncature.
+
+Limite : T078 ferme seulement une reformulation d'ordre fixé. Les obligations
+3, 4 et 5 restent ouvertes pour l'existence dans le PC-tree, et la contrainte
+clean-side n'est pas encore une construction circular-ones/PC-tree.
+
 ### Signature bad-side de bloc
 
 Statut : outil expérimental / limite de compacité observée.

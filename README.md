@@ -53,6 +53,7 @@ make bench-quartet-coverage
 make bench-frontier-obstructions
 make bench-strict-algorithm52
 make bench-strict-positive-coverage
+make bench-threshold-roundness
 make bench-permutation-like
 make bench-permutation-composition
 make bench-relation-components
@@ -144,6 +145,12 @@ un audit de complétude borné pour le sous-cas strict, pas une preuve général
 validés par Algorithm 5.2 ajouteraient des `exists=True` par rapport à
 `candidate.py` sur des tailles au-delà du brute force. Les échecs restent
 incomplets ; le rapport ne justifie jamais un `False`.
+
+`make bench-threshold-roundness` écrit `reports/threshold_roundness_probe.json`.
+Il compare la reformulation fixed-order par seuils
+`N_{d(a,b)}[a] intersect N_{d(a,b)}[b]` au prédicat bad-side et à la définition
+cR directe. C'est un contrôle d'équivalence pour ordre fixé, pas un solveur
+d'existence dans le PC-tree.
 
 `make bench-permutation-like` écrit `reports/permutation_like_probe.json`. Il
 teste les profils locaux `permutation_like` observés sur `paired_farthest`

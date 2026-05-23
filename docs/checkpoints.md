@@ -647,6 +647,14 @@ Dernier commit green avant T009 : `07120e4`.
   `make quick` (`280 passed`, puis `JUSTE`) et `make bench-quick` (`40/40`
   runs, `0` timeout, `0` incomplet). `candidate.py` n'a pas été modifié.
 
+- Checkpoint T078 courant : commit contenant la reformulation clean-side par
+  seuil pour ordre fixé. Validation observée : `tests/test_predicates.py`
+  (`20 passed`), `make bench-threshold-roundness` (`53` lignes, `6072` ordres
+  vérifiés, `0` mismatch vs bad-side et cR directe, `0` troncature,
+  `max_seconds ~= 0.0307`), `make quick` (`283 passed`, puis `JUSTE`) et
+  `make bench-quick` (`40/40` runs, `0` timeout, `0` incomplet).
+  `candidate.py` n'a pas été modifié.
+
 ## Rollback
 
 Si une modification régresse et que la cause n’est pas claire :

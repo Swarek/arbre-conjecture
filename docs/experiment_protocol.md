@@ -252,6 +252,20 @@ Les lignes où Algorithm 5.2 ne trouve rien, atteint sa limite, ou trouve un
 témoin non représenté restent des diagnostics ; elles ne produisent jamais un
 rejet.
 
+Contrôle seuil clean-side Piste D/E :
+
+```bash
+make bench-threshold-roundness
+```
+
+Cette commande écrit `reports/threshold_roundness_probe.json`. Elle compare
+trois prédicats d'ordre fixé : définition cR directe par quadruples,
+bad-side, et clean-side par seuil
+`N_{d(a,b)}[a] intersect N_{d(a,b)}[b]`. Un mismatch est un contre-exemple
+prioritaire à régresser. Une absence de mismatch établit seulement une
+équivalence expérimentale bornée pour ordre fixé ; elle ne décide pas
+l'existence dans un PC-tree compact.
+
 Contrôle promise-aware des permutations locales Piste F/C :
 
 ```bash

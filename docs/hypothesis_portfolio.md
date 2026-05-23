@@ -25,6 +25,13 @@ Complément red-team 2026-05-23 :
 que la treewidth du CSP ne suffit pas sans borne ou compression prouvée des
 domaines `P`. Le cas star/single `P` doit rester un stress prioritaire.
 
+Complément stratégie globale 2026-05-23 :
+`docs/external_reviews/gpt55_global_strategy_threshold_pc_2026-05-23.md` ajoute
+un routage large après les saturations T075/T077. Priorités proposées :
+reformulation par seuils, test de PC-représentabilité des ordres cR, phase
+transition star, obstructions globales high-girth, compression de branches `P`
+actives. Ces pistes doivent être traitées comme hypothèses falsifiables.
+
 ## Piste A : contraintes locales sur nœuds P/C
 
 Intuition : les croisements de cordes farthest-neighbor imposent peut-être des
@@ -148,6 +155,12 @@ circular-ones locales ne capturent pas les obstructions multi-niveaux. Même
 quand `project_farthest_sets_to_pc_nodes` est silencieux sur tous les nœuds, les
 frontiers non-cR exhibent un quartet bad-side exact. La piste D doit donc
 chercher une intersection globale ou un modèle de projection-adjacence.
+
+Mise à jour T078 : la reformulation clean-side par seuil est maintenant testée
+comme équivalent fixed-order à bad-side. Elle ne restaure pas une contrainte
+circular-ones simple, mais elle déplace l'objet vers les intersections
+`N_{d(a,b)}[a] intersect N_{d(a,b)}[b]`, ce qui alimente les pistes round-order
+commun, seuils imbriqués et projection-adjacence.
 
 ## Piste E : obstructions interdites par quartets farthest-neighbor
 
