@@ -439,3 +439,56 @@ Lecture DP :
 Prochaine obligation pour continuer côté DP : construire un test de composition
 parent-enfant, ou produire un contre-exemple où deux affectations ayant le même
 quotient local divergent après extension dans un support plus large.
+
+## Résultats T056
+
+Statut : contre-exemple DP contextuel, hors `candidate.py`.
+
+T056 ajoute `component_mask_quotient_context_collision_profile`. Pour deux
+supports groupés qui se chevauchent, le diagnostic fixe les choix sur
+`(S union C) \\ S` et teste si un quotient local calculé sur `S` suffit à
+prédire le hit/no-hit du groupe voisin `C`. C'est une approximation contrôlée
+de la question parent-enfant : si le même état local et le même contexte externe
+observé donnent deux réponses différentes dans `C`, alors l'état local n'est
+pas composable seul.
+
+Résultat minimal : sur `cycle_metric(5)` avec
+`balanced_pc_tree(5, kind="mixed")`, `mask_multiset` a `12` collisions de
+contexte sur `36` états contextuels, alors que le contrôle
+`assignment_signature` a `0` collision. Le cas est régressé par
+`test_component_mask_quotient_context_collision_refutes_mask_multiset_as_dp_state`.
+
+Contre-exemple global plus fort : sur la matrice `n=5`
+
+```text
+[[0,1,2,2,3],
+ [1,0,2,2,3],
+ [2,2,0,1,3],
+ [2,2,1,0,3],
+ [3,3,3,3,0]]
+```
+
+avec `balanced_pc_tree(5, kind="C")`, deux affectations locales du support
+`((), (0,), (0,0))` ont `mask_multiset=(1,2)`, `hit_components=()`,
+`hit_pairs=()` et le même contexte externe `(1,)=(0,1)`. Elles induisent
+pourtant les ordres canoniques `(0,1,4,3,2)` et `(0,1,3,4,2)`, respectivement
+cR et non-cR. Le témoin contextuel qui distingue le second est l'atome
+bad-side `(2,4,3,0)` sur le support `((), (0,), (1,))`. Le test
+`test_mask_multiset_quotient_same_context_global_cr_collision_counterexample`
+conserve ce cas.
+
+Lecture DP :
+
+- `mask_multiset` reste un classifieur local sound dans T055, mais il est
+  insuffisant comme état DP autonome ;
+- `hit_components`, `hit_pairs` et `decision_only` collisionnent encore plus,
+  ce qui confirme qu'ils sont trop proches d'une décision locale sans mémoire
+  de contexte ;
+- quand l'état T054 complet `full` collisionne sur les probes agrégées, ce n'est
+  pas une perte due au quotient : c'est une limite des états de masques fermés
+  face aux contraintes ouvertes entre supports voisins.
+
+Conséquence : une DP viable doit transporter plus qu'un état de masques fermé
+par support. Il faut représenter des obligations ouvertes vers les supports
+voisins ou garder des signatures d'affectation plus fines ; sinon le contexte
+parent peut distinguer deux sous-états fusionnés.

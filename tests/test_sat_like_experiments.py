@@ -35,6 +35,7 @@ from pc_circular.solvers.sat_like_experiments import (
     compile_bad_side_nogoods_support_local,
     compile_cr_nogoods,
     compile_cr_nogoods_support_local,
+    component_mask_quotient_context_collision_profile,
     forbidden_cr_atoms,
     forbidden_bad_side_atoms,
     frontier_from_assignment,
@@ -629,6 +630,56 @@ def test_component_mask_quotient_negative_control_has_minimal_mixed_state():
     assert quotients["mask_multiset"]["mixed_count"] == 0
     assert quotients["side_blind_schema"]["state_count"] == 1
     assert quotients["side_blind_schema"]["mixed_count"] == 1
+
+
+def test_component_mask_quotient_context_collision_refutes_mask_multiset_as_dp_state():
+    profile = component_mask_quotient_context_collision_profile(
+        cycle_metric(5),
+        balanced_pc_tree(5, kind="mixed"),
+        max_p_degree=3,
+    )
+    quotients = profile["quotients"]
+
+    assert profile["complete"] is True
+    assert profile["counts"]["support_group_count"] == 3
+    assert profile["counts"]["context_pair_count"] == 6
+    assert profile["counts"]["context_assignments_seen"] == 96
+    assert quotients["assignment_signature"]["mixed_count"] == 0
+    assert quotients["full"]["mixed_count"] == 0
+    assert quotients["mask_multiset"]["mixed_count"] == 12
+    assert quotients["hit_components"]["mixed_count"] > 0
+    assert quotients["side_blind_schema"]["mixed_count"] > 0
+    collision = profile["first_collisions"]["mask_multiset"]
+    assert collision["previous_hit"] != collision["new_hit"]
+    assert collision["base_support"] != collision["context_support"]
+
+
+def test_component_mask_quotient_context_collision_reports_limit_and_unsupported():
+    limited = component_mask_quotient_context_collision_profile(
+        cycle_metric(5),
+        balanced_pc_tree(5, kind="mixed"),
+        max_p_degree=3,
+        limit=1,
+    )
+    assert limited["complete"] is False
+    assert limited["counts"]["context_assignments_seen"] == 1
+    assert "exists" not in limited
+    assert "order" not in limited
+    assert "accepted_frontiers" not in limited
+
+    unsupported = component_mask_quotient_context_collision_profile(
+        cycle_metric(5),
+        star_pc_tree(5),
+        max_p_degree=3,
+    )
+    assert unsupported["complete"] is False
+    assert unsupported["encoding"]["unsupported"]
+    assert unsupported["counts"]["context_assignments_seen"] == 0
+    assert unsupported["quotients"] == {}
+    assert unsupported["first_collisions"] == {}
+    assert "exists" not in unsupported
+    assert "order" not in unsupported
+    assert "accepted_frontiers" not in unsupported
 
 
 def test_witness_side_cache_key_keeps_nested_support_choices():

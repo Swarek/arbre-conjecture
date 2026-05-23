@@ -16,6 +16,7 @@ from pc_circular.generators import (
     padded_four_local_non_cr,
 )
 from pc_circular.predicates import (
+    canonical_circular_order,
     find_farthest_crossing_violation,
     find_precircular_cR_violation,
     is_precircular_order_cR,
@@ -28,6 +29,16 @@ from pc_circular.solvers.local_constraints import (
     _matching_crossing_parts,
     exact_low_hub_matching_projected_pc_tree_search_report,
     project_farthest_sets_to_pc_nodes,
+)
+from pc_circular.solvers.sat_like_experiments import (
+    _bad_witness_components_by_pair,
+    _component_mask_state,
+    _component_mask_state_quotients,
+    _cyclic_atom_occurs,
+    _project_atom_order_from_support_assignment,
+    forbidden_bad_side_atoms,
+    frontier_from_assignment,
+    quartet_support_paths,
 )
 
 COUNTEREXAMPLES = [
@@ -286,3 +297,63 @@ def test_matching_low_hub_side_split_boolean_encoding_is_not_sufficient():
     assert side_split_ok is True
     assert _matching_crossing_parts(projection, pairs) is None
     assert exact_oracle_pc_tree(D, T)["exists"] is False
+
+
+def test_mask_multiset_quotient_same_context_global_cr_collision_counterexample():
+    D = [
+        [0, 1, 2, 2, 3],
+        [1, 0, 2, 2, 3],
+        [2, 2, 0, 1, 3],
+        [2, 2, 1, 0, 3],
+        [3, 3, 3, 3, 0],
+    ]
+    T = balanced_pc_tree(5, kind="C")
+    local_support = ((), (0,), (0, 0))
+    full_a = {(): (0, 1), (0,): (0, 1), (0, 0): (1, 0), (1,): (0, 1)}
+    full_b = {(): (0, 1), (0,): (1, 0), (0, 0): (0, 1), (1,): (0, 1)}
+    local_a = {path: full_a[path] for path in local_support}
+    local_b = {path: full_b[path] for path in local_support}
+    local_atoms = [
+        atom_info
+        for atom_info in forbidden_bad_side_atoms(D)
+        if quartet_support_paths(T, atom_info["atom"]) == local_support
+    ]
+    components_by_pair = _bad_witness_components_by_pair(local_atoms)
+
+    state_a = _component_mask_state(T, local_a, components_by_pair, {})
+    state_b = _component_mask_state(T, local_b, components_by_pair, {})
+    quotient_a = _component_mask_state_quotients(state_a["state"])
+    quotient_b = _component_mask_state_quotients(state_b["state"])
+
+    assert state_a["hit"] is False
+    assert state_b["hit"] is False
+    assert quotient_a["mask_multiset"] == quotient_b["mask_multiset"] == (1, 2)
+    assert quotient_a["hit_components"] == quotient_b["hit_components"] == ()
+    assert quotient_a["hit_pairs"] == quotient_b["hit_pairs"] == ()
+
+    order_a = canonical_circular_order(frontier_from_assignment(T, full_a))
+    order_b = canonical_circular_order(frontier_from_assignment(T, full_b))
+    assert order_a == (0, 1, 4, 3, 2)
+    assert order_b == (0, 1, 3, 4, 2)
+    assert is_precircular_order_cR(D, order_a) is True
+    assert is_precircular_order_cR(D, order_b) is False
+
+    context_atom = (2, 4, 3, 0)
+    context_support = quartet_support_paths(T, context_atom)
+    assert context_support == ((), (0,), (1,))
+    projected_a = canonical_circular_order(
+        _project_atom_order_from_support_assignment(
+            T,
+            context_atom,
+            {path: full_a[path] for path in context_support},
+        )
+    )
+    projected_b = canonical_circular_order(
+        _project_atom_order_from_support_assignment(
+            T,
+            context_atom,
+            {path: full_b[path] for path in context_support},
+        )
+    )
+    assert _cyclic_atom_occurs(projected_a, context_atom) is False
+    assert _cyclic_atom_occurs(projected_b, context_atom) is True

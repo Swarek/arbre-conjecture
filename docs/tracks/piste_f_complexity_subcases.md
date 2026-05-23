@@ -920,3 +920,37 @@ Conclusion complexité : il existe des quotients locaux plus forts, mais les
 plus compressés sont des vues très proches de la décision locale et ne donnent
 pas une structure DP composable. Le quotient `mask_multiset` est le meilleur
 candidat non tautologique à tester ensuite contre un contexte parent.
+
+## Résultat T056 - Collisions contextuelles des quotients
+
+Statut : mesure de complexité empirique hors candidate.
+
+T056 mesure les collisions de contexte pour les quotients T055. Le coût est
+volontairement borné dans `make bench-csp-quick` par `max_pairs=20` paires de
+supports voisins par ligne ; les lignes incomplètes sont visibles dans le JSON.
+
+Sur la gate CSP rapide :
+
+- `35728` affectations contextuelles inspectées ;
+- `1828` paires de supports profilées ;
+- `74` lignes incomplètes sur ce diagnostic borné ;
+- `assignment_signature` a `0` collision, comme contrôle ;
+- `mask_multiset` a `856` collisions contextuelles ;
+- `full` a `190` collisions contextuelles ;
+- les quotients plus compressés (`hit_components`, `decision_only`) ont des
+  milliers de collisions.
+
+Sur le probe stress `n=8` avec repeats `2` :
+
+- `9072` affectations contextuelles ;
+- `400` paires de supports profilées ;
+- `20` lignes incomplètes ;
+- `mask_multiset` a `26` collisions ;
+- `full` a `8` collisions ;
+- `assignment_signature` reste à `0`.
+
+Interprétation complexité : la compression locale de T055 n'est pas suffisante
+comme signal de tractabilité. Même l'état de masques complet peut être trop
+pauvre pour composer des supports voisins. Une future DP devra payer soit par
+des états plus riches, soit par des obligations ouvertes, ce qui affaiblit
+l'hypothèse d'une petite table d'états issue des seuls masques fermés.

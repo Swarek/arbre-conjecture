@@ -429,6 +429,18 @@ Dernier commit green avant T009 : `07120e4`.
   tandis que `side_blind_schema` descend à `0.1250` mais produit `358` états
   mixtes ; le cas minimal `cycle_metric(4)`/`balanced_pc_tree(4, kind="C")`
   est régressé. Aucun changement dans `candidate.py`.
+- Checkpoint T056 courant : commit contenant le diagnostic de collisions de
+  contexte des quotients hors candidate. Validation observée :
+  `tests/test_regression_counterexamples.py tests/test_sat_like_experiments.py
+  tests/test_csp_internal_benchmark.py` (`64 passed`),
+  `make bench-csp-quick` (`192` lignes, `0` mismatch), probe stress `n=8`
+  (`20` lignes, `0` mismatch), `make quick` (`236 passed`, puis `JUSTE`),
+  `make check` (`JUSTE`), `make bench-quick` (`40/40` runs, `0` timeout,
+  `0` incomplet). Résultat observé : `mask_multiset` a `856` collisions de
+  contexte sur la gate CSP rapide et un contre-exemple global `n=5` avec même
+  `mask_multiset=(1,2)` mais décisions cR différentes est régressé. Les
+  collisions de `full` montrent que les états de masques fermés ne suffisent
+  pas comme états DP autonomes. Aucun changement dans `candidate.py`.
 
 ## Rollback
 

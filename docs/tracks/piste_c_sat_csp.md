@@ -666,6 +666,76 @@ DP. La prochaine question est externe au support groupé : ces quotients se
 composent-ils à travers un parent PC-tree sans perdre les paires et les choix
 imbriqués ?
 
+## Tentative T056 - Collisions de contexte des quotients
+
+Statut : diagnostic Piste C/B, hors `candidate.py`.
+
+Hypothèse testée : un quotient local T055 peut être exact pour le hit/no-hit de
+son support groupé, mais échouer comme état de composition. Le nouveau profil
+`component_mask_quotient_context_collision_profile` compare deux supports
+groupés qui se chevauchent. Pour une paire `(S,C)`, il fixe les choix de
+`(S union C) \\ S`, calcule le quotient local sur `S`, puis mesure si ce
+quotient détermine le hit/no-hit de `C`.
+
+Contrôles :
+
+- `assignment_signature` garde la signature complète sur `S` et doit rester à
+  `0` collision ;
+- `side_blind_schema` reste un contrôle négatif ;
+- `full` signifie l'état de masques T054 complet, pas l'affectation complète.
+  Une collision de `full` signale une contrainte ouverte entre supports, pas
+  seulement une mauvaise projection.
+
+Contre-exemple minimal régressé : `cycle_metric(5)` avec
+`balanced_pc_tree(5, kind="mixed")`.
+
+- `context_pair_count=6` ;
+- `context_assignments_seen=96` ;
+- `assignment_signature` : `0` collision ;
+- `full` : `0` collision sur ce petit cas ;
+- `mask_multiset` : `12` collisions ;
+- `hit_components`, `hit_pairs`, `decision_only` et `side_blind_schema` :
+  collisions positives.
+
+Contre-exemple global régressé : sur une matrice `n=5` fournie par le sidecar
+contre-exemples, deux affectations du support `((), (0,), (0,0))` ont le même
+`mask_multiset=(1,2)` et le même contexte externe `(1,)=(0,1)`, mais produisent
+un ordre cR `(0,1,4,3,2)` et un ordre non-cR `(0,1,3,4,2)`. L'atome
+`(2,4,3,0)` sur le support voisin `((), (0,), (1,))` distingue le second. Cela
+montre que le quotient peut échouer au niveau de la décision globale, pas
+seulement sur une métrique de profil.
+
+Résultat `make bench-csp-quick` après T056 :
+
+- `192` lignes supportées, `0` mismatch des solveurs CSP expérimentaux ;
+- `context_collision_assignments_seen=35728` ;
+- `context_collision_pairs_profiled=1828` ;
+- `context_collision_incomplete_rows=74` car le diagnostic est borné à
+  `max_pairs=20` par ligne ;
+- `assignment_signature` : `mixed_count=0` ;
+- `full` : ratio `0.4678`, `mixed_count=190` ;
+- `mask_multiset` : ratio `0.4033`, `mixed_count=856` ;
+- `hit_components` : ratio `0.2137`, `mixed_count=2438` ;
+- `decision_only` : ratio `0.1763`, `mixed_count=2194` ;
+- `side_blind_schema` : ratio `0.1250`, `mixed_count=1334`.
+
+Probe stress `n=8`, repeats `2`, familles
+`random/cycle/non_strict/paired_farthest/permuted_cycle`,
+balanced/mixed :
+
+- `context_collision_assignments_seen=9072` ;
+- `assignment_signature` : `0` collision ;
+- `full` : `8` collisions ;
+- `mask_multiset` : `26` collisions ;
+- `hit_components` : `414` collisions ;
+- `decision_only` : `354` collisions.
+
+Conclusion : T056 réfute `mask_multiset` comme état DP autonome. Il montre aussi
+que l'état de masques complet T054 peut être insuffisant face à des contraintes
+ouvertes entre supports voisins. La piste C doit donc passer d'un quotient fermé
+par support à une représentation d'obligations ouvertes, ou changer d'axe vers
+un sous-cas prouvable.
+
 ## Tentative T021 - Repair positive-only pour paired-farthest
 
 Statut : idée saine comme générateur expérimental vérifié, mais non intégrée à

@@ -2680,3 +2680,71 @@
 - Next action : tester la stabilité de `mask_multiset` ou `hit_components` sous
   extension par contexte parent, ou changer d'axe vers un sous-cas prouvable si
   cette composition échoue.
+
+## 2026-05-23 quotient context collisions
+
+- Date/heure : 2026-05-23 10:18:19 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : un quotient T055 peut être exact pour le hit/no-hit local
+  d'un support groupé, mais ne pas être composable. Si deux affectations d'un
+  support `S` ont le même quotient et un même contexte externe dans
+  `(S union C) \\ S`, alors un support voisin `C` ne devrait pas pouvoir les
+  distinguer si le quotient est un état DP autonome.
+- Changement fait : ajout du diagnostic
+  `component_mask_quotient_context_collision_profile`, câblage du benchmark CSP
+  interne, tests de contexte, limites/unsupported, et régression durable
+  `test_mask_multiset_quotient_same_context_global_cr_collision_counterexample`.
+  Aucun changement dans `candidate.py`.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `233 passed`, puis `JUSTE`.
+- Plan subagents : trois sidecars lecture seule. Résultats : Piste B formalise
+  les collisions `boundary_hit/global_cr`; Piste F recommande de traiter
+  `mask_multiset` comme prioritaire et de garder `side_blind_schema` comme
+  contrôle négatif ; le sidecar contre-exemples trouve un témoin global `n=5`
+  où `mask_multiset=(1,2)` avec même contexte externe donne un ordre cR et un
+  ordre non-cR.
+- Commande exécutée :
+  `pytest -q tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`.
+- Résultat correction ciblée intermédiaire : `52 passed`.
+- Commande exécutée :
+  `pytest -q tests/test_regression_counterexamples.py
+  tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`.
+- Résultat correction ciblée : `64 passed`.
+- Régression ajoutée : matrice `n=5` avec `balanced_pc_tree(5, kind="C")`,
+  support local `((), (0,), (0,0))`, même `mask_multiset=(1,2)`, même contexte
+  externe `(1,)=(0,1)`, frontiers canoniques `(0,1,4,3,2)` cR et
+  `(0,1,3,4,2)` non-cR, distingués par l'atome bad-side `(2,4,3,0)`.
+- Commande exécutée : `make bench-csp-quick`.
+- Résultat benchmark interne : `reports/csp_internal_benchmark_quick.json`
+  écrit ; `192` lignes, `0` mismatch. Diagnostic contexte :
+  `35728` affectations contextuelles, `1828` paires profilées,
+  `74` lignes incomplètes visibles car `max_pairs=20`.
+  Collisions : `assignment_signature=0`, `full=190`,
+  `mask_multiset=856`, `hit_components=2438`, `decision_only=2194`,
+  `side_blind_schema=1334`.
+- Commande exécutée : probe stress
+  `tools/pc_csp_internal_benchmark.py --sizes 8 --repeats 2 --instance-kinds
+  random,cycle,non_strict,paired_farthest,permuted_cycle --pc-trees
+  balanced,mixed`.
+- Résultat probe stress : `20` lignes, `0` mismatch ;
+  `context_collision_assignments_seen=9072`, `assignment_signature=0`,
+  `full=8`, `mask_multiset=26`, `hit_components=414`,
+  `decision_only=354`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `236 passed`, puis `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `8` tailles, `40` runs réussis, `0` timeout et `0` incomplet. `candidate.py`
+  n'a pas été modifié par T056.
+- Conclusion : `mask_multiset`, `hit_components`, `hit_pairs` et
+  `decision_only` sont réfutés comme états DP autonomes. Les collisions de
+  `full` indiquent aussi que l'état de masques fermé par support ne porte pas
+  les obligations ouvertes entre supports voisins.
+- Next action : soit définir une signature avec obligations ouvertes entre
+  supports voisins, soit basculer vers un sous-cas prouvable / une piste de
+  complexité plutôt que continuer à quotienter les états fermés.

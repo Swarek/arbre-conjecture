@@ -798,6 +798,21 @@ def _component_mask_state_quotients(state: tuple) -> dict[str, tuple]:
     }
 
 
+def _support_atom_scan_hit(
+    pc_tree: PCNode,
+    support_assignment: Assignment,
+    support_atoms: Sequence[dict],
+) -> bool:
+    for atom_info in support_atoms:
+        atom = tuple(atom_info["atom"])
+        order = canonical_circular_order(
+            _project_atom_order_from_support_assignment(pc_tree, atom, support_assignment)
+        )
+        if _cyclic_atom_occurs(order, atom):
+            return True
+    return False
+
+
 def _domain_product_size(encoding: dict, support: Sequence[Path]) -> int:
     result = 1
     for path in support:
@@ -2199,6 +2214,169 @@ def bad_side_grouped_support_outcome_profile(
     )
     report["counts"]["bad_witness_total"] = sum(len(witnesses) for witnesses in witnesses_by_pair.values())
     report["counts"]["witness_pair_constraints"] = witness_pair_constraints
+    return report
+
+
+def component_mask_quotient_context_collision_profile(
+    D,
+    pc_tree: PCNode,
+    *,
+    max_p_degree: int = 3,
+    limit: Optional[int] = None,
+    max_pairs: Optional[int] = None,
+) -> dict:
+    """Measure whether local mask-state quotients survive neighboring supports.
+
+    For two overlapping support groups ``S`` and ``C``, this diagnostic fixes
+    the choices on ``(S union C) \\ S`` and asks whether a quotient of the local
+    state on ``S`` still determines the hit/no-hit outcome of context group
+    ``C``.  Mixed buckets are counterexamples to using that quotient as a
+    standalone DP state.  The control quotient ``assignment_signature`` should
+    never be mixed.
+    """
+
+    validate_dissimilarity(D)
+    if max_pairs is not None and max_pairs < 0:
+        raise ValueError("max_pairs must be non-negative or None")
+    if limit is not None and limit < 0:
+        raise ValueError("limit must be non-negative or None")
+
+    encoding = build_local_domains(pc_tree, max_p_degree=max_p_degree)
+    report = {
+        "implemented": True,
+        "method": "component_mask_quotient_context_collision_profile",
+        "encoding": encoding,
+        "complete": True,
+        "counts": {
+            "support_group_count": 0,
+            "context_pair_count": 0,
+            "pairs_profiled": 0,
+            "context_assignments_seen": 0,
+            "max_context_support_product": 0,
+        },
+        "quotients": {},
+        "first_collisions": {},
+    }
+    if encoding["unsupported"]:
+        report["complete"] = False
+        return report
+
+    atoms = forbidden_bad_side_atoms(D)
+    atoms_by_support: dict[tuple[Path, ...], list[dict]] = {}
+    for atom_info in atoms:
+        support = quartet_support_paths(pc_tree, atom_info["atom"])
+        atoms_by_support.setdefault(support, []).append(atom_info)
+    report["counts"]["support_group_count"] = len(atoms_by_support)
+
+    support_items = sorted(atoms_by_support.items(), key=lambda item: (len(item[0]), item[0]))
+    context_pairs: list[
+        tuple[tuple[Path, ...], list[dict], tuple[Path, ...], list[dict], tuple[Path, ...]]
+    ] = []
+    for base_support, base_atoms in support_items:
+        base_set = set(base_support)
+        for context_support, context_atoms in support_items:
+            context_set = set(context_support)
+            if context_support == base_support or not (base_set & context_set):
+                continue
+            union_support = tuple(sorted(base_set | context_set))
+            context_pairs.append(
+                (base_support, base_atoms, context_support, context_atoms, union_support)
+            )
+    report["counts"]["context_pair_count"] = len(context_pairs)
+
+    quotient_counts: dict[str, dict[tuple, int]] = {}
+    quotient_hit_values: dict[str, dict[tuple, bool]] = {}
+    quotient_mixed: dict[str, set[tuple]] = {}
+    quotient_representatives: dict[str, dict[tuple, dict]] = {}
+    side_cache: dict[tuple[tuple[int, int], int, NogoodSignature], int] = {}
+    truncated = False
+
+    for base_support, base_atoms, context_support, context_atoms, union_support in context_pairs:
+        if max_pairs is not None and report["counts"]["pairs_profiled"] >= max_pairs:
+            truncated = True
+            break
+        context_support_product = _domain_product_size(encoding, union_support)
+        report["counts"]["max_context_support_product"] = max(
+            report["counts"]["max_context_support_product"],
+            context_support_product,
+        )
+        base_set = set(base_support)
+        extra_support = tuple(path for path in union_support if path not in base_set)
+        domain_lists = [encoding["domains"][path] for path in union_support]
+        components_by_pair = _bad_witness_components_by_pair(base_atoms)
+        report["counts"]["pairs_profiled"] += 1
+
+        for choices in product(*domain_lists):
+            if limit is not None and report["counts"]["context_assignments_seen"] >= limit:
+                truncated = True
+                break
+            context_assignment = dict(zip(union_support, choices))
+            base_assignment = {path: context_assignment[path] for path in base_support}
+            context_hit = _support_atom_scan_hit(pc_tree, context_assignment, context_atoms)
+            context_signature = _nogood_signature(context_assignment, context_support)
+            base_signature = _nogood_signature(base_assignment, base_support)
+            extra_signature = _nogood_signature(context_assignment, extra_support)
+            mask_state = _component_mask_state(
+                pc_tree,
+                base_assignment,
+                components_by_pair,
+                side_cache,
+            )
+            quotients = {
+                "assignment_signature": base_signature,
+                **_component_mask_state_quotients(mask_state["state"]),
+            }
+
+            for quotient_name, quotient_state in quotients.items():
+                key = (base_support, context_support, extra_signature, quotient_state)
+                counts = quotient_counts.setdefault(quotient_name, {})
+                counts[key] = counts.get(key, 0) + 1
+                hit_values = quotient_hit_values.setdefault(quotient_name, {})
+                representatives = quotient_representatives.setdefault(quotient_name, {})
+                representative = representatives.setdefault(
+                    key,
+                    {
+                        "hit": context_hit,
+                        "base_signature": base_signature,
+                        "context_signature": context_signature,
+                    },
+                )
+                previous_hit = hit_values.setdefault(key, context_hit)
+                if previous_hit != context_hit:
+                    quotient_mixed.setdefault(quotient_name, set()).add(key)
+                    if quotient_name not in report["first_collisions"]:
+                        report["first_collisions"][quotient_name] = {
+                            "base_support": base_support,
+                            "context_support": context_support,
+                            "extra_signature": extra_signature,
+                            "quotient_state": quotient_state,
+                            "previous_hit": representative["hit"],
+                            "new_hit": context_hit,
+                            "previous_base_signature": representative["base_signature"],
+                            "new_base_signature": base_signature,
+                            "previous_context_signature": representative["context_signature"],
+                            "new_context_signature": context_signature,
+                        }
+            report["counts"]["context_assignments_seen"] += 1
+        if truncated:
+            break
+
+    quotient_reports = {}
+    assignments_seen = report["counts"]["context_assignments_seen"]
+    for quotient_name, counts in sorted(quotient_counts.items()):
+        state_count = len(counts)
+        mixed_count = len(quotient_mixed.get(quotient_name, set()))
+        quotient_reports[quotient_name] = {
+            "state_count": state_count,
+            "mixed_count": mixed_count,
+            "max_bucket_size": max(counts.values(), default=0),
+            "ratio": state_count / assignments_seen if assignments_seen else 0.0,
+            "average_bucket_size": assignments_seen / state_count if state_count else 0.0,
+            "mixed_ratio": mixed_count / state_count if state_count else 0.0,
+        }
+
+    report["quotients"] = quotient_reports
+    report["complete"] = not truncated
     return report
 
 

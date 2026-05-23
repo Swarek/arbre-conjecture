@@ -3471,3 +3471,87 @@ les plus compressés perdent presque toute information de composition, et le
 contrôle sans masques devient mixte. La prochaine expérience utile doit tester
 la stabilité de `mask_multiset` ou `hit_components` sous extension par contexte
 parent.
+
+## ExecPlan 2026-05-23 - quotient context collisions
+
+But : tester si les quotients T055 sont utilisables comme états DP, ou s'ils
+fusionnent des affectations locales qui doivent rester distinctes dès qu'un
+support plus large les contextualise.
+
+Hypothèse : un quotient composable devrait être stable sous contexte voisin. Si
+deux affectations d'un support `S` ont le même quotient, alors, à choix fixés
+sur les variables de `(S union C) \\ S`, un support voisin `C` ne devrait pas
+produire des profils de hit/no-hit incompatibles que le quotient ne peut pas
+distinguer. Un contre-exemple de collision ne réfute pas le hit/no-hit local
+T055, mais réfute le quotient comme état DP autonome.
+
+Fichiers à modifier :
+`src/pc_circular/solvers/sat_like_experiments.py`,
+`tests/test_sat_like_experiments.py`, `tests/test_csp_internal_benchmark.py`,
+`tests/test_regression_counterexamples.py`, `tools/pc_csp_internal_benchmark.py`,
+`docs/tracks/piste_b_dp_pc_tree.md`, `docs/tracks/piste_c_sat_csp.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/proof_obligations.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `docs/tracks/README.md`,
+`PLANS.md`.
+
+Algorithme pressenti : pour chaque groupe de support profilé, calculer les
+quotients T055 par affectation. Puis comparer les buckets de quotient sous un
+raffinement de contexte : même support plus les choix des variables parentes ou
+des variables non incluses qui apparaissent dans un support englobant. Mesurer
+les collisions où un même quotient local correspond à plusieurs signatures
+complètes/contextuelles ou à plusieurs vecteurs de réponses sur des groupes
+voisins. En première version, rester diagnostic et borné : nombre de buckets
+ambigus, taille max, premier témoin avec signatures.
+
+Plan de contre-exemples : chercher un petit cas où `mask_multiset` ou
+`hit_components` fusionne deux affectations que le contexte distingue. Si trouvé,
+ajouter un test de régression minimal. Contrôles : `full` doit moins collisionner
+que les quotients plus pauvres ; `decision_only` doit collisionner massivement ;
+`side_blind_schema` reste un contrôle négatif déjà mixte.
+
+Plan subagents : Piste B définit la notion de collision de contexte ; Piste C
+cherche un exemple minimal ; Piste F propose les agrégats de benchmark et les
+familles stress. Les sidecars restent lecture seule ; l'agent principal intègre.
+
+Tests à exécuter : tests ciblés
+`tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`,
+`make bench-csp-quick`, puis `make quick`, `make check`, `make bench-quick`.
+`candidate.py` ne doit pas changer.
+
+Risques : une collision de contexte peut seulement montrer qu'un quotient est
+insuffisant comme état autonome, pas que tout DP est impossible ; l'absence de
+collision sur probes n'est pas une preuve ; un diagnostic trop proche de
+l'énumération complète ne doit pas être présenté comme algorithme.
+
+Résultats observés : ajout de
+`component_mask_quotient_context_collision_profile`, du câblage dans
+`tools/pc_csp_internal_benchmark.py`, et des tests de régression. Le diagnostic
+compare des supports groupés qui se chevauchent, en fixant le contexte externe
+`(S union C) \\ S`. Tests ciblés
+`tests/test_regression_counterexamples.py tests/test_sat_like_experiments.py
+tests/test_csp_internal_benchmark.py` : `64 passed`. Contre-exemple minimal
+agrégé : `cycle_metric(5)` avec `balanced_pc_tree(5, kind="mixed")`,
+`context_assignments_seen=96`, `assignment_signature` `0` collision, `full`
+`0` collision, `mask_multiset` `12` collisions. Le sidecar contre-exemples
+donne un témoin global plus fort sur une matrice `n=5` :
+deux affectations locales ont `mask_multiset=(1,2)`, `hit_components=()`, même
+contexte externe, mais les ordres canoniques `(0,1,4,3,2)` et `(0,1,3,4,2)`
+sont respectivement cR et non-cR ; ce témoin est régressé dans
+`tests/test_regression_counterexamples.py`.
+
+`make bench-csp-quick` : `192` lignes, `0` mismatch ; diagnostic contexte borné
+à `max_pairs=20`, `35728` affectations contextuelles, `1828` paires profilées,
+`74` lignes incomplètes visibles. Collisions agrégées :
+`assignment_signature=0`, `full=190`, `mask_multiset=856`,
+`hit_components=2438`, `decision_only=2194`, `side_blind_schema=1334`.
+Probe stress `n=8` repeats `2` :
+`assignment_signature=0`, `full=8`, `mask_multiset=26`,
+`hit_components=414`, `decision_only=354`. Gates finales : `make quick`
+(`236 passed`, puis `JUSTE`), `make check` (`JUSTE`), `make bench-quick`
+(`8` tailles, `40` runs réussis, `0` timeout, `0` incomplet).
+
+Décision : T056 réfute `mask_multiset`, `hit_components`, `hit_pairs` et
+`decision_only` comme états DP autonomes. Les collisions de `full` sur probes
+montrent aussi que l'état de masques fermé par support ne suffit pas à porter
+les obligations ouvertes vers les supports voisins. La suite de la piste DP/CSP
+doit expliciter des obligations ouvertes ou basculer vers un sous-cas prouvable.

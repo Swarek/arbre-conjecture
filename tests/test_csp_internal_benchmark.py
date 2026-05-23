@@ -3,7 +3,7 @@ from tools.pc_csp_internal_benchmark import run_benchmark
 
 def test_csp_internal_benchmark_reports_separate_compile_and_solve_metrics():
     report = run_benchmark(
-        sizes=[4],
+        sizes=[5],
         repeats=1,
         instance_kinds=["cycle"],
         pc_trees=["mixed"],
@@ -35,6 +35,7 @@ def test_csp_internal_benchmark_reports_separate_compile_and_solve_metrics():
         for position, count in row["first_hit_position_histogram"].items()
     )
     assert row["support_outcome_profile_seconds"] >= 0
+    assert row["context_collision_profile_seconds"] >= 0
     assert row["profile_complete"]
     assert row["profile_hit_assignments"] == row["first_hit_assignments"]
     assert row["profile_no_hit_assignments"] == row["first_hit_no_hit_assignments"]
@@ -124,6 +125,11 @@ def test_csp_internal_benchmark_reports_separate_compile_and_solve_metrics():
     assert quotients["full"]["mixed_count"] == 0
     assert quotients["mask_multiset"]["mixed_count"] == 0
     assert quotients["decision_only"]["state_count"] <= quotients["full"]["state_count"]
+    context_quotients = row["context_collision_quotients"]
+    assert row["context_collision_complete"]
+    assert row["context_collision_pair_count"] > 0
+    assert context_quotients["assignment_signature"]["mixed_count"] == 0
+    assert context_quotients["mask_multiset"]["mixed_count"] > 0
     assert report["summary"]["total_first_hit_position_sum"] == row["first_hit_position_sum"]
     assert report["summary"]["total_first_hit_atom_checks_if_exhaustive_seen"] == row[
         "first_hit_atom_checks_if_exhaustive_seen"
@@ -168,3 +174,15 @@ def test_csp_internal_benchmark_reports_separate_compile_and_solve_metrics():
     summary_quotients = report["summary"]["profile_component_mask_quotients"]
     assert summary_quotients["full"]["state_count"] == row["profile_component_mask_state_count"]
     assert summary_quotients["full"]["mixed_count"] == 0
+    summary_context_quotients = report["summary"]["context_collision_quotients"]
+    assert report["summary"]["context_collision_assignments_seen"] == row[
+        "context_collision_assignments_seen"
+    ]
+    assert report["summary"]["context_collision_pairs_profiled"] == row[
+        "context_collision_pairs_profiled"
+    ]
+    assert report["summary"]["context_collision_incomplete_rows"] == 0
+    assert summary_context_quotients["assignment_signature"]["mixed_count"] == 0
+    assert summary_context_quotients["mask_multiset"]["mixed_count"] == context_quotients[
+        "mask_multiset"
+    ]["mixed_count"]

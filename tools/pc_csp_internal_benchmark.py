@@ -31,6 +31,7 @@ from pc_circular.solvers.sat_like_experiments import (  # noqa: E402
     compile_bad_side_nogoods_grouped_support_local,
     compile_bad_side_nogoods_support_local,
     compile_cr_nogoods,
+    component_mask_quotient_context_collision_profile,
     solve_pruned_nogood_csp_from_compilation,
 )
 
@@ -91,6 +92,34 @@ def _aggregate_component_mask_quotients(rows: Sequence[dict]) -> dict:
             quotient["ratio"] = quotient["state_count"] / total_assignments
         if quotient["state_count"]:
             quotient["average_bucket_size"] = total_assignments / quotient["state_count"]
+    return dict(sorted(aggregate.items()))
+
+
+def _aggregate_quotient_context_collisions(rows: Sequence[dict]) -> dict:
+    aggregate: dict[str, dict] = {}
+    total_assignments = sum(row["context_collision_assignments_seen"] for row in rows)
+    for row in rows:
+        for name, quotient in row["context_collision_quotients"].items():
+            target = aggregate.setdefault(
+                name,
+                {
+                    "state_count": 0,
+                    "mixed_count": 0,
+                    "max_bucket_size": 0,
+                    "ratio": 0.0,
+                    "average_bucket_size": 0.0,
+                    "mixed_ratio": 0.0,
+                },
+            )
+            target["state_count"] += quotient["state_count"]
+            target["mixed_count"] += quotient["mixed_count"]
+            target["max_bucket_size"] = max(target["max_bucket_size"], quotient["max_bucket_size"])
+    for quotient in aggregate.values():
+        if total_assignments:
+            quotient["ratio"] = quotient["state_count"] / total_assignments
+        if quotient["state_count"]:
+            quotient["average_bucket_size"] = total_assignments / quotient["state_count"]
+            quotient["mixed_ratio"] = quotient["mixed_count"] / quotient["state_count"]
     return dict(sorted(aggregate.items()))
 
 
@@ -181,6 +210,15 @@ def run_benchmark(
                     )
                     profile_seconds = time.perf_counter() - profile_start
 
+                    context_collision_start = time.perf_counter()
+                    context_collision_profile = component_mask_quotient_context_collision_profile(
+                        D,
+                        T,
+                        max_p_degree=max_p_degree,
+                        max_pairs=20,
+                    )
+                    context_collision_seconds = time.perf_counter() - context_collision_start
+
                     first_hit_solve_start = time.perf_counter()
                     first_hit_solve_result = solve_pruned_nogood_csp_from_compilation(
                         D,
@@ -229,6 +267,7 @@ def run_benchmark(
                     first_hit_counts = first_hit_solve_result["counts"]
                     first_hit_compile_counts = first_hit_compilation["counts"]
                     profile_counts = support_outcome_profile["counts"]
+                    context_collision_counts = context_collision_profile["counts"]
                     signatures = _signature_set(compilation)
                     support_signatures = _signature_set(support_compilation)
                     grouped_signatures = _signature_set(grouped_compilation)
@@ -259,6 +298,7 @@ def run_benchmark(
                             "grouped_solve_seconds": grouped_solve_seconds,
                             "first_hit_compile_seconds": first_hit_compile_seconds,
                             "support_outcome_profile_seconds": profile_seconds,
+                            "context_collision_profile_seconds": context_collision_seconds,
                             "first_hit_solve_seconds": first_hit_solve_seconds,
                             "direct_seconds": direct_seconds,
                             "atoms": len(compilation["atoms"]),
@@ -476,6 +516,23 @@ def run_benchmark(
                             "profile_component_mask_quotients": profile_counts[
                                 "component_mask_quotients"
                             ],
+                            "context_collision_complete": context_collision_profile["complete"],
+                            "context_collision_support_group_count": context_collision_counts[
+                                "support_group_count"
+                            ],
+                            "context_collision_pair_count": context_collision_counts[
+                                "context_pair_count"
+                            ],
+                            "context_collision_pairs_profiled": context_collision_counts[
+                                "pairs_profiled"
+                            ],
+                            "context_collision_assignments_seen": context_collision_counts[
+                                "context_assignments_seen"
+                            ],
+                            "context_collision_max_context_support_product": (
+                                context_collision_counts["max_context_support_product"]
+                            ),
+                            "context_collision_quotients": context_collision_profile["quotients"],
                             "profile_ambiguous_no_hit_assignments": profile_counts[
                                 "ambiguous_no_hit_assignments"
                             ],
@@ -563,6 +620,9 @@ def run_benchmark(
             ),
             "median_support_outcome_profile_seconds": _median(
                 [row["support_outcome_profile_seconds"] for row in supported_rows]
+            ),
+            "median_context_collision_profile_seconds": _median(
+                [row["context_collision_profile_seconds"] for row in supported_rows]
             ),
             "median_solve_seconds": _median([row["solve_seconds"] for row in supported_rows]),
             "median_support_solve_seconds": _median(
@@ -736,6 +796,18 @@ def run_benchmark(
             ),
             "profile_component_mask_quotients": _aggregate_component_mask_quotients(
                 supported_rows
+            ),
+            "context_collision_quotients": _aggregate_quotient_context_collisions(
+                supported_rows
+            ),
+            "context_collision_assignments_seen": sum(
+                row["context_collision_assignments_seen"] for row in supported_rows
+            ),
+            "context_collision_pairs_profiled": sum(
+                row["context_collision_pairs_profiled"] for row in supported_rows
+            ),
+            "context_collision_incomplete_rows": sum(
+                1 for row in supported_rows if not row["context_collision_complete"]
             ),
             "profile_pair_side_split_work_ratio": (
                 sum(row["profile_pair_side_split_checks"] for row in supported_rows)

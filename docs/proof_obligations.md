@@ -1396,6 +1396,26 @@ Limites T055 :
   est insuffisante ;
 - toujours aucune intégration dans `candidate.py` ni preuve de complexité.
 
+T056 ajoute une obligation négative pour les états DP : un quotient local doit
+rester stable sous contexte voisin. Le diagnostic
+`component_mask_quotient_context_collision_profile` trouve des collisions de
+contexte pour `mask_multiset`, `hit_components`, `hit_pairs` et
+`decision_only`. Un contre-exemple global régressé sur `n=5` montre même deux
+affectations locales avec `mask_multiset=(1,2)` et contexte externe identique,
+dont les frontiers canoniques sont respectivement cR et non-cR.
+
+Limites et obligations après T056 :
+
+- `mask_multiset` est réfuté comme état DP autonome ;
+- les collisions de `full` sur probes montrent que l'état de masques fermé par
+  support n'est pas suffisant pour toutes les obligations ouvertes ;
+- une future DP doit définir explicitement ce qui est transporté entre supports
+  voisins, au-delà du hit/no-hit local ;
+- le diagnostic est borné (`max_pairs=20` dans la gate CSP rapide) et sert de
+  falsification, pas de preuve d'impossibilité générale ;
+- aucune modification de `candidate.py`, donc aucune nouvelle obligation de
+  décision générale n'est satisfaite.
+
 ### Prédicats stricts d'ordre fixé
 
 Statut : définitions directes implémentées / base expérimentale Piste F.
