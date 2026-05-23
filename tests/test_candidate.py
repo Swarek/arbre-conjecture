@@ -57,6 +57,15 @@ def _one_high_edge_instance(n):
     return D
 
 
+def _matching_with_extra_hubs(pair_count, hub_count):
+    n = 2 * pair_count + hub_count
+    D = equal_distance_instance(n)
+    for left in range(pair_count):
+        right = pair_count + left
+        D[left][right] = D[right][left] = 2
+    return D
+
+
 def _cycle_metric_for_order(order):
     n = len(order)
     position = {label: idx for idx, label in enumerate(order)}
@@ -509,8 +518,31 @@ def test_candidate_exact_low_hub_matching_projection_search_rejects_large_rigid_
 
     assert result["exists"] is False
     assert result["complete"] is True
-    assert result["solver"] == "candidate_exact_low_hub_matching_projection_search"
-    assert result["candidate_orders_checked"] <= result["candidate_order_bound"]
+    assert result["solver"] == "candidate_exact_low_hub_matching_projected_pc_tree_search"
+    assert result["projection_orders_checked"] <= result["projection_order_bound"]
+    assert result["lifted_orders_checked"] == 0
+
+
+def test_candidate_projected_low_hub_matching_search_avoids_hub_placement_limit():
+    D = _matching_with_extra_hubs(pair_count=5, hub_count=8)
+    T = p_node(
+        [
+            *(p_node([leaf(left), leaf(left + 5)]) for left in range(5)),
+            *(leaf(hub) for hub in range(10, 18)),
+        ]
+    )
+    guided = pc_tree_guided_low_hub_matching_witness_report(D, T, frontier_limit=64)
+
+    assert _pc_tree_frontier_upper_bound(T) > EXACT_PC_TREE_FRONTIER_LIMIT
+    assert guided["status"] == "no_pc_tree_guided_matching_witness_found"
+
+    result = solve(D, pc_tree=T)
+
+    assert result["exists"] is False
+    assert result["complete"] is True
+    assert result["solver"] == "candidate_exact_low_hub_matching_projected_pc_tree_search"
+    assert result["projection_orders_checked"] <= result["projection_order_bound"]
+    assert result["lifted_orders_checked"] == 0
 
 
 def test_candidate_low_hub_ferrers_nonrepresented_witness_continues_search():

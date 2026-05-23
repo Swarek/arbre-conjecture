@@ -10,6 +10,7 @@ from pc_circular.generators import (
     even_high_cycle_plus_low_hub,
     five_local_non_cr_core,
     four_local_non_cr_core,
+    matching_high_graph_plus_low_hub,
     non_bipartite_high_graph_plus_low_hub,
     padded_five_local_non_cr,
     padded_four_local_non_cr,
@@ -21,8 +22,13 @@ from pc_circular.predicates import (
     passes_farthest_crossing_condition,
 )
 from pc_circular.oracle import exact_oracle_pc_tree
-from pc_circular.pc_tree import balanced_pc_tree, represents_order
+from pc_circular.pc_tree import balanced_pc_tree, c_node, leaf, p_node, represents_order
 from pc_circular.solvers.candidate import _minimum_distance_cycle_order, _paired_farthest_order
+from pc_circular.solvers.local_constraints import (
+    _matching_crossing_parts,
+    exact_low_hub_matching_projected_pc_tree_search_report,
+    project_farthest_sets_to_pc_nodes,
+)
 
 COUNTEREXAMPLES = [
     {
@@ -229,3 +235,33 @@ def test_non_bipartite_high_graph_low_hub_subcase_regression():
 
 def test_even_high_cycle_low_hub_subcase_regression():
     assert exact_oracle_pc_tree(even_high_cycle_plus_low_hub(7), None)["exists"] is False
+
+
+def test_minimal_low_hub_matching_local_projection_silent_but_negative_pc_tree():
+    D = matching_high_graph_plus_low_hub(5)
+    T = p_node([p_node([leaf(1), leaf(3)]), p_node([leaf(2), leaf(4)]), leaf(0)])
+
+    assert exact_oracle_pc_tree(D, T)["exists"] is False
+
+    local_report = project_farthest_sets_to_pc_nodes(D, T)
+    assert all(node["laminar_violation_count"] == 0 for node in local_report["nodes"])
+    assert all(node["declared_order_interval_violation_count"] == 0 for node in local_report["nodes"])
+    assert all(node["circular_ones_status"] == "compatible" for node in local_report["nodes"])
+
+    projected_report = exact_low_hub_matching_projected_pc_tree_search_report(D, T)
+    assert projected_report["status"] == "no_projected_pc_tree_order_represented"
+    assert projected_report["complete"] is True
+
+
+def test_matching_low_hub_side_split_boolean_encoding_is_not_sufficient():
+    D = matching_high_graph_plus_low_hub(8)
+    T = c_node([leaf(i) for i in (0, 1, 2, 3, 4, 6, 5, 7)])
+    projection = (1, 2, 3, 4, 6, 5)
+    pairs = ((1, 4), (2, 5), (3, 6))
+    first_half = set(projection[: len(pairs)])
+
+    side_split_ok = all((left in first_half) != (right in first_half) for left, right in pairs)
+
+    assert side_split_ok is True
+    assert _matching_crossing_parts(projection, pairs) is None
+    assert exact_oracle_pc_tree(D, T)["exists"] is False

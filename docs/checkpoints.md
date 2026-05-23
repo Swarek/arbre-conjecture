@@ -310,6 +310,19 @@ Dernier commit green avant T009 : `07120e4`.
   `make quick`, `make hunt-counterexamples`, `make check`, `make bench-quick`,
   `make bench`. Résultat observé : `mixed/star` reste `0` timeout et `0`
   incomplet jusqu'à `n=100`, médiane `0.03311s` à `n=100`.
+- Checkpoint T046 courant : commit contenant
+  `exact_low_hub_matching_projected_pc_tree_search_report` et son intégration
+  candidate bornée avant T045. Le rapport énumère seulement les projections
+  matching `seq + mate(seq)`, relève les hubs via la structure `P/C` du PC-tree
+  original, puis vérifie cR et représentation. Régressions ajoutées : frontier
+  tardive projetée, rigide non-crossing, limite de projections, facteur hubs,
+  oracle petits PC-trees, rejet candidate avec `5` paires et `8` hubs, faux
+  silence local `I_x(v)` minimal `n=5`, et contre-exemple side-only/2-SAT naïf.
+  Validation observée : tests ciblés candidate/local-constraints/régressions,
+  probe oracle `14` couples, `make quick`, `make hunt-counterexamples`,
+  `make check`, `make bench-quick`, `make bench`. Résultat observé :
+  `mixed/star` reste `0` timeout et `0` incomplet jusqu'à `n=100`, médiane
+  `0.03504s` à `n=100`.
 
 ## Rollback
 

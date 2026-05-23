@@ -243,6 +243,34 @@ Limite : la compilation découvre toujours les signatures en énumérant les
 affectations complètes. Le gain est donc une simplification de représentation,
 pas une preuve de solveur compact ni de borne polynomiale.
 
+## Tentative T046 - Projection matching low-hub comme étape vers CSP compact
+
+Statut : intégration candidate bornée, pas encore CSP/nogoods local.
+
+Changement : `exact_low_hub_matching_projected_pc_tree_search_report` sépare le
+sous-cas matching low-hub en deux niveaux. Il énumère les projections
+`seq + mate(seq)` des endpoints du matching, puis relève chaque projection dans
+le PC-tree original avec un parseur récursif des blocs `P/C`. Les hubs deviennent
+des labels epsilon pour la condition cR, mais ils restent contraints par la
+structure du PC-tree.
+
+Intérêt pour Piste C : cela isole la contrainte CSP qui manque. Une future
+compilation compacte devrait éviter l'énumération `2^m * m!` en portant
+l'ordre commun des paires dans les états/nogoods locaux. Une 2-SAT naïve avec
+un booléen "endpoint dans la première moitié" est insuffisante : le test de
+régression `test_matching_low_hub_side_split_boolean_encoding_is_not_sufficient`
+garde un PC-tree rigide où chaque paire est split côté A/B mais où l'ordre des
+mates est désynchronisé.
+
+Résultat subagent : la granularité minimale ressemble à des nogoods 4-aires ou
+à une DP transportant l'ordre relatif des paires ouvertes. Les supports locaux
+de `quartet_support_paths` peuvent être réutilisés, mais la compilation actuelle
+énumère encore les affectations complètes ; le prochain essai utile est une
+compilation par produit des domaines du support seulement.
+
+Limite : T046 est un meilleur exact borné, pas une preuve de CSP polynomial.
+Tout dépassement de `max_projection_orders` reste incomplet.
+
 ## Tentative T021 - Repair positive-only pour paired-farthest
 
 Statut : idée saine comme générateur expérimental vérifié, mais non intégrée à

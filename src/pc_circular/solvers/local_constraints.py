@@ -507,6 +507,309 @@ def _insert_hubs_before_projection_labels(projection, hubs):
             yield tuple(order)
 
 
+def _projection_subsequence(order, projection_labels):
+    projection_label_set = set(projection_labels)
+    return tuple(label for label in order if label in projection_label_set)
+
+
+def _rotations(seq):
+    seq = tuple(seq)
+    for idx in range(len(seq)):
+        yield seq[idx:] + seq[:idx]
+
+
+def _split_projection_into_child_chunks(node: PCNode, projection, projection_label_set):
+    child_projection_sets = []
+    label_to_child = {}
+    for child_index, child in enumerate(node.children):
+        child_projected = set(labels(child)) & projection_label_set
+        child_projection_sets.append(child_projected)
+        for label in child_projected:
+            label_to_child[label] = child_index
+
+    chunks = []
+    seen_children = set()
+    current_child = None
+    current_chunk = []
+    for label in projection:
+        child_index = label_to_child.get(label)
+        if child_index is None:
+            return None
+        if child_index != current_child:
+            if child_index in seen_children:
+                return None
+            if current_child is not None:
+                chunks.append((current_child, tuple(current_chunk)))
+            seen_children.add(child_index)
+            current_child = child_index
+            current_chunk = [label]
+        else:
+            current_chunk.append(label)
+
+    if current_child is not None:
+        chunks.append((current_child, tuple(current_chunk)))
+
+    expected_nonempty = {
+        child_index for child_index, child_projected in enumerate(child_projection_sets) if child_projected
+    }
+    if seen_children != expected_nonempty:
+        return None
+    return tuple(chunks), tuple(child_projection_sets)
+
+
+def _lift_projection_frontier_linear(node: PCNode, projection, projection_label_set):
+    """Build one represented frontier whose projected labels equal projection."""
+
+    projection = tuple(projection)
+    if node.kind == "leaf":
+        assert node.label is not None
+        if node.label in projection_label_set:
+            return (node.label,) if projection == (node.label,) else None
+        return (node.label,) if not projection else None
+
+    split = _split_projection_into_child_chunks(node, projection, projection_label_set)
+    if split is None:
+        return None
+    chunks, child_projection_sets = split
+    chunk_by_child = {child_index: chunk for child_index, chunk in chunks}
+    nonempty_order = tuple(child_index for child_index, _ in chunks)
+    empty_children = tuple(
+        child_index for child_index, child_projected in enumerate(child_projection_sets) if not child_projected
+    )
+
+    if node.kind == "P":
+        child_order = empty_children + nonempty_order
+    else:
+        forward = tuple(range(len(node.children)))
+        reverse = tuple(reversed(forward))
+        forward_nonempty = tuple(child_index for child_index in forward if child_index not in empty_children)
+        reverse_nonempty = tuple(child_index for child_index in reverse if child_index not in empty_children)
+        if nonempty_order == forward_nonempty:
+            child_order = forward
+        elif nonempty_order == reverse_nonempty:
+            child_order = reverse
+        else:
+            return None
+
+    result = []
+    for child_index in child_order:
+        lifted = _lift_projection_frontier_linear(
+            node.children[child_index],
+            chunk_by_child.get(child_index, ()),
+            projection_label_set,
+        )
+        if lifted is None:
+            return None
+        result.extend(lifted)
+    return tuple(result)
+
+
+def _lift_circular_projection_frontier(node: PCNode, projection, projection_labels):
+    """Lift a circular projection through a PC-tree, if possible."""
+
+    projection = tuple(projection)
+    projection_label_set = set(projection_labels)
+    if set(projection) != projection_label_set or len(projection) != len(projection_label_set):
+        return None
+    if not projection:
+        return tuple(sample_frontier(node))
+
+    seen = set()
+    for oriented in (projection, tuple(reversed(projection))):
+        for rotated in _rotations(oriented):
+            if rotated in seen:
+                continue
+            seen.add(rotated)
+            lifted = _lift_projection_frontier_linear(node, rotated, projection_label_set)
+            if lifted is None:
+                continue
+            if _projection_subsequence(lifted, projection_label_set) != rotated:
+                continue
+            canonical_lifted = canonical_circular_order(lifted)
+            if represents_order(node, canonical_lifted):
+                return canonical_lifted
+    return None
+
+
+def exact_low_hub_matching_projected_pc_tree_search_report(
+    D,
+    T: PCNode,
+    *,
+    max_projection_orders: int = 100_000,
+):
+    """Exact bounded search over low-hub matching projections, lifting hubs via T."""
+
+    n = validate_dissimilarity(D)
+    tree_labels = set(labels(T))
+    if tree_labels != set(range(n)):
+        raise ValueError("PC-tree labels must be exactly 0..n-1")
+
+    off_diagonal_values = sorted({D[i][j] for i in range(n) for j in range(i + 1, n)})
+    if len(off_diagonal_values) != 2:
+        return {
+            "method": "exact_low_hub_matching_projected_pc_tree_search_report",
+            "n": n,
+            "max_projection_orders": max_projection_orders,
+            "status": "not_binary_two_level",
+            "complete": False,
+            "strong_ordering_exists": None,
+            "witness_order": None,
+            "witness_order_is_cr": None,
+        }
+
+    _low, high = off_diagonal_values
+    neighbors = {
+        i: tuple(j for j in range(n) if i != j and D[i][j] == high)
+        for i in range(n)
+    }
+    hubs = tuple(i for i, values in neighbors.items() if not values)
+    high_vertices = tuple(i for i, values in neighbors.items() if values)
+    base = {
+        "method": "exact_low_hub_matching_projected_pc_tree_search_report",
+        "n": n,
+        "max_projection_orders": max_projection_orders,
+        "low_value": _low,
+        "high_value": high,
+        "hub_labels": hubs,
+        "high_graph_labels": high_vertices,
+        "witness_order": None,
+        "witness_order_is_cr": None,
+    }
+    if not hubs:
+        return {**base, "status": "no_low_hub", "complete": False, "strong_ordering_exists": None}
+
+    pairs = _matching_pairs(high_vertices, neighbors)
+    if pairs is None:
+        return {**base, "status": "not_matching_high_graph", "complete": False, "strong_ordering_exists": None}
+    if not pairs:
+        order = tuple(sample_frontier(T))
+        return {
+            **base,
+            "status": "empty_high_graph",
+            "complete": True,
+            "strong_ordering_exists": True,
+            "projection_order_bound": 1,
+            "projection_orders_checked": 1,
+            "projection_lift_checks": 0,
+            "cr_checks": 1,
+            "pair_count": 0,
+            "witness_order": order,
+            "witness_order_is_cr": passes_bad_side_precircular_cR(D, order),
+        }
+
+    pair_count = len(pairs)
+    projection_order_bound = (2**pair_count) * _factorial(pair_count)
+    if pair_count >= 2:
+        canonical_bound = max(1, projection_order_bound // (4 * pair_count))
+    else:
+        canonical_bound = projection_order_bound
+    base = {
+        **base,
+        "pair_count": pair_count,
+        "hub_count": len(hubs),
+        "projection_order_bound": projection_order_bound,
+        "projection_order_bound_raw": projection_order_bound,
+        "projection_order_bound_canonical": canonical_bound,
+    }
+
+    mate = {}
+    for left, right in pairs:
+        mate[left] = right
+        mate[right] = left
+
+    checked = 0
+    duplicates_skipped = 0
+    projection_lift_checks = 0
+    lifted_orders_checked = 0
+    cr_checks = 0
+    seen_projections = set()
+    for pair_order in permutations(pairs):
+        for side_choices in product((0, 1), repeat=pair_count):
+            first_half = tuple(pair[choice] for pair, choice in zip(pair_order, side_choices))
+            second_half = tuple(mate[label] for label in first_half)
+            projection = first_half + second_half
+            canonical_projection = canonical_circular_order(projection)
+            if canonical_projection in seen_projections:
+                duplicates_skipped += 1
+                continue
+            seen_projections.add(canonical_projection)
+            if checked >= max_projection_orders:
+                return {
+                    **base,
+                    "status": "projection_limit_exceeded",
+                    "complete": False,
+                    "strong_ordering_exists": None,
+                    "projection_orders_checked": checked,
+                    "duplicates_skipped": duplicates_skipped,
+                    "projection_lift_checks": projection_lift_checks,
+                    "lifted_orders_checked": lifted_orders_checked,
+                    "cr_checks": cr_checks,
+                }
+            checked += 1
+            projection_lift_checks += 1
+            lifted_order = _lift_circular_projection_frontier(T, canonical_projection, high_vertices)
+            if lifted_order is None:
+                continue
+            lifted_orders_checked += 1
+            cr_checks += 1
+            if not passes_bad_side_precircular_cR(D, lifted_order):
+                return {
+                    **base,
+                    "status": "lifted_projection_failed_cr_invariant",
+                    "complete": False,
+                    "strong_ordering_exists": None,
+                    "projection_orders_checked": checked,
+                    "duplicates_skipped": duplicates_skipped,
+                    "projection_lift_checks": projection_lift_checks,
+                    "lifted_orders_checked": lifted_orders_checked,
+                    "cr_checks": cr_checks,
+                    "projected_order": canonical_projection,
+                    "witness_order": lifted_order,
+                    "witness_order_is_cr": False,
+                }
+            if not represents_order(T, lifted_order):
+                return {
+                    **base,
+                    "status": "lifted_projection_failed_representation_invariant",
+                    "complete": False,
+                    "strong_ordering_exists": None,
+                    "projection_orders_checked": checked,
+                    "duplicates_skipped": duplicates_skipped,
+                    "projection_lift_checks": projection_lift_checks,
+                    "lifted_orders_checked": lifted_orders_checked,
+                    "cr_checks": cr_checks,
+                    "projected_order": canonical_projection,
+                    "witness_order": lifted_order,
+                    "witness_order_is_cr": True,
+                }
+            return {
+                **base,
+                "status": "projected_pc_tree_order_found",
+                "complete": True,
+                "strong_ordering_exists": True,
+                "projection_orders_checked": checked,
+                "duplicates_skipped": duplicates_skipped,
+                "projection_lift_checks": projection_lift_checks,
+                "lifted_orders_checked": lifted_orders_checked,
+                "cr_checks": cr_checks,
+                "projected_order": canonical_projection,
+                "witness_order": lifted_order,
+                "witness_order_is_cr": True,
+            }
+
+    return {
+        **base,
+        "status": "no_projected_pc_tree_order_represented",
+        "complete": True,
+        "strong_ordering_exists": False,
+        "projection_orders_checked": checked,
+        "duplicates_skipped": duplicates_skipped,
+        "projection_lift_checks": projection_lift_checks,
+        "lifted_orders_checked": lifted_orders_checked,
+        "cr_checks": cr_checks,
+    }
+
+
 def exact_low_hub_matching_projection_search_report(
     D,
     T: PCNode,

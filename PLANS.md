@@ -2696,3 +2696,96 @@ candidats uniques est réellement épuisée ; `candidate_limit_exceeded` reste
 incomplet. Prochaine piste : transformer cette énumération en DP/CSP
 d'intersection `seq + mate(seq)` ou chercher un contre-exemple minimal à toute
 règle locale de synchronisation.
+
+## ExecPlan 2026-05-23 - hub-projected matching PC-tree lift
+
+But : réduire la limite combinatoire T045 en séparant deux questions dans le
+sous-cas binaire low-hub matching : existence d'une projection high-vertices
+`seq + mate(seq)`, puis relèvement exact de cette projection dans le PC-tree
+original avec les hubs placés par la structure de l'arbre.
+
+Hypothèse : pour ce sous-cas, les hubs peuvent être ignorés dans la condition
+cR, mais pas dans la représentation PC-tree. Si l'on peut relever exactement une
+projection high-vertices vers un frontier complet représenté, on peut décider
+plus de cas que T045 lorsque les placements de hubs font exploser
+`h! * C(h+2m-1,2m-1)`. Un échec complet sur toutes les projections
+`seq + mate(seq)` donne un négatif exact pour ce sous-cas ; un dépassement de
+limite reste incomplet.
+
+Fichiers à modifier : `src/pc_circular/solvers/local_constraints.py`,
+`src/pc_circular/solvers/candidate.py`, `tests/test_local_constraints.py`,
+`tests/test_candidate.py`, `docs/proof_obligations.md`,
+`docs/tracks/piste_c_sat_csp.md`,
+`docs/tracks/piste_e_farthest_quartets.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/tracks/README.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `PLANS.md`.
+
+Algorithme pressenti : ajouter un releveur récursif
+`_lift_projection_frontier` qui, pour une projection linéaire donnée et un
+ensemble de labels projetés, construit un frontier complet représenté ou
+échoue. Sur un nœud `P`, les enfants non vides doivent apparaître comme des
+blocs contigus dans la projection ; les enfants hubs-only peuvent être insérés
+sans changer la projection. Sur un nœud `C`, l'ordre des enfants non vides doit
+être compatible avec l'ordre local forward/reverse après suppression des
+enfants hubs-only. Au niveau racine, essayer rotations et renversements de la
+projection. Énumérer seulement les projections `2^m * m!` dédupliquées modulo
+rotation/renversement, relever, puis vérifier directement
+`passes_bad_side_precircular_cR` et `represents_order` avant tout retour
+positif.
+
+Plan de contre-exemples : comparer le releveur à une énumération exhaustive des
+frontiers sur petits PC-trees avec hubs multiples ; chercher les cas où la
+projection est représentable après suppression des hubs mais non relevable dans
+l'arbre original ; tester non-crossing rigide, frontier tardive, gros hubs avec
+peu de paires, nœuds `C` avec enfants hubs-only intercalés, `low=0`, et des
+PC-trees où certains ordres marchent mais d'autres non.
+
+Plan subagents : cinq sidecars lecture seule. Piste B audite l'état DP possible
+du releveur ; Piste C cherche une formulation CSP/nogoods de la même
+projection ; Piste A cherche un contre-exemple à une règle locale P/C naïve ;
+Piste E/F attaque la candidate par probes non-star/non stricts ; complexité
+classe les sous-cas prouvés versus bornés et recommande l'intégration suivante.
+
+Tests à exécuter : tests ciblés local-constraints/candidate, probes exhaustives
+petits PC-trees contre `enumerate_frontiers` et `exact_oracle_pc_tree`,
+`make quick`, `make hunt-counterexamples`, `make check`, `make bench-quick`; si
+`candidate.py` change, lancer aussi `make bench`.
+
+Risques : le relèvement projection -> frontier complet peut être trop faible si
+la rotation racine est mal traitée ; un enfant projeté en deux morceaux doit
+être rejeté ; les hubs-only dans un nœud `C` ne doivent pas donner une liberté
+de placement inexistante ; l'énumération reste factorielle en nombre de paires
+et ne doit pas être présentée comme un algorithme général.
+
+Résultats observés : `exact_low_hub_matching_projected_pc_tree_search_report`
+ajouté. Le releveur trouve le cas frontier tardive `n=8`, rejette le rigide
+non-crossing `n=6`, transforme le rejet candidate rigide `n=12` en recherche
+sur `192` projections avec `0` ordre relevé, et rejette un stress `5` paires +
+`8` hubs sans énumérer les placements de hubs. Probe oracle local :
+`14` couples matching/PC-tree sans mismatch. Deux contre-exemples de méthode ont
+été ajoutés aux régressions : `P(P(1,3),P(2,4),0)` est négatif malgré des
+projections locales `I_x(v)` silencieuses, et une projection side-split rigide
+montre qu'une 2-SAT par côté des endpoints est trop faible.
+
+Résultats subagents : Piste A fournit le contre-exemple minimal `n=5` aux
+règles locales `I_x(v)`. Piste B recommande une future DP qui transporte l'ordre
+des paires ouvertes et confirme que T046 est une étape utile mais encore
+factorielle. Piste C recommande des nogoods 4-aires/support-local et fournit le
+contre-exemple side-only `C(0,1,2,3,4,6,5,7)`. Piste complexité classe T046
+comme exact borné, pas polynomial, et recommande de supprimer à terme la limite
+`2^m*m!`. Le sidecar E/F a été fermé après timeout sans livrable exploitable.
+
+Validation : tests ciblés `tests/test_local_constraints.py tests/test_candidate.py
+tests/test_regression_counterexamples.py` donnent `102 passed`. `make quick`
+donne `202 passed`, puis `JUSTE`. `make hunt-counterexamples` et `make check`
+donnent `JUSTE`. `make bench-quick` écrit le rapport avec `0` timeout,
+`0` incomplet ; à `n=20`, médiane `0.001331s`, p95 `0.001514s`, fit polynomial
+empirique `p ~= 1.91`. `make bench` écrit le rapport fort avec `0` timeout,
+`0` incomplet jusqu'à `n=100` ; à `n=100`, médiane `0.03504s`,
+p95 `0.04181s`, fit polynomial empirique `p ~= 1.82`.
+
+Décision : intégrer T046 comme amélioration exacte bornée avant T045 complète,
+car elle enlève le facteur des hubs sans affaiblir la correction. Ne pas marquer
+le sous-cas comme polynomial : la prochaine piste doit remplacer l'énumération
+des projections par une DP/CSP support-local ou produire un contre-exemple à
+cette compression.

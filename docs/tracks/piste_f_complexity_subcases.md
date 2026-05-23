@@ -672,6 +672,32 @@ Limites T045 :
   `n=17` ne sont pas résolus ;
 - un dépassement de limite reste incomplet, jamais négatif.
 
+Résultat T046 :
+
+- `exact_low_hub_matching_projected_pc_tree_search_report` enlève le facteur
+  combinatoire des hubs du sous-cas T045 : la borne devient `2^m * m!` sur les
+  projections du matching, au lieu de multiplier par tous les placements
+  possibles des hubs ;
+- le relèvement récursif garde la contrainte de représentation du PC-tree
+  original, donc un enfant `P/C` dont les endpoints projetés sont séparés par un
+  autre enfant est rejeté ;
+- côté candidate, cette recherche est appelée avant l'énumération complète T045
+  et seulement lorsque le PC-tree dépasse déjà la borne exacte générale ;
+- le cas rigide non-crossing `n=12` est rejeté après `192` projections et `0`
+  ordre relevé, au lieu de parcourir des milliers d'ordres complets ;
+- un stress `5` paires + `8` hubs avec chaque paire enfermée dans son propre
+  enfant `P` est rejeté complètement par la candidate, sans payer les
+  placements de hubs.
+
+Limites T046 :
+
+- le sous-cas est toujours matching low-hub seulement ;
+- `projection_limit_exceeded` reste incomplet ;
+- l'énumération des ordres de paires reste factorielle et doit être remplacée
+  par une vraie DP/CSP avant de revendiquer une complexité polynomiale ;
+- le benchmark `mixed/star` peut rester vert sans prouver que cette branche est
+  générale, car beaucoup de positifs restent des témoins certifiés ponctuels.
+
 ## Témoin cycle par distances minimales
 
 Statut : certificat positif intégré pour tout PC-tree du scaffold où le témoin

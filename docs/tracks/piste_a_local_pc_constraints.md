@@ -106,6 +106,26 @@ binaires. Une contrainte utile devra donc soit construire une contrainte globale
 auxiliaire de type circular-ones à intersecter avec le PC-tree, soit conserver
 des corrélations entre niveaux.
 
+## T046 - Contre-exemple minimal matching low-hub aux règles locales `I_x(v)`
+
+Statut : contre-exemple régressé.
+
+Un sidecar a trouvé le premier cas négatif dans le sous-cas matching low-hub :
+`matching_high_graph_plus_low_hub(5)` avec
+`P(P(1,3), P(2,4), 0)`. L'oracle PC-tree répond `False`, mais
+`project_farthest_sets_to_pc_nodes` reste silencieux sur tous les nœuds :
+pas de violation laminaire, pas de violation d'intervalle déclaré, et
+`circular_ones_status == "compatible"`.
+
+Minimalité bornée : les graphes hauts matching low-hub `n <= 4` ne produisent
+pas de négatif PC-tree dans le probe du sidecar. Ce cas `n=5` est donc la
+régression locale minimale connue pour cette règle.
+
+Conclusion : une règle locale fondée seulement sur les ensembles projetés
+`I_x(v)` ne peut pas décider l'existence, même dans le sous-cas matching
+low-hub. La prochaine piste locale doit transporter l'ordre relatif des paires
+ou construire une vraie intersection globale.
+
 ## T022 - Rapport `project_farthest_sets_to_pc_nodes`
 
 Statut : diagnostic implémenté, explicitement non décisionnel.

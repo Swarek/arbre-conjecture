@@ -20,6 +20,9 @@ The current implementation is deliberately conservative:
   it can return a proved negative certificate.
 * for a bounded binary low-hub strong-ordering diagnostic it accepts only a
   represented order that is verified directly as cR.
+* for a bounded binary low-hub matching diagnostic, it can decide by enumerating
+  crossing projections and lifting hubs through the PC-tree before falling back
+  to full candidate-order enumeration.
 
 This is not a solution to the general problem.  Future goals should replace
 the large-n placeholder with a proved algorithm or a clearly scoped sub-case.
@@ -40,6 +43,7 @@ from pc_circular.predicates import (
 from pc_circular.solvers import brute_force
 from pc_circular.solvers.local_constraints import (
     exact_low_hub_matching_projection_search_report,
+    exact_low_hub_matching_projected_pc_tree_search_report,
     iter_low_hub_strong_ordering_witnesses,
     low_hub_component_ferrers_strong_ordering_report,
     low_hub_ferrers_strong_ordering_report,
@@ -55,6 +59,7 @@ SMALL_FORBIDDEN_SUBMATRIX_ORDERS = (4, 5, 6)
 SMALL_FORBIDDEN_SUBMATRIX_LIMIT = 4096
 LOW_HUB_STRONG_ORDERING_PERMUTATION_LIMIT = 100_000
 EXACT_LOW_HUB_MATCHING_PROJECTION_LIMIT = 100_000
+EXACT_LOW_HUB_MATCHING_PROJECTED_PC_TREE_LIMIT = 100_000
 
 
 def _large_n_budget(n: int) -> int:
@@ -551,6 +556,51 @@ def _low_hub_strong_ordering_witness_result(D, n: int, pc_tree: Optional[PCNode]
                     }
 
         if _pc_tree_frontier_upper_bound(pc_tree) > EXACT_PC_TREE_FRONTIER_LIMIT:
+            projected_matching_report = exact_low_hub_matching_projected_pc_tree_search_report(
+                D,
+                pc_tree,
+                max_projection_orders=EXACT_LOW_HUB_MATCHING_PROJECTED_PC_TREE_LIMIT,
+            )
+            if projected_matching_report["complete"] is True:
+                if (
+                    projected_matching_report["strong_ordering_exists"] is True
+                    and projected_matching_report["witness_order"] is not None
+                ):
+                    order = _validate_order_shape(projected_matching_report["witness_order"], n)
+                    if projected_matching_report["witness_order_is_cr"] and passes_bad_side_precircular_cR(D, order):
+                        if represents_order(pc_tree, order):
+                            return {
+                                "exists": True,
+                                "order": list(order),
+                                "complete": True,
+                                "solver": "candidate_exact_low_hub_matching_projected_pc_tree_search",
+                                "projection_order_bound": projected_matching_report.get("projection_order_bound"),
+                                "projection_order_bound_canonical": projected_matching_report.get("projection_order_bound_canonical"),
+                                "projection_orders_checked": projected_matching_report.get("projection_orders_checked"),
+                                "projection_lift_checks": projected_matching_report.get("projection_lift_checks"),
+                                "lifted_orders_checked": projected_matching_report.get("lifted_orders_checked"),
+                                "cr_checks": projected_matching_report.get("cr_checks"),
+                                "pair_count": projected_matching_report.get("pair_count"),
+                                "hub_labels": list(projected_matching_report.get("hub_labels", ())),
+                                "note": "bounded exhaustive low-hub matching projection search lifted a represented order through the PC-tree and verified it directly as circular Robinson",
+                            }
+                elif projected_matching_report["strong_ordering_exists"] is False:
+                    return {
+                        "exists": False,
+                        "order": None,
+                        "complete": True,
+                        "solver": "candidate_exact_low_hub_matching_projected_pc_tree_search",
+                        "projection_order_bound": projected_matching_report.get("projection_order_bound"),
+                        "projection_order_bound_canonical": projected_matching_report.get("projection_order_bound_canonical"),
+                        "projection_orders_checked": projected_matching_report.get("projection_orders_checked"),
+                        "projection_lift_checks": projected_matching_report.get("projection_lift_checks"),
+                        "lifted_orders_checked": projected_matching_report.get("lifted_orders_checked"),
+                        "cr_checks": projected_matching_report.get("cr_checks"),
+                        "pair_count": projected_matching_report.get("pair_count"),
+                        "hub_labels": list(projected_matching_report.get("hub_labels", ())),
+                        "note": "bounded exhaustive low-hub matching projection search found no projection that can be lifted to a represented circular-Robinson order in this proved subcase",
+                    }
+
             exact_matching_report = exact_low_hub_matching_projection_search_report(
                 D,
                 pc_tree,

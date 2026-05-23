@@ -2100,3 +2100,58 @@
 - Next action : chercher une formulation DP/CSP de l'intersection
   PC-tree avec les formes `seq + mate(seq)`, ou produire un contre-exemple
   minimal à une règle locale de synchronisation.
+
+## 2026-05-23 hub-projected matching PC-tree lift
+
+- Date/heure : 2026-05-23 07:50:07 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : dans le sous-cas binaire low-hub matching, on peut
+  énumérer seulement les projections high-vertices `seq + mate(seq)` puis les
+  relever exactement dans le PC-tree original. Cela enlève le facteur
+  combinatoire des placements de hubs de T045, tout en gardant un rejet complet
+  uniquement si toutes les projections uniques sous limite sont épuisées.
+- Changement fait : ajout de
+  `exact_low_hub_matching_projected_pc_tree_search_report`, d'un releveur
+  récursif de projection dans les nœuds `P/C`, et intégration candidate avant
+  l'énumération complète T045. Ajout de tests frontier tardive, rigide
+  non-crossing, limite projection, facteur hubs, oracle petits PC-trees, rejet
+  candidate avec beaucoup de hubs, contre-exemple local `I_x(v)` minimal `n=5`
+  et contre-exemple side-only/2-SAT naïf.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `194 passed`, puis `JUSTE`.
+- Plan subagents : cinq sidecars lecture seule. Résultats : Piste A trouve le
+  contre-exemple minimal `n=5` aux règles locales `I_x(v)` ; Piste B confirme
+  que T046 est une étape vers DP mais doit transporter l'ordre des paires
+  ouvertes ; Piste C recommande des nogoods 4-aires/support-local et fournit le
+  contre-exemple side-only ; Piste complexité classe T046 comme exact borné et
+  non polynomial ; Piste E/F a été fermée après timeout sans livrable.
+- Commande exécutée : `pytest -q tests/test_local_constraints.py
+  tests/test_candidate.py tests/test_regression_counterexamples.py`.
+- Résultat correction : `102 passed`.
+- Commande exécutée : probe oracle matching low-hub sur petits PC-trees.
+- Résultat probe : `14` couples matching/PC-tree sans mismatch entre
+  `exact_oracle_pc_tree` et le rapport projeté complet.
+- Commande exécutée : `make quick`.
+- Résultat correction : `202 passed`, puis `JUSTE`.
+- Commande exécutée : `make hunt-counterexamples`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark rapide : `reports/complexity_report_quick.json` écrit ;
+  `0` timeout, `0` incomplet ; à `n=20`, médiane `0.001331s`,
+  p95 `0.001514s`, fit polynomial empirique `p ~= 1.91`.
+- Commande exécutée : `make bench`.
+- Résultat benchmark fort : `reports/complexity_report.json` écrit ; `0`
+  timeout, `0` incomplet jusqu'à `n=100`, médiane `0.03504s`,
+  p95 `0.04181s`, fit polynomial empirique `p ~= 1.82`.
+- Conclusion : T046 améliore strictement T045 sur les hubs en énumérant les
+  projections plutôt que les ordres complets, avec témoins revérifiés et
+  négatifs complets seulement sous limite. Cela reste factoriel en nombre de
+  paires et ne résout pas l'intersection PC-tree générale.
+- Next action : remplacer l'énumération `2^m * m!` par une DP/CSP
+  support-local qui transporte l'ordre des paires ouvertes, ou documenter un
+  contre-exemple montrant que cette compression explose.

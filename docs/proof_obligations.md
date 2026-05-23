@@ -1305,3 +1305,38 @@ Limites :
 - aucune conclusion de non-existence générale ne peut être tirée si aucun ordre
   strict n'est trouvé ;
 - les cas non stricts et les égalités restent hors périmètre de cet artefact.
+
+### Relèvement de projections matching low-hub dans le PC-tree
+
+Statut : conséquence directe bornée pour un sous-cas ; pas polynomial général.
+
+`exact_low_hub_matching_projected_pc_tree_search_report` traite le sous-cas
+binaire avec au moins un hub bas et un graphe haut matching. Il énumère les
+projections high-vertices de la forme `seq + mate(seq)`, puis tente de relever
+chaque projection à un frontier complet du PC-tree original en insérant les hubs
+uniquement là où la structure `P/C` le permet. Le témoin retourné est toujours
+revérifié par `passes_bad_side_precircular_cR` et `represents_order`.
+
+Obligations couvertes dans ce périmètre :
+
+- nécessité et suffisance fixed-order : héritées du lemme T044/T045 pour le
+  sous-cas matching low-hub, où un ordre est cR ssi la projection des endpoints
+  est `seq + mate(seq)` à rotation/renversement près ;
+- représentation du témoin : le releveur construit un frontier complet et le
+  contrôle par `represents_order` avant acceptation ;
+- négatif complet borné : si toutes les projections uniques sont épuisées sous
+  `max_projection_orders` et aucune n'est relevable, aucun ordre représenté du
+  sous-cas matching low-hub n'est cR.
+
+Limites :
+
+- l'énumération reste factorielle en nombre de paires du matching
+  (`2^m * m!` avant déduplication circulaire) ;
+- `projection_limit_exceeded` est incomplet et ne doit jamais être converti en
+  rejet ;
+- le résultat ne s'applique pas aux graphes hauts non matching ni au cas sans
+  hub bas ;
+- ce n'est pas encore la DP/CSP d'intersection PC-tree demandée : l'ordre commun
+  des paires reste explicitement énuméré ;
+- les contre-exemples T046 montrent qu'une signature locale par ensembles
+  projetés ou par simples variables "côté A/B" est insuffisante.

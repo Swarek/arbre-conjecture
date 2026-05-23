@@ -233,3 +233,31 @@ Conclusion : les agrégats compressent, mais perdent l'information de côté ou
 l'identité fine des témoins mauvais sur les familles stress. Continuer Piste B
 seulement avec une structure supplémentaire prouvable : degré borné, familles
 laminaires/equal-block, ou sous-cas strict.
+
+## Résultats T046
+
+Statut : étape intermédiaire vers DP, mais encore énumérative.
+
+`exact_low_hub_matching_projected_pc_tree_search_report` peut être vu comme une
+intersection PC-tree x langage apparié où les hubs sont epsilon : le langage
+demande une projection `seq + mate(seq)`, et le releveur vérifie que cette
+projection se parse en blocs compatibles avec les nœuds `P/C`.
+
+Le subagent Piste B recommande que la vraie DP transporte au minimum :
+
+- la phase `A/B` du premier et du dernier endpoint d'un bloc ;
+- les endpoints frontières ;
+- les paires ouvertes dont le mate est hors sous-arbre ;
+- l'ordre relatif ou une contrainte PC/PQ sur ces paires ouvertes ;
+- l'orientation exposée de chaque paire ;
+- le statut hubs-only comme epsilon.
+
+Exactitude attendue : polynomial seulement si le nombre de paires ouvertes par
+arête du scaffold est borné ou si les contraintes d'ordre exposées restent
+laminaires/PC-tree-représentables. Sinon, l'ordre des paires ouvertes peut
+dégénérer vers l'énumération factorielle de T046.
+
+Contre-exemple de signature trop faible : deux blocs peuvent exposer les mêmes
+ensembles de paires mais des ordres opposés. Le cas rigide
+`C(0,1,2,3,4,6,5,7)` splitte chaque paire côté A/B mais désynchronise les mates,
+donc une signature par ensembles ou booléens de côté accepte à tort.

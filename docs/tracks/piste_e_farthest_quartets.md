@@ -317,6 +317,26 @@ candidats uniques termine sous `max_candidate_orders`. Un dépassement reste
 incomplet. Les placeholders mixed `n=17` ne sont pas résolus, et T045 ne doit
 pas être généralisé aux graphes hauts non matching.
 
+Résultat T046 : `exact_low_hub_matching_projected_pc_tree_search_report`
+énumère seulement les projections high-vertices `seq + mate(seq)`, puis tente
+de les relever à un frontier complet du PC-tree original. Les hubs ne sont donc
+plus énumérés dans tous les interstices : leur placement est déterminé par un
+releveur `P/C` qui accepte seulement les blocs contigus compatibles et termine
+par une vérification directe cR + `represents_order`.
+
+Ce que cela améliore : le rigide non-crossing `n=12` passe de `21120` candidats
+complets à `192` projections, et le cas `n=13` avec borne complète
+`>100000` est traité sans dépendre du facteur de placements de hubs. Une
+famille à `5` paires et `8` hubs est maintenant rejetée complètement par la
+candidate via la recherche projetée, alors que l'énumération complète des
+placements serait le mauvais objet.
+
+Limites T046 : l'ordre commun des paires reste énuméré (`2^m * m!` avant
+déduplication), donc ce n'est pas encore un algorithme polynomial général.
+Les contre-exemples ajoutés montrent qu'une règle locale `I_x(v)`
+laminar/interval/circular-ones et une 2-SAT qui encode seulement le côté de
+chaque endpoint acceptent trop.
+
 ## Prochaine action
 
 Utiliser les témoins `find_precircular_cR_violation` comme source principale
