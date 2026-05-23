@@ -2,6 +2,7 @@ from tools.pc_csp_internal_benchmark import run_benchmark
 from tools.pc_csp_width_stress import run_width_stress
 from tools.pc_relation_catalog import run_relation_catalog
 from tools.pc_relation_chain_probe import run_relation_chain_probe
+from tools.pc_relation_component_probe import run_relation_component_probe
 from tools.pc_relation_shape_search import run_relation_shape_search
 from tools.pc_relation_unsat_core_probe import run_relation_unsat_core_probe
 from tools.pc_permutation_like_probe import run_permutation_like_probe
@@ -696,3 +697,54 @@ def test_permutation_composition_probe_reports_no_clean_multiblock_candidate():
     assert row["parasite_free"] is True
     assert row["max_permutation_component_edges"] == 1
     assert row["has_multi_permutation_component"] is False
+
+
+def test_relation_component_probe_reports_multi_edge_relations_blocked_by_parasites():
+    report = run_relation_component_probe(
+        block_counts=[2, 3, 4],
+        instance_kinds=["paired_farthest"],
+        repeats=16,
+        seed=20260550,
+        component_product_limit=1_000_000,
+    )
+
+    summary = report["summary"]
+    assert summary["rows"] == 48
+    assert summary["complete_rows"] == 48
+    assert summary["validation_mismatches"] == 0
+    assert summary["component_incomplete_rows"] == 0
+    assert summary["binary_relation_rows"] == 48
+    assert summary["binary_nonboolean_relation_instances"] == 150
+    assert summary["multi_edge_component_rows"] == 32
+    assert summary["parasite_free_rows"] == 1
+    assert summary["parasite_free_multi_edge_rows"] == 0
+    assert summary["sat_parasite_free_multi_edge_rows"] == 0
+    assert summary["rows_with_constant_reject"] == 39
+    assert summary["max_component_edges"] == 6
+    assert "not a proof" in summary["interpretation"]
+
+    assert summary["shape_histogram"]["active_two_regular"] == 78
+    assert summary["shape_histogram"]["small_domain_bridge"] == 31
+    assert summary["shape_histogram"]["permutation_like"] == 1
+    assert summary["multi_edge_component_shape_histogram"]["active_two_regular"] == 70
+    assert summary["multi_edge_component_shape_histogram"]["partial_bijection"] == 1
+
+    assert summary["by_block_count"]["2"]["multi_edge_component_rows"] == 0
+    assert summary["by_block_count"]["2"]["parasite_free_rows"] == 1
+    assert summary["by_block_count"]["3"]["multi_edge_component_rows"] == 16
+    assert summary["by_block_count"]["3"]["parasite_free_rows"] == 0
+    assert summary["by_block_count"]["4"]["multi_edge_component_rows"] == 16
+    assert summary["by_block_count"]["4"]["constant_reject_rows"] == 16
+
+    row = next(row for row in report["rows"] if row["seed"] == 20263586)
+    assert row["row_class"] == "multi_edge_blocked_by_parasite"
+    assert row["relation_accept_assignments"] == 4
+    assert row["constant_reject_count"] == 0
+    assert row["unary_restrictive_count"] == 1
+    assert row["max_component_edges"] == 4
+    assert row["shape_histogram"] == {"small_domain_bridge": 3, "total_cover_dense": 1}
+    assert row["components"][0]["accept_count"] == 4
+    assert row["components"][0]["shape_histogram"] == {
+        "small_domain_bridge": 3,
+        "total_cover_dense": 1,
+    }

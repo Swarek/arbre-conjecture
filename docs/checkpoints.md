@@ -571,6 +571,17 @@ Dernier commit green avant T009 : `07120e4`.
   runs, `0` timeout, `0` incomplet). Résultat observé : les bijections restent
   isolées en `k=2`, disparaissent en `k=3`, ou sont bloquées par parasites en
   `k=4`; `candidate.py` n'a pas été modifié.
+- Checkpoint T071 courant : commit contenant le probe de composantes de toutes
+  les relations binaires non booléennes. Validation observée : test ciblé
+  component probe (`1 passed`), `make bench-relation-components` (`192` lignes
+  complètes, `0` mismatch, `617` relations binaires non booléennes, `127`
+  lignes multi-arêtes, `0` multi-arête parasite-free,
+  `max_component_edges=6`), tests ciblés `tests/test_csp_internal_benchmark.py`
+  (`10 passed`), `make quick` (`272 passed`, puis `JUSTE`) et
+  `make bench-quick` (`40/40` runs, `0` timeout, `0` incomplet). Résultat
+  observé : les réseaux non booléens existent hors `permutation_like`, mais
+  restent tous bloqués par parasites dans `paired_farthest/P3x{k}` ;
+  `candidate.py` n'a pas été modifié.
 
 ## Rollback
 

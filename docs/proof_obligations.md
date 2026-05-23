@@ -277,6 +277,17 @@ globale de `D` ne puisse pas composer ces relations, et ne satisfait donc pas
 les obligations de réduction, de contrôle des parasites ni de promise
 Hsu/McConnell.
 
+T071 élargit ce test à toutes les relations binaires non booléennes du CSP
+matérialisé. Une composante multi-arêtes parasite-free avec affectations
+acceptées deviendrait seulement un candidat de gadget à analyser ; elle ne
+fermerait aucune obligation de preuve sans construction globale de `D`,
+contrôle des contraintes parasites, preuve du promise PC-tree, et réduction
+complète. Inversement, l'absence d'un tel composant dans un sweep ne prouve pas
+l'impossibilité d'une autre famille. Le sweep observé contient `127` lignes avec
+composante multi-arêtes et `617` relations binaires non booléennes, mais `0`
+ligne multi-arêtes parasite-free ; c'est une limite expérimentale du scaffold,
+pas un théorème.
+
 ### Caractérisation bad-side d'un ordre fixé
 
 Statut : conséquence directe pour ordre fixé + prédicat central exact depuis

@@ -194,6 +194,21 @@ arêtes `permutation_like` dans une même composition, sans parasite restrictif 
 avec des affectations acceptées. L'absence d'un tel candidat dans un sweep est
 un signal négatif expérimental pour cette famille, pas une preuve d'impossibilité.
 
+Composantes de relations non booléennes Piste F/C :
+
+```bash
+make bench-relation-components
+```
+
+Cette commande écrit `reports/relation_component_probe.json`. Le rapport reprend
+les relations binaires non booléennes du CSP matérialisé et construit leurs
+composantes de graphe, toutes formes confondues : `permutation_like`,
+`partial_bijection`, `active_two_regular`, sélecteurs et ponts de petit domaine.
+Un candidat propre exigerait une composante multi-arêtes sans parasite
+restrictif et avec des affectations acceptées. Une composante multi-arêtes
+bloquée par `constant_reject` ou par une unaire reste un contre-signal de
+composabilité, pas une preuve d'impossibilité.
+
 ## Interprétation
 
 Un algorithme qui passe les gates peut encore être faux. Après chaque succès, il

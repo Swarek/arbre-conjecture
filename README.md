@@ -49,6 +49,7 @@ make bench-relation-chains
 make bench-relation-unsat-cores
 make bench-permutation-like
 make bench-permutation-composition
+make bench-relation-components
 make acceptance
 ```
 
@@ -112,6 +113,12 @@ promise-aware borné, pas une reconstruction Hsu/McConnell générale.
 `reports/permutation_composition_probe.json`. Il teste si ces profils
 `permutation_like` se composent sur plusieurs blocs `P3` sans parasites
 restrictifs. C’est un stress de gadget local, pas une preuve de dureté.
+
+`make bench-relation-components` écrit
+`reports/relation_component_probe.json`. Il élargit le stress T070 à toutes les
+relations binaires non booléennes observées, mesure leurs composantes
+multi-arêtes et garde les parasites visibles. C’est un diagnostic du scaffold,
+pas une preuve de composabilité ou de dureté.
 
 Dans `tools/pc_circular_conjecture_test.py`, la sortie `JUSTE` signifie seulement
 que la candidate a été égale à l’oracle exact sur les instances générées par ce

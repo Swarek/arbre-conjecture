@@ -4557,3 +4557,72 @@ gadget local T069 : dans `paired_farthest/P3x{k}`, les bijections ne forment pas
 de réseau propre dès qu'on dépasse deux blocs. Continuer soit par un générateur
 construit pour aligner plusieurs blocs, soit basculer vers une autre forme de
 relation non booléenne.
+
+## ExecPlan 2026-05-23 - Non-boolean relation component probe
+
+But : tester si l'échec de composition T070 est spécifique aux relations
+`permutation_like`, ou si toutes les relations binaires non booléennes observées
+dans `paired_farthest/P3x{k}` deviennent multi-blocs seulement sous parasites
+restrictifs.
+
+Hypothèse : des composantes multi-arêtes apparaissent bien quand on inclut les
+formes `active_two_regular`, `partial_bijection`, sélecteurs et ponts de petit
+domaine, mais aucune composante multi-arêtes parasite-free ne survit dans le
+sweep courant. Un contre-signal utile serait une composante non booléenne avec
+au moins deux arêtes, des affectations acceptées, et aucun `constant_reject`,
+unaire restrictive ou relation haute arité.
+
+Fichiers visés : `tools/pc_relation_component_probe.py`,
+`tests/test_csp_internal_benchmark.py`, `Makefile`, `README.md`,
+`docs/experiment_protocol.md`, `docs/hypothesis_portfolio.md`,
+`docs/tracks/piste_c_sat_csp.md`,
+`docs/tracks/piste_f_complexity_subcases.md`,
+`docs/proof_obligations.md`, `docs/experiment_log.md`,
+`docs/checkpoints.md`, `docs/tracks/README.md`, `PLANS.md`.
+
+Algorithme pressenti : réutiliser `quartet_effective_relation_report` et les
+profils de `pc_relation_shape_search`, mais construire les composantes sur
+toutes les relations `binary_non_boolean_catalog`, pas seulement sur les formes
+fonctionnelles. Compter les composantes multi-arêtes, leurs shapes, leurs
+affectations acceptées sous borne explicite, les parasites de ligne et les
+classes de blocage.
+
+Plan de contre-exemples : scanner `paired_farthest` sur `k=2,3,4` avec beaucoup
+de seeds. Chercher d'abord un composant multi-arêtes parasite-free ; s'il
+n'existe pas, documenter si les composants multi-arêtes sont systématiquement
+expliqués par `constant_reject` ou autres parasites. Garder le résultat comme
+signal expérimental du scaffold, pas comme impossibilité générale.
+
+Plan subagents : trois sidecars lecture seule : choix de la prochaine piste
+après T070, forme relationnelle la plus prometteuse hors `permutation_like`,
+et audit d'intégration éventuelle dans `candidate.py`. L'agent principal garde
+l'implémentation, les gates et le commit.
+
+Tests à exécuter : test ciblé du nouveau component probe,
+`make bench-relation-components`, tests CSP ciblés, `make quick`, et
+`make bench-quick`. `candidate.py` ne doit pas changer.
+
+Risques : les composantes sont celles du CSP matérialisé sur un scaffold
+`P3`, pas une preuve sous promise Hsu/McConnell. Une composante multi-arêtes
+bloquée par parasites ne prouve pas que la forme ne peut pas être isolée dans
+une autre construction globale de `D`.
+
+Résultats observés : ajout de `tools/pc_relation_component_probe.py`, cible
+`make bench-relation-components`, test ciblé et documentation T071. Le rapport
+`reports/relation_component_probe.json` contient `192` lignes complètes,
+`0` mismatch, `617` relations binaires non booléennes, `127` lignes avec
+composante multi-arêtes, `0` ligne multi-arêtes parasite-free,
+`0` ligne multi-arêtes parasite-free SAT, `156` lignes avec `constant_reject`,
+`max_component_edges=6` et `max_component_nodes=5`.
+
+Tests observés : test ciblé component probe `1 passed` ; tests ciblés
+`tests/test_csp_internal_benchmark.py` : `10 passed` ;
+`make bench-relation-components` écrit le rapport avec les métriques ci-dessus ;
+`make quick` passe avec `272 passed`, puis `JUSTE` ; `make bench-quick` garde
+`40/40` runs réussis, `0` timeout et `0` incomplet.
+
+Décision : T071 généralise le signal négatif T070. Les relations non
+`permutation_like` se composent bien en composantes multi-arêtes, mais dans ce
+sweep elles sont toutes bloquées par parasites restrictifs. La prochaine piste
+devrait cibler `sparse_partial_matching` et ses conflits unaire+binaire, ou
+construire explicitement une famille `D` qui élimine les parasites.

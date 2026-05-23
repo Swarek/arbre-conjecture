@@ -1264,6 +1264,41 @@ sont bloquées par constantes/unaires. Cela ne prouve pas qu'aucun gadget
 multi-blocs n'existe ; cela indique seulement que `paired_farthest/P3x{k}` ne le
 fournit pas directement.
 
+## Tentative T071 - Composantes de toutes les relations non booléennes
+
+Statut : diagnostic CSP matérialisé, hors `candidate.py`.
+
+Changement : ajout de `tools/pc_relation_component_probe.py`, câblé par
+`make bench-relation-components`. Contrairement à T070, l'outil ne filtre pas
+sur `permutation_like` : il construit les composantes de graphe de toutes les
+relations `binary_non_boolean_catalog` observées dans le CSP matérialisé, puis
+mesure shapes, parasites, compte d'affectations de composante et compte global.
+
+Métriques attendues : `multi_edge_component_rows`,
+`parasite_free_multi_edge_rows`, `sat_parasite_free_multi_edge_rows`,
+`max_component_edges`, histogrammes de shapes, et ventilation par `block_count`.
+
+Résultat `make bench-relation-components` :
+
+- `192` lignes, toutes complètes ;
+- `0` mismatch de validation ;
+- `617` relations binaires non booléennes ;
+- `127` lignes avec composante multi-arêtes ;
+- `0` ligne multi-arêtes parasite-free ;
+- `0` ligne multi-arêtes parasite-free SAT ;
+- `156` lignes avec `constant_reject` ;
+- `max_component_edges=6`, `max_component_nodes=5`.
+
+Par taille : `k=2` n'a aucune composante multi-arêtes et `5` lignes
+parasite-free isolées ; `k=3` a `64/64` lignes multi-arêtes mais aucune
+parasite-free ; `k=4` a `63/64` lignes multi-arêtes, toutes parasitées.
+
+Interprétation à garder : une composante multi-arêtes sans parasite restrictif
+serait un nouveau candidat de gadget. Une composante multi-arêtes bloquée par
+`constant_reject` ou unaire restrictive est seulement un diagnostic de
+corrélation dans le scaffold ; ce n'est pas une preuve d'impossibilité ni une
+preuve de dureté.
+
 ## Tentative T021 - Repair positive-only pour paired-farthest
 
 Statut : idée saine comme générateur expérimental vérifié, mais non intégrée à

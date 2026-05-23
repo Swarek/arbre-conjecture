@@ -1405,3 +1405,45 @@ Conclusion prudente : le gadget local T069 ne se compose pas directement dans
 ce générateur. La piste dureté doit soit construire une autre famille globale
 de `D`, soit accepter que `paired_farthest/P3x{k}` produit surtout des parasites
 dès que plus de deux blocs interagissent.
+
+## Résultat T071 - Composantes toutes relations non booléennes
+
+Statut : diagnostic expérimental, non preuve.
+
+T071 ajoute `make bench-relation-components`. Le rapport
+`reports/relation_component_probe.json` élargit T070 en construisant les
+composantes de toutes les relations binaires non booléennes observées dans
+`paired_farthest/P3x{k}`.
+
+Critère de succès recherché : une composante multi-arêtes parasite-free, avec
+des affectations acceptées. Ce serait un candidat de gadget plus robuste que
+les bijections isolées T070.
+
+Métriques principales du benchmark T071 :
+
+- `rows=192`, toutes complètes ;
+- `validation_mismatches=0` ;
+- `binary_nonboolean_relation_instances=617` ;
+- `multi_edge_component_rows=127` ;
+- `parasite_free_multi_edge_rows=0` ;
+- `sat_parasite_free_multi_edge_rows=0` ;
+- `rows_with_constant_reject=156` ;
+- `max_component_edges=6`, `max_component_nodes=5`.
+
+Les formes multi-arêtes observées sont dominées par `active_two_regular`
+(`333` occurrences dans les composantes multi-arêtes), puis
+`small_domain_bridge` (`90`), `total_cover_dense` (`34`), sélecteurs gauche et
+droite (`33` et `31`) et `partial_bijection` (`16`). Aucun de ces réseaux n'est
+isolé des parasites dans le sweep.
+
+Risque principal : si les composantes multi-arêtes n'apparaissent que sous
+`constant_reject` ou unaire restrictive, le signal est un blocage de scaffold,
+pas une preuve qu'une autre construction globale de `D` ne puisse pas isoler la
+relation.
+
+Conclusion prudente : T071 réfute une explication trop étroite de T070
+centrée uniquement sur `permutation_like`. Des réseaux non booléens existent,
+mais leur usage comme gadgets est bloqué par parasites dans la famille
+`paired_farthest/P3x{k}`. La prochaine piste F la plus concrète est de cibler
+`sparse_partial_matching` et les conflits unaire+binaire T068, car c'est déjà un
+noyau minimal explicite.

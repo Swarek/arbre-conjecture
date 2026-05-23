@@ -3482,3 +3482,55 @@
 - Next action : soit construire un générateur explicitement multi-blocs pour
   aligner plusieurs bijections locales, soit basculer vers une autre forme
   relationnelle moins fragile que `permutation_like`.
+
+## 2026-05-23 all non-boolean relation component probe
+
+- Date/heure : 2026-05-23 16:47:00 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : l'échec T070 est peut-être spécifique aux
+  `permutation_like`; en incluant toutes les relations binaires non booléennes,
+  on devrait voir des composantes multi-blocs, mais elles risquent d'être
+  systématiquement contaminées par parasites dans `paired_farthest/P3x{k}`.
+- Changement fait : ajout de `tools/pc_relation_component_probe.py`, de la cible
+  `make bench-relation-components`, d'un test de régression et de la
+  documentation T071. L'outil construit les composantes de toutes les relations
+  `binary_non_boolean_catalog`, compte les affectations de composante sous borne
+  et reporte les parasites de ligne.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `271 passed`, puis `JUSTE`.
+- Plan subagents : trois sidecars lecture seule. Résultats reçus : un sidecar
+  recommande T071 comme généralisation de T070 et reporte sur `192` lignes
+  `617` relations binaires non booléennes, `127` lignes multi-arêtes et `0`
+  multi-arêtes parasite-free ; un sidecar recommande `sparse_partial_matching`
+  comme prochaine forme à cibler après T071 ; un sidecar déconseille toute
+  intégration `candidate.py` et recommande de rester expérimental.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_csp_internal_benchmark.py::test_relation_component_probe_reports_multi_edge_relations_blocked_by_parasites`.
+- Résultat correction ciblée : `1 passed`.
+- Commande exécutée : `make bench-relation-components`.
+- Résultat benchmark T071 : `reports/relation_component_probe.json` écrit ;
+  `192` lignes, `192` complètes, `0` mismatch, `617` relations binaires non
+  booléennes, `127` lignes avec composante multi-arêtes, `0` ligne multi-arêtes
+  parasite-free, `0` ligne multi-arêtes parasite-free SAT, `156` lignes avec
+  `constant_reject`, `max_component_edges=6`, `max_component_nodes=5`.
+- Détail par bloc : `k=2` a `0` ligne multi-arêtes et `5` lignes parasite-free
+  isolées ; `k=3` a `64/64` lignes multi-arêtes, toutes parasitées ; `k=4` a
+  `63/64` lignes multi-arêtes, toutes parasitées.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_csp_internal_benchmark.py`.
+- Résultat correction ciblée élargie : `10 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction finale : `272 passed`, puis `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `8` tailles, `40/40` runs réussis, `0` timeout et `0` incomplet.
+- Conclusion : T071 montre que les réseaux non booléens existent
+  hors `permutation_like`, mais qu'ils sont tous bloqués par parasites dans ce
+  sweep. Ce n'est pas une preuve d'impossibilité. `candidate.py` n'a pas été
+  modifié.
+- Next action : cibler `sparse_partial_matching` et les conflits
+  unaire+binaire T068, ou construire une famille `D` explicitement conçue pour
+  éliminer les parasites.

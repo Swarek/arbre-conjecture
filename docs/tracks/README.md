@@ -116,6 +116,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T068 | 2026-05-23 | F/C | Noyau UNSAT minimal d'interaction : conflit unaire plus `sparse_partial_matching`, diagnostic matérialisé seulement | `make bench-relation-unsat-cores` |
 | T069 | 2026-05-23 | F/C | Contrôle promise-aware borné : `permutation_like` parasite-free seulement quand `P3/P3` égale les ordres quasi exacts en `n=6` | `make bench-permutation-like` |
 | T070 | 2026-05-23 | F/C | Composition multi-blocs : aucun réseau `permutation_like` propre sur `P3x{k}` pour `k=2,3,4` dans le sweep | `make bench-permutation-composition` |
+| T071 | 2026-05-23 | F/C | Composantes toutes relations non booléennes : multi-arêtes visibles mais testées contre les parasites restrictifs | `make bench-relation-components` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

@@ -217,6 +217,14 @@ propre sur `paired_farthest/P3x{k}` pour `k=2,3,4` et `64` seeds. Les
 négatif contre la composition naïve de ce gadget local, pas une preuve
 d'impossibilité.
 
+Mise à jour T071 : le prochain stress élargit T070 à toutes les relations
+binaires non booléennes. L'hypothèse à tester est que les composantes
+multi-arêtes existent pour d'autres formes (`active_two_regular`,
+`partial_bijection`, sélecteurs, ponts), mais qu'elles restent bloquées par
+parasites dans le scaffold `paired_farthest/P3x{k}`. Un composant multi-arêtes
+parasite-free serait un nouveau candidat gadget ; son absence est seulement un
+signal négatif expérimental.
+
 Sous-cas ajouté : explorer le cas strict comme algorithme spécialisé
 potentiellement polynomial. Ne pas l'intégrer à `candidate.py` avant d'avoir une
 détection stricte et une génération de candidats stricts vérifiées contre les
