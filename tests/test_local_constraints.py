@@ -1,8 +1,10 @@
 from itertools import combinations
+import random
 
 from pc_circular.generators import (
     equal_distance_instance,
     even_high_cycle_plus_low_hub,
+    matching_high_graph_plus_low_hub,
     quasi_circular_not_circular_four_point,
 )
 from pc_circular.pc_tree import c_node, leaf, p_node, star_pc_tree
@@ -17,6 +19,13 @@ from pc_circular.solvers.local_constraints import (
 
 def _binary_low_hub_from_edges(m, edges):
     D = equal_distance_instance(m + 1)
+    for a, b in edges:
+        D[a][b] = D[b][a] = 2
+    return D
+
+
+def _zero_low_hub_from_edges(m, edges):
+    D = [[0 for _ in range(m + 1)] for _ in range(m + 1)]
     for a, b in edges:
         D[a][b] = D[b][a] = 2
     return D
@@ -115,6 +124,29 @@ def test_low_hub_strong_ordering_accepts_complete_bipartite_and_matching_control
     assert matching_report["witness_order_is_cr"] is True
 
 
+def test_low_hub_strong_ordering_accepts_permuted_matching_with_component_priority():
+    for n in (5, 6, 7, 10, 21):
+        for seed in range(20):
+            D = matching_high_graph_plus_low_hub(n, rng=random.Random(seed))
+            report = low_hub_strong_ordering_report(D, max_permutation_pairs=1)
+
+            assert report["status"] == "strong_ordering_found"
+            assert report["strong_ordering_exists"] is True
+            assert report["checked_permutation_pairs"] == 1
+            assert report["witness_order_is_cr"] is True
+
+
+def test_low_hub_strong_ordering_accepts_matching_with_multiple_hubs():
+    D = matching_high_graph_plus_low_hub(20)
+    report = low_hub_strong_ordering_report(D, max_permutation_pairs=1)
+
+    assert len(report["hub_labels"]) == 2
+    assert report["status"] == "strong_ordering_found"
+    assert report["strong_ordering_exists"] is True
+    assert report["checked_permutation_pairs"] == 1
+    assert report["witness_order_is_cr"] is True
+
+
 def test_low_hub_strong_ordering_accepts_chain_graph_control():
     chain_edges = []
     for a, degree in [(1, 4), (2, 3), (3, 2), (4, 1)]:
@@ -143,6 +175,17 @@ def test_low_hub_strong_ordering_reports_non_bipartite_high_graph():
     assert report["strong_ordering_exists"] is False
 
 
+def test_low_hub_strong_ordering_handles_zero_low_value_triangle():
+    triangle = _zero_low_hub_from_edges(3, [(1, 2), (2, 3), (1, 3)])
+    report = low_hub_strong_ordering_report(triangle)
+
+    assert report["low_value"] == 0
+    assert report["status"] == "non_bipartite_high_graph"
+    assert report["strong_ordering_exists"] is False
+    assert report["witness_order"] is None
+    assert brute_force.solve(triangle)["exists"] is False
+
+
 def test_low_hub_strong_ordering_reports_nonapplicable_and_limit_statuses():
     no_hub = _binary_low_hub_from_edges(4, [(1, 2), (2, 3), (3, 4), (1, 4), (0, 1)])
     assert low_hub_strong_ordering_report(no_hub)["status"] == "no_low_hub"
@@ -156,6 +199,15 @@ def test_low_hub_strong_ordering_reports_nonapplicable_and_limit_statuses():
     limited = low_hub_strong_ordering_report(_binary_low_hub_from_edges(8, matching_edges), max_permutation_pairs=0)
     assert limited["status"] == "unsupported_permutation_limit"
     assert limited["complete"] is False
+
+    delayed_positive_edges = [(1, 2), (1, 6), (2, 5), (3, 4)]
+    delayed_positive = _binary_low_hub_from_edges(6, delayed_positive_edges)
+    limited_positive = low_hub_strong_ordering_report(delayed_positive, max_permutation_pairs=1)
+    assert limited_positive["status"] == "unsupported_permutation_limit"
+    assert limited_positive["strong_ordering_exists"] is None
+    full_positive = low_hub_strong_ordering_report(delayed_positive)
+    assert full_positive["status"] == "strong_ordering_found"
+    assert full_positive["witness_order_is_cr"] is True
 
 
 def test_low_hub_strong_ordering_matches_oracle_for_tiny_high_graphs():

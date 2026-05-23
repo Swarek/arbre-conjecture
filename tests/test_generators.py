@@ -10,6 +10,7 @@ from pc_circular.generators import (
     four_local_non_cr_core,
     instance_by_kind,
     instance_by_kind_with_metadata,
+    matching_high_graph_plus_low_hub,
     non_bipartite_high_graph_plus_low_hub,
     odd_high_cycle_plus_low_hub,
     paired_farthest_matching,
@@ -45,6 +46,7 @@ def test_instance_by_kind_accepts_explicit_piste_f_families():
     assert validate_dissimilarity(instance_by_kind(6, kind="non_bipartite_high_graph_plus_low_hub")) == 6
     assert validate_dissimilarity(instance_by_kind(6, kind="complete_bipartite_high_graph_plus_low_hub")) == 6
     assert validate_dissimilarity(instance_by_kind(6, kind="chain_high_graph_plus_low_hub")) == 6
+    assert validate_dissimilarity(instance_by_kind(6, kind="matching_high_graph_plus_low_hub", rng=random.Random(5))) == 6
 
 
 def test_four_local_non_cr_core_is_global_negative_but_four_local_positive():
@@ -114,10 +116,10 @@ def test_even_high_cycle_plus_low_hub_has_no_six_point_obstruction_at_c8():
 
 
 def test_low_hub_strong_ordering_positive_generators_are_valid_large_families():
-    for generator in (complete_bipartite_high_graph_plus_low_hub, chain_high_graph_plus_low_hub):
+    for generator in (complete_bipartite_high_graph_plus_low_hub, chain_high_graph_plus_low_hub, matching_high_graph_plus_low_hub):
         D = generator(11)
         assert validate_dissimilarity(D) == 11
-        assert any(D[0][j] == 1 for j in range(1, 11))
+        assert any(D[i][j] == 1 for i in range(11) for j in range(i + 1, 11))
         assert any(D[i][j] == 2 for i in range(1, 11) for j in range(i + 1, 11))
 
 

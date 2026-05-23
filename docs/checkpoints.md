@@ -229,6 +229,16 @@ Dernier commit green avant T009 : `07120e4`.
   `make bench-quick`, `make bench`, et benchmarks ciblés chain/complete
   low-hub star jusqu'à `n=100`. Résultat observé : `mixed/star` reste `0`
   timeout et `0` incomplet jusqu'à `n=100`, médiane `0.0275s` à `n=100`.
+- Checkpoint T039 courant : commit contenant
+  `matching_high_graph_plus_low_hub`, la priorité composante-alignée de
+  `low_hub_strong_ordering_report`, et la correction du diagnostic pour les
+  niveaux bas `0` hors diagonale. Validation observée : tests ciblés
+  local-constraints/générateurs/candidate, `make unit`, `make quick`,
+  `make hunt-counterexamples`, `make check`, `make bench-quick`, `make bench`,
+  et benchmark ciblé matching low-hub star jusqu'à `n=101`. Résultat observé :
+  les matchings permutés sont trouvés au premier couple d'ordres, `mixed/star`
+  reste `0` timeout et `0` incomplet jusqu'à `n=100`, médiane `0.0267s` à
+  `n=100`.
 
 ## Rollback
 

@@ -188,15 +188,16 @@ def _has_strong_ordering(A_order, B_order, high_edges) -> bool:
 def low_hub_strong_ordering_report(D, *, max_permutation_pairs: int = 100_000):
     """Bounded diagnostic for the binary low-hub strong-ordering conjecture.
 
-    This Piste E/F experiment does not decide the general PC-tree problem and is
-    not used by ``candidate.py``.  It tests whether the high-distance graph of a
+    This Piste E/F experiment does not decide the general PC-tree problem.
+    ``candidate.py`` may use it only as a positive witness source after direct
+    cR and PC-tree validation.  It tests whether the high-distance graph of a
     binary low-hub instance admits a strong ordering, and verifies the resulting
     witness order directly when one is found.
     """
 
     n = validate_dissimilarity(D)
-    positive_values = sorted({D[i][j] for i in range(n) for j in range(i + 1, n) if D[i][j] > 0})
-    if len(positive_values) == 1:
+    off_diagonal_values = sorted({D[i][j] for i in range(n) for j in range(i + 1, n)})
+    if len(off_diagonal_values) <= 1:
         order = tuple(range(n))
         return {
             "method": "bounded_low_hub_strong_ordering_report",
@@ -204,7 +205,7 @@ def low_hub_strong_ordering_report(D, *, max_permutation_pairs: int = 100_000):
             "complete": True,
             "status": "empty_high_graph",
             "strong_ordering_exists": True,
-            "low_value": positive_values[0],
+            "low_value": off_diagonal_values[0] if off_diagonal_values else 0,
             "high_value": None,
             "hub_labels": order,
             "high_graph_labels": (),
@@ -214,7 +215,7 @@ def low_hub_strong_ordering_report(D, *, max_permutation_pairs: int = 100_000):
             "witness_order": order,
             "witness_order_is_cr": passes_bad_side_precircular_cR(D, order),
         }
-    if len(positive_values) != 2:
+    if len(off_diagonal_values) != 2:
         return {
             "method": "bounded_low_hub_strong_ordering_report",
             "n": n,
@@ -225,7 +226,7 @@ def low_hub_strong_ordering_report(D, *, max_permutation_pairs: int = 100_000):
             "witness_order_is_cr": None,
         }
 
-    _low, high = positive_values
+    _low, high = off_diagonal_values
     neighbors = {
         i: tuple(j for j in range(n) if i != j and D[i][j] == high)
         for i in range(n)
@@ -267,20 +268,36 @@ def low_hub_strong_ordering_report(D, *, max_permutation_pairs: int = 100_000):
     for flips in product((0, 1), repeat=len(components)):
         part_a = []
         part_b = []
+        component_a_order = []
+        component_b_order = []
         for flip, (left, right) in zip(flips, components):
             if flip:
-                part_a.extend(right)
-                part_b.extend(left)
+                chosen_a = right
+                chosen_b = left
             else:
-                part_a.extend(left)
-                part_b.extend(right)
+                chosen_a = left
+                chosen_b = right
+            part_a.extend(chosen_a)
+            part_b.extend(chosen_b)
+            component_a_order.extend(chosen_a)
+            component_b_order.extend(chosen_b)
         part_a = tuple(sorted(part_a))
         part_b = tuple(sorted(part_b))
 
         high_edges = {(a, b) for a in part_a for b in part_b if D[a][b] == high}
         priority_a_orders = tuple(dict.fromkeys((part_a, tuple(reversed(part_a)))))
         priority_b_orders = tuple(dict.fromkeys((part_b, tuple(reversed(part_b)))))
-        priority_pairs = tuple((A_order, B_order) for A_order in priority_a_orders for B_order in priority_b_orders)
+        component_pair = (tuple(component_a_order), tuple(component_b_order))
+        reversed_component_pair = (tuple(reversed(component_a_order)), tuple(reversed(component_b_order)))
+        priority_pairs = tuple(
+            dict.fromkeys(
+                (
+                    component_pair,
+                    reversed_component_pair,
+                    *((A_order, B_order) for A_order in priority_a_orders for B_order in priority_b_orders),
+                )
+            )
+        )
         seen_order_pairs = set()
 
         def order_pairs():

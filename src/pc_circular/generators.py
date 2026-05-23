@@ -295,6 +295,23 @@ def chain_high_graph_plus_low_hub(n: int) -> list[list[int]]:
     return D
 
 
+def matching_high_graph_plus_low_hub(n: int, *, rng: random.Random | None = None) -> list[list[int]]:
+    """Binary family: high-distance matching plus one or more low hubs."""
+
+    if n < 5:
+        raise ValueError("matching_high_graph_plus_low_hub requires n >= 5")
+    D = equal_distance_instance(n, value=1)
+    paired_count = n - 1
+    if paired_count % 2:
+        paired_count -= 1
+    split = 1 + paired_count // 2
+    left = range(1, split)
+    right = range(split, 1 + paired_count)
+    for a, b in zip(left, right):
+        D[a][b] = D[b][a] = 2
+    return _permute_labels(D, rng=rng) if rng is not None else D
+
+
 def small_paper_like_instances() -> list[list[list[int]]]:
     """Small named examples; extend with paper-derived cases when available."""
 
@@ -308,6 +325,7 @@ def small_paper_like_instances() -> list[list[list[int]]]:
         non_bipartite_high_graph_plus_low_hub(6),
         complete_bipartite_high_graph_plus_low_hub(6),
         chain_high_graph_plus_low_hub(6),
+        matching_high_graph_plus_low_hub(6),
         non_strict_large_farthest_instance(5),
     ]
 
@@ -382,6 +400,8 @@ def instance_by_kind(
         return complete_bipartite_high_graph_plus_low_hub(n)
     if kind == "chain_high_graph_plus_low_hub":
         return chain_high_graph_plus_low_hub(n)
+    if kind == "matching_high_graph_plus_low_hub":
+        return matching_high_graph_plus_low_hub(n, rng=rng)
     if kind == "mixed":
         return mixed_instance(n, rng=rng, values=values)
     raise ValueError(f"unknown instance kind: {kind}")

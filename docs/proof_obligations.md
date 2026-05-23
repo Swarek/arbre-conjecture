@@ -441,14 +441,14 @@ Suffisance conjecturale :
 - si un strong ordering est donné, l'ordre `hubs, A_order, B_order` est
   expérimentalement cR sur les familles testées, et
   `low_hub_strong_ordering_report` vérifie toujours ce témoin par le prédicat
-  direct `is_precircular_order_cR` ;
+  fixed-order bad-side exact ;
 - il reste à écrire la preuve complète pour toutes les paires, toutes les
   composantes et tous les cas dégénérés avec plusieurs hubs.
 
 Conséquence directe utilisée par la candidate T037 :
 
 - si le diagnostic produit un ordre, que `candidate.py` valide sa forme, que
-  `is_precircular_order_cR(D, order)` est vrai, et que `represents_order(T,
+  `passes_bad_side_precircular_cR(D, order)` est vrai, et que `represents_order(T,
   order)` est vrai quand un PC-tree est fourni, alors retourner `exists=True`
   est sound indépendamment de la conjecture strong-ordering ;
 - aucun statut négatif du diagnostic n'est utilisé comme rejet complet, et une
@@ -473,6 +473,27 @@ Preuve expérimentale T037 :
   `quasi_orders=[]` restent des contrôles de non-contournement ;
 - `make check`, `make hunt-counterexamples` et `make bench` restent verts.
 
+Preuve expérimentale T039 :
+
+- matching low-hub permuté : `matching_high_graph_plus_low_hub/star` est accepté
+  avec `0` timeout et `0` incomplet jusqu'à `n=101`, après validation directe du
+  témoin ;
+- les matchings permutés multi-seed et les matchings avec plusieurs hubs sont
+  trouvés au premier couple d'ordres grâce à la priorité composante-alignée ;
+- le cas `low=0` est explicitement régressé par un triangle haut non biparti,
+  pour éviter de confondre distances nulles hors diagonale et absence de niveau
+  bas ;
+- une petite limite de permutations reste documentée comme incomplète même sur
+  certains positifs.
+
+Conséquence partielle prouvée T039 :
+
+- pour un graphe haut matching, choisir une orientation de chaque composante
+  arête et l'ordre `hubs, A_1..A_m, B_1..B_m` place, pour toute paire basse, les
+  éventuels mauvais témoins hauts sur un seul arc ; les paires hautes n'ont pas
+  de mauvais témoin. Ce lemme couvre le sous-cas matching mais ne caractérise pas
+  tous les graphes bipartis à strong ordering.
+
 Obligations ouvertes avant théorème général :
 
 - prouver la suffisance du strong ordering pour tous les cas binaires hub bas ;
@@ -480,8 +501,11 @@ Obligations ouvertes avant théorème général :
   reconnaissance ou documenter précisément la borne ;
 - vérifier la représentation PC-tree de tout témoin positif ;
 - séparer star/all-orders et existence dans un PC-tree arbitraire ;
-- traiter les cas où le niveau bas hors diagonale vaut `0` ou où plus de deux
-  niveaux positifs apparaissent.
+- traiter en preuve les cas où le niveau bas hors diagonale vaut `0` et les cas
+  dégénérés avec plusieurs hubs ; le code les teste mais cela ne remplace pas un
+  argument général ;
+- expliquer pourquoi les matrices avec plus de deux niveaux hors diagonale
+  sortent du sous-cas.
 
 ### Témoins positifs échantillonnés
 

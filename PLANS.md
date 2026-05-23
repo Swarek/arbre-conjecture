@@ -2101,3 +2101,87 @@ les ordres déjà produits ou énumérés. Garder l'oracle par quadruplets comme
 comparaison indépendante dans les tools. Prochaine étape : utiliser ce gain
 pour tester plus agressivement la reconnaissance strong-ordering low-hub ou les
 familles matching/PC-tree non-star.
+
+## ExecPlan 2026-05-23 - permuted low-hub matching witness
+
+But : ajouter un stress positif low-hub indépendant de chain/complete et rendre
+le diagnostic strong-ordering capable de trouver immédiatement le témoin d'un
+graphe haut matching même lorsque les labels sont permutés.
+
+Hypothèse : dans une matrice binaire `low/high` avec hubs bas et graphe haut
+formé d'un matching, l'ordre `hubs, A_1..A_m, B_1..B_m`, où les paires
+`A_i B_i` sont les arêtes du matching dans le même ordre de composantes, est cR.
+Plus généralement, pour des composantes biparties disjointes, essayer les deux
+parts concaténées composante par composante est une priorité sûre car tout
+témoin reste vérifié par le prédicat fixed-order exact.
+
+Fichiers à modifier : `src/pc_circular/solvers/local_constraints.py`,
+`src/pc_circular/generators.py`, `tests/test_local_constraints.py`,
+`tests/test_generators.py`, `tests/test_candidate.py` si nécessaire,
+`docs/proof_obligations.md`, `docs/tracks/piste_e_farthest_quartets.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/tracks/README.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `PLANS.md`.
+
+Algorithme pressenti : conserver l'énumération bornée comme fallback, mais
+ajouter aux priorités de `low_hub_strong_ordering_report` un couple
+`(A_order, B_order)` construit en concaténant les parts de chaque composante
+bipartie dans le même ordre après application des flips. Pour un matching,
+cela aligne automatiquement les mates, donc le premier ordre testé suffit même
+si les labels sont mélangés.
+
+Plan de contre-exemples : tester un matching low-hub volontairement désaligné
+par labels où l'ordre trié échoue ; vérifier que `max_permutation_pairs=1`
+trouve tout de même le témoin ; tester `max_permutation_pairs=0` comme limite ;
+contrôler que `C6/C8` et le tree négatif restent rejetés ; comparer à l'oracle
+exact sur petits matchings et à `make hunt-counterexamples`.
+
+Plan subagents : deux sidecars lecture seule. Un audite la preuve du matching
+et les risques de priorité composante ; un cherche des contre-exemples rapides
+sur graphes bipartis low-hub multi-composantes où la nouvelle priorité pourrait
+masquer une limite ou changer un statut.
+
+Tests à exécuter : tests ciblés générateurs/local-constraints/candidate,
+benchmark ciblé `matching_high_graph_plus_low_hub/star` jusqu'à `n=101`,
+`make unit`, `make quick`, `make hunt-counterexamples`, `make check`,
+`make bench-quick`; `make bench` si `candidate.py` change ou si les rapports
+forts doivent être rafraîchis.
+
+Risques : confondre priorité de recherche et preuve de complétude ; exploser en
+`2^components` avant d'atteindre un témoin ; accepter un témoin non représenté
+par un PC-tree ; suradapter aux labels naturels au lieu de tester une version
+permutée.
+
+Résultats observés : `matching_high_graph_plus_low_hub` ajouté comme famille
+positive indépendante. `low_hub_strong_ordering_report` essaie maintenant en
+priorité l'ordre composante-aligné puis son renversement, avant les priorités
+triées et l'énumération factorielle. Les tests ciblés
+`tests/test_local_constraints.py tests/test_generators.py tests/test_candidate.py`
+donnent `68 passed`. Le benchmark ciblé
+`matching_high_graph_plus_low_hub/star`, tailles `5,7,9,11,21,41,81,101`,
+répétitions `10`, timeout `2s`, donne `0` timeout et `0` incomplet ; à
+`n=101`, médiane `0.1810s`, p95 `0.1852s`. Les gates fortes restent vertes :
+`make unit` donne `163 passed`, `make quick` donne `163 passed` puis `JUSTE`,
+`make hunt-counterexamples` et `make check` donnent `JUSTE`, `make bench-quick`
+donne `0` timeout et `0` incomplet, et `make bench` donne `0` timeout et `0`
+incomplet jusqu'à `n=100`, médiane `0.0267s`, p95 `0.0366s`, fit polynomial
+empirique `p ~= 1.72`.
+
+Résultats subagents : l'audit preuve confirme que, pour un matching haut avec
+hubs bas, l'ordre `hubs, A_1..A_m, B_1..B_m` aligne les mates et satisfait la
+condition bad-side. La recherche de contre-exemples confirme l'absence de faux
+positif observé et mesure `2400/2400` matchings permutés trouvés au premier
+essai, mais rappelle l'incomplétude générale : avec `max_permutation_pairs=1`,
+seuls `1542/5117` graphes positifs strong-ordering à `m=6` sont trouvés.
+
+Corrections associées : le diagnostic prend maintenant en compte les distances
+basses `0` hors diagonale au lieu de les ignorer, avec une régression triangle
+haut non biparti `low=0`. Les tests rappellent aussi qu'une petite limite de
+permutations doit rester `unsupported_permutation_limit`, pas `False`, même
+quand un témoin existe plus loin.
+
+Décision : conserver T039 comme amélioration de priorité et stress positif
+matching, pas comme preuve générale du cas strong-ordering. Prochaine étape :
+soit prouver la suffisance strong-ordering pour le cas binaire hub bas complet,
+soit remplacer l'énumération factorielle par une reconnaissance polynomiale de
+graphe biparti à strong ordering, en gardant les tests `C6/C8`, tree négatif,
+low-zero et positifs retardés comme garde-fous.

@@ -1693,3 +1693,57 @@
   strong-ordering plus ambitieuse, ajouter matching low-hub comme stress
   positif, ou reprendre la Piste B sur une signature de sous-arbre moins
   globale.
+
+## 2026-05-23 permuted low-hub matching witness
+
+- Date/heure : 2026-05-23 05:45:03 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : pour une matrice binaire `low/high` avec hubs bas et
+  graphe haut matching, l'ordre `hubs, A_1..A_m, B_1..B_m` alignant les mates
+  dans le même ordre donne un témoin cR. Pour le diagnostic strong-ordering
+  plus général, essayer les composantes biparties dans le même ordre est une
+  priorité de recherche sûre parce que tout témoin reste vérifié directement.
+- Changement fait : ajout de `matching_high_graph_plus_low_hub`; ajout d'une
+  priorité composante-alignée dans `low_hub_strong_ordering_report`; correction
+  du diagnostic pour traiter `low=0` hors diagonale ; tests matching permutés
+  multi-seed, hubs multiples, triangle `low=0`, positif retardé par limite de
+  permutations et candidate star.
+- Plan subagents : deux sidecars lecture seule. Résultats : l'audit confirme
+  le certificat matching comme positif robuste ; la recherche de contre-exemples
+  ne trouve pas de faux positif mais montre que `max_permutation_pairs=1` reste
+  incomplet sur les positifs strong-ordering généraux (`1542/5117` trouvés à
+  `m=6`).
+- Commande exécutée : `pytest -q tests/test_local_constraints.py tests/test_generators.py tests/test_candidate.py`.
+- Résultat correction : `68 passed`.
+- Commande exécutée : benchmark ciblé
+  `matching_high_graph_plus_low_hub/star`, tailles
+  `5,7,9,11,21,41,81,101`, répétitions `10`, timeout `2.0`.
+- Résultat benchmark ciblé :
+  `reports/complexity_matching_low_hub_star.json` écrit ; `0` timeout, `0`
+  incomplet ; à `n=101`, médiane `0.1810s`, p95 `0.1852s`, branche
+  `candidate_low_hub_strong_ordering_witness` pour `n>=9`.
+- Commande exécutée : `make unit`.
+- Résultat correction : `163 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `163 passed`, puis `JUSTE`.
+- Commande exécutée : `make hunt-counterexamples`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark rapide : `reports/complexity_report_quick.json` écrit ;
+  `0` timeout, `0` incomplet ; à `n=20`, médiane `0.000990s`, p95
+  `0.001059s`.
+- Commande exécutée : `make bench`.
+- Résultat benchmark fort : `reports/complexity_report.json` écrit ; `0`
+  timeout, `0` incomplet jusqu'à `n=100`, médiane `0.0267s`, p95 `0.0366s`,
+  fit polynomial empirique `p ~= 1.72`.
+- Conclusion : T039 ajoute un stress positif matching et améliore nettement le
+  premier témoin sur matchings permutés, sans transformer le diagnostic
+  strong-ordering en décision complète. Les statuts limités restent
+  explicitement incomplets.
+- Next action : prouver la suffisance du strong ordering binaire hub bas ou
+  identifier l'algorithme polynomial exact correspondant, tout en cherchant des
+  contre-exemples sur PC-trees non-star et graphes bipartis positifs où le
+  premier témoin n'est pas représenté.

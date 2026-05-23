@@ -239,9 +239,20 @@ limites de permutations et les témoins non représentés restent incomplets. Le
 contrôles ajoutés couvrent chain/Ferrers, complete-bipartite, tree négatif,
 PC-tree rigide non représentatif et `quasi_orders=[]`.
 
+Résultat T039 : la famille `matching_high_graph_plus_low_hub` force un stress
+positif indépendant de chain/complete. Le diagnostic essaie maintenant en
+priorité les composantes biparties alignées côté `A` et côté `B`, ce qui trouve
+les matchings permutés au premier essai tout en gardant la vérification directe
+du témoin. Régressions ajoutées : matchings permutés multi-seed,
+matchings avec plusieurs hubs, triangle haut avec `low=0`, et positif qui reste
+`unsupported_permutation_limit` sous petite limite. Ce résultat ne prouve pas la
+complétude : un scan subagent trouve seulement `1542/5117` positifs
+strong-ordering à `m=6` avec `max_permutation_pairs=1`.
+
 ## Prochaine action
 
 Utiliser les témoins `find_precircular_cR_violation` comme source principale
 d’obstructions. Pour low-hub, chercher une preuve de suffisance du strong
-ordering ou une réduction polynomial-time, puis attaquer cette preuve avec une
-famille matching low-hub indépendante de chain/complete.
+ordering ou une réduction polynomial-time, puis attaquer cette preuve avec des
+PC-trees non-star où le premier témoin strong-ordering n'est pas forcément
+représenté.

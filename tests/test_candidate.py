@@ -7,6 +7,7 @@ from pc_circular.generators import (
     cycle_metric,
     equal_distance_instance,
     even_high_cycle_plus_low_hub,
+    matching_high_graph_plus_low_hub,
     non_bipartite_high_graph_plus_low_hub,
     odd_high_cycle_plus_low_hub,
     paired_farthest_matching,
@@ -337,6 +338,18 @@ def test_candidate_low_hub_strong_ordering_witness_accepts_complete_bipartite_st
     assert result["complete"] is True
     assert result["solver"] == "candidate_low_hub_strong_ordering_witness"
     assert is_precircular_order_cR(D, result["order"])
+
+
+def test_candidate_low_hub_strong_ordering_witness_accepts_permuted_matching_star():
+    D = matching_high_graph_plus_low_hub(21, rng=random.Random(39))
+    result = solve(D, pc_tree=star_pc_tree(21))
+
+    assert result["exists"] is True
+    assert result["complete"] is True
+    assert result["solver"] == "candidate_low_hub_strong_ordering_witness"
+    assert result["checked_permutation_pairs"] == 1
+    assert is_precircular_order_cR(D, result["order"])
+    assert represents_order(star_pc_tree(21), result["order"])
 
 
 def test_candidate_low_hub_strong_ordering_witness_does_not_accept_tree_negative():

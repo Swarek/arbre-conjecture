@@ -460,7 +460,7 @@ Résultat T037 :
 
 - la candidate intègre maintenant ce diagnostic seulement dans le second sens :
   si un strong ordering fournit un ordre témoin et que cet ordre est vérifié
-  par `is_precircular_order_cR` puis par `represents_order` quand un PC-tree est
+  par le prédicat fixed-order exact puis par `represents_order` quand un PC-tree est
   fourni, la réponse positive est complète ;
 - les familles `chain_high_graph_plus_low_hub` et
   `complete_bipartite_high_graph_plus_low_hub` servent de positifs large-n
@@ -493,6 +493,28 @@ Résultat T038 :
 Limite T038 : le gain ne produit pas de nouveaux ordres et ne prouve pas la
 reconnaissance strong-ordering. Il rend seulement les prochaines attaques
 large-n moins chères.
+
+Résultat T039 :
+
+- `matching_high_graph_plus_low_hub` ajoute la famille positive manquante, avec
+  labels permutables et un ou plusieurs hubs bas ;
+- `low_hub_strong_ordering_report` essaie d'abord le couple d'ordres obtenu en
+  concaténant les deux parts de chaque composante bipartie. Pour un matching,
+  cela aligne automatiquement les mates et trouve le témoin en un seul essai
+  même après permutation des labels ;
+- le benchmark ciblé `matching_high_graph_plus_low_hub/star`, tailles
+  `5,7,9,11,21,41,81,101`, répétitions `10`, timeout `2s`, donne `0` timeout
+  et `0` incomplet ; à `n=101`, médiane `0.1810s`, p95 `0.1852s` ;
+- la correction associée inclut le niveau bas `0` dans la détection binaire, ce
+  qui évite de classer un triangle haut `low=0` comme graphe haut vide.
+
+Limites T039 :
+
+- la priorité composante-alignée n'est qu'un ordre de recherche. Avec
+  `max_permutation_pairs=1`, un scan subagent trouve seulement `1542/5117`
+  positifs strong-ordering à `m=6` ;
+- les statuts `unsupported_permutation_limit` restent incomplets, pas négatifs ;
+- un PC-tree non-star peut ne pas représenter le premier témoin strong-ordering.
 
 ## Témoin cycle par distances minimales
 
