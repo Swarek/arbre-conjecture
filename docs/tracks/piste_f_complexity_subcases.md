@@ -776,3 +776,17 @@ Limite : le coût de test des atoms reste inchangé dans l'implémentation naïv
 (`atom_checks=72256`). Pour transformer ce signal en résultat de complexité, il
 faut soit borner la taille des groupes de support, soit compiler chaque groupe
 en une contrainte plus compacte que la liste de ses atoms.
+
+## Résultat T049 - Early stop dans les groupes de support
+
+Statut : amélioration empirique de coût, pas borne de complexité.
+
+La variante first-hit réduit le scan atom-par-atom en s'arrêtant dès qu'une
+affectation de support est prouvée mauvaise. Sur `make bench-csp-quick`,
+`atom_checks` passe de `72256` à `41872`. Le sidecar complexité mesure `160` cas
+jusqu'à `n=8` et observe `48888/87328` checks évités, soit `56.0%`.
+
+Limite : equal-distance n'a aucun atom bad-side, donc aucun gain ; les cas où
+aucun atom ne hit rapidement paient encore presque tout le groupe. Ce résultat
+ne donne pas de borne asymptotique sans structure sur l'ordre des atoms ou la
+taille des groupes.

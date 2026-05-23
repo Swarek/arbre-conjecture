@@ -26,6 +26,7 @@ from pc_circular.generators import instance_by_kind  # noqa: E402
 from pc_circular.pc_tree import balanced_pc_tree  # noqa: E402
 from pc_circular.solvers.sat_like_experiments import (  # noqa: E402
     accepted_frontiers_by_csp,
+    compile_bad_side_nogoods_grouped_first_hit_support_local,
     compile_bad_side_nogoods_grouped_support_local,
     compile_bad_side_nogoods_support_local,
     compile_cr_nogoods,
@@ -130,10 +131,29 @@ def run_benchmark(
                     )
                     grouped_solve_seconds = time.perf_counter() - grouped_solve_start
 
+                    first_hit_compile_start = time.perf_counter()
+                    first_hit_compilation = compile_bad_side_nogoods_grouped_first_hit_support_local(
+                        D,
+                        T,
+                        max_p_degree=max_p_degree,
+                    )
+                    first_hit_compile_seconds = time.perf_counter() - first_hit_compile_start
+
+                    first_hit_solve_start = time.perf_counter()
+                    first_hit_solve_result = solve_pruned_nogood_csp_from_compilation(
+                        D,
+                        T,
+                        first_hit_compilation,
+                        max_p_degree=max_p_degree,
+                        validate_against_direct=False,
+                    )
+                    first_hit_solve_seconds = time.perf_counter() - first_hit_solve_start
+
                     direct_seconds = None
                     mismatch = False
                     support_mismatch = False
                     grouped_mismatch = False
+                    first_hit_mismatch = False
                     if validate and not solve_result["unsupported"]:
                         direct_start = time.perf_counter()
                         direct = accepted_frontiers_by_csp(
@@ -150,9 +170,13 @@ def run_benchmark(
                         grouped_actual = {
                             tuple(order) for order in grouped_solve_result["accepted_frontiers"]
                         }
+                        first_hit_actual = {
+                            tuple(order) for order in first_hit_solve_result["accepted_frontiers"]
+                        }
                         mismatch = actual != direct
                         support_mismatch = support_actual != direct
                         grouped_mismatch = grouped_actual != direct
+                        first_hit_mismatch = first_hit_actual != direct
 
                     counts = solve_result["counts"]
                     compile_counts = compilation["counts"]
@@ -160,9 +184,12 @@ def run_benchmark(
                     support_compile_counts = support_compilation["counts"]
                     grouped_counts = grouped_solve_result["counts"]
                     grouped_compile_counts = grouped_compilation["counts"]
+                    first_hit_counts = first_hit_solve_result["counts"]
+                    first_hit_compile_counts = first_hit_compilation["counts"]
                     signatures = _signature_set(compilation)
                     support_signatures = _signature_set(support_compilation)
                     grouped_signatures = _signature_set(grouped_compilation)
+                    first_hit_signatures = _signature_set(first_hit_compilation)
                     old_scan_work = counts["full_assignment_space"] * max(1, len(support_compilation["atoms"]))
                     support_vs_old_scan_ratio = (
                         support_compile_counts["support_product_total"] / old_scan_work
@@ -180,12 +207,15 @@ def run_benchmark(
                             "mismatch": mismatch,
                             "support_mismatch": support_mismatch,
                             "grouped_mismatch": grouped_mismatch,
+                            "first_hit_mismatch": first_hit_mismatch,
                             "compile_seconds": compile_seconds,
                             "solve_seconds": solve_seconds,
                             "support_compile_seconds": support_compile_seconds,
                             "support_solve_seconds": support_solve_seconds,
                             "grouped_compile_seconds": grouped_compile_seconds,
                             "grouped_solve_seconds": grouped_solve_seconds,
+                            "first_hit_compile_seconds": first_hit_compile_seconds,
+                            "first_hit_solve_seconds": first_hit_solve_seconds,
                             "direct_seconds": direct_seconds,
                             "atoms": len(compilation["atoms"]),
                             "unique_nogoods": compile_counts["unique_nogoods"],
@@ -193,12 +223,17 @@ def run_benchmark(
                             "support_unique_nogoods": support_compile_counts["unique_nogoods"],
                             "grouped_atoms": len(grouped_compilation["atoms"]),
                             "grouped_unique_nogoods": grouped_compile_counts["unique_nogoods"],
+                            "first_hit_atoms": len(first_hit_compilation["atoms"]),
+                            "first_hit_unique_nogoods": first_hit_compile_counts["unique_nogoods"],
                             "effective_nogood_signatures": len(signatures),
                             "support_effective_nogood_signatures": len(support_signatures),
                             "grouped_effective_nogood_signatures": len(grouped_signatures),
+                            "first_hit_effective_nogood_signatures": len(first_hit_signatures),
                             "same_effective_signatures": signatures == support_signatures,
                             "same_grouped_effective_signatures": signatures == grouped_signatures,
                             "same_support_and_grouped_signatures": support_signatures == grouped_signatures,
+                            "same_first_hit_effective_signatures": signatures == first_hit_signatures,
+                            "same_grouped_and_first_hit_signatures": grouped_signatures == first_hit_signatures,
                             "support_assignments_seen": support_compile_counts["support_assignments_seen"],
                             "support_product_total": support_compile_counts["support_product_total"],
                             "support_max_product": support_compile_counts["max_support_product"],
@@ -218,6 +253,19 @@ def run_benchmark(
                             "grouped_vs_ungrouped_support_ratio": grouped_compile_counts[
                                 "grouped_vs_ungrouped_support_ratio"
                             ],
+                            "first_hit_support_assignments_seen": first_hit_compile_counts[
+                                "grouped_support_assignments_seen"
+                            ],
+                            "first_hit_support_product_total": first_hit_compile_counts[
+                                "grouped_support_product_total"
+                            ],
+                            "first_hit_atom_checks": first_hit_compile_counts["atom_checks"],
+                            "first_hit_atom_checks_if_exhaustive": first_hit_compile_counts[
+                                "atom_checks_if_exhaustive"
+                            ],
+                            "first_hit_atom_checks_saved": first_hit_compile_counts[
+                                "atom_checks_saved_by_first_hit"
+                            ],
                             "atoms_with_nogoods": compile_counts["atoms_with_nogoods"],
                             "max_support_size": compile_counts["max_support_size"],
                             "support_size_histogram": compile_counts["support_size_histogram"],
@@ -233,6 +281,9 @@ def run_benchmark(
                             "grouped_leaf_assignments_seen": grouped_counts["leaf_assignments_seen"],
                             "grouped_branches_pruned": grouped_counts["branches_pruned"],
                             "grouped_accepted_frontiers": grouped_counts["accepted_frontiers"],
+                            "first_hit_leaf_assignments_seen": first_hit_counts["leaf_assignments_seen"],
+                            "first_hit_branches_pruned": first_hit_counts["branches_pruned"],
+                            "first_hit_accepted_frontiers": first_hit_counts["accepted_frontiers"],
                         }
                     )
 
@@ -253,6 +304,7 @@ def run_benchmark(
             "mismatches": sum(1 for row in rows if row["mismatch"]),
             "support_mismatches": sum(1 for row in rows if row["support_mismatch"]),
             "grouped_mismatches": sum(1 for row in rows if row["grouped_mismatch"]),
+            "first_hit_mismatches": sum(1 for row in rows if row["first_hit_mismatch"]),
             "signature_mismatches": sum(
                 1 for row in rows if row["supported"] and not row["same_effective_signatures"]
             ),
@@ -262,12 +314,21 @@ def run_benchmark(
             "support_grouped_signature_mismatches": sum(
                 1 for row in rows if row["supported"] and not row["same_support_and_grouped_signatures"]
             ),
+            "first_hit_signature_mismatches": sum(
+                1 for row in rows if row["supported"] and not row["same_first_hit_effective_signatures"]
+            ),
+            "grouped_first_hit_signature_mismatches": sum(
+                1 for row in rows if row["supported"] and not row["same_grouped_and_first_hit_signatures"]
+            ),
             "median_compile_seconds": _median([row["compile_seconds"] for row in supported_rows]),
             "median_support_compile_seconds": _median(
                 [row["support_compile_seconds"] for row in supported_rows]
             ),
             "median_grouped_compile_seconds": _median(
                 [row["grouped_compile_seconds"] for row in supported_rows]
+            ),
+            "median_first_hit_compile_seconds": _median(
+                [row["first_hit_compile_seconds"] for row in supported_rows]
             ),
             "median_solve_seconds": _median([row["solve_seconds"] for row in supported_rows]),
             "median_support_solve_seconds": _median(
@@ -276,12 +337,18 @@ def run_benchmark(
             "median_grouped_solve_seconds": _median(
                 [row["grouped_solve_seconds"] for row in supported_rows]
             ),
+            "median_first_hit_solve_seconds": _median(
+                [row["first_hit_solve_seconds"] for row in supported_rows]
+            ),
             "median_direct_seconds": _median(
                 [row["direct_seconds"] for row in supported_rows if row["direct_seconds"] is not None]
             ),
             "total_unique_nogoods": sum(row["unique_nogoods"] for row in supported_rows),
             "total_support_unique_nogoods": sum(row["support_unique_nogoods"] for row in supported_rows),
             "total_grouped_unique_nogoods": sum(row["grouped_unique_nogoods"] for row in supported_rows),
+            "total_first_hit_unique_nogoods": sum(
+                row["first_hit_unique_nogoods"] for row in supported_rows
+            ),
             "total_support_assignments_seen": sum(
                 row["support_assignments_seen"] for row in supported_rows
             ),
@@ -293,6 +360,10 @@ def run_benchmark(
                 row["grouped_support_product_total"] for row in supported_rows
             ),
             "total_grouped_atom_checks": sum(row["grouped_atom_checks"] for row in supported_rows),
+            "total_first_hit_atom_checks": sum(row["first_hit_atom_checks"] for row in supported_rows),
+            "total_first_hit_atom_checks_saved": sum(
+                row["first_hit_atom_checks_saved"] for row in supported_rows
+            ),
             "median_support_vs_old_scan_ratio": _median(
                 [row["support_vs_old_scan_ratio"] for row in supported_rows]
             ),
@@ -347,9 +418,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         if report["summary"]["mismatches"]
         or report["summary"]["support_mismatches"]
         or report["summary"]["grouped_mismatches"]
+        or report["summary"]["first_hit_mismatches"]
         or report["summary"]["signature_mismatches"]
         or report["summary"]["grouped_signature_mismatches"]
         or report["summary"]["support_grouped_signature_mismatches"]
+        or report["summary"]["first_hit_signature_mismatches"]
+        or report["summary"]["grouped_first_hit_signature_mismatches"]
         else 0
     )
 

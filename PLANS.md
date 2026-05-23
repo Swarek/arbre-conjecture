@@ -2957,3 +2957,79 @@ Décision : conserver T048 comme compression structurelle Piste C hors
 mais pas encore un solveur compact : la prochaine tentative doit factoriser les
 tests d'atom dans un même groupe de support ou prouver une borne sur la taille
 des groupes.
+
+## ExecPlan 2026-05-23 - first-hit grouped support compilation
+
+But : tester si T048 peut réduire le coût `atom_checks` sans perdre de nogood en
+s'arrêtant au premier atom violé pour une affectation de support.
+
+Hypothèse : pour un support fixé et une affectation de ses variables, la
+signature de pruning est entièrement déterminée par l'affectation. Si au moins
+un atom bad-side du groupe apparaît, cette signature est déjà un nogood
+suffisant ; les autres atoms violés par la même affectation sont diagnostiques
+mais redondants pour le pruning. On peut donc compiler les mêmes signatures que
+T048 avec moins de tests d'atoms.
+
+Fichiers à modifier : `src/pc_circular/solvers/sat_like_experiments.py`,
+`tests/test_sat_like_experiments.py`, `tools/pc_csp_internal_benchmark.py`,
+`docs/tracks/piste_c_sat_csp.md`, `docs/tracks/piste_b_dp_pc_tree.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/proof_obligations.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `docs/tracks/README.md`,
+`PLANS.md`.
+
+Algorithme pressenti : factoriser `_compile_nogoods_by_grouped_supports` avec
+un paramètre interne `stop_after_first_hit`. Ajouter un compilateur public
+expérimental `compile_bad_side_nogoods_grouped_first_hit_support_local` et un
+solveur associé. Quand un atom du groupe apparaît pour une affectation de
+support, enregistrer la signature puis arrêter le scan des atoms de ce groupe
+pour cette affectation. Exposer `stopped_after_first_hit`,
+`atom_checks_if_exhaustive` et `atom_checks_saved_by_first_hit`.
+
+Plan de contre-exemples : comparer les signatures first-hit à T048 et T047 sur
+random, cycle, block, ultrametric, equal, non-strict, paired-farthest,
+permuted-cycle et matching low-hub ; valider le solveur pruné contre
+`accepted_frontiers_by_csp(source="cr")`; tester wrapping, limite basse et
+unsupported ; chercher explicitement un cas où plusieurs atoms partagent une
+signature mais où le premier atom choisi changerait l'ensemble des signatures.
+
+Plan subagents : Piste C audite la soundness de l'arrêt au premier hit ; Piste
+contre-exemples lance des probes signatures/solveur sur familles diverses ;
+Piste F mesure le gain d'`atom_checks` et cherche les familles où il est nul ;
+Piste B vérifie que l'optimisation ne crée pas une fausse signature DP trop
+faible.
+
+Tests à exécuter : tests ciblés `tests/test_sat_like_experiments.py`, probe
+multi-familles, `make bench-csp-quick`, `make quick`, `make check`. Pas de
+`make hunt-counterexamples` requis sauf si `candidate.py` est modifié, ce qui
+n'est pas prévu.
+
+Risques : les métriques `atoms_with_nogoods`, `pairs_with_nogoods` et
+`atom_hits` deviennent des compteurs de premiers hits, pas une énumération
+complète des violations ; il faut documenter ce changement pour éviter une
+interprétation sémantique trop forte. L'optimisation peut être faible si la
+plupart des affectations de support ne violent aucun atom.
+
+Résultats observés : ajout de
+`compile_bad_side_nogoods_grouped_first_hit_support_local` et
+`solve_grouped_first_hit_support_local_bad_side_nogood_csp`, sans changement de
+`candidate.py`. Tests ciblés `tests/test_sat_like_experiments.py` :
+`39 passed`. `make bench-csp-quick` : `192` lignes, `0` mismatch,
+`0` support/grouped/first-hit mismatch, `0` mismatch de signatures ; mêmes
+`2904` signatures que T047/T048 ; `total_grouped_atom_checks=72256`,
+`total_first_hit_atom_checks=41872`, gain `30384` checks. Probe indépendant
+multi-familles `n=4..7` : `130` cas, `0` mismatch de signatures,
+`0` mismatch contre le CSP cR direct ; `grouped_atom_checks=49760`,
+`first_hit_atom_checks=24168`, gain `25592`, ratio sauvegardé `0.5143`.
+Subagents : audit soundness validant l'équivalence existentielle des signatures
+mais pas les diagnostics exhaustifs ; Piste B fournit un cas minimal où les
+signatures restent identiques mais `atoms_with_nogoods` et `pairs_with_nogoods`
+diminuent ; contre-exemples couvre `220` cas sans mismatch et observe
+`356612 -> 82052` atom checks ; complexité mesure `160` cas jusqu'à `n=8` avec
+`48888/87328` checks économisés, soit `56.0%`. `make quick` final :
+`222 passed`, puis `JUSTE`; `make check` final : `JUSTE`.
+
+Décision : conserver T049 comme optimisation expérimentale sound au niveau des
+signatures de pruning. Cela améliore réellement le coût atom-par-atom de T048,
+mais ne donne toujours pas de borne polynomiale générale : il faut ensuite
+caractériser les cas sans hit rapide ou compiler les groupes de support sans
+scanner une liste d'atoms.

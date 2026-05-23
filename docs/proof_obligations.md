@@ -1268,6 +1268,23 @@ Limites T048 :
 - rien n'est intégré à `candidate.py`, donc les obligations 2, 3 et 5 du
   problème général restent ouvertes.
 
+T049 ajoute `compile_bad_side_nogoods_grouped_first_hit_support_local`, qui
+s'arrête au premier atom violé pour une affectation de support. Cela couvre une
+obligation expérimentale supplémentaire : le nogood effectif est la signature de
+support, donc l'existence d'un atom violé suffit pour émettre cette signature.
+Les tests et probes vérifient que les signatures first-hit coïncident avec T048
+et T047, et que le solveur pruné reste aligné sur le CSP cR direct.
+
+Limites T049 :
+
+- `atom`, `pair`, `bad_witnesses`, `atom_hits`, `atoms_with_nogoods` et
+  `pairs_with_nogoods` deviennent des diagnostics de premier témoin, pas une
+  énumération exhaustive des obstructions supportées ;
+- le gain est empirique sur les checks d'atoms, pas une borne de complexité ;
+- les groupes sans hit rapide paient encore un scan séquentiel ;
+- rien n'est intégré à `candidate.py`; les obligations générales de nécessité,
+  suffisance et complexité restent ouvertes.
+
 ### Prédicats stricts d'ordre fixé
 
 Statut : définitions directes implémentées / base expérimentale Piste F.

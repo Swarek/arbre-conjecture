@@ -350,6 +350,17 @@ Dernier commit green avant T009 : `07120e4`.
   `0.11111`, mêmes `2904` signatures que T047, mais
   `total_grouped_atom_checks=72256`; le prochain progrès doit donc réduire les
   tests atom-par-atom ou prouver une borne sur la taille des groupes.
+- Checkpoint T049 courant : commit contenant la variante first-hit groupée hors
+  candidate. `compile_bad_side_nogoods_grouped_first_hit_support_local`
+  s'arrête au premier atom violé pour chaque affectation de support, en
+  conservant les mêmes signatures effectives que T048/T047. Validation
+  observée : `tests/test_sat_like_experiments.py` (`39 passed`), probe
+  indépendant `130` cas sans mismatch, subagent contre-exemples `220` cas sans
+  mismatch, `make bench-csp-quick` (`192` lignes, `0` mismatch,
+  `0` first-hit mismatch, `0` mismatch de signatures), `make quick`,
+  `make check`. Résultat observé : `atom_checks` passe de `72256` à `41872` sur
+  la gate CSP rapide, mais les diagnostics `atom`/`pair` deviennent des
+  représentants de premier témoin et ne sont plus exhaustifs.
 
 ## Rollback
 

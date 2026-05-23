@@ -2279,3 +2279,59 @@
 - Next action : factoriser les atoms au sein d'un même support ou prouver une
   borne structurelle sur la taille des groupes de support ; sinon basculer vers
   une piste DP qui transporte directement les contraintes par support.
+
+## 2026-05-23 first-hit grouped support compilation
+
+- Date/heure : 2026-05-23 08:32:32 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : dans un groupe d'atoms partageant le même support, une
+  affectation de support qui fait apparaître au moins un atom produit déjà la
+  signature de pruning complète. Scanner les autres atoms de ce groupe pour la
+  même affectation est redondant pour la décision, même si cela donne plus de
+  diagnostics.
+- Changement fait : ajout de
+  `compile_bad_side_nogoods_grouped_first_hit_support_local` et
+  `solve_grouped_first_hit_support_local_bad_side_nogood_csp`; métriques
+  `stopped_after_first_hit`, `atom_checks_if_exhaustive` et
+  `atom_checks_saved_by_first_hit`; extension du benchmark interne avec
+  métriques et mismatches first-hit ; tests de signatures, solveur, limite,
+  unsupported, absence de faux pruning, cas dense et perte diagnostique
+  volontaire.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre sur `c142884`; `214 passed`, puis `JUSTE`.
+- Plan subagents : quatre sidecars lecture seule. Résultats : audit soundness
+  validant l'arrêt au premier hit pour les signatures effectives ; Piste B
+  fournit un cas minimal où les signatures restent identiques mais les
+  diagnostics atoms/pairs diminuent ; contre-exemples couvre `220` cas sans
+  mismatch et mesure `356612 -> 82052` atom checks ; complexité couvre `160`
+  cas jusqu'à `n=8`, `0` mismatch, et `48888/87328` checks évités (`56.0%`).
+- Commande exécutée : `pytest -q tests/test_sat_like_experiments.py`.
+- Résultat correction : `39 passed`.
+- Commande exécutée : probe indépendant multi-familles `n=4..7` sur arbres
+  balanced/mixed.
+- Résultat probe : `130` cas, `0` mismatch de signatures,
+  `0` mismatch contre le CSP cR direct ; `grouped_atom_checks=49760`,
+  `first_hit_atom_checks=24168`, gain `25592`, ratio sauvegardé `0.5143`.
+- Commande exécutée : `make bench-csp-quick`.
+- Résultat benchmark interne : `reports/csp_internal_benchmark_quick.json`
+  écrit ; `192` lignes, `0` mismatch, `0` first-hit mismatch,
+  `0` first-hit signature mismatch, mêmes `2904` signatures que T047/T048 ;
+  `total_grouped_atom_checks=72256`,
+  `total_first_hit_atom_checks=41872`,
+  `total_first_hit_atom_checks_saved=30384`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `222 passed`, puis `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Résultat benchmark candidate : non relancé ; `candidate.py` n'a pas été
+  modifié par T049.
+- Conclusion : T049 est une optimisation sound des signatures de pruning et
+  réduit réellement le coût atom-par-atom mesuré. Ce n'est pas une DP compacte :
+  les diagnostics d'obstruction ne sont plus exhaustifs, et les groupes sans hit
+  rapide restent linéaires en nombre d'atoms.
+- Next action : mesurer et factoriser les groupes où le premier hit arrive
+  tard, ou construire une table de support symbolique qui évite le scan
+  séquentiel.

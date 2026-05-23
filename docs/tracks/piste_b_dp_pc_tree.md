@@ -294,3 +294,18 @@ chaque affectation de support, donc `atom_checks=72256`. Une vraie signature DP
 devrait factoriser ces atoms en contraintes plus compactes sur un même support
 ou prouver que la taille des groupes reste bornée dans les instances
 quasi-circulaires.
+
+## Résultats T049
+
+Statut : optimisation de table de support, pas DP compacte.
+
+First-hit remplace, pour une affectation de support fixée, la liste complète des
+atoms violés par le booléen "au moins un atom bad-side du groupe apparaît". Cela
+préserve les signatures effectives utilisées par `_nogood_matches`.
+
+Limite DP : la table "affectation mauvaise" est encore construite par scan
+séquentiel des atoms, et les diagnostics d'atom/pair deviennent incomplets. Le
+contre-exemple minimal `n=4` ajouté aux tests montre que les signatures restent
+identiques alors que `atoms_with_nogoods` et `pairs_with_nogoods` diminuent.
+Une vraie DP doit donc porter une contrainte de support agrégée, pas les
+représentants first-hit.

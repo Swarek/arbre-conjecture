@@ -22,6 +22,7 @@ from pc_circular.solvers.sat_like_experiments import (
     assignment_frontier_report,
     build_local_domains,
     compile_bad_side_nogoods,
+    compile_bad_side_nogoods_grouped_first_hit_support_local,
     compile_bad_side_nogoods_grouped_support_local,
     compile_bad_side_nogoods_support_local,
     compile_cr_nogoods,
@@ -39,6 +40,7 @@ from pc_circular.solvers.sat_like_experiments import (
     solve_nogood_csp,
     solve_pruned_nogood_csp,
     solve_pruned_nogood_csp_from_compilation,
+    solve_grouped_first_hit_support_local_bad_side_nogood_csp,
     solve_grouped_support_local_bad_side_nogood_csp,
     solve_support_local_bad_side_nogood_csp,
 )
@@ -329,6 +331,91 @@ def test_grouped_support_bad_side_solver_matches_direct_and_prunes_cycle_metric(
     assert result["counts"]["validation_false_negative_frontiers"] == 0
 
 
+def test_grouped_first_hit_bad_side_nogoods_match_grouped_signatures():
+    T = balanced_pc_tree(6, kind="mixed")
+    D = cycle_metric(6)
+    grouped = compile_bad_side_nogoods_grouped_support_local(D, T, max_p_degree=3)
+    first_hit = compile_bad_side_nogoods_grouped_first_hit_support_local(D, T, max_p_degree=3)
+
+    assert first_hit["complete"] is True
+    assert _nogood_signatures(first_hit) == _nogood_signatures(grouped)
+    assert first_hit["counts"]["unique_nogoods"] == grouped["counts"]["unique_nogoods"]
+    assert first_hit["counts"]["stopped_after_first_hit"] is True
+    assert first_hit["counts"]["atom_checks"] < grouped["counts"]["atom_checks"]
+    assert first_hit["counts"]["atom_checks_if_exhaustive"] == grouped["counts"]["atom_checks"]
+    assert first_hit["counts"]["atom_checks_saved_by_first_hit"] == (
+        grouped["counts"]["atom_checks"] - first_hit["counts"]["atom_checks"]
+    )
+
+
+def test_grouped_first_hit_bad_side_solver_matches_direct_and_prunes_cycle_metric():
+    T = balanced_pc_tree(6, kind="mixed")
+    D = cycle_metric(6)
+    direct = accepted_frontiers_by_csp(D, T, source="cr", max_p_degree=3)
+    result = solve_grouped_first_hit_support_local_bad_side_nogood_csp(D, T, max_p_degree=3)
+
+    assert {tuple(order) for order in result["accepted_frontiers"]} == direct
+    assert result["counts"]["branches_pruned"] > 0
+    assert result["counts"]["validation_false_positive_frontiers"] == 0
+    assert result["counts"]["validation_false_negative_frontiers"] == 0
+
+
+def test_grouped_first_hit_keeps_effective_signatures_on_dense_support_groups():
+    T = c_node(
+        [
+            p_node([leaf(0), leaf(1), leaf(2)]),
+            p_node([leaf(3), leaf(4), leaf(5)]),
+            p_node([leaf(6), leaf(7), leaf(8)]),
+        ]
+    )
+    D = cycle_metric(9)
+    support_local = compile_bad_side_nogoods_support_local(D, T, max_p_degree=3)
+    grouped = compile_bad_side_nogoods_grouped_support_local(D, T, max_p_degree=3)
+    first_hit = compile_bad_side_nogoods_grouped_first_hit_support_local(D, T, max_p_degree=3)
+
+    assert first_hit["complete"] is True
+    assert _nogood_signatures(first_hit) == _nogood_signatures(grouped)
+    assert _nogood_signatures(first_hit) == _nogood_signatures(support_local)
+    assert grouped["counts"]["max_atoms_per_support"] > 1
+    assert first_hit["counts"]["atom_checks"] < grouped["counts"]["atom_checks"]
+    assert first_hit["counts"]["atom_checks_saved_by_first_hit"] > 0
+
+
+def test_grouped_first_hit_solver_matches_direct_on_dense_support_groups():
+    T = c_node(
+        [
+            p_node([leaf(0), leaf(1), leaf(2)]),
+            p_node([leaf(3), leaf(4), leaf(5)]),
+            p_node([leaf(6), leaf(7), leaf(8)]),
+        ]
+    )
+    D = cycle_metric(9)
+    direct = accepted_frontiers_by_csp(D, T, source="cr", max_p_degree=3)
+    result = solve_grouped_first_hit_support_local_bad_side_nogood_csp(D, T, max_p_degree=3)
+
+    assert {tuple(order) for order in result["accepted_frontiers"]} == direct
+    assert result["counts"]["validation_false_positive_frontiers"] == 0
+    assert result["counts"]["validation_false_negative_frontiers"] == 0
+
+
+def test_grouped_first_hit_preserves_signatures_but_not_exhaustive_diagnostics():
+    D = [
+        [0, 3, 1, 2],
+        [3, 0, 2, 1],
+        [1, 2, 0, 1],
+        [2, 1, 1, 0],
+    ]
+    T = balanced_pc_tree(4, kind="P")
+    grouped = compile_bad_side_nogoods_grouped_support_local(D, T, max_p_degree=3)
+    first_hit = compile_bad_side_nogoods_grouped_first_hit_support_local(D, T, max_p_degree=3)
+
+    assert _nogood_signatures(first_hit) == _nogood_signatures(grouped)
+    assert first_hit["counts"]["unique_nogoods"] == grouped["counts"]["unique_nogoods"]
+    assert first_hit["counts"]["atoms_with_nogoods"] < grouped["counts"]["atoms_with_nogoods"]
+    assert first_hit["counts"]["pairs_with_nogoods"] < grouped["counts"]["pairs_with_nogoods"]
+    assert first_hit["counts"]["atom_checks_saved_by_first_hit"] > 0
+
+
 def test_grouped_support_compilation_reports_limit_without_false_completion():
     T = balanced_pc_tree(6, kind="mixed")
     D = random_dissimilarity(6, values=(1, 2, 3), rng=random.Random(20260524))
@@ -336,6 +423,15 @@ def test_grouped_support_compilation_reports_limit_without_false_completion():
 
     assert grouped["complete"] is False
     assert grouped["counts"]["grouped_support_assignments_seen"] == 1
+
+
+def test_grouped_first_hit_compilation_reports_limit_without_false_completion():
+    T = balanced_pc_tree(6, kind="mixed")
+    D = random_dissimilarity(6, values=(1, 2, 3), rng=random.Random(20260524))
+    first_hit = compile_bad_side_nogoods_grouped_first_hit_support_local(D, T, max_p_degree=3, limit=1)
+
+    assert first_hit["complete"] is False
+    assert first_hit["counts"]["grouped_support_assignments_seen"] == 1
 
 
 def test_grouped_support_reports_unsupported_large_p_without_false_decision():
@@ -352,6 +448,20 @@ def test_grouped_support_reports_unsupported_large_p_without_false_decision():
     assert result["order"] is None
 
 
+def test_grouped_first_hit_reports_unsupported_large_p_without_false_decision():
+    T = star_pc_tree(5)
+    D = cycle_metric(5)
+    first_hit = compile_bad_side_nogoods_grouped_first_hit_support_local(D, T, max_p_degree=3)
+    result = solve_grouped_first_hit_support_local_bad_side_nogood_csp(D, T, max_p_degree=3)
+
+    assert first_hit["complete"] is False
+    assert first_hit["encoding"]["unsupported"]
+    assert first_hit["counts"]["unique_nogoods"] == 0
+    assert result["unsupported"]
+    assert result["exists"] is None
+    assert result["order"] is None
+
+
 def test_grouped_support_signatures_do_not_prune_exact_cr_frontiers_on_small_tree():
     T = balanced_pc_tree(6, kind="mixed")
     D = cycle_metric(6)
@@ -361,6 +471,20 @@ def test_grouped_support_signatures_do_not_prune_exact_cr_frontiers_on_small_tre
     assert grouped["complete"] is True
     for assignment in iter_local_assignments(encoding):
         pruned = any(_nogood_matches(assignment, nogood["signature"]) for nogood in grouped["nogoods"])
+        order = canonical_circular_order(frontier_from_assignment(T, assignment))
+        if pruned:
+            assert not is_precircular_order_cR(D, order)
+
+
+def test_grouped_first_hit_signatures_do_not_prune_exact_cr_frontiers_on_small_tree():
+    T = balanced_pc_tree(6, kind="mixed")
+    D = cycle_metric(6)
+    first_hit = compile_bad_side_nogoods_grouped_first_hit_support_local(D, T, max_p_degree=3)
+    encoding = first_hit["encoding"]
+
+    assert first_hit["complete"] is True
+    for assignment in iter_local_assignments(encoding):
+        pruned = any(_nogood_matches(assignment, nogood["signature"]) for nogood in first_hit["nogoods"])
         order = canonical_circular_order(frontier_from_assignment(T, assignment))
         if pruned:
             assert not is_precircular_order_cR(D, order)

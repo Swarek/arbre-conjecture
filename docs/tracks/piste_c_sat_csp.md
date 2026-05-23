@@ -354,6 +354,52 @@ Prochaine action : factoriser les atoms d'un même support pour éviter de teste
 chaque atom séparément, ou chercher une preuve que les groupes de supports ont
 une taille bornée dans les PC-trees issus de la quasi-circularité.
 
+## Tentative T049 - Groupes de support avec arrêt au premier hit
+
+Statut : optimisation expérimentale Piste C, non intégrée à `candidate.py`.
+
+Changement : `compile_bad_side_nogoods_grouped_first_hit_support_local` reprend
+T048, mais arrête le scan des atoms d'un groupe dès qu'une affectation de
+support produit un premier atom interdit. La signature de pruning ne dépendant
+que de l'affectation de support, les autres atoms violés par la même signature
+sont redondants pour le solveur pruné.
+
+Invariant testé : les signatures first-hit doivent être identiques à celles de
+T048 et T047. Les compteurs `atom_hits`, `atoms_with_nogoods` et
+`pairs_with_nogoods` deviennent des diagnostics de premiers hits, pas une
+énumération complète des violations.
+
+Résultats :
+
+- tests ciblés `tests/test_sat_like_experiments.py` : `39 passed` ;
+- `make bench-csp-quick` : `192` lignes, `0` mismatch, `0` first-hit mismatch,
+  `0` mismatch de signatures, mêmes `2904` signatures que T047/T048 ;
+- `total_grouped_atom_checks=72256` contre
+  `total_first_hit_atom_checks=41872`, soit `30384` checks évités ;
+- probe indépendant `n=4..7`, familles diverses et arbres balanced/mixed :
+  `130` cas, `0` mismatch de signatures, `0` mismatch direct,
+  `49760 -> 24168` atom checks.
+- sidecar contre-exemples : `220` cas supportés, `0` mismatch de signatures,
+  `0` mismatch de frontiers acceptées, max `84` atoms dans un support groupé,
+  gain combiné `356612 -> 82052` atom checks ;
+- sidecar complexité : `160` cas jusqu'à `n=8`, gain global
+  `48888/87328` checks (`56.0%`), avec gains nuls attendus sur equal-distance
+  faute d'atom bad-side.
+
+Interprétation : T049 confirme que beaucoup d'affectations de support trouvent
+un atom interdit avant d'épuiser le groupe. Le gain reste dépendant de l'ordre
+des atoms et ne remplace pas une compilation symbolique du groupe.
+
+Limite de diagnostic : le test minimal `n=4` verrouille que first-hit peut
+préserver toutes les signatures tout en sous-comptant `atoms_with_nogoods` et
+`pairs_with_nogoods`. Les champs `atom`, `pair`, `bad_witnesses`, `atom_hits`,
+`atoms_with_nogoods` et `pairs_with_nogoods` sont donc seulement des
+représentants de premiers témoins dans ce mode.
+
+Prochaine action : mesurer les cas où le premier hit arrive tard ou n'arrive
+pas, puis tenter de remplacer le scan séquentiel par une contrainte agrégée sur
+les positions relatives des quatre labels.
+
 ## Tentative T021 - Repair positive-only pour paired-farthest
 
 Statut : idée saine comme générateur expérimental vérifié, mais non intégrée à
