@@ -205,6 +205,33 @@ complètement énuméré `20160` à `n=9`, et `cycle n=9` n'a qu'un ordre cR sur
 `20160`. Ce n'est pas une preuve de dureté ; c'est un garde-fou contre une
 fausse borne de complexité.
 
+### Catalogue relationnel non booléen
+
+Statut : diagnostic expérimental / red-team complexité, pas preuve de dureté.
+
+T065 ajoute un catalogue des relations effectives non booléennes entre petits
+nœuds `P3`. Le rapport expose `max_domain_size`, produits de domaines,
+histogrammes de scopes, ratios de tuples rejetés, diversité des relations,
+parasites unaires/constantes et mismatches de validation.
+
+Obligations avant toute conclusion de dureté :
+
+- montrer qu'une relation locale cataloguée est réalisable par une matrice
+  globale `D` en taille polynomiale ;
+- montrer qu'elle reste composable sans contraintes parasites destructrices ;
+- montrer que le PC-tree utilisé respecte le promise attendu, ou déclarer qu'on
+  prouve seulement une généralisation ;
+- donner une réduction complète depuis un problème NP-hard avec équivalence
+  satisfiable ssi il existe un ordre cR représenté ;
+- distinguer les UNSAT du modèle relationnel des vrais certificats négatifs du
+  problème général.
+
+Preuve expérimentale T065 : `make bench-relation-catalog` produit `20` lignes
+complètes, `0` mismatch, `38` instances de relations binaires non booléennes,
+`27` hashes distincts, mais aussi `12` lignes avec parasite `constant_reject` et
+`18` lignes avec parasite unaire non booléen. Ces chiffres suggèrent une piste
+de gadgets, mais ne prouvent ni NP-hardness ni polynomialité.
+
 ### Caractérisation bad-side d'un ordre fixé
 
 Statut : conséquence directe pour ordre fixé + prédicat central exact depuis

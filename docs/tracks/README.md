@@ -110,6 +110,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T062 | 2026-05-23 | C/F | Stress `p3_block_tree(k)` ajouté ; largeur croissante et cap incomplet visibles dans un JSON | `make bench-width-stress` |
 | R003 | 2026-05-23 | C/F | Revue red-team : treewidth faible ne suffit pas si le domaine `P` est factoriel | `docs/external_reviews/gpt55_red_team_domain_warning_2026-05-23.md` |
 | T064 | 2026-05-23 | C/F | Stress single `P`-node : treewidth `0`, domaine `(n-1)!/2`, énumération bornée visible | `make bench-single-p-stress` |
+| T065 | 2026-05-23 | F/C | Catalogue de relations non booléennes `P3` : diversité et parasites visibles | `make bench-relation-catalog` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

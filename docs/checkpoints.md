@@ -518,6 +518,13 @@ Dernier commit green avant T009 : `07120e4`.
   `treewidth_zero_rows=30`, `max_domain_size=181440`), `make quick`
   (`265 passed`, puis `JUSTE`) et `make bench-quick` (`40/40` runs, `0`
   timeout, `0` incomplet). `candidate.py` n'a pas été modifié.
+- Checkpoint T065 courant : commit contenant le catalogue de relations non
+  booléennes entre blocs `P3`. Validation observée : test ciblé relation
+  catalog (`1 passed`), `make bench-relation-catalog` (`20` lignes complètes,
+  `0` mismatch, `38` relations binaires non booléennes, `27` hashes distincts),
+  tests ciblés `tests/test_csp_internal_benchmark.py` (`4 passed`),
+  `make quick` (`266 passed`, puis `JUSTE`) et `make bench-quick` (`40/40`
+  runs, `0` timeout, `0` incomplet). `candidate.py` n'a pas été modifié.
 
 ## Rollback
 

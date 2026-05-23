@@ -43,6 +43,7 @@ make bench-piste-f
 make bench-csp-quick
 make bench-width-stress
 make bench-single-p-stress
+make bench-relation-catalog
 make acceptance
 ```
 
@@ -73,6 +74,11 @@ sert à documenter les limites de la piste DP/treewidth.
 le cas d'un seul gros nœud `P`. Il sert de garde-fou contre une mauvaise lecture
 de la treewidth : le graphe primal peut avoir largeur `0` pendant que le domaine
 local contient déjà `(n-1)!/2` ordres circulaires.
+
+`make bench-relation-catalog` écrit `reports/relation_catalog.json` pour des
+arbres composés de petits blocs `P3`. Il catalogue les relations de quartets
+non booléennes, les parasites unaires/constantes et les limites de validité du
+scaffold. Ce n’est pas une preuve de NP-difficulté.
 
 Dans `tools/pc_circular_conjecture_test.py`, la sortie `JUSTE` signifie seulement
 que la candidate a été égale à l’oracle exact sur les instances générées par ce

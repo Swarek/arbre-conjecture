@@ -3194,3 +3194,53 @@
 - Next action : poursuivre avec un catalogue de relations non booléennes entre
   petits nœuds `P`, en reportant toujours contraintes parasites, taille de
   domaine et validité du promise.
+
+## 2026-05-23 non-boolean P-node relation catalog
+
+- Date/heure : 2026-05-23 15:22:31 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les blocs `P3` exposent des relations binaires non
+  booléennes de domaine `6 x 6`; leur diversité et leurs parasites donnent un
+  signal utile pour la piste dureté/FPT sans constituer une preuve.
+- Changement fait : ajout de `tools/pc_relation_catalog.py`, de la cible
+  `make bench-relation-catalog`, d'un test ciblé et des métriques red-team :
+  tailles de domaine, scopes, densités, ratios de tuples rejetés, parasites,
+  statut `relation_unsat_only`, caveat de promise et claim de complexité
+  autorisé.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop` propre
+  au commit `cdbf1ec`; `265 passed`, puis `JUSTE`.
+- Plan subagents : trois sidecars lecture seule. Résultats : le sidecar CSP
+  recommande de réutiliser `quartet_effective_relation_report` et de
+  canonicaliser les relations binaires ; le sidecar adversarial recommande les
+  lignes `p3x2/p3x3` cycle, paired, equal et obstructions paddées ; le sidecar
+  red-team recommande de rendre visibles `q`, treewidth, parasites, mismatchs
+  et statut expérimental.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_csp_internal_benchmark.py::test_relation_catalog_reports_non_boolean_p3_relations_and_parasites`.
+- Résultat correction ciblée : `1 passed`.
+- Commande exécutée : `make bench-relation-catalog`.
+- Résultat benchmark catalogue : `reports/relation_catalog.json` écrit ;
+  `20` lignes, `20` complètes, `0` mismatch, `18`
+  `non_boolean_relation_catalog`, `2` `two_sat_candidate`, `38` relations
+  binaires non booléennes, `27` hashes distincts, `12` lignes avec
+  `constant_reject`, `18` lignes avec parasite unaire non booléen, treewidth
+  upper bound max `3`, produit de domaine max `36`, `13` lignes avec
+  `0` affectation acceptée.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_csp_internal_benchmark.py`.
+- Résultat correction ciblée élargie : `4 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction finale : `266 passed`, puis `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `8` tailles, `40/40` runs réussis, `0` timeout et `0` incomplet.
+- Conclusion : T065 produit un catalogue utile pour la piste gadget/dureté, mais
+  les parasites fréquents empêchent toute conclusion NP-hard. `candidate.py`
+  n'a pas été modifié.
+- Next action : analyser les hashes de relations pour chercher une relation
+  permutation-like / equality / disequality isolable sans parasite constant, ou
+  basculer vers la preuve de suffisance du modèle relationnel si les parasites
+  dominent.

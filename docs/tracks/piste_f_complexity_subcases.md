@@ -1205,3 +1205,39 @@ revendication de polynomialite fondee seulement sur une largeur faible.
 Prochaine action Piste F : cataloguer les relations non booleennes entre petits
 noeuds `P`, mais en reportant toujours les contraintes parasites et la taille
 des domaines. La piste de durete reste plausible, pas prouvee.
+
+## Résultat T065 - Catalogue non booléen P3/P3
+
+Statut : signal expérimental pour dureté/tractabilité, non preuve.
+
+T065 ajoute `make bench-relation-catalog`. Le rapport
+`reports/relation_catalog.json` catalogue les relations effectives fusionnées
+entre blocs `P3` sur des arbres `p3_block_tree(2)` et `p3_block_tree(3)`.
+
+Métriques principales :
+
+- `rows=20`, toutes complètes ;
+- `validation_mismatches=0` ;
+- `binary_non_boolean_relation_instances=38` ;
+- `unique_binary_non_boolean_catalog_hashes=27` ;
+- `rows_with_constant_reject_parasite=12` ;
+- `rows_with_unary_non_boolean_parasite=18` ;
+- `max_primal_treewidth_upper_bound=3` ;
+- `max_relation_domain_product=36` ;
+- densité binaire min `0.0556`, max `0.3333` ;
+- `zero_accept_rows=13`.
+
+Conclusion prudente :
+
+- La diversité de relations non booléennes montre que les petits nœuds `P`
+  produisent bien un langage plus riche que 2-SAT.
+- Les parasites unaires et constantes sont fréquents ; ils peuvent rendre un
+  gadget non composable.
+- Les UNSAT observés sont `relation_unsat_only`, pas des certificats négatifs
+  du problème général.
+- Une future piste NP-hard doit isoler une relation utile avec contrôle des
+  contraintes parasites et du promise `T=T(D)`.
+
+Prochaine action Piste F : chercher une relation non booléenne plus structurée
+dans ce catalogue, par exemple permutation-like, égalité, disequality ou
+implication cyclique, puis tenter de l'isoler sans `constant_reject` parasite.

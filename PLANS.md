@@ -4212,3 +4212,62 @@ Décision : T064 devient un garde-fou obligatoire pour la lecture treewidth/FPT 
 reporter la taille de domaine est aussi important que reporter la largeur. Ne
 pas intégrer de DP treewidth candidate sur gros `P` sans borne ou compression
 prouvée du domaine.
+
+## ExecPlan 2026-05-23 - Non-boolean P-node relation catalog
+
+But : produire le premier catalogue reproductible des relations non booléennes
+entre petits nœuds `P`, avec contraintes parasites visibles. Ce checkpoint doit
+avancer la piste F sans prétendre prouver NP-hardness.
+
+Hypothèse : des arbres composés de blocs `P3` exposent des relations binaires
+de domaine `6 x 6`. La diversité, la densité et les parasites de ces relations
+donneront un signal utile : soit les relations semblent structurées/tractables,
+soit elles suggèrent des gadgets de dureté à isoler.
+
+Fichiers visés : `tools/pc_relation_catalog.py`,
+`tests/test_csp_internal_benchmark.py`, `Makefile`, `README.md`,
+`docs/experiment_protocol.md`, `docs/tracks/piste_c_sat_csp.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/proof_obligations.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `docs/tracks/README.md`,
+`PLANS.md`.
+
+Algorithme pressenti : réutiliser `quartet_effective_relation_report` avec
+`store_full_relations=True` sur `p3_block_tree(k)`, extraire les relations
+fusionnées, canonicaliser les clés de relations binaires par indices de domaine,
+et reporter pour chaque ligne : classe, validation, treewidth, domaine max,
+relations non booléennes, densités, signatures acceptées/rejetées, scopes
+unaires/constantes comme parasites et diversité de catalogues.
+
+Plan de contre-exemples : inclure `cycle`, `paired_farthest`, `random`,
+`equal`, `four_local_non_cr` et `five_local_non_cr` quand la taille le permet.
+Les contrôles attendus sont : `equal` tautologique, `cycle` positif rare mais
+SAT, `paired_farthest/random` souvent UNSAT ou avec constant reject, et
+obstructions locales padding pour exposer des parasites.
+
+Plan subagents : trois sidecars lecture seule sont lancés : structure des
+relations existantes, familles adversariales P/P, et métriques red-team pour ne
+pas surinterpréter le catalogue.
+
+Tests à exécuter : test ciblé du catalogue, `make bench-relation-catalog`,
+tests ciblés CSP, `make quick`, et `make bench-quick`. `candidate.py` ne doit
+pas changer.
+
+Risques : une relation non booléenne observée ne prouve pas une réduction
+NP-hard ; elle peut être un artefact du scaffold ou dépendre de contraintes
+parasites globales de `D`. Le rapport doit donc rendre ces parasites visibles.
+
+Résultats observés : ajout de `tools/pc_relation_catalog.py`, cible
+`make bench-relation-catalog`, test ciblé et documentation T065. Le rapport
+`reports/relation_catalog.json` contient `20` lignes complètes, `0` mismatch,
+`18` lignes non booléennes, `38` relations binaires non booléennes, `27` hashes
+distincts, `12` lignes avec `constant_reject`, `18` lignes avec parasite unaire
+non booléen, treewidth upper bound max `3`, produit de domaine max `36`, et
+`13` lignes avec `0` affectation acceptée. Tests ciblés
+`tests/test_csp_internal_benchmark.py` : `4 passed`. `make quick` passe avec
+`266 passed`, puis `JUSTE`. `make bench-quick` garde `40/40` runs réussis,
+`0` timeout et `0` incomplet.
+
+Décision : le catalogue est utile comme signal de recherche, mais les parasites
+dominants empêchent toute conclusion de dureté. La prochaine étape doit analyser
+les hashes pour chercher une relation structurée isolable, ou revenir à la
+preuve de suffisance du modèle relationnel si les parasites restent dominants.

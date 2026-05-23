@@ -112,6 +112,18 @@ Elle garde visible le cas où le CSP a une seule variable et treewidth `0`, mais
 où le domaine local du nœud `P` est factoriel. Elle ne valide pas la candidate
 générale et ne doit pas être confondue avec une preuve de dureté.
 
+Catalogue relations Piste F :
+
+```bash
+make bench-relation-catalog
+```
+
+Cette commande écrit `reports/relation_catalog.json` pour des arbres
+`p3_block_tree(k)`. Le rapport catalogue les relations non booléennes entre
+petits nœuds `P`, les contraintes parasites unaires/constantes, les densités,
+les tailles de domaine et les mismatches de validation. Une relation non
+booléenne observée est un signal expérimental, pas une réduction NP-hard.
+
 ## Interprétation
 
 Un algorithme qui passe les gates peut encore être faux. Après chaque succès, il

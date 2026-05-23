@@ -1,5 +1,6 @@
 from tools.pc_csp_internal_benchmark import run_benchmark
 from tools.pc_csp_width_stress import run_width_stress
+from tools.pc_relation_catalog import run_relation_catalog
 from tools.pc_single_p_domain_stress import run_single_p_domain_stress
 
 
@@ -375,3 +376,62 @@ def test_single_p_domain_stress_exposes_factorial_domain_even_at_treewidth_zero(
         "unordered_constraints": 1,
     }
     assert quartet["cr_order_count"] == 2
+
+
+def test_relation_catalog_reports_non_boolean_p3_relations_and_parasites():
+    report = run_relation_catalog(
+        block_counts=[2],
+        instance_kinds=["cycle", "paired_farthest", "equal", "four_local_non_cr"],
+        repeats=1,
+    )
+
+    assert report["summary"]["rows"] == 4
+    assert report["summary"]["complete_rows"] == 4
+    assert report["summary"]["validation_mismatches"] == 0
+    assert report["summary"]["row_class_histogram"] == {
+        "non_boolean_relation_catalog": 3,
+        "two_sat_candidate": 1,
+    }
+    assert report["summary"]["binary_non_boolean_rows"] == 3
+    assert report["summary"]["binary_non_boolean_relation_instances"] == 3
+    assert report["summary"]["unique_binary_non_boolean_catalog_hashes"] >= 1
+    assert report["summary"]["max_relation_domain_product"] == 36
+    assert report["summary"]["rows_with_unary_non_boolean_parasite"] == 3
+    assert report["summary"]["rows_with_constant_reject_parasite"] == 1
+
+    cycle = next(row for row in report["rows"] if row["instance_kind"] == "cycle")
+    assert cycle["row_class"] == "non_boolean_relation_catalog"
+    assert cycle["relation_accept_assignments"] == cycle["direct_cr_assignments"] == 4
+    assert cycle["max_domain_size"] == 6
+    assert cycle["domain_size_histogram"] == {"2": 1, "6": 2}
+    assert cycle["scope_size_histogram"] == {"1": 2, "2": 1}
+    assert cycle["binary_non_boolean_relation_count"] == 1
+    assert cycle["parasite_unary_non_boolean_count"] == 2
+    assert cycle["parasite_free_gadget_candidate"] is False
+    assert cycle["complexity_claim_allowed"] == "fpt_q_w"
+    relation = cycle["binary_non_boolean_relations"][0]
+    assert relation["domain_sizes"] == [6, 6]
+    assert relation["domain_product"] == 36
+    assert relation["accepted_signature_count"] == 2
+    assert relation["rejected_tuple_ratio"] == 34 / 36
+    assert relation["accepted_index_tuples"] == [[0, 0], [5, 5]]
+    assert relation["left_functional"]
+    assert relation["right_functional"]
+
+    paired = next(
+        row for row in report["rows"] if row["instance_kind"] == "paired_farthest"
+    )
+    assert paired["binary_non_boolean_relation_count"] == 1
+
+    four_local = next(
+        row for row in report["rows"] if row["instance_kind"] == "four_local_non_cr"
+    )
+    assert four_local["parasite_constant_reject_count"] == 1
+    assert four_local["negative_certificate_status"] == "relation_unsat_only"
+    assert four_local["relation_accept_assignments"] == four_local["direct_cr_assignments"] == 0
+
+    equal = next(row for row in report["rows"] if row["instance_kind"] == "equal")
+    assert equal["row_class"] == "two_sat_candidate"
+    assert equal["binary_non_boolean_relation_count"] == 0
+    assert equal["parasite_relation_count"] == 1
+    assert equal["complexity_claim_allowed"] == "two_sat_after_relation_build"

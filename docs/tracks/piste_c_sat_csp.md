@@ -1092,6 +1092,42 @@ compression prouvée des domaines locaux. Pour les gros `P`, le domaine local
 peut déjà contenir le problème. Une future intégration treewidth candidate doit
 donc rester positive-only ou prouvée dans un sous-cas avec domaine borné.
 
+## Tentative T065 - Catalogue de relations non booléennes P3
+
+Statut : diagnostic CSP/complexité, hors `candidate.py`.
+
+Changement : ajout de `tools/pc_relation_catalog.py`, câblé par
+`make bench-relation-catalog`. L'outil réutilise
+`quartet_effective_relation_report(..., store_full_relations=True)` sur
+`p3_block_tree(k)` et extrait les relations fusionnées non booléennes avec :
+taille de domaine, scopes, densités, tuples acceptés/rejetés quand petits,
+hash canonique invariant par inversion de scope de même taille, treewidth,
+parasites unaires/constantes, statut `relation_unsat_only` et caveat de promise.
+
+Résultat `make bench-relation-catalog` :
+
+- `20` lignes : `block_count=2,3`, familles `cycle`, `paired_farthest`,
+  `random`, `equal`, `four_local_non_cr`, `five_local_non_cr`, avec repeats
+  pour random/paired ;
+- `20` lignes complètes ;
+- `0` mismatch de validation ;
+- `18` lignes `non_boolean_relation_catalog` et `2` lignes
+  `two_sat_candidate` ;
+- `38` instances de relations binaires non booléennes ;
+- `27` hashes de relations binaires non booléennes distincts ;
+- `12` lignes avec parasite `constant_reject` ;
+- `18` lignes avec parasite unaire non booléen ;
+- treewidth upper bound maximale `3` ;
+- produit de domaine maximal par relation `36` ;
+- densités binaires entre `0.0556` et `0.3333` ;
+- `13` lignes avec `0` affectation acceptée dans le modèle relationnel.
+
+Interprétation : T065 donne le premier catalogue lisible de relations `P3/P3`.
+La diversité observée nourrit la piste gadget/dureté, mais les parasites sont
+fréquents et empêchent toute conclusion NP-hard. Pour Piste C, ce rapport
+confirme que "binaire" ne veut pas dire "2-SAT" : les domaines sont `6 x 6`, et
+la complexité correcte reste paramétrée par `q` et `w`.
+
 ## Tentative T021 - Repair positive-only pour paired-farthest
 
 Statut : idée saine comme générateur expérimental vérifié, mais non intégrée à

@@ -177,6 +177,11 @@ du graphe primal" est insuffisant seul. Le prochain axe F doit donc combiner
 largeur, taille de domaine et représentation compacte des permutations de gros
 `P`.
 
+Mise à jour T065 : le catalogue `P3/P3` produit de nombreuses relations
+binaires non booléennes distinctes, mais aussi beaucoup de parasites
+unaires/constantes. La prochaine expérience doit chercher une relation
+structurée isolable, pas conclure à la dureté depuis le catalogue brut.
+
 Sous-cas ajouté : explorer le cas strict comme algorithme spécialisé
 potentiellement polynomial. Ne pas l'intégrer à `candidate.py` avant d'avoir une
 détection stricte et une génération de candidats stricts vérifiées contre les
