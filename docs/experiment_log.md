@@ -2504,3 +2504,63 @@
 - Next action : implémenter un profil bitset réel par composante et tester
   `paired_farthest` comme stress family, ou basculer vers une DP de masques de
   côtés.
+
+## 2026-05-23 real component-bitset profile
+
+- Date/heure : 2026-05-23 09:37:26 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : le modèle T052
+  `side_cache_misses + component_checks` peut être rendu effectif en cachant
+  des masques de côtés par composante de mauvais témoins. Pour une paire
+  `{a,b}`, une composante est hit ssi son masque vaut `0b11`.
+- Changement fait : ajout de `_component_side_cache_key` et
+  `_pair_side_bitset_outcome`, compteurs réels
+  `pair_side_split_bitset_*`, champs JSON du benchmark CSP interne, tests de
+  parité bitset/scan, support imbriqué, composantes group-local, cas
+  equal/limit/unsupported, et régression paired-farthest label-identity. Aucun
+  changement dans `candidate.py`.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `227 passed`, puis `JUSTE`.
+- Plan subagents : quatre sidecars lecture seule. Résultats : Piste C liste les
+  invariants de parité et edge cases ; Piste B classe les masques comme atome
+  DP local exact mais non signature globale et fournit un contre-exemple
+  paired-farthest label-identity ; Piste F mesure les familles stress
+  `paired_farthest/random/permuted_cycle` ; Piste tests fournit les assertions
+  anti-faux-sens ajoutées.
+- Commande exécutée :
+  `pytest -q tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`.
+- Résultat correction intermédiaire : `49 passed`.
+- Commande exécutée : `pytest -q tests/test_sat_like_experiments.py
+  tests/test_csp_internal_benchmark.py tests/test_regression_counterexamples.py`.
+- Résultat correction ciblée : `60 passed`.
+- Commande exécutée : `make bench-csp-quick`.
+- Résultat benchmark interne : `reports/csp_internal_benchmark_quick.json`
+  écrit ; `192` lignes, `0` mismatch,
+  `profile_pair_side_split_mismatches=0`,
+  `profile_pair_side_split_bitset_mismatches=0`.
+  Totaux principaux : first-hit `41872` atom-checks, bitset réel `44936`
+  checks (`1.0732x`), projection bitset `27822` checks (`0.6645x`),
+  visites de témoins `29868`, cache composantes `3000/12068`, cache côtés
+  bitset `17114/12754`.
+- Résultat par familles : `cycle` et `non_strict` restent des contrôles
+  positifs ; `random`, `permuted_cycle` et `paired_farthest` restent les stress
+  où les visites de témoins rendent le bitset réel plus cher. Sur l'agrégat
+  rapide, `paired_farthest/mixed` est autour de `1.55x` first-hit en coût réel.
+- Commande exécutée : `make quick`.
+- Résultat correction : `232 passed`, puis `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `40/40` runs réussis, `0` timeout et `0` incomplet sur les tailles
+  `4,5,6,8,10,12,16,20`. `candidate.py` n'a pas été modifié par T053.
+- Conclusion : T053 est exact comme classifieur local support-level, mais
+  réfute l'idée qu'un cache direct de masques de composantes suffise comme
+  amélioration algorithmique. Le modèle de projection reste prometteur, mais il
+  faut éviter les visites de témoins ou mesurer/compresser les états de masques.
+- Next action : mesurer la cardinalité des états de masques par support et
+  famille, puis chercher une DP qui transporte ces masques sans rescanner les
+  témoins, avec `paired_farthest` comme stress prioritaire.

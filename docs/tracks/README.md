@@ -90,6 +90,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T050 | 2026-05-23 | C/B/F | Profil first-hit : le coût restant est dominé par les affectations no-hit, pas seulement par les hits tardifs | métriques `first_hit_*` |
 | T051 | 2026-05-23 | C/B/F | Profil support hit/no-hit : pair-side exact sur la gate, mais tranches unaires et recomputation par composantes insuffisantes comme compression | `bad_side_grouped_support_outcome_profile` |
 | T052 | 2026-05-23 | C/B/F | Cache des côtés par support triple : cache simple encore trop cher, modèle bitset-composantes prometteur | `_witness_side_cache_key` |
+| T053 | 2026-05-23 | C/B/F | Profil bitset/composantes réel : exact mais encore plus cher que first-hit en coût réel ; la projection reste prometteuse | `_pair_side_bitset_outcome` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

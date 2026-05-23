@@ -844,3 +844,32 @@ par famille/tree observés : environ `0.48` pour `ultrametric`, `0.55` pour
 Conclusion complexité : le goulot n'est plus seulement la projection de côtés ;
 il faut compresser les checks de composantes. `paired_farthest` reste la famille
 à garder comme stress test pour tout modèle bitset.
+
+## Résultat T053 - Bitset réel versus modèle
+
+Statut : résultat de complexité empirique hors candidate.
+
+T053 transforme le modèle bitset T052 en profil exécuté. Sur
+`make bench-csp-quick`, il garde `0` mismatch mais le coût réel est moins bon
+que le modèle :
+
+- first-hit atom-checks : `41872` ;
+- projection bitset : `27822`, ratio `0.6645` ;
+- bitset réel avec visites de témoins : `44936`, ratio `1.0732` ;
+- visites de témoins : `29868` ;
+- hits/misses du cache de composantes : `3000/12068`.
+
+Lecture par familles sur la gate rapide :
+
+- `ultrametric`, `non_strict`, `block` et `cycle` restent les contrôles où le
+  bitset réel est proche ou meilleur que first-hit ;
+- `random`, `permuted_cycle` et surtout `paired_farthest` restent les stress où
+  les visites de témoins rendent le profil plus cher ;
+- `paired_farthest/mixed` est autour de `1.55x` en coût réel sur l'agrégat
+  rapide, malgré un modèle de projection autour de `1.07x`.
+
+Conclusion : la projection de masques reste un signal utile, mais une
+implémentation directe ne donne pas encore de gain. La prochaine mesure de
+complexité doit compter les états distincts de masques par rapport aux
+affectations de support, surtout sur `random`, `permuted_cycle` et
+`paired_farthest`.

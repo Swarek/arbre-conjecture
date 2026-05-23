@@ -191,6 +191,27 @@ def test_recorded_counterexamples_match_predicates():
             assert exact_oracle_pc_tree(D, T)["exists"] is example["pc_tree_oracle_exists"]
 
 
+def test_paired_farthest_label_identity_loss_counterexample():
+    D = [
+        [0, 1, 1, 3, 2, 2],
+        [1, 0, 1, 2, 2, 3],
+        [1, 1, 0, 2, 3, 2],
+        [3, 2, 2, 0, 1, 1],
+        [2, 2, 3, 1, 0, 1],
+        [2, 3, 2, 1, 1, 0],
+    ]
+
+    assert is_precircular_order_cR(D, [0, 1, 2, 3, 4, 5]) is False
+    assert find_precircular_cR_violation(D, [0, 1, 2, 3, 4, 5])["quadruple"] == (
+        1,
+        2,
+        4,
+        5,
+    )
+    assert is_precircular_order_cR(D, [0, 2, 1, 3, 4, 5]) is True
+    assert _paired_farthest_order(D, len(D)) == (0, 1, 2, 3, 5, 4)
+
+
 def test_five_point_four_local_positive_global_negative_counterexample():
     D = four_local_non_cr_core()
 

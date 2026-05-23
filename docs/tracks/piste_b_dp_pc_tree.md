@@ -361,3 +361,34 @@ les témoins.
 Contre-exemple à une signature trop faible : si on omet les choix imbriqués du
 support triple, deux affectations peuvent avoir le même choix root mais placer
 le témoin sur des côtés opposés.
+
+## Résultats T053
+
+Statut : brique DP locale exacte pour un support groupé, pas état DP suffisant.
+
+Le profil bitset réel confirme que, pour une affectation de support fixée, la
+donnée suivante est suffisante pour classifier les atoms bad-side du groupe :
+pour chaque paire `{a,b}` et chaque composante group-local de mauvais témoins,
+un masque binaire des côtés occupés. Le groupe hit ssi un masque vaut `0b11`.
+
+Ce que cette signature préserve :
+
+- les labels de la paire endpoint ;
+- l'appartenance à une composante de témoins ;
+- les choix imbriqués du support nécessaire à chaque côté ;
+- le fait qu'une composante, et non seulement la paire globale, occupe deux
+  côtés.
+
+Ce qu'elle perd :
+
+- l'ordre des témoins dans une composante ;
+- les côtés exacts après agrégation par OR ;
+- les corrélations entre supports groupés différents ;
+- la représentabilité globale d'un frontier.
+
+Conséquence DP : les masques de composantes sont un bon atome d'état local, mais
+pas une signature globale. T053 ajoute aussi un contre-exemple de perte
+d'identité sur paired-farthest `n=6` : deux blocs proches changent la validité
+cR même si une signature trop grossière ne garderait que les mêmes types de
+masques. Toute DP doit donc garder les labels/paires et non seulement des
+profils de couleurs anonymes.

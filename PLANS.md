@@ -3248,3 +3248,79 @@ Décision : conserver T052 comme preuve expérimentale que la clé
 La vraie prochaine piste n'est pas le cache de projection simple : c'est une
 implémentation bitset/composantes ou une DP qui transporte les masques de côtés
 par composante.
+
+## ExecPlan 2026-05-23 - real component bitset profile
+
+But : remplacer le modèle de coût T052
+`pair_side_split_bitset_cached_checks` par un profil réel qui calcule et
+réutilise des masques de côtés par paire et composante de mauvais témoins.
+
+Hypothèse : pour une paire `{a,b}`, après cache des côtés de témoins par
+signature triple, chaque composante de mauvais témoins peut être testée par un
+masque binaire accumulé. Une affectation supportée est hit ssi une composante a
+le masque `0b11`. Le coût réel doit donc être proche du modèle T052
+`side_cache_misses + component_checks`, et non du coût naïf
+`side_cache_misses + component_witness_checks`.
+
+Fichiers à modifier :
+`src/pc_circular/solvers/sat_like_experiments.py`,
+`tests/test_sat_like_experiments.py`, `tests/test_csp_internal_benchmark.py`,
+`tools/pc_csp_internal_benchmark.py`, `docs/tracks/piste_c_sat_csp.md`,
+`docs/tracks/piste_b_dp_pc_tree.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/proof_obligations.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `docs/tracks/README.md`,
+`PLANS.md`.
+
+Algorithme pressenti : ajouter une variante interne de
+`_pair_side_split_outcome` qui construit les côtés des témoins une fois par
+paire, puis teste les composantes via des masques accumulés avec arrêt dès que
+le masque vaut `0b11`. Exposer des compteurs distincts
+`pair_side_split_bitset_side_*`, `pair_side_split_bitset_component_checks`,
+`pair_side_split_bitset_witness_visits` et
+`pair_side_split_bitset_actual_checks`, puis vérifier qu'ils coïncident avec le
+diagnostic pair-side sur hit/no-hit.
+
+Plan de contre-exemples : traiter tout mismatch bitset vs pair-side comme
+contre-exemple T053. Tester equal-distance, `limit=1`, gros `P` unsupported,
+choix imbriqués, familles `cycle/random/non_strict/paired_farthest`, et ne pas
+transformer un no-hit local en décision de solver.
+
+Plan subagents : Piste C audite les invariants de masques ; Piste B évalue si
+les masques sont une signature DP crédible ou trop faible ; Piste F mesure les
+familles où le profil bitset gagne ou échoue ; Piste tests propose les
+régressions anti-faux-sens.
+
+Tests à exécuter : tests ciblés
+`tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`,
+probe familles si nécessaire, `make bench-csp-quick`, `make quick`,
+`make check`, `make bench-quick`. `make hunt-counterexamples` n'est pas requis
+tant que `candidate.py` reste inchangé.
+
+Risques : un compteur bitset peut seulement déplacer le coût et ne pas donner
+de borne asymptotique ; l'arrêt précoce dans une composante doit conserver
+assez de compteurs pour rester auditable ; le profil reste expérimental et hors
+`candidate.py`.
+
+Résultats observés : ajout de `_component_side_cache_key` et
+`_pair_side_bitset_outcome`, avec métriques réelles
+`pair_side_split_bitset_*` dans le profil et le benchmark CSP interne. Tests
+ciblés `tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`
+: `49 passed`. Régressions ciblées avec
+`tests/test_regression_counterexamples.py` : `60 passed`. `make bench-csp-quick`
+: `192` lignes, `0` mismatch, `profile_pair_side_split_mismatches=0`,
+`profile_pair_side_split_bitset_mismatches=0`. Totaux : first-hit `41872`
+atom-checks, bitset réel `44936` checks (`1.0732x`), projection bitset `27822`
+checks (`0.6645x`), visites de témoins `29868`, cache composantes
+`3000/12068`, cache côtés bitset `17114/12754`. Subagents : Piste C valide les
+invariants de parité et edge cases ; Piste B confirme que le masque est un
+atome DP local mais pas une signature globale ; Piste F classe
+`paired_farthest`, `random` et `permuted_cycle` comme stress ; Piste tests
+propose les assertions anti-faux-sens ajoutées. Gates candidate finales :
+`make quick` (`232 passed`, puis `JUSTE`), `make check` (`JUSTE`),
+`make bench-quick` (`40/40` runs réussis, `0` timeout, `0` incomplet).
+
+Décision : conserver T053 comme résultat exact local et négatif sur la
+compression directe. Le modèle de projection reste prometteur, mais le coût
+réel montre que la prochaine piste doit mesurer/compresser la cardinalité des
+états de masques ou éviter les visites de témoins, avec `paired_farthest` comme
+stress prioritaire.

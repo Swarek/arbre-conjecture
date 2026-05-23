@@ -1341,6 +1341,23 @@ Limites T052 :
 - aucune borne asymptotique sur le nombre de signatures triples ou de
   composantes n'est encore prouvée.
 
+T053 ajoute un profil bitset/composantes réel. Pour chaque support groupé, il
+calcule des masques de côtés par paire `{a,b}` et composante de mauvais témoins.
+Sur la gate CSP rapide, ce profil a `0` mismatch avec le scan atomique et avec
+le test pair-side T051.
+
+Limites T053 :
+
+- ce profil reste hors `candidate.py` et ne décide aucun ordre ;
+- les masques sont exacts seulement pour un support groupé et une affectation
+  locale donnés ; ils ne prouvent pas la représentabilité globale ;
+- le coût réel (`1.0732x` first-hit) est supérieur au modèle de projection
+  (`0.6645x`) car les visites de témoins dominent ;
+- une signature qui anonymise les labels, les paires, les composantes ou les
+  choix imbriqués est réfutée par les tests de régression ;
+- aucune borne asymptotique sur le nombre d'états de masques distincts n'est
+  encore établie.
+
 ### Prédicats stricts d'ordre fixé
 
 Statut : définitions directes implémentées / base expérimentale Piste F.

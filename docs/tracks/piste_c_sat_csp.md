@@ -512,6 +512,58 @@ confond les deux côtés.
 Prochaine action : implémenter un diagnostic bitset réel par composante, en
 gardant la comparaison stricte aux signatures first-hit et au CSP cR direct.
 
+## Tentative T053 - Profil bitset/composantes réel
+
+Statut : diagnostic Piste C exact sur la gate interne, hors `candidate.py`.
+
+Hypothèse testée : le modèle T052
+`side_cache_misses + component_checks` peut être rapproché d'une exécution
+réelle en cachant des masques de côtés par composante. Pour une paire `{a,b}`,
+une composante de mauvais témoins produit un hit exactement quand son masque de
+côtés vaut `0b11`.
+
+Changement : ajout de `_component_side_cache_key` et
+`_pair_side_bitset_outcome`. Le profil garde les compteurs T052 historiques et
+ajoute les compteurs réels :
+`pair_side_split_bitset_component_cache_*`,
+`pair_side_split_bitset_witness_visits`,
+`pair_side_split_bitset_checks`,
+`pair_side_split_bitset_projection_checks` et
+`pair_side_split_bitset_mismatches`.
+
+Résultats :
+
+- tests ciblés : `49 passed` ;
+- `make bench-csp-quick` : `192` lignes, `0` mismatch,
+  `profile_pair_side_split_mismatches=0` et
+  `profile_pair_side_split_bitset_mismatches=0` ;
+- coût first-hit : `41872` atom-checks ;
+- coût bitset réel : `44936` checks, ratio `1.0732` ;
+- coût de projection bitset : `27822` checks, ratio `0.6645` ;
+- visites de témoins bitset : `29868` ;
+- hits/misses du cache de composantes : `3000/12068` ;
+- hits/misses du cache de côtés dans le profil bitset : `17114/12754`.
+
+Interprétation : le test bitset est sémantiquement aligné avec le scan
+atomique sur la gate, et il protège explicitement les composantes : des témoins
+sur deux côtés mais dans deux composantes distinctes ne suffisent pas. En
+revanche, le coût réel reste supérieur à first-hit parce que les visites de
+témoins dominent. Le modèle de projection T052 reste proche (`0.6645` contre
+`0.6650`), mais il suppose une structure plus forte qui éviterait ces visites.
+
+Familles de stress :
+
+- `cycle` et `non_strict` restent des contrôles positifs (`0.867x` et `0.583x`
+  en coût réel sur les agrégats rapides mesurés par sidecar) ;
+- `random` et `paired_farthest` sont les stress négatifs : sur la gate rapide,
+  `random` est autour de `1.37x..1.39x`, `paired_farthest` autour de
+  `1.41x..1.55x` en coût réel.
+
+Conclusion : T053 réfute l'idée qu'un simple cache de masques de composantes
+suffise. La prochaine compression doit éviter les visites de témoins par
+composante, par exemple via tables de masques par support de composante, DP
+transportant les masques ouverts, ou règle spéciale pour `paired_farthest`.
+
 ## Tentative T021 - Repair positive-only pour paired-farthest
 
 Statut : idée saine comme générateur expérimental vérifié, mais non intégrée à

@@ -397,6 +397,17 @@ Dernier commit green avant T009 : `07120e4`.
   côtés `49558` checks, ratio `1.1836x` first-hit ; modèle
   bitset-composantes `27846` checks, ratio `0.6650x`; la clé triple complète
   est protégée par un test de choix imbriqué.
+- Checkpoint T053 courant : commit contenant le profil bitset/composantes réel
+  hors candidate. Validation observée :
+  `tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`
+  (`49 passed`), régressions ciblées (`60 passed`), `make bench-csp-quick`
+  (`192` lignes, `0` mismatch,
+  `profile_pair_side_split_bitset_mismatches=0`), `make quick`
+  (`232 passed`, puis `JUSTE`), `make check`, `make bench-quick`
+  (`40/40` runs, `0` timeout, `0` incomplet). Résultat observé : le
+  classifieur local est exact sur la gate, mais le coût réel bitset est
+  `44936` checks (`1.0732x` first-hit) contre une projection théorique
+  `27822` checks (`0.6645x`). `candidate.py` n'a pas été modifié.
 
 ## Rollback
 
