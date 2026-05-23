@@ -305,6 +305,18 @@ la nécessité du croisement. Le cas frontier tardive `n=8` reste incomplet à l
 borne `64`, donc T044 ne résout pas l'intersection PC-tree ; il rend seulement
 un certificat positif plus naturel quand le bon frontier est inspecté.
 
+Résultat T045 : `exact_low_hub_matching_projection_search_report` énumère
+directement les formes cR du sous-cas matching low-hub : `seq + mate(seq)` pour
+les endpoints, puis insertion arbitraire des hubs. Cela transforme la condition
+bad-side/farthest en famille exhaustive d'ordres fixés sous une limite
+combinatoire. Le cas frontier tardive `n=8` est trouvé sans attendre le bon
+frontier dans l'énumération PC-tree.
+
+Limites T045 : l'exhaustivité n'est revendiquée que si l'énumération des
+candidats uniques termine sous `max_candidate_orders`. Un dépassement reste
+incomplet. Les placeholders mixed `n=17` ne sont pas résolus, et T045 ne doit
+pas être généralisé aux graphes hauts non matching.
+
 ## Prochaine action
 
 Utiliser les témoins `find_precircular_cR_violation` comme source principale
@@ -312,4 +324,4 @@ d’obstructions. Pour low-hub, chercher une réduction polynomial-time de
 reconnaissance strong-ordering générale ou un diagnostic d'intersection PC-tree
 plus compact. Prochaine option raisonnable : intersecter le PC-tree avec les
 ordres matching/component-Ferrers/strong-ordering, en commençant par les hubs
-séparés et les frontiers tardives révélés par T043/T044.
+séparés et les frontiers tardives révélés par T043/T044/T045.

@@ -82,6 +82,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T042 | 2026-05-23 | E/F | Union de composantes chain/Ferrers low-hub certifiée positive component-wise | `low_hub_component_ferrers_strong_ordering_report` |
 | T043 | 2026-05-23 | E/F | Témoin matching low-hub guidé par PC-tree ; limites split-hubs/frontier-limit régressées | `pc_tree_guided_low_hub_matching_witness_report` |
 | T044 | 2026-05-23 | E/F | Projection frontier matching low-hub ; hubs séparés traités si un frontier croisé est inspecté | `pc_tree_projected_matching_frontier_found` |
+| T045 | 2026-05-23 | E/F/C | Recherche exacte bornée des projections matching low-hub ; négatifs complets seulement sous limite explicite | `exact_low_hub_matching_projection_search_report` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

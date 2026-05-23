@@ -298,6 +298,18 @@ Dernier commit green avant T009 : `07120e4`.
   Résultat observé : `mixed/star` reste `0` timeout et `0` incomplet jusqu'à
   `n=100`, médiane `0.03139s` à `n=100`; la frontier tardive `n=8` reste une
   limite à `frontier_limit=64`.
+- Checkpoint T045 courant : commit contenant
+  `exact_low_hub_matching_projection_search_report` et son intégration candidate
+  bornée. Le rapport énumère paresseusement les ordres `seq + mate(seq)` avec
+  hubs insérés, teste d'abord `represents_order`, puis cR, et retourne un
+  négatif complet seulement si tous les candidats uniques sous la limite sont
+  épuisés. Régressions ajoutées : frontier tardive `n=8` positive, rigide
+  non-crossing `n=6` négatif, limite basse explicite, lazy hit `n=13`, et rejet
+  candidate non-crossing `n=12`. Validation observée : tests ciblés
+  candidate/local-constraints/generators, probe oracle `19` couples,
+  `make quick`, `make hunt-counterexamples`, `make check`, `make bench-quick`,
+  `make bench`. Résultat observé : `mixed/star` reste `0` timeout et `0`
+  incomplet jusqu'à `n=100`, médiane `0.03311s` à `n=100`.
 
 ## Rollback
 

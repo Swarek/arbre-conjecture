@@ -25,6 +25,7 @@ from pc_circular.solvers import brute_force
 from pc_circular.solvers.local_constraints import (
     _matching_crossing_parts,
     classify_order_obstructions,
+    exact_low_hub_matching_projection_search_report,
     iter_low_hub_strong_ordering_witnesses,
     low_hub_component_ferrers_strong_ordering_report,
     low_hub_ferrers_strong_ordering_report,
@@ -366,6 +367,71 @@ def test_matching_crossing_projection_matches_cr_for_fixed_orders_small():
         for order in all_circular_orders(n):
             has_crossing_projection = _matching_crossing_parts(order, pairs) is not None
             assert has_crossing_projection == passes_bad_side_precircular_cR(D, order)
+
+
+def test_exact_low_hub_matching_projection_search_finds_frontier_tardy_positive():
+    D = matching_high_graph_plus_low_hub(8)
+    T = p_node([leaf(4), c_node([leaf(1), leaf(2)]), leaf(5), leaf(7), leaf(6), leaf(3), leaf(0)])
+    guided = pc_tree_guided_low_hub_matching_witness_report(D, T, frontier_limit=64)
+    exact = exact_low_hub_matching_projection_search_report(D, T)
+
+    assert exact_oracle_pc_tree(D, T)["exists"] is True
+    assert guided["status"] == "no_pc_tree_guided_matching_witness_found"
+    assert exact["status"] == "matching_projection_order_found"
+    assert exact["complete"] is True
+    assert exact["strong_ordering_exists"] is True
+    assert exact["candidate_orders_checked"] <= exact["candidate_order_bound"]
+    assert exact["witness_order_is_cr"] is True
+    assert represents_order(T, exact["witness_order"])
+
+
+def test_exact_low_hub_matching_projection_search_rejects_noncrossing_rigid_tree():
+    D = matching_high_graph_plus_low_hub(6)
+    T = c_node([leaf(0), leaf(1), leaf(3), leaf(2), leaf(4), leaf(5)])
+    report = exact_low_hub_matching_projection_search_report(D, T)
+
+    assert exact_oracle_pc_tree(D, T)["exists"] is False
+    assert report["status"] == "no_matching_projection_order_represented"
+    assert report["complete"] is True
+    assert report["strong_ordering_exists"] is False
+    assert report["candidate_orders_checked"] <= report["candidate_order_bound"]
+
+
+def test_exact_low_hub_matching_projection_search_reports_candidate_limit():
+    D = matching_high_graph_plus_low_hub(12)
+    T = c_node(
+        [
+            leaf(0),
+            p_node([leaf(i) for i in range(1, 6)]),
+            leaf(11),
+            p_node([leaf(i) for i in range(6, 11)]),
+        ]
+    )
+    report = exact_low_hub_matching_projection_search_report(D, T, max_candidate_orders=10)
+
+    assert report["status"] == "candidate_limit_exceeded"
+    assert report["complete"] is False
+    assert report["strong_ordering_exists"] is None
+    assert report["candidate_order_bound"] > 10
+
+
+def test_exact_low_hub_matching_projection_search_is_lazy_before_raw_bound():
+    D = equal_distance_instance(13)
+    for a, b in ((0, 1), (2, 3), (4, 5), (6, 7), (8, 9)):
+        D[a][b] = D[b][a] = 2
+    T = c_node([leaf(i) for i in (10, 0, 2, 4, 6, 8, 11, 1, 3, 5, 7, 9, 12)])
+
+    limited = exact_low_hub_matching_projection_search_report(D, T, max_candidate_orders=100)
+    found = exact_low_hub_matching_projection_search_report(D, T, max_candidate_orders=100_000)
+
+    assert exact_oracle_pc_tree(D, T)["exists"] is True
+    assert limited["status"] == "candidate_limit_exceeded"
+    assert limited["complete"] is False
+    assert found["candidate_order_bound"] > 100_000
+    assert found["status"] == "matching_projection_order_found"
+    assert found["candidate_orders_checked"] < 100_000
+    assert found["witness_order_is_cr"] is True
+    assert represents_order(T, found["witness_order"])
 
 
 def test_pc_tree_guided_low_hub_matching_frontier_limit_is_incomplete():

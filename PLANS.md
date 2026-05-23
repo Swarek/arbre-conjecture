@@ -2604,3 +2604,95 @@ low-hub. Le résultat prouvé porte sur un ordre fixé/projeté ; l'existence da
 un PC-tree compact reste bornée par les frontiers inspectées. Prochaine piste :
 diagnostic exact petit `seq + mate(seq)` après pruning des hubs, puis tentative
 DP/CSP d'intersection non bornée si les états restent petits.
+
+## ExecPlan 2026-05-23 - exact bounded matching projection search
+
+But : dépasser la dépendance T044 aux frontiers inspectées en énumérant
+directement, lorsque c'est petit, tous les ordres circular Robinson possibles du
+sous-cas matching low-hub : projections `seq + mate(seq)` et placements des
+hubs dans les interstices.
+
+Hypothèse : dans le sous-cas binaire low-hub matching prouvé par T044, les
+ordres cR sont exactement les ordres dont la projection non-hub est
+`seq, mate(seq)` à rotation/renversement près. Si le nombre de projections et
+placements de hubs est sous une limite explicite, on peut décider exactement
+l'existence dans un PC-tree du scaffold en testant `represents_order` sur tous
+ces candidats. Au-dessus de la limite, le rapport reste incomplet.
+
+Fichiers à modifier : `src/pc_circular/solvers/local_constraints.py`,
+`src/pc_circular/solvers/candidate.py`, `tests/test_local_constraints.py`,
+`tests/test_candidate.py`, `docs/proof_obligations.md`,
+`docs/tracks/piste_e_farthest_quartets.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/tracks/README.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `PLANS.md`.
+
+Algorithme pressenti : ajouter un rapport
+`exact_low_hub_matching_projection_search_report`. Détecter le sous-cas
+low-hub matching ; calculer la borne
+`2^m * m! * h! * C(h+2m-1,2m-1)` ; si elle dépasse
+`max_candidate_orders`, ne pas couper avant d'avoir essayé : énumérer
+paresseusement les orientations et permutations des paires, insérer les hubs
+dans les `2m` interstices, dédupliquer modulo rotation/renversement, tester
+d'abord `represents_order`, puis accepter le premier ordre qui passe aussi
+`passes_bad_side_precircular_cR`. Si le nombre réel de candidats uniques atteint
+`max_candidate_orders`, retourner `candidate_limit_exceeded`. Si tous les
+candidats sont épuisés, retourner un négatif complet pour ce sous-cas.
+
+Plan de contre-exemples : tester le non-crossing rigide `n=6`, la frontier
+tardive `n=8`, des PC-trees petits contre `exact_oracle_pc_tree`, des limites
+de candidats, `low=0`, hubs multiples, et des cas où T044/T043 trouvent déjà un
+témoin pour vérifier que le nouveau rapport ne contredit pas les certificats
+positifs existants.
+
+Plan subagents : sidecars lecture seule. Un audite la complétude de
+l'énumération `seq + mate(seq)` avec hubs ; un cherche un faux négatif contre
+l'oracle PC-tree sur petits matchings ; un mesure si le rapport résout des
+placeholders mixed ou seulement des cas déjà couverts ; un évalue les risques de
+complexité/limite ; un prépare la checklist documentaire.
+
+Tests à exécuter : tests ciblés local-constraints/candidate, probes exactes
+petits matchings PC-tree, `make unit`, `make quick`,
+`make hunt-counterexamples`, `make check`, `make bench-quick`; `make bench` si
+`candidate.py` change.
+
+Risques : explosion combinatoire déguisée ; conclure négatif alors que
+l'énumération n'a pas été complète ; doublons modulo rotation qui masquent une
+erreur de couverture ; accepter un ordre non représenté ; généraliser le
+résultat hors matching low-hub.
+
+Résultats observés : le rapport exact borné trouve le cas frontier tardive
+`n=8` que T044/T043 manquait à `frontier_limit=64`, avec témoin représenté et
+cR. Il rejette complètement un rigide non-crossing `n=6`, et la candidate
+rejette complètement un cas non-crossing `n=12` dont la borne PC-tree générale
+dépasse `4096`, avec `21120` candidats uniques testés, `0` ordre représenté et
+`0` check cR payé grâce à l'ordre `represents_order` avant cR. La correction
+lazy évite un faux blocage sur une borne brute lâche : un cas `n=13` avec borne
+brute `>100000` est trouvé sous `100000` candidats uniques.
+
+Résultats subagents : l'audit preuve confirme que l'énumération
+`seq + mate(seq)` plus placements arbitraires des hubs est complète pour le
+sous-cas binaire low-hub matching, modulo rotation/renversement. Les probes
+sidecars donnent `0` mismatch sur plusieurs centaines de couples petits
+`(D,T)` et `59040` ordres fixés. Les mesures recommandent de garder
+`EXACT_LOW_HUB_MATCHING_PROJECTION_LIMIT = 100000`, de tester `represents_order`
+avant cR, et de présenter T045 comme diagnostic exact borné : il ne résout pas
+les placeholders mixed `n=17` et n'améliore pas T040/T042 déjà couverts par
+T043.
+
+Validation : tests ciblés `tests/test_local_constraints.py tests/test_candidate.py
+tests/test_generators.py` donnent `99 passed`. `make quick` donne `194 passed`
+puis `JUSTE`. `make hunt-counterexamples` et `make check` donnent `JUSTE`.
+Probe oracle local : `19` couples petits matching/PC-tree sans mismatch avec
+`exact_oracle_pc_tree`. `make bench-quick` donne `0` timeout et `0` incomplet ;
+à `n=20`, médiane `0.00126s`, p95 `0.00143s`, fit polynomial empirique
+`p ~= 1.85`. `make bench` donne `0` timeout et `0` incomplet jusqu'à `n=100` ;
+à `n=100`, médiane `0.03311s`, p95 `0.03756s`, fit polynomial empirique
+`p ~= 1.81`.
+
+Décision : intégrer T045 comme sous-cas exact borné après T044/T043 et seulement
+quand le PC-tree n'est pas déjà sous la borne exacte générale. Un retour
+`exists=False, complete=True` est autorisé uniquement si l'énumération des
+candidats uniques est réellement épuisée ; `candidate_limit_exceeded` reste
+incomplet. Prochaine piste : transformer cette énumération en DP/CSP
+d'intersection `seq + mate(seq)` ou chercher un contre-exemple minimal à toute
+règle locale de synchronisation.

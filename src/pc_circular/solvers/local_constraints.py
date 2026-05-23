@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from itertools import permutations, product
+from math import comb
 
 from pc_circular.predicates import (
+    canonical_circular_order,
     farthest_sets,
     find_farthest_crossing_violation,
     find_precircular_cR_violation,
@@ -470,6 +472,191 @@ def _matching_crossing_parts(order, pairs):
         "projected_order": projected,
         "part_a": part_a,
         "part_b": part_b,
+    }
+
+
+def _weak_compositions(total: int, slots: int):
+    if slots <= 0:
+        if total == 0:
+            yield ()
+        return
+    if slots == 1:
+        yield (total,)
+        return
+    for first in range(total + 1):
+        for rest in _weak_compositions(total - first, slots - 1):
+            yield (first, *rest)
+
+
+def _insert_hubs_before_projection_labels(projection, hubs):
+    projection = tuple(projection)
+    hubs = tuple(hubs)
+    if not projection:
+        for hub_order in permutations(hubs):
+            yield tuple(hub_order)
+        return
+
+    for hub_order in permutations(hubs):
+        for counts in _weak_compositions(len(hubs), len(projection)):
+            cursor = 0
+            order = []
+            for count, label in zip(counts, projection):
+                order.extend(hub_order[cursor : cursor + count])
+                cursor += count
+                order.append(label)
+            yield tuple(order)
+
+
+def exact_low_hub_matching_projection_search_report(
+    D,
+    T: PCNode,
+    *,
+    max_candidate_orders: int = 100_000,
+):
+    """Exact bounded search for represented low-hub matching projection orders."""
+
+    n = validate_dissimilarity(D)
+    tree_labels = set(labels(T))
+    if tree_labels != set(range(n)):
+        raise ValueError("PC-tree labels must be exactly 0..n-1")
+
+    off_diagonal_values = sorted({D[i][j] for i in range(n) for j in range(i + 1, n)})
+    if len(off_diagonal_values) != 2:
+        return {
+            "method": "exact_low_hub_matching_projection_search_report",
+            "n": n,
+            "max_candidate_orders": max_candidate_orders,
+            "status": "not_binary_two_level",
+            "complete": False,
+            "strong_ordering_exists": None,
+            "witness_order": None,
+            "witness_order_is_cr": None,
+        }
+
+    _low, high = off_diagonal_values
+    neighbors = {
+        i: tuple(j for j in range(n) if i != j and D[i][j] == high)
+        for i in range(n)
+    }
+    hubs = tuple(i for i, values in neighbors.items() if not values)
+    high_vertices = tuple(i for i, values in neighbors.items() if values)
+    base = {
+        "method": "exact_low_hub_matching_projection_search_report",
+        "n": n,
+        "max_candidate_orders": max_candidate_orders,
+        "low_value": _low,
+        "high_value": high,
+        "hub_labels": hubs,
+        "high_graph_labels": high_vertices,
+        "witness_order": None,
+        "witness_order_is_cr": None,
+    }
+    if not hubs:
+        return {**base, "status": "no_low_hub", "complete": False, "strong_ordering_exists": None}
+
+    pairs = _matching_pairs(high_vertices, neighbors)
+    if pairs is None:
+        return {**base, "status": "not_matching_high_graph", "complete": False, "strong_ordering_exists": None}
+    if not pairs:
+        order = tuple(sample_frontier(T))
+        return {
+            **base,
+            "status": "empty_high_graph",
+            "complete": True,
+            "strong_ordering_exists": True,
+            "candidate_order_bound": 1,
+            "candidate_orders_checked": 1,
+            "pair_count": 0,
+            "witness_order": order,
+            "witness_order_is_cr": passes_bad_side_precircular_cR(D, order),
+        }
+
+    pair_count = len(pairs)
+    hub_count = len(hubs)
+    slot_count = 2 * pair_count
+    hub_placement_count = _factorial(hub_count) * comb(hub_count + slot_count - 1, slot_count - 1)
+    candidate_order_bound = (2**pair_count) * _factorial(pair_count) * hub_placement_count
+    if pair_count >= 2:
+        canonical_bound = max(1, candidate_order_bound // (4 * pair_count))
+    else:
+        canonical_bound = candidate_order_bound
+    base = {
+        **base,
+        "pair_count": pair_count,
+        "hub_count": hub_count,
+        "hub_placement_count": hub_placement_count,
+        "candidate_order_bound": candidate_order_bound,
+        "candidate_order_bound_raw": candidate_order_bound,
+        "candidate_order_bound_canonical": canonical_bound,
+    }
+
+    mate = {}
+    for left, right in pairs:
+        mate[left] = right
+        mate[right] = left
+
+    checked = 0
+    duplicates_skipped = 0
+    representation_checks = 0
+    represented_orders_checked = 0
+    cr_checks = 0
+    seen_orders = set()
+    for pair_order in permutations(pairs):
+        for side_choices in product((0, 1), repeat=pair_count):
+            first_half = tuple(pair[choice] for pair, choice in zip(pair_order, side_choices))
+            second_half = tuple(mate[label] for label in first_half)
+            projection = first_half + second_half
+            for order in _insert_hubs_before_projection_labels(projection, hubs):
+                canonical_order = canonical_circular_order(order)
+                if canonical_order in seen_orders:
+                    duplicates_skipped += 1
+                    continue
+                seen_orders.add(canonical_order)
+                if checked >= max_candidate_orders:
+                    return {
+                        **base,
+                        "status": "candidate_limit_exceeded",
+                        "complete": False,
+                        "strong_ordering_exists": None,
+                        "candidate_orders_checked": checked,
+                        "duplicates_skipped": duplicates_skipped,
+                        "representation_checks": representation_checks,
+                        "represented_orders_checked": represented_orders_checked,
+                        "cr_checks": cr_checks,
+                    }
+                checked += 1
+                representation_checks += 1
+                if not represents_order(T, canonical_order):
+                    continue
+                represented_orders_checked += 1
+                cr_checks += 1
+                if not passes_bad_side_precircular_cR(D, canonical_order):
+                    continue
+                return {
+                    **base,
+                    "status": "matching_projection_order_found",
+                    "complete": True,
+                    "strong_ordering_exists": True,
+                    "candidate_orders_checked": checked,
+                    "duplicates_skipped": duplicates_skipped,
+                    "representation_checks": representation_checks,
+                    "represented_orders_checked": represented_orders_checked,
+                    "cr_checks": cr_checks,
+                    "projected_order": tuple(label for label in canonical_order if label in mate),
+                    "witness_order": canonical_order,
+                    "witness_order_is_cr": True,
+                }
+
+    return {
+        **base,
+        "status": "no_matching_projection_order_represented",
+        "complete": True,
+        "strong_ordering_exists": False,
+        "candidate_orders_checked": checked,
+        "duplicates_skipped": duplicates_skipped,
+        "representation_checks": representation_checks,
+        "represented_orders_checked": represented_orders_checked,
+        "cr_checks": cr_checks,
     }
 
 

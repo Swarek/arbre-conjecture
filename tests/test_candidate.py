@@ -47,6 +47,7 @@ from pc_circular.solvers import brute_force
 from pc_circular.solvers.local_constraints import (
     low_hub_component_ferrers_strong_ordering_report,
     low_hub_ferrers_strong_ordering_report,
+    pc_tree_guided_low_hub_matching_witness_report,
 )
 
 
@@ -484,6 +485,32 @@ def test_candidate_low_hub_projected_matching_accepts_large_split_hubs():
     assert result["projected_frontiers_checked"] == 1
     assert result["segments_checked"] == 0
     assert result["frontiers_sampled"] == 0
+
+
+def test_candidate_exact_low_hub_matching_projection_search_rejects_large_rigid_noncrossing():
+    D = matching_high_graph_plus_low_hub(12)
+    T = p_node(
+        [
+            p_node([leaf(1), leaf(6)]),
+            p_node([leaf(2), leaf(7)]),
+            p_node([leaf(3), leaf(8)]),
+            p_node([leaf(4), leaf(9)]),
+            p_node([leaf(5), leaf(10)]),
+            leaf(0),
+            leaf(11),
+        ]
+    )
+    guided = pc_tree_guided_low_hub_matching_witness_report(D, T, frontier_limit=64)
+
+    assert _pc_tree_frontier_upper_bound(T) > EXACT_PC_TREE_FRONTIER_LIMIT
+    assert guided["status"] == "no_pc_tree_guided_matching_witness_found"
+
+    result = solve(D, pc_tree=T)
+
+    assert result["exists"] is False
+    assert result["complete"] is True
+    assert result["solver"] == "candidate_exact_low_hub_matching_projection_search"
+    assert result["candidate_orders_checked"] <= result["candidate_order_bound"]
 
 
 def test_candidate_low_hub_ferrers_nonrepresented_witness_continues_search():

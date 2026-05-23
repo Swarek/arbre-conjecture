@@ -715,6 +715,50 @@ certificat, le cas non-crossing rigide `n=6` reste négatif exact, et les gates
 `make quick`, `make hunt-counterexamples`, `make check`, `make bench-quick` et
 `make bench` restent verts.
 
+### Recherche exacte bornée des projections matching low-hub
+
+Statut : décision exacte d'un sous-cas quand l'énumération finit sous limite ;
+diagnostic incomplet sinon.
+
+T045 exploite le théorème T044 : dans le sous-cas binaire low-hub matching, les
+ordres cR sont exactement ceux dont la projection non-hub est, à
+rotation/renversement près,
+
+```text
+seq, mate(seq)
+```
+
+avec les hubs insérés arbitrairement dans les interstices. Le rapport
+`exact_low_hub_matching_projection_search_report` énumère ces formes, déduplique
+les ordres circulaires, teste `represents_order`, puis revalide cR.
+
+Ce que cela couvre :
+
+- obligation 1/2 dans le sous-cas : la famille énumérée est nécessaire et
+  suffisante par T044 ;
+- obligation 3 sous limite : si tous les candidats uniques sont épuisés, aucun
+  ordre représenté cR n'a été manqué dans ce sous-cas ;
+- obligation 4 : tout témoin positif est vérifié par `represents_order` ;
+- obligation 5 partielle : la borne brute est
+  `2^m * m! * h! * C(h+2m-1,2m-1)` ; ce n'est pas polynomial ;
+- obligation 6 : `low=0` et hubs multiples restent couverts par le même lemme
+  bad-side strict.
+
+Limites :
+
+- hors matching low-hub, le rapport est non applicable ;
+- au-dessus de `max_candidate_orders`, l'échec est incomplet, jamais négatif ;
+- la borne brute est lâche et peut dépasser la limite alors qu'un témoin existe
+  tôt ; l'implémentation énumère donc paresseusement les candidats uniques ;
+- le résultat n'est pas une intersection PC-tree polynomial-time.
+
+Preuve expérimentale T045 : frontier tardive `n=8` trouvée par énumération des
+formes cR, rigide non-crossing `n=6` rejeté complètement, négatif non-crossing
+`n=12` rejeté par la candidate après `21120` candidats uniques, et cas `n=13`
+montrant qu'un témoin peut être trouvé sous la limite malgré une borne brute
+supérieure à la limite. `make quick`, `make hunt-counterexamples`,
+`make check`, `make bench-quick` et `make bench` restent verts.
+
 ### Témoins positifs échantillonnés
 
 Statut : conséquence directe / clarification de la candidate.

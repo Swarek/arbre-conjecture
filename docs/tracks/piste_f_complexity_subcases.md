@@ -648,6 +648,30 @@ Limites T044 :
 - le cas frontier tardive `n=8` reste manqué à `frontier_limit=64` ;
 - un échec T044 reste incomplet.
 
+Résultat T045 :
+
+- `exact_low_hub_matching_projection_search_report` décide exactement le
+  sous-cas matching low-hub si l'ensemble des candidats `seq + mate(seq)` avec
+  hubs insérés est épuisé sous `max_candidate_orders` ;
+- la candidate l'appelle seulement après les certificats rapides T043/T044 et
+  seulement si le PC-tree dépasse déjà la borne exacte générale de frontiers ;
+- le cas frontier tardive `n=8` est trouvé par le rapport exact, ce qui explique
+  le positif sans dépendre d'un frontier précoce ;
+- un rigide non-crossing `n=12` est rejeté complètement côté candidate :
+  `21120` candidats uniques, `0` représenté, `0` check cR payé ;
+- la correction lazy permet de trouver un témoin `n=13` sous `100000`
+  candidats uniques malgré une borne brute supérieure à `100000` ;
+- `make bench` reste à `0` timeout et `0` incomplet jusqu'à `n=100`; à `n=100`,
+  médiane `0.03311s`, p95 `0.03756s`, fit polynomial empirique `p ~= 1.81`.
+
+Limites T045 :
+
+- limite combinatoire, pas polynomial-time ;
+- la limite candidate reste `100000` pour éviter de ralentir les benchmarks ;
+- les cas T040/T042 restent mieux traités par T043, et les placeholders mixed
+  `n=17` ne sont pas résolus ;
+- un dépassement de limite reste incomplet, jamais négatif.
+
 ## Témoin cycle par distances minimales
 
 Statut : certificat positif intégré pour tout PC-tree du scaffold où le témoin
@@ -698,6 +722,7 @@ Résultat T019 :
 - `candidate_paired_farthest_matching_witness`;
 - `pc_tree_guided_low_hub_matching_witness_report`;
 - `pc_tree_projected_matching_frontier_found`;
+- `exact_low_hub_matching_projection_search_report`;
 - `represents_order` non énumératif quand `limit is None`;
 - `--diagnostics-up-to` dans `tools/pc_circular_complexity_benchmark.py`;
 - `make bench-piste-f`.

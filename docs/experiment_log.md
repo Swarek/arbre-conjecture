@@ -2047,3 +2047,56 @@
 - Next action : construire un diagnostic exact petit `seq + mate(seq)` après
   pruning des hubs pour mesurer la vraie intersection PC-tree/matching, puis
   tenter un état DP/CSP si les contre-exemples locaux restent contrôlables.
+
+## 2026-05-23 exact bounded matching projection search
+
+- Date/heure : 2026-05-23 07:31:34 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : dans le sous-cas binaire low-hub matching, les ordres cR
+  sont exactement les projections `seq + mate(seq)` avec hubs insérés
+  arbitrairement. Si ces candidats uniques sont épuisés sous une limite, alors
+  l'existence dans le PC-tree scaffold est décidée exactement pour ce sous-cas.
+- Changement fait : ajout de
+  `exact_low_hub_matching_projection_search_report`; intégration candidate
+  bornée après T043/T044 et seulement si la borne PC-tree générale dépasse
+  `EXACT_PC_TREE_FRONTIER_LIMIT`; énumération paresseuse jusqu'à
+  `EXACT_LOW_HUB_MATCHING_PROJECTION_LIMIT = 100000`; métriques de borne brute,
+  borne canonique, doublons, checks de représentation et checks cR ; régressions
+  frontier tardive `n=8`, rigide non-crossing `n=6`, limite basse, lazy hit
+  `n=13`, et rejet candidate non-crossing `n=12`.
+- Commande exécutée avant modification : `make quick`.
+- Résultat correction avant modification : `189 passed`, puis `JUSTE`.
+- Plan subagents : cinq sidecars lecture seule. Résultats : preuve de
+  complétude de `seq + mate(seq)` plus hubs sous les hypothèses matching ;
+  aucun mismatch sur plusieurs centaines de couples petits `(D,T)` ; mesure
+  montrant que T045 ne résout pas les placeholders mixed `n=17` et doit rester
+  gardé ; recommandation appliquée de limite `100000` et de test
+  `represents_order` avant cR.
+- Commande exécutée : `pytest -q tests/test_local_constraints.py tests/test_candidate.py tests/test_generators.py`.
+- Résultat correction : `99 passed`.
+- Commande exécutée : probe oracle petits matchings contre
+  `exact_oracle_pc_tree`.
+- Résultat probe : `19` couples matching/PC-tree sans mismatch ; tout témoin
+  trouvé est cR et représenté.
+- Commande exécutée : `make quick`.
+- Résultat correction : `194 passed`, puis `JUSTE`.
+- Commande exécutée : `make hunt-counterexamples`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark rapide : `reports/complexity_report_quick.json` écrit ;
+  `0` timeout, `0` incomplet ; à `n=20`, médiane `0.00126s`, p95 `0.00143s`,
+  fit polynomial empirique `p ~= 1.85`.
+- Commande exécutée : `make bench`.
+- Résultat benchmark fort : `reports/complexity_report.json` écrit ; `0`
+  timeout, `0` incomplet jusqu'à `n=100`, médiane `0.03311s`, p95 `0.03756s`,
+  fit polynomial empirique `p ~= 1.81`.
+- Conclusion : T045 donne une décision exacte bornée du sous-cas matching
+  low-hub et produit des négatifs complets quand l'énumération finit. Il reste
+  combinatoire, ne résout pas les placeholders mixed `n=17`, et tout dépassement
+  de limite reste incomplet.
+- Next action : chercher une formulation DP/CSP de l'intersection
+  PC-tree avec les formes `seq + mate(seq)`, ou produire un contre-exemple
+  minimal à une règle locale de synchronisation.

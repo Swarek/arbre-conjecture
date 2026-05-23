@@ -39,6 +39,7 @@ from pc_circular.predicates import (
 )
 from pc_circular.solvers import brute_force
 from pc_circular.solvers.local_constraints import (
+    exact_low_hub_matching_projection_search_report,
     iter_low_hub_strong_ordering_witnesses,
     low_hub_component_ferrers_strong_ordering_report,
     low_hub_ferrers_strong_ordering_report,
@@ -53,6 +54,7 @@ SMALL_FORBIDDEN_SUBMATRIX_ORDER = 4
 SMALL_FORBIDDEN_SUBMATRIX_ORDERS = (4, 5, 6)
 SMALL_FORBIDDEN_SUBMATRIX_LIMIT = 4096
 LOW_HUB_STRONG_ORDERING_PERMUTATION_LIMIT = 100_000
+EXACT_LOW_HUB_MATCHING_PROJECTION_LIMIT = 100_000
 
 
 def _large_n_budget(n: int) -> int:
@@ -546,6 +548,52 @@ def _low_hub_strong_ordering_witness_result(D, n: int, pc_tree: Optional[PCNode]
                         "part_a": list(matching_report.get("part_a", ())),
                         "part_b": list(matching_report.get("part_b", ())),
                         "note": "binary low-hub matching high graph produced a PC-tree-guided represented witness verified directly as circular Robinson",
+                    }
+
+        if _pc_tree_frontier_upper_bound(pc_tree) > EXACT_PC_TREE_FRONTIER_LIMIT:
+            exact_matching_report = exact_low_hub_matching_projection_search_report(
+                D,
+                pc_tree,
+                max_candidate_orders=EXACT_LOW_HUB_MATCHING_PROJECTION_LIMIT,
+            )
+            if exact_matching_report["complete"] is True:
+                if (
+                    exact_matching_report["strong_ordering_exists"] is True
+                    and exact_matching_report["witness_order"] is not None
+                ):
+                    order = _validate_order_shape(exact_matching_report["witness_order"], n)
+                    if exact_matching_report["witness_order_is_cr"] and passes_bad_side_precircular_cR(D, order):
+                        if represents_order(pc_tree, order):
+                            return {
+                                "exists": True,
+                                "order": list(order),
+                                "complete": True,
+                                "solver": "candidate_exact_low_hub_matching_projection_search",
+                                "candidate_order_bound": exact_matching_report.get("candidate_order_bound"),
+                                "candidate_order_bound_canonical": exact_matching_report.get("candidate_order_bound_canonical"),
+                                "candidate_orders_checked": exact_matching_report.get("candidate_orders_checked"),
+                                "representation_checks": exact_matching_report.get("representation_checks"),
+                                "represented_orders_checked": exact_matching_report.get("represented_orders_checked"),
+                                "cr_checks": exact_matching_report.get("cr_checks"),
+                                "pair_count": exact_matching_report.get("pair_count"),
+                                "hub_labels": list(exact_matching_report.get("hub_labels", ())),
+                                "note": "bounded exhaustive low-hub matching projection search found a represented order verified directly as circular Robinson",
+                            }
+                elif exact_matching_report["strong_ordering_exists"] is False:
+                    return {
+                        "exists": False,
+                        "order": None,
+                        "complete": True,
+                    "solver": "candidate_exact_low_hub_matching_projection_search",
+                    "candidate_order_bound": exact_matching_report.get("candidate_order_bound"),
+                    "candidate_order_bound_canonical": exact_matching_report.get("candidate_order_bound_canonical"),
+                    "candidate_orders_checked": exact_matching_report.get("candidate_orders_checked"),
+                    "representation_checks": exact_matching_report.get("representation_checks"),
+                    "represented_orders_checked": exact_matching_report.get("represented_orders_checked"),
+                    "cr_checks": exact_matching_report.get("cr_checks"),
+                    "pair_count": exact_matching_report.get("pair_count"),
+                        "hub_labels": list(exact_matching_report.get("hub_labels", ())),
+                        "note": "bounded exhaustive low-hub matching projection search found no represented circular-Robinson order in this proved subcase",
                     }
 
     for report in iter_low_hub_strong_ordering_witnesses(
