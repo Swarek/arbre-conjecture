@@ -211,6 +211,26 @@ Artefacts : `even_high_cycle_plus_low_hub`,
 `candidate_even_high_cycle_low_hub_obstruction`,
 régression `test_even_high_cycle_low_hub_subcase_regression`.
 
+## Strong ordering low-hub
+
+Statut : conjecture expérimentale pour le cas binaire hub bas, hors candidate.
+
+`low_hub_strong_ordering_report` teste bornément si le graphe haut privé des
+hubs admet un strong ordering. Ce diagnostic explique les certificats T034/T035
+dans un langage commun : graphe non biparti impossible ; graphe biparti sans
+strong ordering impossible dans les probes ; strong ordering trouvé donne le
+témoin naturel `hubs, A, B`, vérifié ensuite par le prédicat cR direct.
+
+Résultat T036 : exhaustif oracle jusqu'à `5` sommets non-hub sans mismatch ;
+sur tous les graphes à `6` sommets non-hub, le diagnostic retrouve `5117`
+strong-ordering, `60` bipartis sans strong ordering, et `27591` non bipartis.
+Les contrôles incluent `C4`, `C6`, `C8`, `K3,3`, matching, chain/Ferrers et un
+tree négatif.
+
+Limite : le rapport est factoriel et marqué incomplet si la limite de
+permutations est atteinte. Il ne prouve pas encore l'existence dans un PC-tree
+compact, car un témoin positif doit aussi être représenté.
+
 ## Prochaine action
 
 Utiliser les témoins `find_precircular_cR_violation` comme source principale

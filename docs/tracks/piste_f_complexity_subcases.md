@@ -441,6 +441,21 @@ Limite ajoutée :
 - la conjecture plus large "low-hub binaire positif ssi graphe haut admet un
   strong ordering" reste une piste, pas une candidate intégrée.
 
+Résultat expérimental T036 :
+
+- `low_hub_strong_ordering_report` ajoute un diagnostic borné pour la conjecture
+  strong-ordering du cas hub bas binaire ;
+- le rapport est hors `candidate.py` et retourne `complete=False` si la limite
+  factorielle est atteinte ;
+- contrôles positifs : `C4`, `K3,3`, matching, chain/Ferrers ;
+- contrôles négatifs : `C6`, `C8`, tree haut à 7 non-hub ;
+- exhaustif oracle `m <= 5` sans mismatch ; exhaustif diagnostic `m=6` :
+  `5117` strong-ordering, `60` bipartis sans strong-ordering, `27591` non
+  bipartis ;
+- prochaine intégration possible seulement après preuve de suffisance et
+  reconnaissance polynomial-time, ou comme sous-cas positif borné avec garde
+  `represents_order`.
+
 ## Témoin cycle par distances minimales
 
 Statut : certificat positif intégré pour tout PC-tree du scaffold où le témoin

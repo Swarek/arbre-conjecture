@@ -1517,3 +1517,48 @@
 - Next action : tester la conjecture strong-ordering sur graphes hauts hub bas
   avec un détecteur expérimental borné, puis isoler un sous-cas positif prouvé
   comme chain/complete-bipartite/matching représenté par le PC-tree.
+
+## 2026-05-23 low-hub strong-ordering diagnostic
+
+- Date/heure : 2026-05-23 05:32:00 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : dans le cas binaire `low/high` avec hub bas universel,
+  l'existence sous star/all-orders pourrait coïncider avec l'existence d'un
+  strong ordering du graphe haut privé des hubs.
+- Changement fait : ajout de `low_hub_strong_ordering_report` dans
+  `local_constraints.py`, hors `candidate.py`. Le rapport détecte les cas non
+  applicables, bipartit le graphe haut, énumère bornément les ordres des deux
+  parts, teste la condition strong ordering, et vérifie directement le témoin
+  `hubs + A + B` par `is_precircular_order_cR`.
+- Commande exécutée avant modification : `make quick`.
+- Résultat correction avant modification : `142 passed in 2.97s`, puis
+  `JUSTE`.
+- Plan subagents : deux sidecars lecture seule. Résultats : l'intégration doit
+  rester dans `local_constraints.py`, pas dans `candidate.py`; le rapport doit
+  marquer `complete=False` si la limite factorielle est atteinte ; les contrôles
+  prioritaires sont `C4`, `C6`, `C8`, `K3,3`, matching, chain/Ferrers, tree
+  négatif et cas non applicables.
+- Contrôles positifs : `C4 + hub`, `K3,3 + hub`, matching et chain/Ferrers
+  trouvent un strong ordering dont le témoin construit est vérifié cR.
+- Contrôles négatifs : `C6 + hub`, `C8 + hub`, et le tree haut
+  `(1,2),(1,5),(2,3),(2,4),(3,6),(4,7)` plus hub n'ont pas de strong ordering ;
+  le tree est aussi négatif par oracle exact.
+- Probe exhaustive oracle : pour tous les graphes hauts avec hub bas et
+  `m <= 5` sommets non-hub, le diagnostic coïncide avec `brute_force.solve`.
+- Probe exhaustive diagnostic : pour `m=6`, résultats
+  `{strong=True: 5117, strong=False: 27651}`, avec statuts
+  `strong_ordering_found=5116`, `empty_high_graph=1`,
+  `non_bipartite_high_graph=27591`, `no_strong_ordering=60`.
+- Commande exécutée : `pytest -q tests/test_local_constraints.py`.
+- Résultat correction : `12 passed`.
+- Commande exécutée : `make unit`.
+- Résultat correction : `149 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `149 passed`, puis `JUSTE`.
+- Conclusion : T036 transforme la piste strong-ordering en artefact
+  falsifiable et borné. Elle renforce la compréhension du cas hub bas binaire,
+  mais ne change pas la candidate et ne prouve pas encore le problème PC-tree.
+- Next action : soit prouver la suffisance du strong ordering et remplacer
+  l'énumération factorielle par une reconnaissance polynomiale, soit isoler un
+  sous-cas positif plus petit avec témoin représenté par le PC-tree.

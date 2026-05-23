@@ -198,6 +198,14 @@ Dernier commit green avant T009 : `07120e4`.
   et benchmark ciblé `even_high_cycle_plus_low_hub/star`. Résultat observé :
   `mixed/star` reste `0` timeout et `0` incomplet jusqu'à `n=100`; la famille
   cycle haut pair induit est rejetée en temps polynomial.
+- Checkpoint T036 courant : commit contenant le diagnostic borné
+  `low_hub_strong_ordering_report`, sans changement de `candidate.py`. Il teste
+  expérimentalement la conjecture strong-ordering du cas binaire hub bas avec
+  contrôles `C4`, `C6`, `C8`, `K3,3`, matching, chain/Ferrers, tree négatif,
+  cas non applicables et limite factorielle. Validation observée :
+  `tests/test_local_constraints.py`, probe exhaustive diagnostic `m=6`,
+  `make unit`, `make quick`. Résultat observé : le diagnostic coïncide avec
+  l'oracle exact jusqu'à `m<=5` et retrouve la frontière T035 à `m=6`.
 
 ## Rollback
 

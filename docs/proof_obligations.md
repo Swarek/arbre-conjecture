@@ -401,6 +401,56 @@ Limites :
 - les encodages avec niveau bas hors diagonale `0` restent hors de la détection
   actuelle.
 
+### Strong ordering du graphe haut avec hub bas
+
+Statut : conjecture structurante + diagnostic borné, pas encore théorème
+intégré à la candidate.
+
+Pour une matrice binaire `low/high` avec au moins un hub bas universel, T035
+suggère la conjecture suivante sous star/all-orders : il existe un ordre cR si
+et seulement si le graphe des arêtes `high`, privé des hubs bas, admet un
+strong ordering de graphe biparti. Un strong ordering est une bipartition
+`A,B` avec deux ordres linéaires tels que, pour `a_i < a_k` et `b_j < b_l`, les
+arêtes croisées `a_i b_l` et `a_k b_j` forcent aussi les arêtes droites
+`a_i b_j` et `a_k b_l`.
+
+Conséquence prouvée partielle :
+
+- nécessité locale : dans tout ordre cR coupé en un hub bas, chaque sommet a
+  tous ses voisins hauts du même côté. Cela oriente les arêtes hautes d'une
+  composante bipartie de sources vers puits ;
+- une violation du strong ordering produit une paire basse avec deux mauvais
+  témoins sur deux arcs opposés, donc viole la condition bad-side d'ordre fixé.
+
+Suffisance conjecturale :
+
+- si un strong ordering est donné, l'ordre `hubs, A_order, B_order` est
+  expérimentalement cR sur les familles testées, et
+  `low_hub_strong_ordering_report` vérifie toujours ce témoin par le prédicat
+  direct `is_precircular_order_cR` ;
+- il reste à écrire la preuve complète pour toutes les paires, toutes les
+  composantes et tous les cas dégénérés avec plusieurs hubs.
+
+Preuve expérimentale T036 :
+
+- contrôles positifs : `C4 + hub`, `K3,3 + hub`, matching, chain/Ferrers ;
+- contrôles négatifs : `C6 + hub`, `C8 + hub`, tree haut
+  `(1,2),(1,5),(2,3),(2,4),(3,6),(4,7)` plus hub ;
+- exhaustif `m <= 5` non-hub : le diagnostic strong-ordering coïncide avec
+  l'oracle exact ;
+- exhaustif diagnostic `m=6` : `5117` strong-ordering trouvés, `60` graphes
+  bipartis sans strong ordering, `27591` graphes non bipartis.
+
+Obligations ouvertes avant intégration candidate :
+
+- prouver la suffisance du strong ordering pour tous les cas binaires hub bas ;
+- remplacer l'énumération factorielle par un algorithme polynomial de
+  reconnaissance ou documenter précisément la borne ;
+- vérifier la représentation PC-tree de tout témoin positif ;
+- séparer star/all-orders et existence dans un PC-tree arbitraire ;
+- traiter les cas où le niveau bas hors diagonale vaut `0` ou où plus de deux
+  niveaux positifs apparaissent.
+
 ### Témoins positifs échantillonnés
 
 Statut : conséquence directe / clarification de la candidate.

@@ -1875,3 +1875,67 @@ Décision : intégrer comme sous-cas négatif polynomial étroit. Ne pas intégr
 caractérisation strong-ordering complète avant d'avoir un détecteur/witness
 robuste, des contrôles positifs `K_{p,q}`/chain/matching, et une preuve de
 représentation PC-tree pour les témoins positifs.
+
+## ExecPlan 2026-05-23 - strong ordering low-hub diagnostic
+
+But : tester la conjecture issue de T035 sans l'intégrer à la candidate :
+dans une matrice binaire `low/high` avec hub bas universel, l'existence d'un
+ordre cR sous star pourrait coïncider avec l'existence d'un strong ordering du
+graphe haut privé des hubs.
+
+Hypothèse : après retrait des hubs bas, le graphe haut doit être un bipartite
+permutation graph. Un strong ordering fournit le témoin naturel
+`hub, A-order, B-order`; une absence de strong ordering expliquerait les
+obstructions `C6`, `C8` et le tree négatif trouvé par subagent.
+
+Fichiers à modifier : `src/pc_circular/solvers/local_constraints.py` ou un
+module expérimental proche, `tests/test_local_constraints.py` ou un test dédié,
+`docs/proof_obligations.md`, `docs/tracks/piste_e_farthest_quartets.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/tracks/README.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `PLANS.md`.
+
+Algorithme pressenti : pour les petites tailles seulement, détecter les deux
+niveaux `low/high` et les hubs isolés du graphe haut, énumérer les bipartitions
+et les permutations des deux parts sous une limite explicite, puis tester la
+condition strong ordering. Vérifier le témoin construit par
+`is_precircular_order_cR`. Le rapport doit marquer `complete=False` si les
+permutations dépassent la limite.
+
+Plan de contre-exemples : comparer strong-ordering vs oracle exact pour tous
+les graphes hauts avec hub bas jusqu'à `m=6` sommets non-hub, puis sur random
+`m=7,8` avec budgets bornés. Contrôles : `C4` positif, `C6`/`C8` négatifs,
+`K3,3` positif, matching positif, chain/Ferrers positif, tree négatif.
+
+Plan subagents : deux sidecars lecture seule. Un cherche des mismatches
+strong-ordering/oracle ; l'autre audite l'intégration minimale hors candidate.
+
+Tests à exécuter : tests ciblés du module expérimental, `make unit`,
+`make quick`. Pas de `make hunt-counterexamples` obligatoire si `candidate.py`
+n'est pas modifié, mais lancer un probe exhaustif dédié et documenté.
+
+Risques : coût factoriel ; mauvais traitement des composantes isolées ;
+confondre un diagnostic complet borné avec un algorithme polynomial ; oublier
+que les témoins positifs doivent encore être représentés par le PC-tree avant
+toute intégration future dans `candidate.py`.
+
+Résultats observés : `low_hub_strong_ordering_report` ajouté dans
+`local_constraints.py` comme diagnostic borné hors `candidate.py`. Il détecte
+les cas non applicables, les graphes hauts non bipartis, les limites
+factorielles, et vérifie directement le témoin `hubs + A + B` lorsqu'un strong
+ordering est trouvé. Les contrôles unitaires couvrent `C4`, `C6`, `C8`,
+`K3,3`, matching, chain/Ferrers, un tree négatif, les cas non binaires, sans
+hub, et limite atteinte.
+
+Probe exhaustive : pour tous les graphes hauts avec hub bas et `m=6` sommets
+non-hub, le diagnostic donne `5117` strong-ordering positifs, `60` graphes
+bipartis sans strong ordering, et `27591` graphes non bipartis. Cela recoupe la
+frontière T035. Le test unitaire compare aussi strong-ordering à l'oracle exact
+pour tous les graphes hauts jusqu'à `m=5`.
+
+Validation observée : `pytest -q tests/test_local_constraints.py` `12 passed`;
+`make unit` `149 passed`; `make quick` `149 passed` puis `JUSTE`.
+
+Décision : conserver comme diagnostic expérimental et comme candidat de
+caractérisation du cas star/all-orders binaire hub bas. Ne pas intégrer dans
+`candidate.py` avant une preuve écrite, un détecteur polynomial plutôt que
+factoriel, et un garde de représentation PC-tree pour les témoins positifs.

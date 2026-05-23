@@ -73,6 +73,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T033 | 2026-05-23 | E/F | Contre-exemple 6-points à la caractérisation 5-locale ; cycle haut impair plus hub bas certifié négatif | `candidate_odd_high_cycle_low_hub_obstruction` |
 | T034 | 2026-05-23 | E/F | Certificat cycle impair généralisé à tout graphe haut non biparti avec hub bas | `candidate_non_bipartite_high_graph_low_hub_obstruction` |
 | T035 | 2026-05-23 | E/F | Les graphes hauts bipartis ne suffisent pas ; cycle haut pair induit `>=6` certifié négatif | `candidate_even_high_cycle_low_hub_obstruction` |
+| T036 | 2026-05-23 | E/F | Diagnostic strong-ordering borné pour le cas binaire hub bas ; pas intégré à la candidate | `low_hub_strong_ordering_report` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

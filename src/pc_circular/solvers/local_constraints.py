@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+from itertools import permutations, product
+
 from pc_circular.predicates import (
     farthest_sets,
     find_farthest_crossing_violation,
     find_precircular_cR_violation,
+    is_precircular_order_cR,
     validate_dissimilarity,
 )
 from pc_circular.pc_tree import PCNode, labels
@@ -136,6 +139,181 @@ def _laminar_violations(projected_sets):
                 continue
             violations.append((tuple(sorted(left)), tuple(sorted(right))))
     return tuple(violations)
+
+
+def _factorial(value: int) -> int:
+    result = 1
+    for factor in range(2, value + 1):
+        result *= factor
+    return result
+
+
+def _bipartite_components(vertices, neighbors):
+    color: dict[int, int] = {}
+    components = []
+    for start in vertices:
+        if start in color:
+            continue
+        color[start] = 0
+        stack = [start]
+        component = []
+        while stack:
+            current = stack.pop()
+            component.append(current)
+            for neighbor in neighbors[current]:
+                if neighbor not in color:
+                    color[neighbor] = 1 - color[current]
+                    stack.append(neighbor)
+                elif color[neighbor] == color[current]:
+                    return None
+        left = tuple(sorted(vertex for vertex in component if color[vertex] == 0))
+        right = tuple(sorted(vertex for vertex in component if color[vertex] == 1))
+        components.append((left, right))
+    return tuple(components)
+
+
+def _has_strong_ordering(A_order, B_order, high_edges) -> bool:
+    for left_index, a_left in enumerate(A_order):
+        for a_right in A_order[left_index + 1 :]:
+            for lower_index, b_left in enumerate(B_order):
+                for b_right in B_order[lower_index + 1 :]:
+                    crossing_edges = (a_left, b_right) in high_edges and (a_right, b_left) in high_edges
+                    straight_edges = (a_left, b_left) in high_edges and (a_right, b_right) in high_edges
+                    if crossing_edges and not straight_edges:
+                        return False
+    return True
+
+
+def low_hub_strong_ordering_report(D, *, max_permutation_pairs: int = 100_000):
+    """Bounded diagnostic for the binary low-hub strong-ordering conjecture.
+
+    This Piste E/F experiment does not decide the general PC-tree problem and is
+    not used by ``candidate.py``.  It tests whether the high-distance graph of a
+    binary low-hub instance admits a strong ordering, and verifies the resulting
+    witness order directly when one is found.
+    """
+
+    n = validate_dissimilarity(D)
+    positive_values = sorted({D[i][j] for i in range(n) for j in range(i + 1, n) if D[i][j] > 0})
+    if len(positive_values) == 1:
+        order = tuple(range(n))
+        return {
+            "method": "bounded_low_hub_strong_ordering_report",
+            "n": n,
+            "complete": True,
+            "status": "empty_high_graph",
+            "strong_ordering_exists": True,
+            "low_value": positive_values[0],
+            "high_value": None,
+            "hub_labels": order,
+            "high_graph_labels": (),
+            "max_permutation_pairs": max_permutation_pairs,
+            "part_a": (),
+            "part_b": (),
+            "witness_order": order,
+            "witness_order_is_cr": is_precircular_order_cR(D, order),
+        }
+    if len(positive_values) != 2:
+        return {
+            "method": "bounded_low_hub_strong_ordering_report",
+            "n": n,
+            "complete": True,
+            "status": "not_binary_two_level",
+            "strong_ordering_exists": None,
+            "witness_order": None,
+            "witness_order_is_cr": None,
+        }
+
+    _low, high = positive_values
+    neighbors = {
+        i: tuple(j for j in range(n) if i != j and D[i][j] == high)
+        for i in range(n)
+    }
+    hubs = tuple(i for i, values in neighbors.items() if not values)
+    high_vertices = tuple(i for i, values in neighbors.items() if values)
+    base = {
+        "method": "bounded_low_hub_strong_ordering_report",
+        "n": n,
+        "complete": True,
+        "low_value": _low,
+        "high_value": high,
+        "hub_labels": hubs,
+        "high_graph_labels": high_vertices,
+        "max_permutation_pairs": max_permutation_pairs,
+        "witness_order": None,
+        "witness_order_is_cr": None,
+    }
+    if not hubs:
+        return {**base, "status": "no_low_hub", "strong_ordering_exists": None}
+    if not high_vertices:
+        order = tuple(hubs)
+        return {
+            **base,
+            "status": "empty_high_graph",
+            "strong_ordering_exists": True,
+            "part_a": (),
+            "part_b": (),
+            "witness_order": order,
+            "witness_order_is_cr": is_precircular_order_cR(D, order),
+        }
+
+    components = _bipartite_components(high_vertices, neighbors)
+    if components is None:
+        return {**base, "status": "non_bipartite_high_graph", "strong_ordering_exists": False}
+
+    partition_count = 2 ** len(components)
+    checked_permutation_pairs = 0
+    for flips in product((0, 1), repeat=len(components)):
+        part_a = []
+        part_b = []
+        for flip, (left, right) in zip(flips, components):
+            if flip:
+                part_a.extend(right)
+                part_b.extend(left)
+            else:
+                part_a.extend(left)
+                part_b.extend(right)
+        part_a = tuple(sorted(part_a))
+        part_b = tuple(sorted(part_b))
+        permutation_pair_count = _factorial(len(part_a)) * _factorial(len(part_b))
+        if checked_permutation_pairs + permutation_pair_count > max_permutation_pairs:
+            return {
+                **base,
+                "complete": False,
+                "status": "unsupported_permutation_limit",
+                "strong_ordering_exists": None,
+                "component_count": len(components),
+                "partition_count": partition_count,
+                "checked_permutation_pairs": checked_permutation_pairs,
+            }
+
+        high_edges = {(a, b) for a in part_a for b in part_b if D[a][b] == high}
+        for A_order in permutations(part_a):
+            for B_order in permutations(part_b):
+                checked_permutation_pairs += 1
+                if _has_strong_ordering(A_order, B_order, high_edges):
+                    witness_order = tuple(hubs) + tuple(A_order) + tuple(B_order)
+                    return {
+                        **base,
+                        "status": "strong_ordering_found",
+                        "strong_ordering_exists": True,
+                        "component_count": len(components),
+                        "partition_count": partition_count,
+                        "checked_permutation_pairs": checked_permutation_pairs,
+                        "part_a": tuple(A_order),
+                        "part_b": tuple(B_order),
+                        "witness_order": witness_order,
+                        "witness_order_is_cr": is_precircular_order_cR(D, witness_order),
+                    }
+
+    return {
+        **base,
+        "status": "no_strong_ordering",
+        "strong_ordering_exists": False,
+        "component_count": len(components),
+        "partition_count": partition_count,
+        "checked_permutation_pairs": checked_permutation_pairs,
+    }
 
 
 def project_farthest_sets_to_pc_nodes(D, T: PCNode, *, circular_ones_degree_limit: int = 8):
