@@ -123,3 +123,33 @@ Priorité raisonnable :
    test d’ordre, pas comme solver d’existence.
 3. Chercher comment cette condition se projette sur un PC-tree : CSP de quartets
    interdits ou DP par signatures de sous-frontiers.
+
+## Algorithm 5.2, usage expérimental
+
+Statut : source mathématique externe + générateur expérimental T024.
+
+La section 5 du PDF `strongly-circular-sidma-1.pdf` décrit un algorithme qui,
+pour un espace déjà strict quasi-circular, choisit un point `x` et un
+`x' in F_x`, puis partitionne `X` en :
+
+```text
+N = {u : d(u,x) <= d(u,x')}
+F = {u : d(u,x') <= d(u,x)}
+J(x,y) = {u : d(x,y) > max(d(x,u), d(u,y))} union {x,y}.
+```
+
+Dans le cas `N cap F != empty`, l'ordre est obtenu par les deux arcs déterminés
+par un point équidistant. Dans le cas disjoint, les ensembles `N` et `F` sont
+eux-mêmes séparés en deux arcs via `J(x,z)` et `J(x',y)`, puis triés par
+distance à `x` ou `x'`. Le papier indique que le résultat, complété par une
+vérification d'ordre fixé, donne une reconnaissance stricte en `O(n^2)`.
+
+Impact pour le dépôt :
+
+- `strict_algorithm52_report` transcrit cette idée comme générateur de candidats
+  et vérifie ensuite chaque ordre par les prédicats directs ;
+- le rapport essaie tous les choix `x, x' in F_x` et les deux orientations des
+  segments dans le cas disjoint, car une transcription trop littérale avait
+  déjà raté `cycle_metric(6)` ;
+- cet artefact ne prouve pas encore la complétude dans un PC-tree compact et
+  n'est pas appelé par `candidate.py`.

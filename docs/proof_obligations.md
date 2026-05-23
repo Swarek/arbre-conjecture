@@ -542,3 +542,48 @@ Limites :
   ordre donné ;
 - un témoin strict cR peut ne pas être représenté par le PC-tree, donc toute
   future intégration doit garder le garde `represents_order`.
+
+### Générateur Algorithm 5.2 strict
+
+Statut : artefact expérimental filtré / preuve de complétude non encore
+formalisée.
+
+`strict_algorithm52_report` implémente une génération de candidats inspirée de
+l'Algorithm 5.2 du papier strict :
+
+- choix de tous les couples `x, x' in F_x` ;
+- construction de `N`, `F` et des ensembles stricts `J(x,y)` ;
+- génération des orientations possibles dans le cas disjoint `N cap F = empty` ;
+- filtrage par `represents_order` si un PC-tree est fourni ;
+- vérification directe par `is_strict_quasi_circular_order`,
+  `is_strict_precircular_order_cR` et `is_strict_circular_robinson_order`.
+
+Ce que cela couvre expérimentalement :
+
+- obligation 1 fixed-order : les ordres validés sont vérifiés par les
+  prédicats stricts directs, donc aucune acceptation ne dépend seulement de la
+  construction ;
+- obligation 4 partielle : avec PC-tree fourni, le rapport ne compte un ordre
+  strict que s'il est représenté ; les témoins stricts non représentés sont
+  comptés à part ;
+- obligation négative : Fig. 2.2 prouve dans les tests que `sqcR` seul ne doit
+  pas être accepté comme strict circular ;
+- obligation de séparation : le rapport n'est pas utilisé dans `candidate.py`.
+
+Preuve expérimentale T024 : `cycle_metric(6)` est récupéré, Fig. 2.2 sépare les
+deux ordres `sqcR` du seul ordre strict circular, un exemple random `n=5 seed=33`
+montre un strict positif hors témoins minimum-cycle/paired-farthest, et
+l'exhaustif `n=4`, valeurs `{1,2,3}`, récupère exactement les ordres strict
+quasi et strict circular pour les `729` matrices. Probe additionnelle :
+cycles `n=4..7`, equal-distance et random `n=5/6` seeds `0..199` sans
+désaccord.
+
+Limites :
+
+- la preuve que la génération couvre tous les ordres stricts compatibles n'est
+  pas encore écrite dans le dépôt ;
+- `max_candidates` protège contre l'explosion sur entrées non strictes, et un
+  hit de limite rend le rapport incomplet, jamais négatif ;
+- aucune conclusion de non-existence générale ne peut être tirée si aucun ordre
+  strict n'est trouvé ;
+- les cas non stricts et les égalités restent hors périmètre de cet artefact.

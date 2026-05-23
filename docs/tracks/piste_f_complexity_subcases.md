@@ -198,6 +198,30 @@ Décision : garder ces fonctions comme base expérimentale. La prochaine étape
 strict doit être la génération exhaustive des un ou deux ordres compatibles
 stricts annoncés par Prop. 5.9 ou une reproduction validée d'Algorithm 5.2.
 
+Résultat T024 :
+
+- `strict_algorithm52_report(D, pc_tree=None, max_candidates=10000)` génère des
+  candidats inspirés de l'Algorithm 5.2 puis les filtre par représentation
+  PC-tree et par les prédicats stricts directs ;
+- le cas disjoint `N cap F = empty` génère les deux orientations possibles des
+  segments `N` et `F`, ce qui récupère `cycle_metric(6)` alors que la
+  transcription naïve T022 le ratait ;
+- Fig. 2.2 reste un garde : deux ordres sont strict quasi, un seul est strict
+  circular ;
+- un exemple random `n=5 seed=33` montre un strict positif qui n'est couvert ni
+  par le témoin minimum-cycle ni par le témoin paired-farthest existants ;
+- la régression PC-tree non-star vérifie que les ordres stricts non représentés
+  sont comptés séparément et ne deviennent pas des témoins représentés ;
+- exhaustif `n=4`, valeurs `{1,2,3}` : le rapport récupère exactement les
+  ordres strict quasi et strict circular exacts pour les `729` matrices ;
+- probe cycles `n=4..7`, equal-distance, random `n=5/6` seeds `0..199` :
+  aucun désaccord avec les ordres stricts exacts.
+
+Limite T024 : le rapport est un générateur filtré, pas une preuve. Il ne traite
+pas les cas non stricts, et l'étape suivante doit soit prouver que la génération
+couvre les ordres stricts représentés, soit l'utiliser seulement comme
+diagnostic/certificat positif.
+
 ## Témoin cycle par distances minimales
 
 Statut : certificat positif intégré pour tout PC-tree du scaffold où le témoin

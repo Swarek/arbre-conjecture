@@ -5,6 +5,7 @@ from pc_circular.oracle import exact_oracle_pc_tree
 from pc_circular.pc_tree import balanced_pc_tree, represents_order, star_pc_tree
 from pc_circular.predicates import (
     all_circular_orders,
+    canonical_circular_order,
     find_strict_precircular_cR_violation,
     find_strict_quasi_circular_violation,
     is_precircular_order_cR,
@@ -14,7 +15,8 @@ from pc_circular.predicates import (
     is_strict_quasi_circular_order,
     is_strict_robinson_linear,
 )
-from pc_circular.solvers.strict_experiments import strict_order_report
+from pc_circular.solvers.candidate import _minimum_distance_cycle_order, _paired_farthest_order
+from pc_circular.solvers.strict_experiments import strict_algorithm52_report, strict_order_report
 
 
 def test_strict_linear_robinson_rejects_equalities():
@@ -79,6 +81,44 @@ def test_strict_report_marks_large_instances_incomplete():
     assert report["reason"] == "n exceeds strict_order_report max_n"
 
 
+def test_algorithm52_report_recovers_cycle_metric_strict_order():
+    D = cycle_metric(6)
+    report = strict_algorithm52_report(D)
+
+    assert report["complete"] is True
+    assert report["strict_quasi_orders"] == [(0, 1, 2, 3, 4, 5)]
+    assert report["strict_precircular_orders"] == [(0, 1, 2, 3, 4, 5)]
+    assert report["strict_circular_orders"] == [(0, 1, 2, 3, 4, 5)]
+
+
+def test_algorithm52_report_handles_fig_2_2_quasi_vs_circular_split():
+    D = [
+        [0, 1, 2, 3],
+        [1, 0, 3, 2],
+        [2, 3, 0, 1],
+        [3, 2, 1, 0],
+    ]
+    report = strict_algorithm52_report(D)
+
+    assert report["complete"] is True
+    assert set(report["strict_quasi_orders"]) == {(0, 1, 2, 3), (0, 1, 3, 2)}
+    assert report["strict_circular_orders"] == [(0, 1, 3, 2)]
+
+
+def test_algorithm52_report_finds_strict_positive_outside_existing_witness_families():
+    D = [
+        [0, 3, 1, 3, 1],
+        [3, 0, 2, 2, 3],
+        [1, 2, 0, 3, 3],
+        [3, 2, 3, 0, 1],
+        [1, 3, 3, 1, 0],
+    ]
+
+    assert _minimum_distance_cycle_order(D, 5) is None
+    assert _paired_farthest_order(D, 5) is None
+    assert strict_algorithm52_report(D)["strict_circular_orders"] == [(0, 2, 1, 3, 4)]
+
+
 def test_strict_witness_must_be_represented_by_pc_tree():
     D = [
         [0, 2, 1, 1],
@@ -93,6 +133,12 @@ def test_strict_witness_must_be_represented_by_pc_tree():
     assert not represents_order(T, order)
     assert exact_oracle_pc_tree(D, T)["exists"] is False
     assert strict_order_report(D, T)["strict_circular_count"] == 0
+
+    unrestricted = strict_algorithm52_report(D)
+    represented = strict_algorithm52_report(D, T)
+    assert canonical_circular_order(order) in unrestricted["strict_circular_orders"]
+    assert represented["strict_circular_count"] == 0
+    assert represented["unrepresented_strict_circular_count"] >= 1
 
 
 def test_strict_circular_implies_strict_precircular_on_n4_values():
@@ -123,3 +169,21 @@ def test_strict_precircular_matches_strict_circular_arc_definition_n4_values():
             checked += 1
             assert is_strict_circular_robinson_order(D, order) is is_strict_precircular_order_cR(D, order)
     assert checked == 2187
+
+
+def test_algorithm52_report_matches_exact_strict_orders_n4_values():
+    n = 4
+    pairs = list(itertools.combinations(range(n), 2))
+    checked = 0
+    for values in itertools.product((1, 2, 3), repeat=len(pairs)):
+        D = [[0] * n for _ in range(n)]
+        for (i, j), value in zip(pairs, values):
+            D[i][j] = D[j][i] = value
+        exact_quasi = {order for order in all_circular_orders(n) if is_strict_quasi_circular_order(D, order)}
+        exact_circular = {order for order in all_circular_orders(n) if is_strict_circular_robinson_order(D, order)}
+        report = strict_algorithm52_report(D)
+        assert report["complete"] is True
+        assert set(report["strict_quasi_orders"]) == exact_quasi
+        assert set(report["strict_circular_orders"]) == exact_circular
+        checked += 1
+    assert checked == 729

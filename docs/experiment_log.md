@@ -873,3 +873,41 @@
 - Next action : implémenter un module expérimental de génération des candidats
   stricts, ou reproduire Algorithm 5.2 avec comparaison exhaustive contre
   `strict_order_report` avant toute promotion en candidate.
+
+## 2026-05-23 Algorithm 5.2 strict candidates
+
+- Date/heure : 2026-05-23, Europe/Paris.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : l'Algorithm 5.2 peut être transcrit comme générateur
+  expérimental de candidats stricts, à condition de filtrer les ordres produits
+  par les prédicats fixed-order et de ne jamais conclure sans vérification de
+  représentation PC-tree.
+- Changement fait : ajout de `strict_algorithm52_report` dans
+  `src/pc_circular/solvers/strict_experiments.py`; ajout de tests pour
+  `cycle_metric(6)`, Fig. 2.2, un random strict positif `n=5 seed=33`, le
+  témoin strict non représenté par PC-tree, et l'exhaustif `n=4`.
+- Commande exécutée avant modification : `make quick`.
+- Résultat correction : `85 passed in 1.15s`, puis `JUSTE`.
+- Plan subagents : cinq explorateurs lecture seule. Résultats reçus pendant
+  l'itération : Piste C/D recommande un rapport strict PC-tree borné ; Piste
+  sources/modules recommande un rapport balles/circular-ones ; Piste
+  contre-exemples fournit `cycle_metric(5)`, Fig. 2.2, equal-distance, random
+  `n=5 seed=33`, et le piège PC-tree non-star ; Piste B propose une signature
+  strict-specific externe avec seuil `>=` à tester plus tard.
+- Commande exécutée : `pytest -q tests/test_strict_experiments.py`.
+- Résultat correction : `12 passed`.
+- Probe exécutée : comparaison de `strict_algorithm52_report` aux ordres
+  stricts exacts sur cycles `n=4..7`, equal-distance, random `n=5/6` seeds
+  `0..199`.
+- Résultat probe : aucun désaccord ; le rapport récupère exactement les ordres
+  `strict_quasi` et `strict_circular` exacts dans ces familles.
+- Probe exhaustive intégrée aux tests : `n=4`, valeurs `{1,2,3}`.
+- Résultat probe : `729` matrices ; le rapport récupère exactement les ordres
+  strict quasi et strict circular exacts.
+- Conclusion : progrès utile Piste F. Le générateur filtré donne une base plus
+  proche de l'Algorithm 5.2 et récupère des stricts positifs hors familles déjà
+  intégrées, mais il reste expérimental et hors `candidate.py`.
+- Next action : soit formaliser la complétude de la génération strict dans le
+  dépôt, soit ajouter un rapport PC-tree/circular-ones borné pour relier ces
+  candidats stricts à l'existence représentée par `T`.

@@ -1057,3 +1057,64 @@ incomplet.
 Décision : conserver comme base expérimentale Piste F. Ne pas intégrer dans
 `candidate.py` tant que la génération des ordres stricts (Algorithm 5.2 ou
 équivalent) n'est pas prouvée exhaustive et testée contre l'oracle PC-tree.
+
+## ExecPlan 2026-05-23 - Algorithm 5.2 strict candidates
+
+But : transformer la lecture de l'Algorithm 5.2 en générateur expérimental
+d'ordres candidats stricts, filtrés par les prédicats fixed-order de T023,
+sans modifier `candidate.py`.
+
+Hypothèse : en générant les ordres issus de la partition `N/F` de l'Algorithm
+5.2 pour tous les choix `x` et `x' in F_x`, puis en vérifiant directement
+`sqcR`/strict circular, on récupère les un ou deux ordres compatibles stricts
+observés en petit `n`. Les sorties non vérifiées restent de simples candidats.
+
+Fichiers à modifier : `src/pc_circular/solvers/strict_experiments.py`,
+`tests/test_strict_experiments.py`, `docs/source_notes.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/tracks/README.md`,
+`docs/proof_obligations.md`, `docs/experiment_log.md`, `docs/checkpoints.md`.
+
+Algorithme pressenti : implémenter `strict_algorithm52_report(D, pc_tree=None)`
+avec `J(x,y) = {u : d(x,y) > max(d(x,u), d(u,y))} union {x,y}`. Pour le cas
+`N cap F != empty`, construire les ordres `Sort(x, X1) ++ ReverseSort(x, X2)`.
+Pour le cas disjoint, calculer les partitions `J(x,z)` et `J(x',y)`, générer
+les deux orientations possibles de chaque segment afin d'éviter le faux rejet
+observé sur `cycle_metric(6)`, puis filtrer par les prédicats stricts. Limiter
+le nombre de candidats produits et marquer `complete=False` si la limite est
+atteinte.
+
+Plan de contre-exemples : comparer aux ordres exacts de `strict_order_report`
+sur Fig. 2.2, `cycle_metric(6)`, equal-distance, témoin strict non représenté
+par PC-tree, exhaustif `n=4` valeurs `{1,2,3}`, et probes random `n=5`.
+
+Plan subagents : cinq explorateurs lecture seule en parallèle : transcription
+source Algorithm 5.2, matrices strictes minimales, artefact CSP/PC-tree strict,
+signature DP stricte, et lien modules/circular-ones.
+
+Tests à exécuter : tests stricts ciblés, probe exhaustive `n=4`, `make unit`,
+`make quick`, `make bench-quick`. Si `candidate.py` reste inchangé, pas de
+`make hunt-counterexamples` obligatoire, mais garder une probe dédiée contre
+les ordres stricts exacts.
+
+Risques : surinterpréter un générateur filtré comme preuve de complétude ;
+confondre ordre strict quasi et strict circular ; exploser sur des égalités
+non strictes ; accepter un témoin non représenté par le PC-tree.
+
+Résultats observés : `strict_algorithm52_report` ajouté dans
+`strict_experiments.py`. Le rapport génère des candidats inspirés de
+l'Algorithm 5.2 pour tous les choix `x, x' in F_x`, filtre par représentation
+PC-tree si fournie, puis vérifie `strict_quasi`, `strict_precircular` et
+`strict_circular` par les prédicats directs. Pour éviter le faux rejet de la
+transcription naïve T022 sur `cycle_metric(6)`, le cas `N cap F = empty`
+génère les deux orientations possibles des segments `N` et `F` avant filtrage.
+Tests ajoutés : cycle strict positif, Fig. 2.2 avec deux ordres `sqcR` mais un
+seul strict circular, random `n=5` seed `33` strict positif non couvert par les
+témoins minimum-cycle/paired-farthest existants, garde PC-tree non représenté,
+et exhaustif `n=4` valeurs `{1,2,3}` comparé aux ordres stricts exacts. Probe
+locale : cycles `n=4..7`, equal-distance et random `n=5/6` seeds `0..199` sans
+désaccord entre les ordres stricts exacts et les ordres vérifiés du rapport.
+
+Décision : conserver comme artefact expérimental T024. Ne pas intégrer dans
+`candidate.py` : la complétude est vérifiée expérimentalement sur petits cas,
+mais pas encore prouvée pour l'existence dans un PC-tree compact ni pour les
+cas non stricts.

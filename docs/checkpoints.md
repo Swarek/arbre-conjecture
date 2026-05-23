@@ -102,6 +102,11 @@ Dernier commit green avant T009 : `07120e4`.
   témoin strict non représenté, et la documentation de non-intégration
   candidate. Validation observée : `tests/test_strict_experiments.py`,
   `make unit`, `make quick`, `make bench-quick` (`0` timeout, `0` incomplet).
+- Checkpoint T024 courant : commit contenant `strict_algorithm52_report`, un
+  générateur expérimental inspiré de l'Algorithm 5.2 et filtré par les prédicats
+  stricts directs, plus les régressions cycle/Fig. 2.2/random/PC-tree. Validation
+  observée : `tests/test_strict_experiments.py`, probe stricte random bornée,
+  `make unit`, `make quick`, `make bench-quick`.
 
 ## Rollback
 
