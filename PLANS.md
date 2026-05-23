@@ -2269,3 +2269,85 @@ validée ; (2) borne de frontiers canoniques root-aware pour ne pas rater des
 petits PC-trees exacts. Ne pas transformer l'absence de témoin strong-ordering
 représenté en rejet. Prochaine piste recommandée : T041
 `permuted_chain_high_graph_plus_low_hub` ou rapport CSP non-star diagnostique.
+
+## ExecPlan 2026-05-23 - permuted Ferrers low-hub witness
+
+But : intégrer un certificat positif polynomial pour les matrices binaires
+low-hub dont le graphe haut privé des hubs est un graphe biparti chain/Ferrers,
+y compris après permutation des labels.
+
+Hypothèse : si une bipartition du graphe haut a des voisinages emboîtés dans
+une part, alors trier cette part par voisinages décroissants et l'autre part
+dans l'ordre Ferrers opposé donne un strong ordering. Par le lemme bad-side
+T040, `hubs, A_order, B_order` est cR. La candidate ne peut accepter ce témoin
+que s'il est aussi représenté par le PC-tree.
+
+Fichiers à modifier : `src/pc_circular/solvers/local_constraints.py`,
+`src/pc_circular/solvers/candidate.py`, `src/pc_circular/generators.py`,
+`tests/test_local_constraints.py`, `tests/test_candidate.py`,
+`tests/test_generators.py`, `docs/proof_obligations.md`,
+`docs/tracks/piste_e_farthest_quartets.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/tracks/README.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `PLANS.md`.
+
+Algorithme pressenti : ajouter `low_hub_ferrers_strong_ordering_report`.
+Détecter les matrices à deux niveaux hors diagonale avec hubs bas, bipartir le
+graphe haut, exiger une seule composante non-hub, trier une part par inclusion
+décroissante de voisinages, trier l'autre par inclusion/degré croissant, puis
+vérifier `_has_strong_ordering` et `passes_bad_side_precircular_cR`. Intégrer
+dans `candidate.py` seulement comme témoin positif vérifié.
+
+Plan de contre-exemples : tester `permuted_chain_high_graph_plus_low_hub` aux
+tailles `15,17,21,41,81,101`; vérifier les petites tailles contre brute force ;
+contrôler que matching low-hub reste non-Ferrers et continue via T039/T040 ;
+contrôler `C6/C8`, le tree négatif, low `0`, plusieurs hubs, non-binaire, sans
+hub, PC-tree non-star non représentatif, et `quasi_orders=[]`.
+
+Plan subagents : quatre sidecars lecture seule. Un audite la preuve Ferrers et
+l'ordre des parts, un cherche des contre-exemples/ties/dégénérescences, un
+mesure l'échec factoriel actuel sur chain permuté, un propose la documentation
+des obligations de preuve.
+
+Tests à exécuter : tests ciblés local-constraints/candidate/generators,
+benchmark ciblé `permuted_chain_high_graph_plus_low_hub/star` jusqu'à `n=101`,
+`make unit`, `make quick`, `make hunt-counterexamples`, `make check`,
+`make bench-quick`, `make bench` puisque `candidate.py` change.
+
+Risques : confondre Ferrers suffisant et strong-ordering général ; accepter un
+témoin non représenté ; utiliser le rejet Ferrers comme faux négatif ; mauvais
+ordre de la seconde part sous labels permutés ou égalités de voisinage.
+
+Résultats observés : avant T041, `permuted_chain_high_graph_plus_low_hub`
+relabellisé seed `0` saturait la limite `100000` de l'itérateur
+strong-ordering dès `n=15`, alors que le premier témoin factoriel arrive après
+`11,594,305` couples (`n=17` : `1,161,812,121`, `n=21` :
+`4,429,285,415,150`). Le détecteur Ferrers évite cette explosion et accepte les
+tailles `15,17,21,41,81,101` avec `checked_permutation_pairs=0`. Le benchmark
+ciblé `permuted_chain_high_graph_plus_low_hub/star`, tailles
+`9,11,15,17,21,41,81,101`, répétitions `10`, timeout `2s`, donne `0` timeout
+et `0` incomplet ; à `n=101`, médiane `0.2606s`, p95 `0.2677s`.
+
+Résultats subagents : l'audit preuve valide l'ordre Ferrers comme
+strong-ordering quand l'inclusion réelle des voisinages est vérifiée. La
+recherche de contre-exemples ne trouve pas de faux positif Ferrers, mais ajoute
+deux garde-fous : un témoin Ferrers peut être cR mais non représenté par un
+PC-tree non-star alors qu'un autre témoin représenté existe ; un tri par degrés
+seulement échoue déjà sur un matching low-hub `n=5`. Le code verrouille donc
+`represents_order` puis continue l'itérateur, et vérifie l'inclusion des
+voisinages plutôt qu'un critère de degré.
+
+Validation : tests ciblés `tests/test_candidate.py tests/test_local_constraints.py
+tests/test_generators.py` donnent `76 passed`. `make unit` donne `171 passed`.
+`make quick` donne `171 passed` puis `JUSTE`. `make hunt-counterexamples` et
+`make check` donnent `JUSTE`. `make bench-quick` donne `0` timeout et `0`
+incomplet ; à `n=20`, médiane `0.00112s`, p95 `0.00122s`. `make bench` donne
+`0` timeout et `0` incomplet jusqu'à `n=100`; à `n=100`, médiane `0.0287s`,
+p95 `0.0360s`, fit polynomial empirique `p ~= 1.76`.
+
+Décision : intégrer T041 comme certificat positif polynomial pour le sous-cas
+Ferrers/chain low-hub permuté. Garder explicitement les limites : Ferrers est
+suffisant mais pas nécessaire, l'ordre Ferrers canonique peut ne pas être
+représenté par un PC-tree non-star, et tout échec du détecteur reste
+non-conclusif. Prochaine piste recommandée : rapport CSP non-star hors
+candidate ou extension positive aux graphes bipartis permutation/strong-ordering
+sans énumération factorielle.

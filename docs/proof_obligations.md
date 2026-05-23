@@ -531,6 +531,52 @@ Obligations ouvertes avant théorème général :
 - expliquer pourquoi les matrices avec plus de deux niveaux hors diagonale
   sortent du sous-cas.
 
+### Sous-cas chain/Ferrers high graph avec hub bas
+
+Statut : théorème prouvé pour un certificat positif ; sous-cas suffisant, pas
+caractérisation complète.
+
+Dans une matrice binaire `low/high` avec au moins un hub bas, si le graphe haut
+privé des hubs est biparti Ferrers/chain, alors ses voisinages peuvent être
+ordonnés par inclusion. En triant une part par voisinages décroissants et
+l'autre dans l'ordre Ferrers opposé, on obtient un strong ordering. Par le
+lemme bad-side T040, l'ordre `hubs, A_order, B_order` est circular Robinson.
+
+Ce que cela couvre :
+
+- obligation 1/2 positive : le strong ordering construit donne un témoin cR par
+  le lemme bad-side ;
+- obligation 4 : `candidate.py` accepte seulement si l'ordre est représenté par
+  `represents_order(T, order)` quand un PC-tree est fourni ;
+- obligation 5 dans ce sous-cas : bipartition, test d'inclusion des voisinages,
+  construction de l'ordre et validation directe sont polynomiaux ; le coût
+  dominant reste la validation fixed-order `passes_bad_side_precircular_cR` en
+  `O(n^3)` dans la candidate ;
+- obligation 6 : les égalités du cas binaire non strict, y compris `low=0`
+  hors diagonale, restent gouvernées par le `>` strict des mauvais témoins.
+
+Limites :
+
+- le critère n'est pas nécessaire : les matchings low-hub et d'autres graphes
+  strong-ordering positifs ne sont pas forcément Ferrers ;
+- sur PC-tree non-star, un témoin Ferrers non représenté ne prouve pas
+  `exists=False` ;
+- les matrices non binaires, sans hub bas, ou avec graphe haut non Ferrers
+  restent hors sous-cas ;
+- aucun échec de reconnaissance Ferrers ne doit être converti en rejet.
+
+Preuve expérimentale T041 :
+
+- `permuted_chain_high_graph_plus_low_hub/star` est accepté après permutation
+  des labels jusqu'à `n=101` dans le benchmark ciblé, avec `0` timeout et `0`
+  incomplet ;
+- `matching_high_graph_plus_low_hub` est régressé comme positif non-Ferrers :
+  le détecteur Ferrers ne doit pas devenir un critère nécessaire ;
+- un contre-exemple PC-tree non-star montre que le témoin Ferrers construit
+  peut être cR mais non représenté alors qu'un autre témoin représenté existe ;
+  `candidate.py` doit donc continuer la recherche après un témoin positif non
+  représenté, jamais conclure `False`.
+
 ### Témoins positifs échantillonnés
 
 Statut : conséquence directe / clarification de la candidate.

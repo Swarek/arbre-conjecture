@@ -261,10 +261,19 @@ témoin représenté après `761` couples testés. Les limites restent explicite
 si la borne de permutations est atteinte, l'absence de témoin représenté reste
 incomplète.
 
+Résultat T041 : `low_hub_ferrers_strong_ordering_report` reconnaît le sous-cas
+chain/Ferrers par inclusion des voisinages du graphe haut, construit directement
+un strong ordering et laisse `candidate.py` accepter seulement le témoin vérifié
+cR et représenté. C'est un certificat positif polynomial pour ce sous-cas, pas
+un rejet : matching low-hub reste volontairement non-Ferrers et passe par les
+autres témoins. Un contre-exemple non-star est ajouté côté candidate : le
+témoin Ferrers canonique peut être non représenté, donc la recherche doit
+continuer vers un autre témoin représenté.
+
 ## Prochaine action
 
 Utiliser les témoins `find_precircular_cR_violation` comme source principale
 d’obstructions. Pour low-hub, chercher une réduction polynomial-time de
-reconnaissance strong-ordering ou un diagnostic d'intersection PC-tree plus
-compact. T041 probable : sous-cas chain/Ferrers permuté ou rapport CSP non-star
-hors candidate.
+reconnaissance strong-ordering générale ou un diagnostic d'intersection PC-tree
+plus compact. Prochaine option raisonnable : rapport CSP non-star hors candidate
+ou extension positive à une classe plus large de graphes bipartis permutation.

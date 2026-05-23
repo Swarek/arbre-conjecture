@@ -38,7 +38,10 @@ from pc_circular.predicates import (
     validate_dissimilarity,
 )
 from pc_circular.solvers import brute_force
-from pc_circular.solvers.local_constraints import iter_low_hub_strong_ordering_witnesses
+from pc_circular.solvers.local_constraints import (
+    iter_low_hub_strong_ordering_witnesses,
+    low_hub_ferrers_strong_ordering_report,
+)
 
 
 EXACT_BRUTE_FORCE_LIMIT = 8
@@ -480,6 +483,24 @@ def _paired_farthest_witness_result(D, n: int, pc_tree: Optional[PCNode]):
 
 
 def _low_hub_strong_ordering_witness_result(D, n: int, pc_tree: Optional[PCNode]):
+    ferrers_report = low_hub_ferrers_strong_ordering_report(D)
+    if ferrers_report["strong_ordering_exists"] is True and ferrers_report["witness_order"] is not None:
+        order = _validate_order_shape(ferrers_report["witness_order"], n)
+        if ferrers_report["witness_order_is_cr"] and passes_bad_side_precircular_cR(D, order):
+            if pc_tree is None or represents_order(pc_tree, order):
+                return {
+                    "exists": True,
+                    "order": list(order),
+                    "complete": True,
+                    "solver": "candidate_low_hub_strong_ordering_witness",
+                    "checked_permutation_pairs": 0,
+                    "permutation_pair_limit": LOW_HUB_STRONG_ORDERING_PERMUTATION_LIMIT,
+                    "hub_labels": list(ferrers_report.get("hub_labels", ())),
+                    "part_a": list(ferrers_report.get("part_a", ())),
+                    "part_b": list(ferrers_report.get("part_b", ())),
+                    "note": "binary low-hub Ferrers high graph produced a represented strong-ordering witness verified directly as circular Robinson",
+                }
+
     for report in iter_low_hub_strong_ordering_witnesses(
         D,
         max_permutation_pairs=LOW_HUB_STRONG_ORDERING_PERMUTATION_LIMIT,

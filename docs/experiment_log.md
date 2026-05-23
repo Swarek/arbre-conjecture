@@ -1815,3 +1815,63 @@
   certificat positif vérifié, ou ajouter le rapport CSP non-star proposé par le
   sidecar pour mesurer précisément les cas où le témoin global n'est pas
   représenté.
+
+## 2026-05-23 permuted Ferrers low-hub witness
+
+- Date/heure : 2026-05-23 06:23:32 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : pour une matrice binaire `low/high` avec hub bas, si le
+  graphe haut privé est biparti Ferrers/chain, alors l'ordre obtenu par
+  voisinages emboîtés décroissants d'une part et ordre opposé de l'autre part
+  est un strong ordering. Par le lemme bad-side T040, `hubs,A,B` est un témoin
+  cR, à condition de le vérifier et de vérifier sa représentation par le
+  PC-tree.
+- Changement fait : ajout de
+  `permuted_chain_high_graph_plus_low_hub`; ajout de
+  `low_hub_ferrers_strong_ordering_report`; intégration dans `candidate.py`
+  comme certificat positif vérifié avant l'itérateur factoriel ; régressions
+  pour chaîne permutée grande, matching non-Ferrers, et PC-tree non-star où le
+  témoin Ferrers canonique est non représenté mais un autre témoin existe.
+- Commande exécutée avant modification : `make quick`.
+- Résultat correction avant modification : `167 passed`, puis `JUSTE`.
+- Plan subagents : quatre sidecars lecture seule. Résultats : preuve Ferrers
+  validée sous inclusion réelle des voisinages ; aucune fausse acceptation
+  trouvée sur `7552` probes Ferrers/permutées ni `600` probes jusqu'à `n=101` ;
+  explosion factorielle confirmée avant T041 (`n=15` : premier témoin après
+  `11,594,305` couples) ; contre-exemple non-star ajouté montrant que le témoin
+  Ferrers canonique peut être cR mais non représenté ; contre-exemple au tri par
+  degrés seulement sur matching low-hub `n=5`.
+- Commande exécutée : `pytest -q tests/test_candidate.py tests/test_local_constraints.py tests/test_generators.py`.
+- Résultat correction : `76 passed`.
+- Commande exécutée : benchmark ciblé
+  `permuted_chain_high_graph_plus_low_hub/star`, tailles
+  `9,11,15,17,21,41,81,101`, répétitions `10`, timeout `2.0`.
+- Résultat benchmark ciblé :
+  `reports/complexity_permuted_chain_low_hub_star.json` écrit ; `0` timeout,
+  `0` incomplet ; à `n=101`, médiane `0.2606s`, p95 `0.2677s`, fit polynomial
+  empirique `p ~= 3.05`.
+- Commande exécutée : `make unit`.
+- Résultat correction : `171 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `171 passed`, puis `JUSTE`.
+- Commande exécutée : `make hunt-counterexamples`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark rapide : `reports/complexity_report_quick.json` écrit ;
+  `0` timeout, `0` incomplet ; à `n=20`, médiane `0.00112s`, p95 `0.00122s`.
+- Commande exécutée : `make bench`.
+- Résultat benchmark fort : `reports/complexity_report.json` écrit ; `0`
+  timeout, `0` incomplet jusqu'à `n=100`, médiane `0.0287s`, p95 `0.0360s`,
+  fit polynomial empirique `p ~= 1.76`.
+- Conclusion : T041 supprime une explosion factorielle sur les graphes haut
+  Ferrers relabellisés et fournit un certificat positif polynomial pour ce
+  sous-cas. Ce n'est pas une caractérisation complète : matching low-hub reste
+  positif non-Ferrers, les PC-trees non-star peuvent rejeter le témoin Ferrers
+  canonique, et tout échec Ferrers reste non conclusif.
+- Next action : explorer une reconnaissance polynomial-time plus large des
+  graphes bipartis à strong-ordering compatibles PC-tree, ou produire un
+  rapport CSP non-star hors candidate pour mesurer les conflits de
+  représentation.

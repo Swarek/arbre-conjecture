@@ -13,6 +13,7 @@ from pc_circular.generators import (
     paired_farthest_matching,
     padded_five_local_non_cr,
     padded_four_local_non_cr,
+    permuted_chain_high_graph_plus_low_hub,
     permuted_cycle_metric,
     quasi_circular_not_circular_four_point,
     random_dissimilarity,
@@ -42,6 +43,7 @@ from pc_circular.solvers.candidate import (
     solve,
 )
 from pc_circular.solvers import brute_force
+from pc_circular.solvers.local_constraints import low_hub_ferrers_strong_ordering_report
 
 
 def _one_high_edge_instance(n):
@@ -330,6 +332,18 @@ def test_candidate_low_hub_strong_ordering_witness_accepts_chain_star():
     assert represents_order(star_pc_tree(12), result["order"])
 
 
+def test_candidate_low_hub_ferrers_witness_accepts_permuted_chain_star():
+    D = permuted_chain_high_graph_plus_low_hub(21, rng=random.Random(0))
+    result = solve(D, pc_tree=star_pc_tree(21))
+
+    assert result["exists"] is True
+    assert result["complete"] is True
+    assert result["solver"] == "candidate_low_hub_strong_ordering_witness"
+    assert result["checked_permutation_pairs"] == 0
+    assert is_precircular_order_cR(D, result["order"])
+    assert represents_order(star_pc_tree(21), result["order"])
+
+
 def test_candidate_low_hub_strong_ordering_witness_accepts_complete_bipartite_star():
     D = complete_bipartite_high_graph_plus_low_hub(11)
     result = solve(D, pc_tree=star_pc_tree(11))
@@ -373,6 +387,25 @@ def test_candidate_low_hub_strong_ordering_searches_for_represented_nonstar_witn
     assert result["complete"] is True
     assert result["solver"] == "candidate_low_hub_strong_ordering_witness"
     assert result["checked_permutation_pairs"] > 1
+    assert is_precircular_order_cR(D, result["order"])
+    assert represents_order(T, result["order"])
+
+
+def test_candidate_low_hub_ferrers_nonrepresented_witness_continues_search():
+    D = permuted_chain_high_graph_plus_low_hub(9, rng=random.Random(0))
+    T = p_node([c_node([leaf(2), leaf(5)]), *[leaf(i) for i in (0, 1, 3, 4, 6, 7, 8)]])
+    ferrers_report = low_hub_ferrers_strong_ordering_report(D)
+
+    assert ferrers_report["status"] == "ferrers_strong_ordering_found"
+    assert ferrers_report["witness_order_is_cr"] is True
+    assert not represents_order(T, ferrers_report["witness_order"])
+
+    result = solve(D, pc_tree=T)
+
+    assert result["exists"] is True
+    assert result["complete"] is True
+    assert result["solver"] == "candidate_low_hub_strong_ordering_witness"
+    assert result["checked_permutation_pairs"] > 0
     assert is_precircular_order_cR(D, result["order"])
     assert represents_order(T, result["order"])
 

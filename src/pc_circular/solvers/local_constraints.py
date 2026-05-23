@@ -185,6 +185,131 @@ def _has_strong_ordering(A_order, B_order, high_edges) -> bool:
     return True
 
 
+def _nested_neighborhood_order(vertices, neighbors):
+    ordered = tuple(
+        sorted(
+            vertices,
+            key=lambda vertex: (-len(neighbors[vertex]), tuple(sorted(neighbors[vertex])), vertex),
+        )
+    )
+    neighbor_sets = {vertex: frozenset(neighbors[vertex]) for vertex in vertices}
+    for left, right in zip(ordered, ordered[1:]):
+        if not neighbor_sets[right] <= neighbor_sets[left]:
+            return None
+    return ordered
+
+
+def _increasing_neighborhood_order(vertices, neighbors):
+    return tuple(
+        sorted(
+            vertices,
+            key=lambda vertex: (len(neighbors[vertex]), tuple(sorted(neighbors[vertex])), vertex),
+        )
+    )
+
+
+def low_hub_ferrers_strong_ordering_report(D):
+    """Detect a binary low-hub Ferrers/chain high graph and build a witness."""
+
+    n = validate_dissimilarity(D)
+    off_diagonal_values = sorted({D[i][j] for i in range(n) for j in range(i + 1, n)})
+    if len(off_diagonal_values) <= 1:
+        order = tuple(range(n))
+        return {
+            "method": "low_hub_ferrers_strong_ordering_report",
+            "n": n,
+            "status": "empty_high_graph",
+            "strong_ordering_exists": True,
+            "low_value": off_diagonal_values[0] if off_diagonal_values else 0,
+            "high_value": None,
+            "hub_labels": order,
+            "high_graph_labels": (),
+            "part_a": (),
+            "part_b": (),
+            "witness_order": order,
+            "witness_order_is_cr": passes_bad_side_precircular_cR(D, order),
+        }
+    if len(off_diagonal_values) != 2:
+        return {
+            "method": "low_hub_ferrers_strong_ordering_report",
+            "n": n,
+            "status": "not_binary_two_level",
+            "strong_ordering_exists": None,
+            "witness_order": None,
+            "witness_order_is_cr": None,
+        }
+
+    _low, high = off_diagonal_values
+    neighbors = {
+        i: tuple(j for j in range(n) if i != j and D[i][j] == high)
+        for i in range(n)
+    }
+    hubs = tuple(i for i, values in neighbors.items() if not values)
+    high_vertices = tuple(i for i, values in neighbors.items() if values)
+    base = {
+        "method": "low_hub_ferrers_strong_ordering_report",
+        "n": n,
+        "low_value": _low,
+        "high_value": high,
+        "hub_labels": hubs,
+        "high_graph_labels": high_vertices,
+        "witness_order": None,
+        "witness_order_is_cr": None,
+    }
+    if not hubs:
+        return {**base, "status": "no_low_hub", "strong_ordering_exists": None}
+    if not high_vertices:
+        order = tuple(hubs)
+        return {
+            **base,
+            "status": "empty_high_graph",
+            "strong_ordering_exists": True,
+            "part_a": (),
+            "part_b": (),
+            "witness_order": order,
+            "witness_order_is_cr": passes_bad_side_precircular_cR(D, order),
+        }
+
+    components = _bipartite_components(high_vertices, neighbors)
+    if components is None:
+        return {**base, "status": "non_bipartite_high_graph", "strong_ordering_exists": False}
+    if len(components) != 1:
+        return {
+            **base,
+            "status": "not_ferrers_high_graph",
+            "strong_ordering_exists": None,
+            "component_count": len(components),
+        }
+
+    left, right = components[0]
+    for part_a_vertices, part_b_vertices in ((left, right), (right, left)):
+        A_order = _nested_neighborhood_order(part_a_vertices, neighbors)
+        if A_order is None:
+            continue
+        B_order = _increasing_neighborhood_order(part_b_vertices, neighbors)
+        high_edges = {(a, b) for a in A_order for b in B_order if D[a][b] == high}
+        if not _has_strong_ordering(A_order, B_order, high_edges):
+            continue
+        witness_order = tuple(hubs) + tuple(A_order) + tuple(B_order)
+        return {
+            **base,
+            "status": "ferrers_strong_ordering_found",
+            "strong_ordering_exists": True,
+            "component_count": len(components),
+            "part_a": tuple(A_order),
+            "part_b": tuple(B_order),
+            "witness_order": witness_order,
+            "witness_order_is_cr": passes_bad_side_precircular_cR(D, witness_order),
+        }
+
+    return {
+        **base,
+        "status": "not_ferrers_high_graph",
+        "strong_ordering_exists": None,
+        "component_count": len(components),
+    }
+
+
 def low_hub_strong_ordering_report(D, *, max_permutation_pairs: int = 100_000):
     """Bounded diagnostic for the binary low-hub strong-ordering conjecture.
 

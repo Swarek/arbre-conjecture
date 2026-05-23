@@ -5,6 +5,7 @@ from pc_circular.generators import (
     equal_distance_instance,
     even_high_cycle_plus_low_hub,
     matching_high_graph_plus_low_hub,
+    permuted_chain_high_graph_plus_low_hub,
     quasi_circular_not_circular_four_point,
 )
 from pc_circular.oracle import exact_oracle_pc_tree
@@ -21,6 +22,7 @@ from pc_circular.solvers import brute_force
 from pc_circular.solvers.local_constraints import (
     classify_order_obstructions,
     iter_low_hub_strong_ordering_witnesses,
+    low_hub_ferrers_strong_ordering_report,
     low_hub_strong_ordering_report,
     measure_obstruction_support,
     project_farthest_sets_to_pc_nodes,
@@ -191,6 +193,23 @@ def test_low_hub_strong_ordering_accepts_chain_graph_control():
 
     assert report["status"] == "strong_ordering_found"
     assert report["witness_order_is_cr"] is True
+
+
+def test_low_hub_ferrers_report_accepts_permuted_chain_without_factorial_search():
+    D = permuted_chain_high_graph_plus_low_hub(21, rng=random.Random(0))
+    report = low_hub_ferrers_strong_ordering_report(D)
+
+    assert report["status"] == "ferrers_strong_ordering_found"
+    assert report["strong_ordering_exists"] is True
+    assert report["witness_order_is_cr"] is True
+
+
+def test_low_hub_ferrers_report_rejects_matching_as_non_ferrers_subcase():
+    D = matching_high_graph_plus_low_hub(12)
+    report = low_hub_ferrers_strong_ordering_report(D)
+
+    assert report["status"] == "not_ferrers_high_graph"
+    assert report["strong_ordering_exists"] is None
 
 
 def test_low_hub_strong_ordering_rejects_tree_counterexample():

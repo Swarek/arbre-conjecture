@@ -295,6 +295,12 @@ def chain_high_graph_plus_low_hub(n: int) -> list[list[int]]:
     return D
 
 
+def permuted_chain_high_graph_plus_low_hub(n: int, *, rng: random.Random | None = None) -> list[list[int]]:
+    """Relabelled nested-neighborhood high graph plus one low hub."""
+
+    return _permute_labels(chain_high_graph_plus_low_hub(n), rng=rng)
+
+
 def matching_high_graph_plus_low_hub(n: int, *, rng: random.Random | None = None) -> list[list[int]]:
     """Binary family: high-distance matching plus one or more low hubs."""
 
@@ -325,6 +331,7 @@ def small_paper_like_instances() -> list[list[list[int]]]:
         non_bipartite_high_graph_plus_low_hub(6),
         complete_bipartite_high_graph_plus_low_hub(6),
         chain_high_graph_plus_low_hub(6),
+        permuted_chain_high_graph_plus_low_hub(6, rng=random.Random(0)),
         matching_high_graph_plus_low_hub(6),
         non_strict_large_farthest_instance(5),
     ]
@@ -400,6 +407,8 @@ def instance_by_kind(
         return complete_bipartite_high_graph_plus_low_hub(n)
     if kind == "chain_high_graph_plus_low_hub":
         return chain_high_graph_plus_low_hub(n)
+    if kind == "permuted_chain_high_graph_plus_low_hub":
+        return permuted_chain_high_graph_plus_low_hub(n, rng=rng)
     if kind == "matching_high_graph_plus_low_hub":
         return matching_high_graph_plus_low_hub(n, rng=rng)
     if kind == "mixed":

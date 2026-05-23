@@ -250,6 +250,18 @@ Dernier commit green avant T009 : `07120e4`.
   `make bench`, et probe ciblée matching low-hub star jusqu'à `n=101`. Résultat
   observé : `mixed/star` reste `0` timeout et `0` incomplet jusqu'à `n=100`,
   médiane `0.0265s` à `n=100`.
+- Checkpoint T041 courant : commit contenant
+  `permuted_chain_high_graph_plus_low_hub`,
+  `low_hub_ferrers_strong_ordering_report`, et l'intégration candidate du
+  certificat positif Ferrers/chain low-hub. Il ajoute les régressions chaîne
+  permutée large, matching non-Ferrers, et PC-tree non-star où le témoin
+  Ferrers canonique est non représenté mais un autre témoin existe. Validation
+  observée : tests ciblés candidate/local-constraints/generators, `make unit`,
+  `make quick`, `make hunt-counterexamples`, `make check`, `make bench-quick`,
+  `make bench`, et benchmark ciblé chaîne Ferrers permutée jusqu'à `n=101`.
+  Résultat observé : `mixed/star` reste `0` timeout et `0` incomplet jusqu'à
+  `n=100`, médiane `0.0287s` à `n=100`; la chaîne Ferrers permutée star a `0`
+  timeout et médiane `0.2606s` à `n=101`.
 
 ## Rollback
 

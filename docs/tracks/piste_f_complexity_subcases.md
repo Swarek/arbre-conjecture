@@ -541,6 +541,32 @@ Limites T040 :
 - la reconnaissance strong-ordering reste énumérative, même si la suffisance du
   témoin `hubs,A,B` est maintenant documentée comme preuve bad-side.
 
+Résultat T041 :
+
+- `permuted_chain_high_graph_plus_low_hub` ajoute la famille chain/Ferrers
+  relabellisée, qui bloquait l'énumération factorielle du diagnostic
+  strong-ordering ;
+- `low_hub_ferrers_strong_ordering_report` détecte un graphe haut Ferrers en
+  vérifiant l'emboîtement des voisinages d'une part, puis construit l'ordre
+  strong-ordering polynomialement ;
+- `candidate.py` l'utilise seulement comme témoin positif : l'ordre est encore
+  validé par `passes_bad_side_precircular_cR` et par `represents_order` si un
+  PC-tree est fourni ;
+- benchmark ciblé `permuted_chain_high_graph_plus_low_hub/star`, tailles
+  `9,11,15,17,21,41,81,101`, répétitions `10`, timeout `2s` : `0` timeout et
+  `0` incomplet ; à `n=101`, médiane `0.2606s`, p95 `0.2677s`.
+
+Limites T041 :
+
+- Ferrers est suffisant, pas nécessaire : matching low-hub reste un positif
+  non-Ferrers ;
+- le témoin Ferrers construit peut ne pas être représenté par un PC-tree
+  non-star même si l'oracle PC-tree est positif ; T041 ajoute une régression où
+  la candidate doit continuer la recherche et trouve un témoin représenté ;
+- un tri par degrés seulement n'est pas un substitut au test d'inclusion des
+  voisinages ;
+- un échec Ferrers ne prouve rien et ne doit pas être converti en rejet.
+
 ## Témoin cycle par distances minimales
 
 Statut : certificat positif intégré pour tout PC-tree du scaffold où le témoin
