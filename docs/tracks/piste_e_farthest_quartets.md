@@ -135,6 +135,45 @@ d'obstructions prouvée complète.
 Artefacts : `four_local_non_cr_core`, `padded_four_local_non_cr`,
 tests de régression `four_local_positive_global_negative`.
 
+## Obstruction 5-locale réfutée
+
+Statut : contre-exemple minimal enregistré.
+
+T033 a trouvé une matrice binaire à 6 points telle que chaque sous-matrice
+induite de taille 5 admet un ordre cR, mais la matrice complète n'en admet
+aucun :
+
+```text
+[[0,1,1,1,1,1],
+ [1,0,1,1,2,2],
+ [1,1,0,2,1,2],
+ [1,1,2,0,2,1],
+ [1,2,1,2,0,1],
+ [1,2,2,1,1,0]]
+```
+
+Conséquence : la hiérarchie des obstructions induites ne s'arrête pas au niveau
+4 dans les expériences actuelles, et elle ne s'arrête pas non plus au niveau 5.
+Les scans de petite taille restent des certificats négatifs héréditaires, pas
+une caractérisation globale.
+
+Artefacts : `five_local_non_cr_core`, `padded_five_local_non_cr`, tests de
+régression `five_local_positive_global_negative`.
+
+## Cycle haut impair plus hub bas
+
+Statut : sous-cas négatif structurel extrait de l'obstruction 5-locale.
+
+Dans une matrice binaire `low/high`, si le graphe des arêtes `high` est un cycle
+impair et qu'il existe un hub à distance `low` de tout le cycle, alors aucun
+ordre cR n'existe. Pour chaque sommet `v` du cycle, les deux voisins de `v`
+sont deux mauvais témoins pour la paire `{hub,v}` ; ils doivent donc être du
+même côté de `v` dans l'ordre linéaire obtenu en coupant au hub. Cela force une
+alternance source/puits sur le cycle, impossible quand le cycle est impair.
+
+Artefacts : `odd_high_cycle_plus_low_hub`,
+`candidate_odd_high_cycle_low_hub_obstruction`.
+
 ## Prochaine action
 
 Utiliser les témoins `find_precircular_cR_violation` comme source principale

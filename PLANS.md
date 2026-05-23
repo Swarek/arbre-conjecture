@@ -1650,3 +1650,83 @@ les cas `n <= 8` sont exacts par brute force et les cas `n > 8` sont rejetés pa
 Décision : conserver comme progrès sound et comme contre-exemple durable à la
 caractérisation 4-locale. Ne pas conclure à une base finie d'obstructions :
 les tailles `(4,5)` sont seulement deux certificats héréditaires bornés.
+
+## ExecPlan 2026-05-23 - six-point k-local obstruction probe
+
+But : tester si la hiérarchie des obstructions induites continue : chercher une
+matrice à 6 points globalement non-cR dont toutes les sous-matrices induites de
+taille 5 sont cR.
+
+Hypothèse : les certificats de tailles `(4,5)` ne caractérisent pas non plus la
+non-existence globale. Si un noyau 6-points existe, il doit devenir un
+contre-exemple durable et éventuellement un certificat héréditaire taille 6,
+mais seulement si le coût reste compatible avec les gates.
+
+Fichiers à modifier : d'abord `PLANS.md` seulement. Si une obstruction utile est
+trouvée : `src/pc_circular/generators.py`, `tests/test_regression_counterexamples.py`,
+`tests/test_candidate.py`, `docs/proof_obligations.md`,
+`docs/tracks/piste_e_farthest_quartets.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/tracks/README.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, et possiblement
+`src/pc_circular/solvers/candidate.py` si l'intégration taille 6 est sound et
+raisonnablement rapide.
+
+Algorithme pressenti : probe exhaustive `n=6`, valeurs `{1,2}`, en filtrant les
+matrices dont toutes les 5-sous-matrices sont positives puis en testant l'oracle
+global. Si l'exhaustif est trop lent ou négatif, utiliser recherche random et
+local search sur valeurs `{1,2,3}` avec score `nombre de 5-sous-matrices cR`
+moins pénalité si la matrice globale devient positive.
+
+Plan de contre-exemples : si un noyau est trouvé, vérifier toutes les
+restrictions 5-points par oracle exact, vérifier que le noyau complet est
+négatif, puis chercher un padding à grandes tailles qui ne crée pas
+d'obstruction 4/5 plus petite. Si aucun noyau n'est trouvé, documenter la borne
+exhaustive et ne pas modifier la candidate.
+
+Plan subagents : trois explorateurs lecture seule : recherche indépendante de
+noyau 6-local ; coût/placement d'un éventuel scan 6-points dans `candidate.py` ;
+stratégie de génération/shrink pour les obstructions k-locales.
+
+Tests à exécuter : probes bornées, puis si modification code : tests ciblés,
+`make unit`, `make quick`, `make hunt-counterexamples`, `make check`,
+`make bench-quick`, et benchmark ciblé de la nouvelle famille.
+
+Risques : intégrer taille 6 sans nécessité ; ralentir fortement les cas
+incomplets ; confondre absence de noyau `{1,2}` avec théorème ; ajouter une
+famille artificielle qui ne teste pas le PC-tree compact ; oublier que les
+obstructions induites sont négatives seulement.
+
+Résultats observés : l'exhaustif `n=6`, valeurs `{1,2}`, a trouvé après `237`
+matrices un noyau globalement non-cR dont toutes les restrictions 5-points sont
+cR :
+`[[0,1,1,1,1,1],[1,0,1,1,2,2],[1,1,0,2,1,2],[1,1,2,0,2,1],[1,2,1,2,0,1],[1,2,2,1,1,0]]`.
+Le padding par sommets bas universels préserve les restrictions 5-points
+positives sur les tailles testées et donne une obstruction induite de taille 6.
+
+Résultat structurel : les subagents ont identifié ce noyau comme un cycle haut
+impair plus un hub bas universel. Pour chaque sommet du cycle, le hub impose que
+ses deux voisins hauts soient du même côté dans tout ordre cR ; en orientant les
+arêtes du cycle selon l'ordre linéaire autour du hub, chaque sommet devrait être
+source ou puits. Une alternance source/puits est impossible sur un cycle impair.
+
+Changements intégrés : ajout de `five_local_non_cr_core`,
+`padded_five_local_non_cr` et `odd_high_cycle_plus_low_hub` dans
+`generators.py`; extension du certificat induit borné aux tailles `(4,5,6)` ;
+ajout du certificat structurel
+`candidate_odd_high_cycle_low_hub_obstruction` dans `candidate.py`, qui rejette
+les graphes hauts formés d'un cycle impair connecté et d'au moins un hub bas
+universel.
+
+Validation : tests candidats/générateurs/régressions ciblés `46 passed`,
+`make unit` `134 passed`, `make quick` `134 passed` puis `JUSTE`,
+`make hunt-counterexamples` `JUSTE`, `make check` `JUSTE`, `make bench-quick`
+`0` timeout et `0` incomplet, `make bench` `0` timeout et `0` incomplet,
+`make bench-piste-f` `0` timeout. Benchmarks ciblés : `five_local_non_cr/star`
+`0` timeout et `0` incomplet ; `odd_high_cycle_plus_low_hub/star` passe de
+placeholders `n>=10` à `candidate_odd_high_cycle_low_hub_obstruction` avec `0`
+timeout et `0` incomplet sur tailles `6,8,10,12,20,40`.
+
+Décision : intégrer. Contrairement au scan 6-points seul, le certificat
+odd-cycle donne une famille paramétrique négative avec preuve simple et coût
+faible. Garder le scan 6-points comme certificat héréditaire borné, mais ne pas
+présenter `(4,5,6)` comme caractérisation.

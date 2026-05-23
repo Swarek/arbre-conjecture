@@ -4,7 +4,9 @@ import random
 from pc_circular.generators import (
     cycle_metric,
     equal_distance_instance,
+    odd_high_cycle_plus_low_hub,
     paired_farthest_matching,
+    padded_five_local_non_cr,
     padded_four_local_non_cr,
     permuted_cycle_metric,
     quasi_circular_not_circular_four_point,
@@ -29,6 +31,7 @@ from pc_circular.solvers.candidate import (
     _minimum_distance_cycle_order,
     _paired_farthest_order,
     _pc_tree_frontier_upper_bound,
+    _small_forbidden_submatrix_result,
     solve,
 )
 from pc_circular.solvers import brute_force
@@ -215,13 +218,32 @@ def test_candidate_small_forbidden_submatrix_finds_five_point_obstruction_after_
         for subset in combinations(range(9), 4)
     )
 
-    result = solve(D, pc_tree=star_pc_tree(9))
+    result = _small_forbidden_submatrix_result(D, len(D), (5,))
 
     assert result["exists"] is False
     assert result["complete"] is True
     assert result["solver"] == "candidate_small_forbidden_submatrix_obstruction"
     assert result["obstruction_order"] == 5
     assert result["obstruction_labels"] == [0, 1, 2, 3, 4]
+    assert result["checked_subsets_for_order"] == 1
+    assert not brute_force.solve(_induced_submatrix(D, result["obstruction_labels"]))["exists"]
+
+
+def test_candidate_small_forbidden_submatrix_finds_six_point_obstruction_after_five_local_passes():
+    D = padded_five_local_non_cr(9)
+    assert 6 in SMALL_FORBIDDEN_SUBMATRIX_ORDERS
+    assert all(
+        brute_force.solve(_induced_submatrix(D, subset))["exists"]
+        for subset in combinations(range(9), 5)
+    )
+
+    result = _small_forbidden_submatrix_result(D, len(D), (6,))
+
+    assert result["exists"] is False
+    assert result["complete"] is True
+    assert result["solver"] == "candidate_small_forbidden_submatrix_obstruction"
+    assert result["obstruction_order"] == 6
+    assert result["obstruction_labels"] == [0, 1, 2, 3, 4, 5]
     assert result["checked_subsets_for_order"] == 1
     assert not brute_force.solve(_induced_submatrix(D, result["obstruction_labels"]))["exists"]
 
@@ -234,6 +256,17 @@ def test_candidate_small_forbidden_submatrix_does_not_block_cycle_witness():
     assert result["complete"] is True
     assert result["solver"] == "candidate_minimum_distance_cycle_witness"
     assert is_precircular_order_cR(D, result["order"])
+
+
+def test_candidate_odd_high_cycle_low_hub_obstruction_proves_large_negative():
+    D = odd_high_cycle_plus_low_hub(10)
+    result = solve(D, pc_tree=star_pc_tree(10))
+
+    assert result["exists"] is False
+    assert result["complete"] is True
+    assert result["solver"] == "candidate_odd_high_cycle_low_hub_obstruction"
+    assert result["hub_labels"] == [0]
+    assert set(result["cycle_labels"]) == set(range(1, 10))
 
 
 def test_candidate_non_sized_quasi_orders_remain_incomplete_when_sample_misses_witness():

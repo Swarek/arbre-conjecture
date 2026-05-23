@@ -70,6 +70,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T030 | 2026-05-23 | F/Benchmark | Attribution des placeholders `mixed/star` par sous-famille ; les 42 incomplets forts sont tous `random` | `resolved_kind_*` benchmark JSON |
 | T031 | 2026-05-23 | F/E | Certificat négatif héréditaire par sous-matrice 4 points ; `make bench` passe à 0 incomplet | `candidate_small_forbidden_submatrix_obstruction` |
 | T032 | 2026-05-23 | E/F | Contre-exemple 5-points à la caractérisation 4-locale ; certificat héréditaire étendu aux tailles 4 et 5 | `four_local_non_cr_core` |
+| T033 | 2026-05-23 | E/F | Contre-exemple 6-points à la caractérisation 5-locale ; cycle haut impair plus hub bas certifié négatif | `candidate_odd_high_cycle_low_hub_obstruction` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

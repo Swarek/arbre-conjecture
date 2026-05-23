@@ -194,6 +194,51 @@ def padded_four_local_non_cr(n: int) -> list[list[int]]:
     return D
 
 
+def five_local_non_cr_core() -> list[list[int]]:
+    """Six-point obstruction whose every five-point induced submatrix is cR."""
+
+    return [
+        [0, 1, 1, 1, 1, 1],
+        [1, 0, 1, 1, 2, 2],
+        [1, 1, 0, 2, 1, 2],
+        [1, 1, 2, 0, 2, 1],
+        [1, 2, 1, 2, 0, 1],
+        [1, 2, 2, 1, 1, 0],
+    ]
+
+
+def padded_five_local_non_cr(n: int) -> list[list[int]]:
+    """Pad the six-point five-local obstruction to larger sizes."""
+
+    if n < 6:
+        raise ValueError("padded_five_local_non_cr requires n >= 6")
+    D = _zero_matrix(n)
+    core = five_local_non_cr_core()
+    for i in range(6):
+        for j in range(6):
+            D[i][j] = core[i][j]
+    for i in range(n):
+        for j in range(i + 1, n):
+            if i < 6 and j < 6:
+                continue
+            D[i][j] = D[j][i] = 1
+    return D
+
+
+def odd_high_cycle_plus_low_hub(n: int) -> list[list[int]]:
+    """Binary family: an odd high-distance cycle plus one low universal hub."""
+
+    cycle_size = n - 1
+    if cycle_size < 5 or cycle_size % 2 == 0:
+        raise ValueError("odd_high_cycle_plus_low_hub requires n-1 odd and at least 5")
+    D = equal_distance_instance(n, value=1)
+    for offset in range(cycle_size):
+        a = 1 + offset
+        b = 1 + ((offset + 1) % cycle_size)
+        D[a][b] = D[b][a] = 2
+    return D
+
+
 def small_paper_like_instances() -> list[list[list[int]]]:
     """Small named examples; extend with paper-derived cases when available."""
 
@@ -201,6 +246,8 @@ def small_paper_like_instances() -> list[list[list[int]]]:
         cycle_metric(4),
         quasi_circular_not_circular_four_point(),
         four_local_non_cr_core(),
+        five_local_non_cr_core(),
+        odd_high_cycle_plus_low_hub(6),
         non_strict_large_farthest_instance(5),
     ]
 
@@ -263,6 +310,10 @@ def instance_by_kind(
         return paired_farthest_matching(n, rng=rng)
     if kind in {"four_local_non_cr", "padded_four_local_non_cr"}:
         return padded_four_local_non_cr(n)
+    if kind in {"five_local_non_cr", "padded_five_local_non_cr"}:
+        return padded_five_local_non_cr(n)
+    if kind == "odd_high_cycle_plus_low_hub":
+        return odd_high_cycle_plus_low_hub(n)
     if kind == "mixed":
         return mixed_instance(n, rng=rng, values=values)
     raise ValueError(f"unknown instance kind: {kind}")

@@ -38,7 +38,7 @@ EXACT_BRUTE_FORCE_LIMIT = 8
 EXACT_PC_TREE_FRONTIER_LIMIT = 4096
 EXACT_QUASI_ORDER_LIMIT = 4096
 SMALL_FORBIDDEN_SUBMATRIX_ORDER = 4
-SMALL_FORBIDDEN_SUBMATRIX_ORDERS = (4, 5)
+SMALL_FORBIDDEN_SUBMATRIX_ORDERS = (4, 5, 6)
 SMALL_FORBIDDEN_SUBMATRIX_LIMIT = 4096
 
 
@@ -212,6 +212,50 @@ def _small_forbidden_submatrix_result(
             if checked_for_size >= SMALL_FORBIDDEN_SUBMATRIX_LIMIT:
                 break
     return None
+
+
+def _odd_high_cycle_low_hub_result(D, n: int):
+    positive_values = sorted({D[i][j] for i in range(n) for j in range(i + 1, n) if D[i][j] > 0})
+    if len(positive_values) != 2:
+        return None
+    _low, high = positive_values
+
+    high_neighbors = {
+        i: [j for j in range(n) if i != j and D[i][j] == high]
+        for i in range(n)
+    }
+    hubs = [i for i, neighbors in high_neighbors.items() if not neighbors]
+    cycle_vertices = [i for i, neighbors in high_neighbors.items() if neighbors]
+    if not hubs or len(cycle_vertices) < 5 or len(cycle_vertices) % 2 == 0:
+        return None
+    if any(len(high_neighbors[i]) != 2 for i in cycle_vertices):
+        return None
+
+    cycle_set = set(cycle_vertices)
+    if any(neighbor not in cycle_set for i in cycle_vertices for neighbor in high_neighbors[i]):
+        return None
+
+    start = cycle_vertices[0]
+    seen = {start}
+    stack = [start]
+    while stack:
+        current = stack.pop()
+        for neighbor in high_neighbors[current]:
+            if neighbor not in seen:
+                seen.add(neighbor)
+                stack.append(neighbor)
+    if seen != cycle_set:
+        return None
+
+    return {
+        "exists": False,
+        "order": None,
+        "complete": True,
+        "solver": "candidate_odd_high_cycle_low_hub_obstruction",
+        "hub_labels": hubs,
+        "cycle_labels": cycle_vertices,
+        "note": "the high-distance graph is an odd cycle plus low-universal hubs, which would force an impossible source/sink alternation",
+    }
 
 
 def _minimum_distance_cycle_order(D, n: int) -> tuple[int, ...] | None:
@@ -411,6 +455,10 @@ def solve(D, quasi_orders=None, pc_tree=None):
 
     if has_at_most_one_bad_witness_per_pair(D):
         return _universal_order_result(n, quasi_orders, pc_tree)
+
+    odd_high_cycle_result = _odd_high_cycle_low_hub_result(D, n)
+    if odd_high_cycle_result is not None:
+        return odd_high_cycle_result
 
     exact_quasi_orders_result = _bounded_quasi_orders_exact_result(D, n, quasi_orders)
     if exact_quasi_orders_result is not None:

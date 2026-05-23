@@ -378,10 +378,42 @@ Résultat T032 :
   `n > 8`, les rejets passent par
   `candidate_small_forbidden_submatrix_obstruction` avec obstruction d'ordre 5.
 
+Résultat T033 :
+
+- un contre-exemple minimal `n=6`, valeurs `{1,2}`, montre que toutes les
+  sous-matrices 5-points peuvent être cR alors que la matrice complète ne l'est
+  pas ;
+- le générateur `five_local_non_cr_core` conserve ce noyau, et
+  `padded_five_local_non_cr(n)` l'étend à de grandes tailles sans créer
+  d'obstruction 5-points dans les probes ;
+- la candidate inspecte maintenant les tailles
+  `SMALL_FORBIDDEN_SUBMATRIX_ORDERS = (4, 5, 6)`, toujours après les témoins
+  positifs directs et sans conclure si aucune obstruction inspectée n'est
+  trouvée ;
+- benchmark ciblé `five_local_non_cr/star`, tailles
+  `6,7,8,9,10,12,20,40`, répétitions `3` : `0` timeout, `0` incomplet ; pour
+  `n > 8`, les rejets passent par
+  `candidate_small_forbidden_submatrix_obstruction` avec obstruction d'ordre 6.
+
+Résultat structurel T033 :
+
+- le noyau 6-points est une relabellisation d'un cycle haut impair `C5` plus un
+  hub bas universel ;
+- le générateur `odd_high_cycle_plus_low_hub(n)` encode cette famille pour
+  `n-1` impair ;
+- la candidate ajoute
+  `candidate_odd_high_cycle_low_hub_obstruction`, qui rejette en temps
+  polynomial les matrices binaires dont le graphe des arêtes hautes est un cycle
+  impair connecté plus au moins un hub isolé ;
+- benchmark ciblé `odd_high_cycle_plus_low_hub/star`, tailles
+  `6,8,10,12,20,40`, répétitions `3` : `0` timeout, `0` incomplet ; les tailles
+  `n >= 10` passent maintenant par le certificat structurel au lieu du
+  placeholder.
+
 Limite ajoutée :
 
 - les obstructions 4-points ne sont pas une caractérisation ; les obstructions
-  `(4,5)` ne doivent pas non plus être présentées comme une caractérisation
+  `(4,5,6)` ne doivent pas non plus être présentées comme une caractérisation
   sans preuve séparée.
 
 ## Témoin cycle par distances minimales

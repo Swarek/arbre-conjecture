@@ -1323,3 +1323,70 @@
   ni une preuve d'algorithme général.
 - Next action : chercher une famille 5-locale positive mais globalement
   négative, ou formaliser un certificat négatif pour `paired_farthest/mixed`.
+
+## 2026-05-23 six-point five-local obstruction and odd high cycle certificate
+
+- Date/heure : 2026-05-23 04:10:18 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les obstructions induites de tailles `(4,5)` ne
+  caractérisent pas la non-existence cR globale. Un noyau 6-points 5-localement
+  positif, ou mieux une famille paramétrique, indiquerait une vraie hiérarchie
+  d'obstructions.
+- Changement fait : ajout de `five_local_non_cr_core`,
+  `padded_five_local_non_cr`, `odd_high_cycle_plus_low_hub`,
+  `SMALL_FORBIDDEN_SUBMATRIX_ORDERS = (4, 5, 6)`, et
+  `candidate_odd_high_cycle_low_hub_obstruction`.
+- Commande exécutée avant modification : `make quick`.
+- Résultat correction avant modification : `127 passed in 2.09s`, puis
+  `JUSTE`.
+- Plan subagents : trois explorateurs lecture seule. Résultats : noyau
+  6-points trouvé indépendamment en exhaustif `{1,2}` ; coût d'un scan 6-points
+  brut jugé acceptable seulement avec une famille concrète ; le noyau est une
+  relabellisation d'un cycle haut impair `C5` plus hub bas universel.
+- Contre-exemple minimal :
+  `[[0,1,1,1,1,1],[1,0,1,1,2,2],[1,1,0,2,1,2],[1,1,2,0,2,1],[1,2,1,2,0,1],[1,2,2,1,1,0]]`.
+  Exhaustif `n=6`, valeurs `{1,2}` : trouvé après `237` matrices ; les `6`
+  sous-matrices induites de taille `5` sont positives, mais le noyau complet est
+  négatif.
+- Théorème de sous-cas ajouté : si le graphe des arêtes hautes d'une matrice
+  binaire est un cycle impair connecté plus au moins un hub isolé, aucun ordre
+  cR n'existe. La preuve utilise la caractérisation bad-side : chaque sommet du
+  cycle devrait être source ou puits dans l'ordre linéaire autour du hub, ce qui
+  force une alternance impossible sur un cycle impair.
+- Commande exécutée : `pytest -q tests/test_candidate.py tests/test_generators.py tests/test_regression_counterexamples.py`.
+- Résultat correction : `46 passed`.
+- Commande exécutée : benchmark ciblé
+  `tools/pc_circular_complexity_benchmark.py --sizes 6,7,8,9,10,12,20,40 --repeats 3 --instance-kind five_local_non_cr --pc-tree star`.
+- Résultat benchmark ciblé : `reports/complexity_five_local_non_cr.json` écrit ;
+  `0` timeout, `0` incomplet ; `candidate_small_forbidden_submatrix_obstruction`
+  sur tous les runs `n > 8`.
+- Commande exécutée : benchmark ciblé
+  `tools/pc_circular_complexity_benchmark.py --sizes 6,8,10,12,20,40 --repeats 3 --instance-kind odd_high_cycle_plus_low_hub --pc-tree star`.
+- Résultat benchmark ciblé : `reports/complexity_odd_high_cycle_plus_low_hub.json`
+  écrit ; `0` timeout, `0` incomplet ; les tailles `n >= 10` passent par
+  `candidate_odd_high_cycle_low_hub_obstruction`.
+- Commande exécutée : `make unit`.
+- Résultat correction : `134 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `134 passed in 2.93s`, puis `JUSTE`.
+- Commande exécutée : `make hunt-counterexamples`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark rapide : `reports/complexity_report_quick.json` écrit ;
+  `0` timeout, `0` incomplet.
+- Commande exécutée : `make bench-piste-f`.
+- Résultat benchmark ciblé Piste F : rapports écrits ; `0` timeout.
+  `paired_farthest/star` reste complet ; `paired_farthest/mixed` garde `20`
+  incomplets à `n=16,20`, avec max observé `0.708s`.
+- Commande exécutée : `make bench`.
+- Résultat benchmark fort : `reports/complexity_report.json` écrit ; `0`
+  timeout, `0` incomplet jusqu'à `n=100`, fit polynomial empirique `p ~= 3.25`.
+- Conclusion : T033 casse la conjecture 5-locale, ajoute un certificat
+  héréditaire 6-points borné et surtout un sous-cas négatif polynomial pour
+  cycle haut impair plus hub bas. Le problème général reste ouvert.
+- Next action : chercher des modules/blow-ups de cycle impair avec hub bas, ou
+  transformer le certificat odd-cycle en contrainte locale utilisable dans un
+  PC-tree non-star.

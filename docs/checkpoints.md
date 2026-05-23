@@ -166,6 +166,17 @@ Dernier commit green avant T009 : `07120e4`.
   `make bench`, benchmark ciblé `four_local_non_cr/star`. Résultat observé : le
   4-local seul est réfuté, mais les rejets 5-points restent sound quand le noyau
   induit est trouvé.
+- Checkpoint T033 courant : commit contenant le contre-exemple minimal
+  `five_local_non_cr_core`, son padding large `padded_five_local_non_cr`, le
+  générateur `odd_high_cycle_plus_low_hub`, l'extension du certificat
+  héréditaire aux tailles `(4,5,6)`, et le certificat structurel négatif
+  `candidate_odd_high_cycle_low_hub_obstruction`. Validation observée : tests
+  candidats/générateurs/régressions ciblés, `make unit`, `make quick`,
+  `make hunt-counterexamples`, `make check`, `make bench-quick`, `make bench`,
+  `make bench-piste-f`, benchmarks ciblés `five_local_non_cr/star` et
+  `odd_high_cycle_plus_low_hub/star`. Résultat observé : le 5-local seul est
+  réfuté ; la famille cycle haut impair plus hub bas est désormais rejetée par
+  un certificat polynomial.
 
 ## Rollback
 

@@ -6,7 +6,12 @@ results when the conjecture tester finds a disagreement.
 
 from itertools import combinations
 
-from pc_circular.generators import four_local_non_cr_core, padded_four_local_non_cr
+from pc_circular.generators import (
+    five_local_non_cr_core,
+    four_local_non_cr_core,
+    padded_five_local_non_cr,
+    padded_four_local_non_cr,
+)
 from pc_circular.predicates import (
     find_farthest_crossing_violation,
     find_precircular_cR_violation,
@@ -192,5 +197,23 @@ def test_padded_four_local_counterexample_has_no_four_point_obstruction():
 
     assert exact_oracle_pc_tree([[D[i][j] for j in range(5)] for i in range(5)], None)["exists"] is False
     for subset in combinations(range(9), 4):
+        submatrix = [[D[i][j] for j in subset] for i in subset]
+        assert exact_oracle_pc_tree(submatrix, None)["exists"] is True
+
+
+def test_six_point_five_local_positive_global_negative_counterexample():
+    D = five_local_non_cr_core()
+
+    assert exact_oracle_pc_tree(D, None)["exists"] is False
+    for subset in combinations(range(6), 5):
+        submatrix = [[D[i][j] for j in subset] for i in subset]
+        assert exact_oracle_pc_tree(submatrix, None)["exists"] is True
+
+
+def test_padded_five_local_counterexample_has_no_five_point_obstruction():
+    D = padded_five_local_non_cr(9)
+
+    assert exact_oracle_pc_tree([[D[i][j] for j in range(6)] for i in range(6)], None)["exists"] is False
+    for subset in combinations(range(9), 5):
         submatrix = [[D[i][j] for j in subset] for i in subset]
         assert exact_oracle_pc_tree(submatrix, None)["exists"] is True

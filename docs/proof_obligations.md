@@ -301,6 +301,49 @@ Preuve expérimentale T016 : tests unitaires, probe `n=9..30` sur
 star/balanced/mixed avec `33` checks, et faux ami à arête basse vérifié hors
 sous-cas.
 
+### Cycle haut impair avec hub bas
+
+Statut : certificat négatif prouvé pour ce sous-cas + intégré à la candidate.
+
+`candidate_odd_high_cycle_low_hub_obstruction` traite les matrices à deux
+distances positives `low < high` dont le graphe des arêtes `high` est formé
+d'un cycle impair connecté sur au moins 5 sommets et d'au moins un sommet isolé
+dans ce graphe. Un sommet isolé est donc à distance `low` de tous les sommets du
+cycle ; on l'appelle hub bas.
+
+Preuve :
+
+- fixer un hub bas `h` et un sommet `v` du cycle haut ;
+- la paire `{h,v}` a distance `low` ;
+- les deux voisins de `v` dans le cycle haut sont des témoins mauvais pour
+  `{h,v}`, car `max(d(h,u), d(u,v)) = high > low` ;
+- dans tout ordre cR, ces deux voisins doivent être du même côté de la corde
+  `{h,v}` ;
+- en retirant `h` de l'ordre circulaire, cela signifie que chaque sommet du
+  cycle n'est pas situé entre ses deux voisins de cycle dans l'ordre linéaire ;
+- en orientant chaque arête du cycle selon cet ordre linéaire, chaque sommet du
+  cycle doit être source ou puits ;
+- une alternance source/puits est impossible sur un cycle impair.
+
+Ce que cela couvre :
+
+- obligation 1 : le certificat utilise la caractérisation bad-side exacte d'un
+  ordre fixé ;
+- obligation 2 négative : l'impossibilité d'alternance prouve qu'aucun ordre
+  complet ne peut être cR ;
+- obligation 3 : aucun ordre représenté par le PC-tree n'est manqué, car aucun
+  ordre complet n'existe ;
+- obligation 5 : la détection inspecte les deux valeurs de distance et le graphe
+  `high`, donc elle est polynomiale en `n`.
+
+Limites :
+
+- le certificat exige exactement deux niveaux de distance positive et un graphe
+  `high` composé d'un cycle impair connecté plus hubs isolés ;
+- il ne traite pas encore les cycles impairs avec modules, perturbations, ou
+  plusieurs composantes non triviales ;
+- il est négatif seulement et ne fournit aucun témoin positif.
+
 ### Témoins positifs échantillonnés
 
 Statut : conséquence directe / clarification de la candidate.
@@ -399,12 +442,12 @@ Limites :
 Statut : certificat négatif prouvé quand une obstruction est trouvée.
 
 `candidate_small_forbidden_submatrix_obstruction` cherche des sous-ensembles de
-tailles listées dans `SMALL_FORBIDDEN_SUBMATRIX_ORDERS`, actuellement `(4, 5)`,
-jusqu'à `SMALL_FORBIDDEN_SUBMATRIX_LIMIT = 4096` sous-ensembles par taille.
-Pour chaque sous-ensemble inspecté, la sous-matrice induite est renumérotée et
-testée exactement par la baseline brute-force de petite taille. Si aucun ordre
-cR n'existe sur cette sous-matrice, la candidate retourne `exists=False` et
-`complete=True` pour l'instance complète.
+tailles listées dans `SMALL_FORBIDDEN_SUBMATRIX_ORDERS`, actuellement
+`(4, 5, 6)`, jusqu'à `SMALL_FORBIDDEN_SUBMATRIX_LIMIT = 4096` sous-ensembles
+par taille. Pour chaque sous-ensemble inspecté, la sous-matrice induite est
+renumérotée et testée exactement par la baseline brute-force de petite taille.
+Si aucun ordre cR n'existe sur cette sous-matrice, la candidate retourne
+`exists=False` et `complete=True` pour l'instance complète.
 
 Preuve :
 
@@ -453,6 +496,22 @@ induites de taille 4 en admet un. Elle prouve que les obstructions 4-points ne
 caractérisent pas la non-existence globale. L'ajout de la taille 5 est donc un
 certificat héréditaire supplémentaire, pas une preuve de base finie
 d'obstructions.
+
+Contre-exemple T033 à la caractérisation 5-locale :
+
+```text
+[[0,1,1,1,1,1],
+ [1,0,1,1,2,2],
+ [1,1,0,2,1,2],
+ [1,1,2,0,2,1],
+ [1,2,1,2,0,1],
+ [1,2,2,1,1,0]]
+```
+
+Cette matrice n'admet aucun ordre cR global, mais chacune de ses sous-matrices
+induites de taille 5 en admet un. Elle réfute à son tour une caractérisation
+par obstructions 5-points seulement. L'ajout de la taille 6 reste donc un
+certificat négatif borné, pas une preuve de complétude.
 
 ### Membership PC-tree d'un ordre fixé
 

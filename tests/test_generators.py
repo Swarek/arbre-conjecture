@@ -3,10 +3,13 @@ import random
 
 from pc_circular.generators import (
     MIXED_INSTANCE_KINDS,
+    five_local_non_cr_core,
     four_local_non_cr_core,
     instance_by_kind,
     instance_by_kind_with_metadata,
+    odd_high_cycle_plus_low_hub,
     paired_farthest_matching,
+    padded_five_local_non_cr,
     padded_four_local_non_cr,
     permuted_cycle_metric,
 )
@@ -32,6 +35,8 @@ def test_instance_by_kind_accepts_explicit_piste_f_families():
     assert validate_dissimilarity(instance_by_kind(5, kind="permuted_cycle", rng=random.Random(3))) == 5
     assert validate_dissimilarity(instance_by_kind(5, kind="paired_farthest", rng=random.Random(4))) == 5
     assert validate_dissimilarity(instance_by_kind(5, kind="four_local_non_cr")) == 5
+    assert validate_dissimilarity(instance_by_kind(6, kind="five_local_non_cr")) == 6
+    assert validate_dissimilarity(instance_by_kind(6, kind="odd_high_cycle_plus_low_hub")) == 6
 
 
 def test_four_local_non_cr_core_is_global_negative_but_four_local_positive():
@@ -50,6 +55,34 @@ def test_padded_four_local_non_cr_preserves_four_local_positive_core_obstruction
     for subset in combinations(range(9), 4):
         submatrix = [[D[i][j] for j in subset] for i in subset]
         assert brute_force.solve(submatrix)["exists"]
+
+
+def test_five_local_non_cr_core_is_global_negative_but_five_local_positive():
+    D = five_local_non_cr_core()
+
+    assert not brute_force.solve(D)["exists"]
+    for subset in combinations(range(6), 5):
+        submatrix = [[D[i][j] for j in subset] for i in subset]
+        assert brute_force.solve(submatrix)["exists"]
+
+
+def test_padded_five_local_non_cr_preserves_five_local_positive_core_obstruction():
+    D = padded_five_local_non_cr(9)
+
+    assert not brute_force.solve([[D[i][j] for j in range(6)] for i in range(6)])["exists"]
+    for subset in combinations(range(9), 5):
+        submatrix = [[D[i][j] for j in subset] for i in subset]
+        assert brute_force.solve(submatrix)["exists"]
+
+
+def test_odd_high_cycle_plus_low_hub_is_vertex_critical_for_small_odd_cycles():
+    for n in (6, 8):
+        D = odd_high_cycle_plus_low_hub(n)
+
+        assert not brute_force.solve(D)["exists"]
+        for subset in combinations(range(n), n - 1):
+            submatrix = [[D[i][j] for j in subset] for i in subset]
+            assert brute_force.solve(submatrix)["exists"]
 
 
 def test_instance_metadata_preserves_mixed_rng_sequence():
