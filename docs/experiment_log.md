@@ -963,3 +963,47 @@
 - Next action : construire/intersecter un vrai PC-tree de boules avec le
   PC-tree fourni, ou chercher des contraintes d'arcs dérivées des quartets cR et
   les attaquer avec Fig. 2.2/equal-distance/paired-farthest.
+
+## 2026-05-23 bad-witness arc constraints diagnostic
+
+- Date/heure : 2026-05-23, Europe/Paris.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les mauvais témoins
+  `B(a,b) = {w : max(d(a,w), d(w,b)) > d(a,b)}` peuvent peut-être fournir des
+  contraintes d'arcs/circular-ones plus proches de cR que les boules.
+- Changement fait : ajout de `bad_witness_arc_order_report` et
+  `bad_witness_arc_constraints_report` dans
+  `src/pc_circular/solvers/dp_experiments.py`; ajout de régressions dans
+  `tests/test_dp_experiments.py`; mise à jour Pistes D/E, obligations,
+  `PLANS.md` et checkpoints.
+- Commande exécutée avant modification : `make quick`.
+- Résultat correction avant modification : `98 passed in 1.14s`, puis `JUSTE`.
+- Plan subagents : trois explorateurs lecture seule. Résultats : confirmation
+  que la condition one-side est exactement la condition cR pour ordre fixé ;
+  `B(a,b)` arc est un filtre suffisant observé mais trop fort ; `B(a,b) union
+  {a,b}` est ni nécessaire ni suffisant ; l'API doit rester bornée et marquer
+  les absences inconnues si `frontier_limit` tronque l'énumération.
+- Contre-exemples ajoutés : `n=5`, ordre `(0,2,4,1,3)`, cR vrai mais
+  `B(0,3)={1,2}` non arc ; equal-distance `n=4` cR vrai mais
+  `B(0,2) union {0,2}` non arc ; matrice
+  `[[0,2,1,2],[2,0,2,1],[1,2,0,2],[2,1,2,0]]` où
+  `B union endpoints` passe mais cR échoue.
+- Commande exécutée : `pytest -q tests/test_dp_experiments.py`.
+- Résultat correction : `15 passed`.
+- Commande exécutée : `make unit`.
+- Résultat correction : `102 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `102 passed in 1.75s`, puis `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark : `reports/complexity_report_quick.json` écrit ; `0`
+  timeout, `0` incomplet ; tailles `[4,5,6,8,10,12,16,20]`, dernier `n=20`
+  avec `candidate_validated_sampled_witness` sur 4 runs et
+  `candidate_universal_bad_witness_bound_all_orders` sur 1 run.
+- Conclusion : résultat négatif utile pour Piste D/E. La condition one-side est
+  exacte pour ordre fixé, mais les contraintes d'arcs indépendantes ne sont pas
+  une caractérisation exploitable directement comme circular-ones global.
+  `candidate.py` reste inchangé.
+- Next action : tenter un état DP/CSP qui mémorise, pour chaque paire
+  concernée, quel côté contient déjà des mauvais témoins, ou prouver/refuter
+  formellement la suffisance de `B(a,b)` arc comme filtre positif.

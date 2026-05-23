@@ -113,6 +113,13 @@ Dernier commit green avant T009 : `07120e4`.
   boules et contre-exemple random `ball_arc/quasi` non cR. Validation observée :
   `tests/test_strict_experiments.py`, probe ball/quasi random bornée,
   `make unit`, `make quick`, `make bench-quick`.
+- Checkpoint T026 courant : commit contenant
+  `bad_witness_arc_constraints_report`, diagnostic borné comparant la condition
+  exacte one-side des mauvais témoins à deux contraintes d'arcs naïves. Il
+  verrouille que `B(a,b)` arc est trop fort et que
+  `B(a,b) union {a,b}` est ni nécessaire ni suffisant. Validation observée :
+  `tests/test_dp_experiments.py`, `make unit`, `make quick`,
+  `make bench-quick` (`0` timeout, `0` incomplet).
 
 ## Rollback
 

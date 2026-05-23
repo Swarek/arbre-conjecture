@@ -83,6 +83,27 @@ Résultat observé :
 Prochaine action : utiliser ce diagnostic comme accélérateur ou générateur
 d’obstructions pour le CSP/DP, sans le confondre avec l’existence dans PC-tree.
 
+## Mauvais témoins de quartets
+
+Statut : reformulation exacte pour ordre fixé ; contraintes d'arcs naïves
+réfutées.
+
+Pour une paire `{a,b}`, définir
+`B(a,b) = {w : max(d(a,w), d(w,b)) > d(a,b)}`. Un ordre fixé est cR si et
+seulement si, pour toute paire `{a,b}`, les éléments de `B(a,b)` n'apparaissent
+pas sur les deux arcs ouverts séparés par `a,b`.
+
+Le diagnostic `bad_witness_arc_constraints_report` compare cette condition
+exacte à deux tentatives d'arcs indépendantes :
+
+- `B(a,b)` arc : filtre suffisant observé, mais non nécessaire ;
+- `B(a,b) union {a,b}` arc : ni nécessaire ni suffisant.
+
+Les contre-exemples sont verrouillés dans `tests/test_dp_experiments.py`. La
+suite utile n'est donc pas d'ajouter ces contraintes comme oracle, mais de les
+utiliser pour produire des nogoods locaux ou des états DP qui mémorisent de
+quel côté d'une paire les mauvais témoins ont déjà été vus.
+
 ## Prochaine action
 
 Utiliser les témoins `find_precircular_cR_violation` comme source principale

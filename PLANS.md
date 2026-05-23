@@ -1182,3 +1182,65 @@ random `n=5/6` seeds `0..199` sans mismatch ball/quasi.
 Décision : conserver comme diagnostic Piste D. La contrainte de boules confirme
 la génération quasi-circulaire sur petits cas, mais ne décide pas cR et reste
 énumérative dans ce scaffold. Ne pas intégrer dans `candidate.py`.
+
+## ExecPlan 2026-05-23 - bad-witness arc constraints diagnostic
+
+But : tester la piste D/E en transformant les mauvais témoins cR
+`B(a,b) = {w : max(d(a,w), d(w,b)) > d(a,b)}` en contraintes d'arcs
+diagnostiques, sans modifier `candidate.py`.
+
+Hypothèse : pour un ordre fixé, la condition exacte est que chaque `B(a,b)`
+reste sur un seul des deux arcs ouverts délimités par `a,b`. En revanche les
+contraintes plus simples "`B(a,b)` est un arc" et "`B(a,b) union {a,b}` est un
+arc" devraient être des approximations falsifiables, utiles pour éviter une
+fausse réduction circular-ones.
+
+Fichiers à modifier : `src/pc_circular/solvers/dp_experiments.py`,
+`tests/test_dp_experiments.py`, `docs/tracks/piste_d_circular_ones.md`,
+`docs/tracks/piste_e_farthest_quartets.md`, `docs/tracks/README.md`,
+`docs/proof_obligations.md`, `docs/experiment_log.md`,
+`docs/checkpoints.md`, `PLANS.md`.
+
+Algorithme pressenti : ajouter `bad_witness_arc_constraints_report(D,
+pc_tree=None, max_n=8, frontier_limit=None)`. Le rapport énumère tous les
+ordres circulaires ou les frontiers PC-tree tant que `n <= max_n`, refuse les
+labels PC-tree invalides, marque `complete=False` si `frontier_limit` est
+atteint, et produit des comptes séparés pour `bad_witness_one_side`,
+`bad_witness_set_arc`, `bad_witness_with_endpoints_arc`,
+`precircular`, `strict_precircular` et `strict_circular`. Si le rapport est
+incomplet, une absence de témoin reste `None`, jamais `False`.
+
+Plan de contre-exemples : chercher exhaustivement en `n=4` valeurs `{1,2,3}`
+et par random/shrink en `n=5/6` des faux positifs/faux négatifs pour les deux
+contraintes naïves. Verrouiller les exemples minimaux dans
+`tests/test_dp_experiments.py`; vérifier que `bad_witness_one_side` reste
+équivalent à `is_precircular_order_cR` sur l'exhaustif `n=4`.
+
+Plan subagents : trois explorateurs lecture seule : définitions et risques
+d'une contrainte d'arc, recherche de contre-exemples petits, et API PC-tree
+bornée compatible avec les rapports Piste D existants.
+
+Tests à exécuter : tests DP ciblés, probe de contre-exemples bornée,
+`make unit`, `make quick`, `make bench-quick`. `make check` n'est pas requis si
+`candidate.py` reste inchangé, mais `make quick` doit rester vert.
+
+Risques : appeler "arc" une condition de côté et la vendre comme réduction
+circular-ones ; interpréter une énumération tronquée comme une décision ;
+traiter les égalités avec `>=` au lieu de `>` ; confondre cR non strict et
+strict circular.
+
+Résultats observés : `bad_witness_arc_constraints_report` ajouté dans
+`dp_experiments.py`, avec énumération bornée des ordres/frontiers, gestion
+`complete=False` pour `n > max_n` et `frontier_limit`, et champs séparés
+`counts`, `exists`, témoins de violation et mismatches. Les subagents ont
+confirmé la reformulation exacte one-side pour ordre fixé et fourni des
+contre-exemples minimaux : `B(a,b)` arc est trop fort (`n=5`, ordre
+`(0,2,4,1,3)`, cR vrai mais `B(0,3)={1,2}` non arc) ; `B(a,b) union {a,b}` est
+ni nécessaire (equal-distance `n=4`) ni suffisant (matrice carrée opposée).
+Tests ajoutés dans `tests/test_dp_experiments.py`, dont l'équivalence
+one-side/cR sur l'exhaustif `n=4`.
+
+Décision : conserver T026 comme résultat négatif utile Piste D/E. Ne pas
+intégrer dans `candidate.py`. La suite doit utiliser `B(a,b)` arc seulement
+comme filtre/nogood suffisant expérimental, ou construire un état DP/CSP qui
+mémorise le côté des mauvais témoins sans sur-rejeter les ordres cR.

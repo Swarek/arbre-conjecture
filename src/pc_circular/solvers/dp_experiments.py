@@ -10,7 +10,17 @@ from itertools import combinations
 from math import log2
 from typing import Callable, Iterable, Sequence
 
-from pc_circular.predicates import find_precircular_cR_violation, is_precircular_order_cR, validate_dissimilarity
+from pc_circular.pc_tree import PCNode, enumerate_frontiers, labels, represents_order
+from pc_circular.predicates import (
+    all_circular_orders,
+    canonical_circular_order,
+    find_precircular_cR_violation,
+    is_arc,
+    is_precircular_order_cR,
+    is_strict_circular_robinson_order,
+    is_strict_precircular_order_cR,
+    validate_dissimilarity,
+)
 
 
 Matrix = Sequence[Sequence[float]]
@@ -135,6 +145,261 @@ def passes_bad_side_cr_test(D: Matrix, order: Order) -> bool:
     """Return whether the bad-side fixed-order diagnostic finds no violation."""
 
     return find_bad_side_cr_violation(D, order) is None
+
+
+def _bad_witness_constraint_stats(D: Matrix) -> dict:
+    by_pair = bad_witnesses_by_pair(D)
+    histogram: dict[int, int] = {}
+    total = 0
+    constraints = []
+    for pair, witnesses in by_pair.items():
+        count = len(witnesses)
+        histogram[count] = histogram.get(count, 0) + 1
+        total += count
+        if witnesses:
+            constraints.append({"pair": pair, "bad_witnesses": witnesses, "bad_witness_count": count})
+    return {
+        "bad_pair_count": len(by_pair),
+        "nonempty_bad_pair_count": sum(1 for witnesses in by_pair.values() if witnesses),
+        "nontrivial_bad_pair_count": sum(1 for witnesses in by_pair.values() if len(witnesses) >= 2),
+        "bad_witness_total": total,
+        "bad_witness_histogram": dict(sorted(histogram.items())),
+        "constraints": constraints,
+    }
+
+
+def bad_witness_arc_order_report(D: Matrix, order: Order) -> dict:
+    seq = canonical_circular_order(_validated_order(D, order))
+    by_pair = bad_witnesses_by_pair(D)
+    side_signature = bad_side_signature(D, seq)
+
+    first_one_side_violation = None
+    first_set_arc_violation = None
+    first_with_endpoints_arc_violation = None
+    all_one_side = True
+    all_set_arc = True
+    all_with_endpoints_arc = True
+
+    for pair, witnesses in by_pair.items():
+        side = side_signature[pair]
+        one_side = not (side["a_to_b"] and side["b_to_a"])
+        if not one_side:
+            all_one_side = False
+            if first_one_side_violation is None:
+                first_one_side_violation = {
+                    "pair": pair,
+                    "bad_witnesses": witnesses,
+                    "a_to_b_bad_witnesses": side["a_to_b"],
+                    "b_to_a_bad_witnesses": side["b_to_a"],
+                    "cr_violation": find_bad_side_cr_violation(D, seq),
+                }
+
+        if not is_arc(seq, witnesses):
+            all_set_arc = False
+            if first_set_arc_violation is None:
+                first_set_arc_violation = {
+                    "pair": pair,
+                    "bad_witnesses": witnesses,
+                    "tested_set": witnesses,
+                }
+
+        with_endpoints = tuple(sorted(set(witnesses) | set(pair)))
+        if not is_arc(seq, with_endpoints):
+            all_with_endpoints_arc = False
+            if first_with_endpoints_arc_violation is None:
+                first_with_endpoints_arc_violation = {
+                    "pair": pair,
+                    "bad_witnesses": witnesses,
+                    "tested_set": with_endpoints,
+                }
+
+    precircular = is_precircular_order_cR(D, seq)
+    strict_precircular = is_strict_precircular_order_cR(D, seq)
+    strict_circular = is_strict_circular_robinson_order(D, seq)
+    return {
+        "order": seq,
+        "bad_witness_one_side": all_one_side,
+        "bad_witness_set_arc": all_set_arc,
+        "bad_witness_with_endpoints_arc": all_with_endpoints_arc,
+        "precircular": precircular,
+        "strict_precircular": strict_precircular,
+        "strict_circular": strict_circular,
+        "first_bad_witness_one_side_violation": first_one_side_violation,
+        "first_bad_witness_set_arc_violation": first_set_arc_violation,
+        "first_bad_witness_with_endpoints_arc_violation": first_with_endpoints_arc_violation,
+        "one_side_precircular_mismatch": all_one_side != precircular,
+        "set_arc_precircular_mismatch": all_set_arc != precircular,
+        "with_endpoints_precircular_mismatch": all_with_endpoints_arc != precircular,
+    }
+
+
+def bad_witness_arc_constraints_report(
+    D: Matrix,
+    pc_tree: PCNode | None = None,
+    *,
+    max_n: int = 8,
+    frontier_limit: int | None = None,
+) -> dict:
+    """Enumerate small orders and compare bad-witness arc constraints.
+
+    This is a bounded Piste D/E diagnostic, not a solver.  The exact fixed-order
+    cR reformulation is ``bad_witness_one_side``: every bad-witness set
+    ``B(a,b)`` must lie on one of the two open arcs cut by endpoints ``a,b``.
+    The standalone arc variants are deliberately reported separately because
+    they are only candidate circular-ones-style approximations.
+    """
+
+    n = validate_dissimilarity(D)
+    constraint_stats = _bad_witness_constraint_stats(D)
+    base_report = {
+        "implemented": True,
+        "method": "bounded_bad_witness_arc_constraints_frontier_report",
+        "n": n,
+        "max_n": max_n,
+        "pc_tree_provided": pc_tree is not None,
+        "frontier_limit": frontier_limit,
+        **constraint_stats,
+    }
+    if n > max_n:
+        unknown = {
+            "bad_witness_one_side": None,
+            "bad_witness_set_arc": None,
+            "bad_witness_with_endpoints_arc": None,
+            "precircular": None,
+            "strict_circular": None,
+        }
+        return {
+            **base_report,
+            "complete": False,
+            "incomplete_reasons": ["n exceeds max_n"],
+            "reason": "n exceeds bad_witness_arc_constraints_report max_n",
+            "order_source": None,
+            "order_count": None,
+            "counts": None,
+            "exists": unknown,
+        }
+
+    if pc_tree is None:
+        order_source = "all_circular_orders"
+        orders = list(all_circular_orders(n))
+        frontier_limit_reached = False
+    else:
+        if set(labels(pc_tree)) != set(range(n)):
+            raise ValueError("pc_tree labels must be exactly 0..n-1")
+        order_source = "pc_tree_frontiers"
+        probe_limit = frontier_limit + 1 if frontier_limit is not None else None
+        orders = enumerate_frontiers(pc_tree, canonical=True, limit=probe_limit)
+        frontier_limit_reached = frontier_limit is not None and len(orders) > frontier_limit
+        if frontier_limit_reached:
+            orders = orders[:frontier_limit]
+
+    one_side_orders = []
+    set_arc_orders = []
+    with_endpoints_arc_orders = []
+    precircular_orders = []
+    strict_precircular_orders = []
+    strict_circular_orders = []
+    first_one_side_precircular_mismatch = None
+    first_set_arc_precircular_mismatch = None
+    first_with_endpoints_precircular_mismatch = None
+    first_bad_witness_one_side_violation = None
+    first_bad_witness_set_arc_violation = None
+    first_bad_witness_with_endpoints_arc_violation = None
+    representation_mismatch_count = 0
+    first_representation_mismatch = None
+
+    for order in orders:
+        canonical = canonical_circular_order(order)
+        if pc_tree is not None and not represents_order(pc_tree, canonical):
+            representation_mismatch_count += 1
+            if first_representation_mismatch is None:
+                first_representation_mismatch = canonical
+
+        order_report = bad_witness_arc_order_report(D, canonical)
+        if order_report["bad_witness_one_side"]:
+            one_side_orders.append(canonical)
+        elif first_bad_witness_one_side_violation is None:
+            first_bad_witness_one_side_violation = order_report["first_bad_witness_one_side_violation"]
+
+        if order_report["bad_witness_set_arc"]:
+            set_arc_orders.append(canonical)
+        elif first_bad_witness_set_arc_violation is None:
+            first_bad_witness_set_arc_violation = order_report["first_bad_witness_set_arc_violation"]
+
+        if order_report["bad_witness_with_endpoints_arc"]:
+            with_endpoints_arc_orders.append(canonical)
+        elif first_bad_witness_with_endpoints_arc_violation is None:
+            first_bad_witness_with_endpoints_arc_violation = order_report[
+                "first_bad_witness_with_endpoints_arc_violation"
+            ]
+
+        if order_report["precircular"]:
+            precircular_orders.append(canonical)
+        if order_report["strict_precircular"]:
+            strict_precircular_orders.append(canonical)
+        if order_report["strict_circular"]:
+            strict_circular_orders.append(canonical)
+
+        if order_report["one_side_precircular_mismatch"] and first_one_side_precircular_mismatch is None:
+            first_one_side_precircular_mismatch = order_report
+        if order_report["set_arc_precircular_mismatch"] and first_set_arc_precircular_mismatch is None:
+            first_set_arc_precircular_mismatch = order_report
+        if (
+            order_report["with_endpoints_precircular_mismatch"]
+            and first_with_endpoints_precircular_mismatch is None
+        ):
+            first_with_endpoints_precircular_mismatch = order_report
+
+    incomplete_reasons = []
+    if frontier_limit_reached:
+        incomplete_reasons.append("frontier_limit reached")
+    if representation_mismatch_count:
+        incomplete_reasons.append("enumerated frontier failed represents_order sanity check")
+    complete = not incomplete_reasons
+
+    counts = {
+        "orders_seen": len(orders),
+        "bad_witness_one_side": len(one_side_orders),
+        "bad_witness_set_arc": len(set_arc_orders),
+        "bad_witness_with_endpoints_arc": len(with_endpoints_arc_orders),
+        "precircular": len(precircular_orders),
+        "strict_precircular": len(strict_precircular_orders),
+        "strict_circular": len(strict_circular_orders),
+        "one_side_precircular_mismatch": 1 if first_one_side_precircular_mismatch is not None else 0,
+        "set_arc_precircular_mismatch": 1 if first_set_arc_precircular_mismatch is not None else 0,
+        "with_endpoints_precircular_mismatch": 1 if first_with_endpoints_precircular_mismatch is not None else 0,
+        "representation_mismatch": representation_mismatch_count,
+    }
+    exists = {
+        "bad_witness_one_side": True if one_side_orders else (False if complete else None),
+        "bad_witness_set_arc": True if set_arc_orders else (False if complete else None),
+        "bad_witness_with_endpoints_arc": True if with_endpoints_arc_orders else (False if complete else None),
+        "precircular": True if precircular_orders else (False if complete else None),
+        "strict_circular": True if strict_circular_orders else (False if complete else None),
+    }
+
+    return {
+        **base_report,
+        "complete": complete,
+        "incomplete_reasons": incomplete_reasons,
+        "order_source": order_source,
+        "order_count": len(orders),
+        "counts": counts,
+        "exists": exists,
+        "bad_witness_one_side_orders": one_side_orders,
+        "bad_witness_set_arc_orders": set_arc_orders,
+        "bad_witness_with_endpoints_arc_orders": with_endpoints_arc_orders,
+        "precircular_orders": precircular_orders,
+        "strict_precircular_orders": strict_precircular_orders,
+        "strict_circular_orders": strict_circular_orders,
+        "first_bad_witness_one_side_violation": first_bad_witness_one_side_violation,
+        "first_bad_witness_set_arc_violation": first_bad_witness_set_arc_violation,
+        "first_bad_witness_with_endpoints_arc_violation": first_bad_witness_with_endpoints_arc_violation,
+        "first_one_side_precircular_mismatch": first_one_side_precircular_mismatch,
+        "first_set_arc_precircular_mismatch": first_set_arc_precircular_mismatch,
+        "first_with_endpoints_precircular_mismatch": first_with_endpoints_precircular_mismatch,
+        "first_representation_mismatch": first_representation_mismatch,
+    }
 
 
 def _validated_block(

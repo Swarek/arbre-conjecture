@@ -548,6 +548,43 @@ Limites :
 - les modules sont groupés par signature complète d'appartenance aux boules, pas
   par simple poids de signature.
 
+### Mauvais témoins comme contraintes d'arcs
+
+Statut : reformulation fixed-order exacte partielle ; deux réductions
+circular-ones naïves réfutées.
+
+Pour une paire `{a,b}`, `B(a,b)` désigne les témoins `w` tels que
+`max(d(a,w), d(w,b)) > d(a,b)`.
+
+Résultat exact pour ordre fixé :
+
+- `bad_witness_one_side` est équivalent à `is_precircular_order_cR` : aucun
+  `B(a,b)` ne doit être présent sur les deux arcs ouverts séparés par `a,b`.
+- Cette équivalence est une conséquence directe de la condition cR sur
+  quadruplets cycliques et du diagnostic `find_bad_side_cr_violation`.
+
+Résultats négatifs T026 :
+
+- exiger que chaque `B(a,b)` soit un arc est trop fort. Le test de régression
+  `n=5`, ordre `(0,2,4,1,3)`, est cR mais a `B(0,3) = {1,2}` non arc ;
+- exiger que chaque `B(a,b) union {a,b}` soit un arc n'est pas nécessaire :
+  equal-distance `n=4` est cR, mais `{0,2}` n'est pas un arc dans
+  `(0,1,2,3)` ;
+- la même contrainte n'est pas suffisante : la matrice carrée opposée
+  `[[0,2,1,2],[2,0,2,1],[1,2,0,2],[2,1,2,0]]` passe cette contrainte dans
+  `(0,1,2,3)` mais viole cR.
+
+Obligations ouvertes :
+
+- prouver formellement si `B(a,b)` arc est toujours suffisant pour cR, ou
+  produire un faux positif ;
+- si ce filtre est conservé, l'utiliser seulement comme condition suffisante ou
+  nogood local, jamais comme caractérisation d'existence ;
+- construire un état DP/CSP qui mémorise les côtés déjà occupés par les mauvais
+  témoins sans énumérer les frontiers complètes du PC-tree ;
+- traiter les égalités avec l'inégalité stricte `>` dans la définition de
+  mauvais témoin.
+
 ### Prédicats stricts d'ordre fixé
 
 Statut : définitions directes implémentées / base expérimentale Piste F.

@@ -8,8 +8,11 @@ from pc_circular.generators import (
     random_dissimilarity,
 )
 from pc_circular.predicates import all_circular_orders, is_precircular_order_cR
+from pc_circular.pc_tree import star_pc_tree
 from pc_circular.solvers.dp_experiments import (
     bad_side_signature,
+    bad_witness_arc_constraints_report,
+    bad_witness_arc_order_report,
     bad_witnesses_by_pair,
     block_bad_side_signature,
     block_signature_bucket_report,
@@ -75,6 +78,11 @@ def test_bad_side_matches_precircular_cr_on_exhaustive_n4():
         D = _matrix_from_pair_values(n, values)
         for order in all_circular_orders(n):
             assert passes_bad_side_cr_test(D, order) is is_precircular_order_cR(D, order)
+            report = bad_witness_arc_order_report(D, order)
+            assert report["bad_witness_one_side"] is is_precircular_order_cR(D, order)
+            assert not report["one_side_precircular_mismatch"]
+            if report["bad_witness_set_arc"]:
+                assert report["precircular"]
 
 
 def test_bad_side_matches_precircular_cr_on_random_small_orders():
@@ -85,6 +93,71 @@ def test_bad_side_matches_precircular_cr_on_random_small_orders():
             D = random_dissimilarity(n, rng=rng, values=(1, 2, 3, 4))
             for order in orders:
                 assert passes_bad_side_cr_test(D, order) is is_precircular_order_cR(D, order)
+
+
+def test_bad_witness_set_arc_is_too_strong_for_precircular_cr():
+    D = [
+        [0, 2, 1, 1, 1],
+        [2, 0, 3, 1, 1],
+        [1, 3, 0, 2, 1],
+        [1, 1, 2, 0, 1],
+        [1, 1, 1, 1, 0],
+    ]
+    order = (0, 2, 4, 1, 3)
+
+    report = bad_witness_arc_order_report(D, order)
+    assert report["precircular"]
+    assert report["bad_witness_one_side"]
+    assert not report["bad_witness_set_arc"]
+    assert report["first_bad_witness_set_arc_violation"] == {
+        "pair": (0, 3),
+        "bad_witnesses": (1, 2),
+        "tested_set": (1, 2),
+    }
+
+
+def test_bad_witness_with_endpoints_arc_is_too_strong_for_equal_distances():
+    D = equal_distance_instance(4)
+    order = (0, 1, 2, 3)
+
+    report = bad_witness_arc_order_report(D, order)
+    assert report["precircular"]
+    assert report["bad_witness_one_side"]
+    assert report["bad_witness_set_arc"]
+    assert not report["bad_witness_with_endpoints_arc"]
+    assert report["first_bad_witness_with_endpoints_arc_violation"] == {
+        "pair": (0, 2),
+        "bad_witnesses": (),
+        "tested_set": (0, 2),
+    }
+
+
+def test_bad_witness_with_endpoints_arc_is_not_sufficient_for_precircular_cr():
+    D = [
+        [0, 2, 1, 2],
+        [2, 0, 2, 1],
+        [1, 2, 0, 2],
+        [2, 1, 2, 0],
+    ]
+    order = (0, 1, 2, 3)
+
+    report = bad_witness_arc_order_report(D, order)
+    assert not report["precircular"]
+    assert not report["bad_witness_one_side"]
+    assert report["bad_witness_with_endpoints_arc"]
+    assert report["first_bad_witness_one_side_violation"]["pair"] == (0, 2)
+
+
+def test_bad_witness_arc_constraints_report_keeps_truncated_absences_unknown():
+    D = equal_distance_instance(5)
+    report = bad_witness_arc_constraints_report(D, star_pc_tree(5), frontier_limit=1)
+
+    assert not report["complete"]
+    assert report["incomplete_reasons"] == ["frontier_limit reached"]
+    assert report["order_source"] == "pc_tree_frontiers"
+    assert report["counts"]["orders_seen"] == 1
+    assert report["exists"]["precircular"] is True
+    assert report["exists"]["strict_circular"] is None
 
 
 def test_block_signature_tracks_forced_inside_external_pair():
