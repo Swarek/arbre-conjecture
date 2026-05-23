@@ -128,6 +128,13 @@ Dernier commit green avant T009 : `07120e4`.
   supportés. Validation observée : `tests/test_sat_like_experiments.py`, probe
   fanout 3 bad-side/quartets, `make unit`, `make quick`, `make bench-csp-quick`,
   `make bench-quick`.
+- Checkpoint T028 courant : commit contenant le sous-cas
+  `candidate_exact_bounded_pc_tree_frontiers`. La candidate calcule une borne
+  indépendante saturée sur le nombre de frontiers du PC-tree scaffold et énumère
+  exactement seulement si la borne est sous `EXACT_PC_TREE_FRONTIER_LIMIT`.
+  Validation observée : `tests/test_candidate.py`, probe oracle PC-tree `42`
+  décisions, `make unit`, `make quick`, `make hunt-counterexamples`,
+  `make check`, `make bench-quick`.
 
 ## Rollback
 

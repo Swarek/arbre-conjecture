@@ -325,6 +325,39 @@ Limites :
 - les résultats `False` du placeholder restent incomplets et doivent rester
   visibles dans les rapports.
 
+### PC-tree exact à frontiers bornées
+
+Statut : sous-cas exact intégré à la candidate pour le scaffold P/C/leaf.
+
+`candidate_exact_bounded_pc_tree_frontiers` calcule un upper bound indépendant
+de l'énumération sur le nombre de frontiers représentées. Si ce bound est au
+plus `EXACT_PC_TREE_FRONTIER_LIMIT`, toutes les frontiers sont énumérées sans
+limite et testées par `is_precircular_order_cR`.
+
+Ce que cela couvre :
+
+- obligation 1 : la condition testée sur chaque ordre est le prédicat fixed-order
+  exact ;
+- obligation 2 : si une frontier représentée passe le prédicat, le témoin
+  suffit ;
+- obligation 3 dans ce sous-cas : toutes les frontiers représentées sont
+  énumérées parce que la borne est indépendante et sous la limite ;
+- obligation 4 : l'ordre vient de `enumerate_frontiers(pc_tree)`, donc il est
+  représenté dans le scaffold ;
+- obligation 5 dans ce sous-cas : le temps est borné par
+  `O(frontier_limit * n^4)` pour le test direct actuel, plus le calcul de borne
+  saturé ; hors sous-cas, aucune décision négative n'est prise.
+
+Limites :
+
+- la borne peut surcompter, ce qui est sûr mais incomplet ;
+- les grands `P` restent hors sous-cas et ne doivent pas produire de rejet
+  complet ;
+- cette preuve concerne le scaffold PC-tree enraciné, pas la totalité d'une
+  implémentation Hsu/McConnell ;
+- la branche est ignorée quand `quasi_orders` explicite est fourni, pour ne pas
+  décider sur un espace différent de celui demandé.
+
 ### Membership PC-tree d'un ordre fixé
 
 Statut : théorème prouvé pour le scaffold P/C/leaf enraciné, pas pour une

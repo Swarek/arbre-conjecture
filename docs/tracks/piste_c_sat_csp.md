@@ -197,6 +197,21 @@ Créer un rapport de décision Piste C vs Piste B/F, puis tester une signature
 DP/collision ou un sous-cas polynomial avant de continuer à raffiner le CSP
 énumératif.
 
+## Tentative T028 - Exact PC-tree borné dans la candidate
+
+Statut : sous-cas exact hors CSP, utile comme baseline de décision complète.
+
+La candidate inclut désormais un cas où le nombre de frontiers du PC-tree
+scaffold est certifié sous `EXACT_PC_TREE_FRONTIER_LIMIT`. Cela contourne le
+CSP/nogood quand le domaine total est déjà petit : toutes les frontiers sont
+énumérées directement et testées par le prédicat cR exact.
+
+Intérêt pour Piste C : cette branche fournit une référence complète pour les
+petits domaines locaux, et rappelle qu'un solveur CSP compact ne gagne que
+lorsque l'espace de frontiers dépasse cette limite. Si le PC-tree est déjà
+petit, l'énumération exacte simple est plus robuste qu'une compilation de
+nogoods.
+
 ## Tentative T027 - Nogoods bad-side par paire
 
 Statut : amélioration de représentation expérimentale, non intégrée dans

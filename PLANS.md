@@ -1303,3 +1303,65 @@ Décision : conserver comme simplification CSP Piste B/C/E. Le résultat divise
 les objets compilés par deux dans les probes, mais la compilation reste
 énumérative et le pruning observé ne prouve pas de nouvelle borne. Ne pas
 intégrer dans `candidate.py`.
+
+## ExecPlan 2026-05-23 - bounded exact PC-tree candidate subcase
+
+But : intégrer un sous-cas exact dans `candidate.py` pour les PC-trees dont le
+nombre de frontiers représentées est borné par un petit seuil explicite, même
+si `n > 8`.
+
+Hypothèse : certains PC-trees fournis ont peu de frontiers malgré une grande
+taille `n` (par exemple un nœud `C` quasi rigide). Dans ce cas, énumérer toutes
+les frontiers représentées et vérifier `is_precircular_order_cR` donne une
+décision complète justifiée. Si l'upper bound dépasse le seuil, la candidate ne
+conclut pas et retombe sur ses certificats positifs/placeholder existants.
+
+Fichiers à modifier : `src/pc_circular/solvers/candidate.py`,
+`tests/test_candidate.py`, `docs/tracks/piste_f_complexity_subcases.md`,
+`docs/tracks/piste_c_sat_csp.md`, `docs/tracks/README.md`,
+`docs/proof_obligations.md`, `docs/experiment_log.md`,
+`docs/checkpoints.md`, `PLANS.md`.
+
+Algorithme pressenti : ajouter un upper bound récursif borné sur le nombre de
+frontiers linéaires du scaffold PC-tree : produit des enfants, facteur
+`degree!` pour `P`, facteur `2` pour `C`, avec saturation à
+`EXACT_PC_TREE_FRONTIER_LIMIT + 1`. Si le bound est au plus la limite, appeler
+`enumerate_frontiers(pc_tree, canonical=True)` sans limite, tester chaque ordre,
+et retourner une décision complète `True` avec témoin ou `False` sans témoin.
+Ne pas utiliser cette branche quand `quasi_orders` explicite est fourni.
+
+Plan de contre-exemples : C-tree rigide `n>8` positif (`cycle_metric`) ;
+C-tree rigide `n>8` négatif contenant le contre-exemple 4 points étendu ;
+star/gros P-node dont l'upper bound dépasse la limite et ne doit pas retourner
+un faux `False` complet ; garde contre `quasi_orders` explicite.
+
+Plan subagents : deux explorateurs lecture seule : preuve/tests de la branche
+bounded PC-tree et fixtures `n>8` positives/négatives.
+
+Tests à exécuter : tests candidate ciblés, `make unit`, `make quick`,
+`make hunt-counterexamples` parce que `candidate.py` change, `make bench-quick`
+et si possible `make check`.
+
+Risques : sous-estimer le nombre de frontiers ; conclure `False` après une
+énumération tronquée ; bypasser une famille `quasi_orders` explicite ; ralentir
+les benchmarks star en essayant d'énumérer un gros P-node ; confondre scaffold
+PC-tree et vrai PC-tree Hsu/McConnell.
+
+Résultats observés : `EXACT_PC_TREE_FRONTIER_LIMIT`,
+`_pc_tree_frontier_upper_bound` et
+`candidate_exact_bounded_pc_tree_frontiers` ajoutés dans `candidate.py`.
+La branche est placée après les certificats positifs rapides
+minimum-cycle/paired-farthest et avant l'échantillonnage. Résultat positif
+verrouillé : C-tree rigide `n=9` avec métrique plateau-cycle, aucun shortcut
+minimum-cycle/paired-farthest, témoin naturel cR. Résultat négatif verrouillé :
+C-tree rigide `n=9` avec contre-exemple quatre points étendu, unique frontier
+non cR. Garde gros `P` verrouillé : star `n=9` sur la même matrice a un témoin
+cR hors des 64 premiers échantillons, donc la candidate reste
+`candidate_large_n_placeholder` et `complete=False`.
+Probe locale : 42 décisions de la nouvelle branche comparées à
+`exact_oracle_pc_tree` sur arbres rigides/one-P `n=9..11`, familles
+cycle/equal/paired/random, sans désaccord.
+
+Décision : intégrer dans `candidate.py` comme sous-cas exact borné. Ce n'est
+pas une solution générale : la limite évite toute énumération explosive et les
+grands espaces restent incomplets.

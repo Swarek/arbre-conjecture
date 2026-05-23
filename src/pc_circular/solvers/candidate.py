@@ -22,7 +22,7 @@ from __future__ import annotations
 from itertools import islice
 from typing import Iterable, Optional, Sequence
 
-from pc_circular.pc_tree import PCNode, enumerate_frontiers, represents_order, sample_frontier
+from pc_circular.pc_tree import PCNode, enumerate_frontiers, labels, represents_order, sample_frontier
 from pc_circular.predicates import (
     has_at_most_one_bad_witness_per_pair,
     is_precircular_order_cR,
@@ -32,6 +32,7 @@ from pc_circular.solvers import brute_force
 
 
 EXACT_BRUTE_FORCE_LIMIT = 8
+EXACT_PC_TREE_FRONTIER_LIMIT = 4096
 
 
 def _large_n_budget(n: int) -> int:
@@ -54,6 +55,82 @@ def _validate_order_shape(order: Sequence[int], n: int) -> tuple[int, ...]:
     if len(seq) != n or set(seq) != set(range(n)):
         raise ValueError("order must be a permutation of 0..n-1")
     return seq
+
+
+def _multiply_capped(left: int, right: int, cap: int) -> int:
+    if left == 0 or right == 0:
+        return 0
+    if left > cap // right:
+        return cap + 1
+    return left * right
+
+
+def _factorial_capped(value: int, cap: int) -> int:
+    result = 1
+    for factor in range(2, value + 1):
+        result = _multiply_capped(result, factor, cap)
+        if result > cap:
+            return result
+    return result
+
+
+def _pc_tree_frontier_upper_bound(node: PCNode, *, cap: int = EXACT_PC_TREE_FRONTIER_LIMIT) -> int:
+    """Return a capped upper bound on represented scaffold frontiers."""
+
+    if node.kind == "leaf":
+        return 1
+
+    count = 1
+    for child in node.children:
+        child_count = _pc_tree_frontier_upper_bound(child, cap=cap)
+        count = _multiply_capped(count, child_count, cap)
+        if count > cap:
+            return count
+
+    if node.kind == "P":
+        local_choices = _factorial_capped(len(node.children), cap)
+    else:
+        local_choices = 1 if len(node.children) <= 1 else 2
+    return _multiply_capped(count, local_choices, cap)
+
+
+def _bounded_pc_tree_exact_result(D, n: int, pc_tree: Optional[PCNode]):
+    if pc_tree is None:
+        return None
+    if set(labels(pc_tree)) != set(range(n)):
+        raise ValueError("pc_tree labels must be exactly 0..n-1")
+
+    upper_bound = _pc_tree_frontier_upper_bound(pc_tree)
+    if upper_bound > EXACT_PC_TREE_FRONTIER_LIMIT:
+        return None
+
+    orders = enumerate_frontiers(pc_tree, canonical=True)
+    for order in orders:
+        if is_precircular_order_cR(D, order):
+            return {
+                "exists": True,
+                "order": list(order),
+                "complete": True,
+                "solver": "candidate_exact_bounded_pc_tree_frontiers",
+                "tried_orders": len(orders),
+                "frontiers_enumerated": len(orders),
+                "frontier_count": len(orders),
+                "frontier_upper_bound": upper_bound,
+                "frontier_limit": EXACT_PC_TREE_FRONTIER_LIMIT,
+                "note": "all represented PC-tree frontiers were enumerated under a certified upper bound and a cR witness was found",
+            }
+    return {
+        "exists": False,
+        "order": None,
+        "complete": True,
+        "solver": "candidate_exact_bounded_pc_tree_frontiers",
+        "tried_orders": len(orders),
+        "frontiers_enumerated": len(orders),
+        "frontier_count": len(orders),
+        "frontier_upper_bound": upper_bound,
+        "frontier_limit": EXACT_PC_TREE_FRONTIER_LIMIT,
+        "note": "all represented PC-tree frontiers were enumerated under a certified upper bound and none is circular Robinson",
+    }
 
 
 def _minimum_distance_cycle_order(D, n: int) -> tuple[int, ...] | None:
@@ -259,6 +336,9 @@ def solve(D, quasi_orders=None, pc_tree=None):
         paired_result = _paired_farthest_witness_result(D, n, pc_tree)
         if paired_result is not None:
             return paired_result
+        exact_pc_tree_result = _bounded_pc_tree_exact_result(D, n, pc_tree)
+        if exact_pc_tree_result is not None:
+            return exact_pc_tree_result
 
     tried = 0
     for order in _sample_orders(n, quasi_orders, pc_tree):

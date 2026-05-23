@@ -5,9 +5,11 @@ from pc_circular.generators import (
     equal_distance_instance,
     paired_farthest_matching,
     permuted_cycle_metric,
+    quasi_circular_not_circular_four_point,
 )
 from pc_circular.pc_tree import (
     balanced_pc_tree,
+    c_node,
     enumerate_frontiers,
     leaf,
     p_node,
@@ -15,10 +17,12 @@ from pc_circular.pc_tree import (
     sample_frontier,
     star_pc_tree,
 )
-from pc_circular.predicates import canonical_circular_order, is_precircular_order_cR
+from pc_circular.predicates import all_circular_orders, canonical_circular_order, is_precircular_order_cR
 from pc_circular.solvers.candidate import (
+    EXACT_PC_TREE_FRONTIER_LIMIT,
     _minimum_distance_cycle_order,
     _paired_farthest_order,
+    _pc_tree_frontier_upper_bound,
     solve,
 )
 
@@ -37,6 +41,28 @@ def _cycle_metric_for_order(order):
         for j in range(i + 1, n):
             delta = abs(position[i] - position[j])
             D[i][j] = D[j][i] = min(delta, n - delta)
+    return D
+
+
+def _plateau_cycle_metric(n):
+    D = [[0 for _ in range(n)] for _ in range(n)]
+    for i in range(n):
+        for j in range(i + 1, n):
+            delta = min((j - i) % n, (i - j) % n)
+            D[i][j] = D[j][i] = max(1, delta - 1)
+    return D
+
+
+def _rigid_c_tree(n):
+    return c_node([leaf(i) for i in range(n)])
+
+
+def _extended_non_cr_four_point_instance(n):
+    D = equal_distance_instance(n)
+    base = quasi_circular_not_circular_four_point()
+    for i in range(4):
+        for j in range(4):
+            D[i][j] = base[i][j]
     return D
 
 
@@ -93,6 +119,58 @@ def test_candidate_marks_sampled_positive_witness_complete():
     assert result["complete"] is True
     assert result["solver"] == "candidate_validated_sampled_witness"
     assert is_precircular_order_cR(D, result["order"])
+
+
+def test_candidate_exact_bounded_pc_tree_finds_large_rigid_c_tree_witness_without_shortcut():
+    D = _plateau_cycle_metric(9)
+    T = _rigid_c_tree(9)
+
+    assert enumerate_frontiers(T, canonical=True) == [tuple(range(9))]
+    assert _minimum_distance_cycle_order(D, 9) is None
+    assert _paired_farthest_order(D, 9) is None
+    result = solve(D, pc_tree=T)
+
+    assert result["exists"] is True
+    assert result["complete"] is True
+    assert result["solver"] == "candidate_exact_bounded_pc_tree_frontiers"
+    assert result["frontier_count"] == 1
+    assert result["frontiers_enumerated"] == 1
+    assert result["frontier_limit"] == EXACT_PC_TREE_FRONTIER_LIMIT
+    assert is_precircular_order_cR(D, result["order"])
+    assert represents_order(T, result["order"])
+
+
+def test_candidate_exact_bounded_pc_tree_proves_large_rigid_negative():
+    D = _extended_non_cr_four_point_instance(9)
+    T = _rigid_c_tree(9)
+    natural = tuple(range(9))
+
+    assert enumerate_frontiers(T, canonical=True) == [natural]
+    assert not is_precircular_order_cR(D, natural)
+    result = solve(D, pc_tree=T)
+
+    assert result["exists"] is False
+    assert result["order"] is None
+    assert result["complete"] is True
+    assert result["solver"] == "candidate_exact_bounded_pc_tree_frontiers"
+    assert result["frontier_count"] == 1
+
+
+def test_candidate_exact_bounded_pc_tree_skips_large_star_frontier_space_without_false_negative():
+    D = _extended_non_cr_four_point_instance(9)
+    T = star_pc_tree(9)
+    sampled = enumerate_frontiers(T, canonical=True, limit=64)
+
+    assert _pc_tree_frontier_upper_bound(T) > EXACT_PC_TREE_FRONTIER_LIMIT
+    assert len(sampled) == 64
+    assert not any(is_precircular_order_cR(D, order) for order in sampled)
+    assert any(is_precircular_order_cR(D, order) for order in all_circular_orders(9))
+
+    result = solve(D, pc_tree=T)
+    assert result["exists"] is False
+    assert result["complete"] is False
+    assert result["solver"] == "candidate_large_n_placeholder"
+    assert result["tried_orders"] == 64
 
 
 def test_candidate_finds_large_permuted_cycle_witness_in_star_tree():

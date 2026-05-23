@@ -222,6 +222,45 @@ pas les cas non stricts, et l'étape suivante doit soit prouver que la générat
 couvre les ordres stricts représentés, soit l'utiliser seulement comme
 diagnostic/certificat positif.
 
+## PC-tree exact à nombre de frontiers borné
+
+Statut : sous-cas exact intégré à `candidate.py`, énumératif mais complet quand
+la borne est sous le seuil.
+
+`candidate_exact_bounded_pc_tree_frontiers` s'applique seulement quand un
+`pc_tree` est fourni et qu'aucune famille `quasi_orders` explicite ne remplace
+ce PC-tree. La candidate calcule d'abord un upper bound récursif saturé sur le
+nombre de frontiers du scaffold :
+
+- feuille : `1` ;
+- nœud `P` : produit des enfants fois `degree!` ;
+- nœud `C` : produit des enfants fois `2` ;
+- toute multiplication est saturée à `EXACT_PC_TREE_FRONTIER_LIMIT + 1`.
+
+Si cette borne est au plus la limite, la candidate énumère toutes les frontiers
+canoniques représentées, les teste par `is_precircular_order_cR`, et retourne
+une décision complète positive ou négative. Si la borne dépasse la limite, elle
+ne conclut pas et laisse les certificats positifs/placeholder existants gérer la
+suite.
+
+Résultat T028 :
+
+- `n=9`, C-tree rigide et métrique plateau-cycle : positif exact, sans passer
+  par les témoins minimum-cycle ou paired-farthest ;
+- `n=9`, C-tree rigide et contre-exemple 4 points étendu : négatif exact ;
+- `n=9`, star sur la même matrice : la borne dépasse la limite, les 64 premiers
+  échantillons ne contiennent aucun témoin, mais un ordre cR existe hors sample ;
+  la candidate reste donc `complete=False`.
+
+Limites :
+
+- ce sous-cas ne prouve pas de complexité générale, seulement une énumération
+  complète lorsque la borne indépendante est petite ;
+- l'upper bound surcompte parfois à cause de la canonicalisation circulaire, ce
+  qui est sûr mais peut rater des opportunités ;
+- le résultat concerne le scaffold PC-tree enraciné du dépôt, pas une
+  implémentation complète Hsu/McConnell non enracinée.
+
 ## Témoin cycle par distances minimales
 
 Statut : certificat positif intégré pour tout PC-tree du scaffold où le témoin

@@ -1055,3 +1055,50 @@
   solveur compact. `candidate.py` reste inchangé.
 - Next action : soit chercher une construction non énumérative de ces nogoods,
   soit revenir à un sous-cas prouvable où les supports bad-side se factorisent.
+
+## 2026-05-23 bounded exact PC-tree candidate subcase
+
+- Date/heure : 2026-05-23, Europe/Paris.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : quand le PC-tree fourni a un nombre de frontiers certifié
+  sous une petite limite, on peut décider exactement l'existence cR même pour
+  `n > 8`, sans prétendre résoudre les grands `P`.
+- Changement fait : ajout de `EXACT_PC_TREE_FRONTIER_LIMIT`,
+  `_pc_tree_frontier_upper_bound` et
+  `candidate_exact_bounded_pc_tree_frontiers` dans `candidate.py`; ajout de
+  tests `n=9` positif rigide sans shortcut, négatif rigide, et gros star qui
+  doit rester incomplet malgré un témoin hors sample.
+- Commande exécutée avant modification : `make quick`.
+- Résultat correction avant modification : `108 passed in 1.82s`, puis
+  `JUSTE`.
+- Plan subagents : deux explorateurs lecture seule. Résultats : ne jamais
+  utiliser une énumération tronquée comme preuve, garder `quasi_orders`
+  prioritaire, placer la branche avant sampling, et tester un positif
+  plateau-cycle sans shortcut, un négatif rigide, et un star trop grand qui
+  reste `complete=False`.
+- Commande exécutée : `pytest -q tests/test_candidate.py`.
+- Résultat correction : `20 passed`.
+- Probe exécutée : comparaison de la nouvelle branche à `exact_oracle_pc_tree`
+  sur arbres rigides et one-P, `n=9..11`, familles cycle/equal/paired/random.
+- Résultat probe : `42` décisions de
+  `candidate_exact_bounded_pc_tree_frontiers`, aucun désaccord oracle.
+- Commande exécutée : `make unit`.
+- Résultat correction : `111 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `111 passed in 1.92s`, puis `JUSTE`.
+- Commande exécutée : `make hunt-counterexamples`.
+- Résultat correction : `JUSTE` sur exhaustif `n=4`, `5000` random,
+  `max-n=8`, seed `314159`, shrink actif.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `0` timeout, `0` incomplet ; dernier `n=20` via
+  `candidate_validated_sampled_witness` sur 4 runs et
+  `candidate_universal_bad_witness_bound_all_orders` sur 1 run.
+- Conclusion : sous-cas exact utile intégré. Les résultats négatifs complets
+  sont permis uniquement quand l'upper bound indépendant prouve que toutes les
+  frontiers du scaffold ont été énumérées.
+- Next action : chercher une construction non énumérative pour les PC-trees
+  au-delà de la limite, ou un sous-cas où la borne reste polynomialement petite.
