@@ -101,6 +101,17 @@ Cette commande écrit `reports/p3_width_stress.json` pour les arbres
 visibles : largeur exacte, caps dépassés, témoins validés, et lignes
 incomplètes. Elle ne valide pas la candidate générale.
 
+Stress domaine single-P Piste F :
+
+```bash
+make bench-single-p-stress
+```
+
+Cette commande écrit `reports/single_p_domain_stress.json` pour un PC-tree star.
+Elle garde visible le cas où le CSP a une seule variable et treewidth `0`, mais
+où le domaine local du nœud `P` est factoriel. Elle ne valide pas la candidate
+générale et ne doit pas être confondue avec une preuve de dureté.
+
 ## Interprétation
 
 Un algorithme qui passe les gates peut encore être faux. Après chaque succès, il

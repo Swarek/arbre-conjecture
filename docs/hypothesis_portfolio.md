@@ -20,6 +20,11 @@ lue comme un routage multi-pistes, pas comme une instruction de se concentrer
 sur T057. Elle alimente bad-side fixed-order, quartet CSP, 2-SAT/treewidth,
 circular-ones/universalité et catalogue de relations non booléennes.
 
+Complément red-team 2026-05-23 :
+`docs/external_reviews/gpt55_red_team_domain_warning_2026-05-23.md` rappelle
+que la treewidth du CSP ne suffit pas sans borne ou compression prouvée des
+domaines `P`. Le cas star/single `P` doit rester un stress prioritaire.
+
 ## Piste A : contraintes locales sur nœuds P/C
 
 Intuition : les croisements de cordes farthest-neighbor imposent peut-être des
@@ -89,6 +94,10 @@ nouveaux sous garde de coût. Sans gain mesuré, basculer vers le catalogue de
 relations non booléennes/gadgets ou vers la collision de second ordre T057.
 Garder séparés les UNSAT relationnels tant que la suffisance globale du modèle
 relationnel n'est pas prouvée.
+
+Mise à jour T064 : avant toute intégration treewidth dans `candidate.py`,
+toujours reporter aussi la taille maximale de domaine local. Une ligne de
+treewidth `0` sur un gros `P` peut cacher `(n-1)!/2` états.
 
 ## Piste D : intersection de contraintes type PC-tree / circular-ones
 
@@ -162,6 +171,11 @@ Prochain essai concret : utiliser le graphe primal et le catalogue de relations
 fusionnées T059 pour comparer PC-trees arbitraires, arbres binaires C-only,
 arbres balanced/mixed et gros nœuds `P`, puis chercher une relation non
 booléenne de type gadget sans masquer les contraintes parasites de `D`.
+
+Mise à jour T064 : le benchmark single `P` confirme que le paramètre "treewidth
+du graphe primal" est insuffisant seul. Le prochain axe F doit donc combiner
+largeur, taille de domaine et représentation compacte des permutations de gros
+`P`.
 
 Sous-cas ajouté : explorer le cas strict comme algorithme spécialisé
 potentiellement polynomial. Ne pas l'intégrer à `candidate.py` avant d'avoir une

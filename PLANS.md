@@ -4158,3 +4158,57 @@ Décision : garder T057 comme piste de compression à falsifier, mais poursuivre
 le Goal par décision multi-pistes. Prochaine étape recommandée : probe borné de
 gain positive-only T060/T061 avant toute intégration candidate ; sans gain,
 basculer vers catalogue non booléen/gadgets ou collision de second ordre.
+
+## ExecPlan 2026-05-23 - Single P-node domain stress
+
+But : transformer la revue red-team GPT 5.5 Pro en artefact reproductible. Le
+risque teste est que la treewidth du CSP soit faible, voire nulle, pendant que
+le domaine local d'un gros noeud `P` est deja factoriel.
+
+Hypothèse : un PC-tree star fournit un stress minimal contre la lecture
+"contraintes binaires/treewidth faible donc facile". Le graphe primal unary a
+treewidth `0`, mais le domaine contient `(n-1)!/2` ordres circulaires.
+
+Fichiers visés : `src/pc_circular/generators.py`,
+`tools/pc_single_p_domain_stress.py`, `tests/test_csp_internal_benchmark.py`,
+`Makefile`, `README.md`, `docs/experiment_protocol.md`,
+`docs/external_reviews/`, `docs/tracks/piste_c_sat_csp.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/proof_obligations.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `docs/tracks/README.md`,
+`PLANS.md`.
+
+Algorithme pressenti : ajouter un gadget quatre points
+`single_bad_side_quartet_instance` avec exactement une contrainte nonseparation
+`not sep(0,2;1,3)`, puis un outil CLI qui mesure, pour des PC-trees star, la
+taille du domaine circulaire, les contraintes bad-side explicites et le nombre
+d'ordres cR inspectes sous limite.
+
+Plan de contre-exemples : inclure equal-distance comme controle `all orders`,
+cycle comme ordre rare mais positif, random comme negatif frequent,
+paired-farthest comme famille hard-looking, et les gadgets `single_quartet` /
+`four_local_non_cr` comme petits controles structurels.
+
+Tests à exécuter : test ciblé du stress single-P, `make bench-single-p-stress`,
+tests ciblés CSP, `make quick`, et `make bench-quick` si le changement touche
+les targets de benchmark. `candidate.py` ne doit pas changer.
+
+Risques : ce benchmark ne prouve pas la durete ; il montre seulement que
+treewidth seule n'est pas un parametre suffisant quand les domaines `P` sont
+factoriels.
+
+Résultats observés : ajout de `single_bad_side_quartet_instance`,
+`tools/pc_single_p_domain_stress.py`, cible `make bench-single-p-stress`,
+test ciblé et documentation R003/T064. Le test ciblé
+`tests/test_csp_internal_benchmark.py::test_single_p_domain_stress_exposes_factorial_domain_even_at_treewidth_zero`
+passe. `make bench-single-p-stress` écrit
+`reports/single_p_domain_stress.json` avec `30` lignes,
+`treewidth_zero_rows=30`, `max_domain_size=181440`,
+`max_complete_domain_size=20160`, `incomplete_exact_count_rows=4` et
+`max_unordered_bad_side_constraints=650`. `make quick` passe avec
+`265 passed`, puis `JUSTE`. `make bench-quick` garde `40/40` runs réussis,
+`0` timeout et `0` incomplet.
+
+Décision : T064 devient un garde-fou obligatoire pour la lecture treewidth/FPT :
+reporter la taille de domaine est aussi important que reporter la largeur. Ne
+pas intégrer de DP treewidth candidate sur gros `P` sans borne ou compression
+prouvée du domaine.

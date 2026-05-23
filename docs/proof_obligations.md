@@ -179,6 +179,32 @@ affectations. La prochaine obligation est soit de prouver/implémenter une
 compilation non énumérative, soit de basculer vers une signature DP ou un
 sous-cas polynomial.
 
+### Taille des domaines P et treewidth
+
+Statut : limite expérimentale explicite depuis T064.
+
+La DP treewidth T061 et le stress `p3_block_tree(k)` T062 montrent un paramètre
+de largeur utile, mais T064 ajoute l'autre obstruction : un PC-tree star possède
+un seul noeud `P`, donc le graphe primal d'un CSP local peut avoir treewidth
+`0`, tandis que le domaine contient `(n-1)!/2` ordres circulaires.
+
+Obligation de preuve ajoutée :
+
+- toute revendication FPT doit expliciter à la fois la treewidth et la taille
+  maximale des domaines locaux, ou donner une représentation compacte prouvée
+  des permutations de `P` ;
+- une preuve polynomial-time ne peut pas s'appuyer seulement sur la portée
+  binaire des quartets ni sur une treewidth faible ;
+- une intégration `candidate.py` de la DP treewidth ne doit pas conclure
+  `False` sur un gros `P` non prouvé, et tout `True` doit rester vérifié par un
+  ordre reconstruit.
+
+Preuve expérimentale T064 : `make bench-single-p-stress` donne `30` lignes de
+treewidth unary `0`, mais un domaine maximal `181440` à `n=10`, un domaine
+complètement énuméré `20160` à `n=9`, et `cycle n=9` n'a qu'un ordre cR sur
+`20160`. Ce n'est pas une preuve de dureté ; c'est un garde-fou contre une
+fausse borne de complexité.
+
 ### Caractérisation bad-side d'un ordre fixé
 
 Statut : conséquence directe pour ordre fixé + prédicat central exact depuis

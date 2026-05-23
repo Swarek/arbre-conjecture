@@ -3155,3 +3155,42 @@
 - Next action : lancer un probe borné pour mesurer si T060/T061 apportent de
   vrais témoins positifs nouveaux avant toute intégration dans `candidate.py`,
   ou basculer vers le catalogue de relations non booléennes/gadgets.
+
+## 2026-05-23 single P-node domain stress
+
+- Date/heure : 2026-05-23 14:35:00 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : la treewidth du CSP de quartets n'est pas un paramètre
+  suffisant si un gros nœud `P` garde un domaine local factoriel. Le cas star a
+  une seule variable et treewidth `0`, mais domaine `(n-1)!/2`.
+- Changement fait : ajout du gadget `single_bad_side_quartet_instance`, de
+  `tools/pc_single_p_domain_stress.py`, de la cible
+  `make bench-single-p-stress`, d'un test ciblé, et documentation R003/T064
+  dans les pistes, obligations de preuve, protocole et plans.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop` propre
+  au commit `915bdb6`; `264 passed`, puis `JUSTE`.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_csp_internal_benchmark.py::test_single_p_domain_stress_exposes_factorial_domain_even_at_treewidth_zero`.
+- Résultat correction ciblée : `1 passed`.
+- Commande exécutée : `make bench-single-p-stress`.
+- Résultat benchmark single-P : `reports/single_p_domain_stress.json` écrit ;
+  `30` lignes, `12` skipped, `treewidth_zero_rows=30`,
+  `max_domain_size=181440`, `max_complete_domain_size=20160`,
+  `incomplete_exact_count_rows=4`, `max_unordered_bad_side_constraints=650`,
+  `zero_cr_rows=5`, `all_cr_rows=6`.
+- Commande exécutée : `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_csp_internal_benchmark.py tests/test_pc_tree_frontiers.py`.
+- Résultat correction ciblée élargie : `13 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction finale : `265 passed`, puis `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `8` tailles, `40/40` runs réussis, `0` timeout et `0` incomplet.
+- Conclusion : T064 rend durable le point red-team : treewidth faible ne suffit
+  pas sans borne/compaction prouvée des domaines `P`. `candidate.py` n'a pas
+  été modifié.
+- Next action : poursuivre avec un catalogue de relations non booléennes entre
+  petits nœuds `P`, en reportant toujours contraintes parasites, taille de
+  domaine et validité du promise.

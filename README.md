@@ -42,6 +42,7 @@ make bench
 make bench-piste-f
 make bench-csp-quick
 make bench-width-stress
+make bench-single-p-stress
 make acceptance
 ```
 
@@ -67,6 +68,11 @@ gate de la candidate générale.
 `p3_block_tree(k)`. Ce benchmark montre comment les relations de quartets
 restent résolubles à largeur bornée puis deviennent incomplètes sous cap ; il
 sert à documenter les limites de la piste DP/treewidth.
+
+`make bench-single-p-stress` écrit `reports/single_p_domain_stress.json` pour
+le cas d'un seul gros nœud `P`. Il sert de garde-fou contre une mauvaise lecture
+de la treewidth : le graphe primal peut avoir largeur `0` pendant que le domaine
+local contient déjà `(n-1)!/2` ordres circulaires.
 
 Dans `tools/pc_circular_conjecture_test.py`, la sortie `JUSTE` signifie seulement
 que la candidate a été égale à l’oracle exact sur les instances générées par ce

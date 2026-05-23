@@ -158,6 +158,22 @@ def quasi_circular_not_circular_four_point() -> list[list[int]]:
     ]
 
 
+def single_bad_side_quartet_instance() -> list[list[int]]:
+    """Four-point gadget with exactly one nontrivial bad-side pair.
+
+    With labels ``a=0, b=1, c=2, d=3``, the only pair with two bad witnesses is
+    ``{a,c}``, and ``B_ac = {b,d}``.  It isolates the quartet constraint
+    ``not sep(a,c; b,d)`` for stress tests of a single large ``P`` domain.
+    """
+
+    return [
+        [0, 2, 1, 2],
+        [2, 0, 2, 3],
+        [1, 2, 0, 2],
+        [2, 3, 2, 0],
+    ]
+
+
 def four_local_non_cr_core() -> list[list[int]]:
     """Five-point obstruction whose every four-point induced submatrix is cR."""
 

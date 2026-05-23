@@ -1171,3 +1171,37 @@ Interprétation complexité : cette famille montre que la DP T061 est bien une
 piste FPT par largeur, pas une preuve de tractabilité générale. Elle doit rester
 dans les benchmarks de recherche pour empêcher une confusion entre "relations
 binaires" et "problème facile".
+
+## Résultat T064 - Single P-node : treewidth zéro, domaine factoriel
+
+Statut : stress de complexité sur la taille de domaine, hors candidate.
+
+La revue red-team R003 signale une faiblesse de toute lecture "CSP binaire +
+treewidth" : un PC-tree star a une seule variable locale, donc treewidth `0`,
+mais le domaine du noeud `P` contient `(n-1)!/2` ordres circulaires.
+
+T064 ajoute `make bench-single-p-stress`. Le rapport
+`reports/single_p_domain_stress.json` mesure des familles `equal`, `cycle`,
+`random`, `paired_farthest`, `single_quartet` et `four_local_non_cr` sur des
+tailles `4..10`.
+
+Résultat observé :
+
+- `30` lignes profilées ;
+- `treewidth_zero_rows=30` ;
+- `max_domain_size=181440` à `n=10` ;
+- `max_complete_domain_size=20160` à `n=9` ;
+- `incomplete_exact_count_rows=4` sous limite `25000` ;
+- `max_unordered_bad_side_constraints=650` ;
+- `cycle n=9` : `1/20160` ordre cR ;
+- `random n=9` : `0/20160` ordre cR sur la seed du rapport ;
+- equal-distance : tous les ordres inspectés sont cR.
+
+Conclusion : la classification FPT doit au minimum mentionner deux paramètres :
+la treewidth du graphe primal et la taille/representabilite compacte des
+domaines locaux. Le cas single `P` est maintenant un garde-fou contre toute
+revendication de polynomialite fondee seulement sur une largeur faible.
+
+Prochaine action Piste F : cataloguer les relations non booleennes entre petits
+noeuds `P`, mais en reportant toujours les contraintes parasites et la taille
+des domaines. La piste de durete reste plausible, pas prouvee.

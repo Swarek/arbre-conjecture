@@ -1,7 +1,7 @@
 PYTHON ?= $(shell if [ -x .venv/bin/python ]; then echo .venv/bin/python; elif command -v python3 >/dev/null 2>&1; then echo python3; else echo python; fi)
 PYTEST ?= $(PYTHON) -m pytest
 
-.PHONY: quick check hunt-counterexamples bench-quick bench bench-piste-f bench-csp-quick bench-width-stress unit acceptance
+.PHONY: quick check hunt-counterexamples bench-quick bench bench-piste-f bench-csp-quick bench-width-stress bench-single-p-stress unit acceptance
 
 unit:
 	$(PYTEST) -q
@@ -116,6 +116,13 @@ bench-width-stress:
 	  --instance-kinds cycle,paired_farthest,equal \
 	  --max-treewidth 4 \
 	  --output reports/p3_width_stress.json
+
+bench-single-p-stress:
+	mkdir -p reports && \
+	$(PYTHON) tools/pc_single_p_domain_stress.py \
+	  --sizes 4,5,6,7,8,9,10 \
+	  --frontier-limit 25000 \
+	  --output reports/single_p_domain_stress.json
 
 acceptance:
 	make check && make bench

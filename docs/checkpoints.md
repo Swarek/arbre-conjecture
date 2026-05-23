@@ -510,6 +510,14 @@ Dernier commit green avant T009 : `07120e4`.
   la revue GPT 5.5 Pro bad-side/quartets après critique utilisateur. Validation
   observée : `make quick` (`264 passed`, puis `JUSTE`). Aucun changement
   algorithmique ni modification de `candidate.py`.
+- Checkpoint R003/T064 courant : commit contenant le benchmark single `P`-node
+  et la revue red-team sur la taille de domaine. Validation observée :
+  test ciblé single-P (`1 passed`), tests ciblés
+  `tests/test_csp_internal_benchmark.py tests/test_pc_tree_frontiers.py`
+  (`13 passed`), `make bench-single-p-stress` (`30` lignes,
+  `treewidth_zero_rows=30`, `max_domain_size=181440`), `make quick`
+  (`265 passed`, puis `JUSTE`) et `make bench-quick` (`40/40` runs, `0`
+  timeout, `0` incomplet). `candidate.py` n'a pas été modifié.
 
 ## Rollback
 

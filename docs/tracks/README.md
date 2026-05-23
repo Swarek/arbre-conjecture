@@ -108,6 +108,8 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T060 | 2026-05-23 | C/F | Solveur 2-SAT exact sur les relations effectives booléennes ; SAT/UNSAT et témoins vérifiés hors candidate | `solve_quartet_2sat` |
 | T061 | 2026-05-23 | C/F | DP/treewidth exacte bornée sur relations effectives, incluant les domaines non booléens `P3` | `solve_quartet_treewidth_csp` |
 | T062 | 2026-05-23 | C/F | Stress `p3_block_tree(k)` ajouté ; largeur croissante et cap incomplet visibles dans un JSON | `make bench-width-stress` |
+| R003 | 2026-05-23 | C/F | Revue red-team : treewidth faible ne suffit pas si le domaine `P` est factoriel | `docs/external_reviews/gpt55_red_team_domain_warning_2026-05-23.md` |
+| T064 | 2026-05-23 | C/F | Stress single `P`-node : treewidth `0`, domaine `(n-1)!/2`, énumération bornée visible | `make bench-single-p-stress` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

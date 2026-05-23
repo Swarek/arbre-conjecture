@@ -1059,6 +1059,39 @@ Prochaine action : mesurer si `solve_quartet_treewidth_csp` trouve des témoins
 positifs réellement nouveaux pour `candidate.py` sous une garde de coût stricte,
 ou basculer vers le catalogue de relations non booléennes/gadgets.
 
+## Tentative T064 - Stress single P-node et domaine factoriel
+
+Statut : benchmark de limite du modèle CSP/treewidth, hors `candidate.py`.
+
+Changement : ajout de `tools/pc_single_p_domain_stress.py`, câblé par
+`make bench-single-p-stress`. Le rapport prend un PC-tree star comme un seul
+gros noeud `P`, donc un modèle CSP unary de treewidth `0`, puis mesure la
+taille du domaine circulaire `(n-1)!/2`, les contraintes bad-side explicites et
+le nombre d'ordres cR inspectés sous limite.
+
+Gadget ajouté : `single_bad_side_quartet_instance()` donne quatre points avec
+une unique paire non triviale `{0,2}` et `B_02 = {1,3}`. Elle isole une seule
+contrainte `not sep(0,2;1,3)` : le star contient `3` ordres circulaires et `2`
+passent cR.
+
+Résultat `make bench-single-p-stress` :
+
+- `30` lignes et `12` lignes ignorées car les petits gadgets ne s'appliquent
+  qu'à `n=4` ou `n=5` ;
+- toutes les lignes ont treewidth unary `0` ;
+- domaine maximal visible `181440` à `n=10` ;
+- plus grand domaine complètement énuméré `20160` à `n=9` ;
+- `4` lignes `n=10` sont volontairement incomplètes sous limite `25000` ;
+- plus grand nombre de contraintes bad-side non orientées `650` ;
+- `cycle n=9` : `1` ordre cR sur `20160` ;
+- equal-distance : tous les ordres inspectés sont cR.
+
+Interprétation : T064 corrige une lecture trop optimiste de T061/T062. La
+treewidth du graphe primal est un bon paramètre seulement avec une borne ou une
+compression prouvée des domaines locaux. Pour les gros `P`, le domaine local
+peut déjà contenir le problème. Une future intégration treewidth candidate doit
+donc rester positive-only ou prouvée dans un sous-cas avec domaine borné.
+
 ## Tentative T021 - Repair positive-only pour paired-farthest
 
 Statut : idée saine comme générateur expérimental vérifié, mais non intégrée à

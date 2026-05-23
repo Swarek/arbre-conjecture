@@ -1,5 +1,6 @@
 from tools.pc_csp_internal_benchmark import run_benchmark
 from tools.pc_csp_width_stress import run_width_stress
+from tools.pc_single_p_domain_stress import run_single_p_domain_stress
 
 
 def test_csp_internal_benchmark_reports_separate_compile_and_solve_metrics():
@@ -337,3 +338,40 @@ def test_p3_block_width_stress_reports_growth_and_caps():
     assert capped_row["treewidth_complete"] is False
     assert capped_row["treewidth_exists"] is None
     assert capped_row["treewidth_reason"] == "treewidth_cap_exceeded"
+
+
+def test_single_p_domain_stress_exposes_factorial_domain_even_at_treewidth_zero():
+    report = run_single_p_domain_stress(
+        sizes=[4, 6],
+        instance_kinds=["equal", "cycle", "single_quartet"],
+        frontier_limit=1000,
+    )
+
+    assert report["summary"]["rows"] == 5
+    assert report["summary"]["treewidth_zero_rows"] == 5
+    assert report["summary"]["max_domain_size"] == 60
+    assert report["summary"]["max_complete_domain_size"] == 60
+    assert report["summary"]["incomplete_exact_count_rows"] == 0
+
+    equal6 = next(
+        row
+        for row in report["rows"]
+        if row["n"] == 6 and row["instance_kind"] == "equal"
+    )
+    assert equal6["domain_size"] == 60
+    assert equal6["cr_order_count"] == 60
+
+    quartet = next(
+        row for row in report["rows"] if row["instance_kind"] == "single_quartet"
+    )
+    assert quartet["n"] == 4
+    assert quartet["domain_size"] == 3
+    assert quartet["bad_side"]["nontrivial_bad_side_pairs"] == 1
+    assert quartet["bad_side"]["unordered_bad_side_constraints"] == 1
+    assert quartet["bad_side"]["oriented_bad_side_atoms"] == 2
+    assert quartet["bad_side"]["first_nontrivial_pair"] == {
+        "pair": [0, 2],
+        "bad_witnesses": [1, 3],
+        "unordered_constraints": 1,
+    }
+    assert quartet["cr_order_count"] == 2
