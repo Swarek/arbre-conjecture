@@ -4898,3 +4898,69 @@ Décision : T075 remplit le diagnostic A/D demandé et renforce le rejet des
 règles locales indépendantes par nœud. Ne pas intégrer dans `candidate.py`.
 Prochaine piste recommandée : audit strict Algorithm 5.2, ou formalisation
 d'une vraie relation de bord pour les quartets bad-side.
+
+## ExecPlan 2026-05-23 - Strict Algorithm 5.2 completeness audit
+
+But : reprendre la piste stricte après T075 et transformer les probes ad hoc de
+T024 en benchmark reproductible. L'objectif borné est de comparer
+`strict_algorithm52_report` aux ordres stricts exacts énumérés sur petites
+instances, avec et sans PC-tree, avant toute intégration dans `candidate.py`.
+
+Hypothèse : le générateur inspiré d'Algorithm 5.2, après vérification directe
+des ordres, récupère tous les ordres strict quasi et strict circular observés
+sur les instances strictement énumérables. Si un mismatch apparaît, il devient
+un contre-exemple de complétude de l'artefact strict, pas une faiblesse de
+l'oracle.
+
+Fichiers visés : `tools/pc_strict_algorithm52_audit.py`,
+`tests/test_strict_experiments.py`, `Makefile`, `README.md`,
+`docs/experiment_protocol.md`, `docs/hypothesis_portfolio.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/proof_obligations.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `docs/tracks/README.md`,
+`PLANS.md`.
+
+Algorithme pressenti : énumérer exactement les ordres circulaires ou les
+frontiers d'un PC-tree pour `n <= 8`, calculer les ensembles exacts
+`strict_quasi`, `strict_precircular`, `strict_circular`, puis comparer ces
+ensembles aux sorties vérifiées de `strict_algorithm52_report`. Agréger les
+mismatches, limites de candidats, tailles de candidats, cas représentés/non
+représentés, et écrire un JSON.
+
+Plan de contre-exemples : scanner `cycle`, `equal`, `random`, `permuted_cycle`
+si disponible, Fig. 2.2 et le strict positif random T024, sur `none`, `star`,
+`balanced` et `mixed`. En cas de mismatch, enregistrer la matrice et le PC-tree
+dans un test de régression ou un JSON minimal.
+
+Plan subagents : trois explorateurs lecture seule lancés en parallèle :
+lacunes de `strict_algorithm52_report`, garde-fous d'une éventuelle intégration
+positive-only dans `candidate.py`, et familles/métriques de fuzz strict. Le
+travail local ne dépend pas de leurs résultats pour construire l'audit.
+
+Tests à exécuter : test ciblé du nouvel audit, `make bench-strict-algorithm52`,
+`tests/test_strict_experiments.py`, `make quick`, puis `make bench-quick`.
+`candidate.py` ne doit pas changer dans ce checkpoint.
+
+Risques : l'audit reste borné par énumération et ne prouve pas la complétude
+générale d'Algorithm 5.2. Les cas non stricts doivent être comptés sans être
+acceptés comme positifs stricts. Une limite `max_candidates` atteinte rend une
+ligne incomplète, jamais négative.
+
+Résultats observés : ajout de `tools/pc_strict_algorithm52_audit.py`, de la
+cible `make bench-strict-algorithm52`, d'un test de régression borné et de la
+documentation T076. Un probe ad hoc a d'abord comparé
+`strict_algorithm52_report` aux comptes de `strict_order_report` sur `624`
+lignes (`n=4..7`, familles `cycle/equal/random`, PC-trees
+`none/star/balanced`) sans mismatch. Le benchmark reproductible T076 compare
+ensuite les ensembles exacts : `360` lignes, `360` complètes, `0` incomplète,
+`0` mismatch, `0` ordre strict quasi/pre-circular/circular manqué, `138` lignes
+exactes strict circular positives, `0` limite `max_candidates` atteinte,
+`max_seconds=0.0376`. Un test supplémentaire force
+`strict_algorithm52_report(cycle_metric(7), max_candidates=1)` à
+`complete=False` pour verrouiller qu'une limite de candidats ne devient pas un
+rejet.
+
+Décision : ne pas intégrer dans `candidate.py` maintenant. T076 renforce
+Algorithm 5.2 comme générateur de témoins stricts et comme sous-cas à formaliser,
+mais l'audit reste borné, ne traite pas les cas non stricts et ne ferme pas la
+preuve de complétude dans un PC-tree compact. Prochaine étape : preuve
+structurée du sous-cas strict ou probe de couverture positive-only large-n.

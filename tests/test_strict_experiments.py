@@ -24,6 +24,7 @@ from pc_circular.solvers.strict_experiments import (
     strict_ball_circular_ones_report,
     strict_order_report,
 )
+from tools.pc_strict_algorithm52_audit import run_strict_algorithm52_audit
 
 
 def test_strict_linear_robinson_rejects_equalities():
@@ -124,6 +125,15 @@ def test_algorithm52_report_finds_strict_positive_outside_existing_witness_famil
     assert _minimum_distance_cycle_order(D, 5) is None
     assert _paired_farthest_order(D, 5) is None
     assert strict_algorithm52_report(D)["strict_circular_orders"] == [(0, 2, 1, 3, 4)]
+
+
+def test_algorithm52_report_marks_candidate_limit_without_negative_claim():
+    report = strict_algorithm52_report(cycle_metric(7), max_candidates=1)
+
+    assert report["complete"] is False
+    assert report["candidate_count"] == 1
+    assert report["strict_circular_count"] == 0
+    assert report["strict_circular_orders"] == []
 
 
 def test_ball_circular_ones_report_matches_cycle_metric_counts():
@@ -293,6 +303,26 @@ def test_algorithm52_report_matches_exact_strict_orders_n4_values():
         assert set(report["strict_circular_orders"]) == exact_circular
         checked += 1
     assert checked == 729
+
+
+def test_strict_algorithm52_audit_matches_exact_on_bounded_sweep():
+    report = run_strict_algorithm52_audit(
+        sizes=[4, 5],
+        pc_trees=["none", "mixed"],
+        instance_kinds=["fig22", "strict_t024", "cycle", "random", "equal"],
+        repeats=3,
+    )
+
+    summary = report["summary"]
+    assert summary["rows"] == 24
+    assert summary["complete_rows"] == 24
+    assert summary["mismatch_rows"] == 0
+    assert summary["mismatch_total"] == 0
+    assert summary["strict_quasi_missing_total"] == 0
+    assert summary["strict_precircular_missing_total"] == 0
+    assert summary["strict_circular_missing_total"] == 0
+    assert summary["strict_circular_exact_positive_rows"] > 0
+    assert summary["algorithm_limit_hit_rows"] == 0
 
 
 def test_ball_circular_ones_report_matches_quasi_definition_n4_values():

@@ -312,6 +312,40 @@ par rapport à `candidate.py`. Statut : amélioration d'infrastructure et
 contre-signal à une intégration positive-only immédiate ; aucune suffisance
 globale ni aucun rejet général prouvé.
 
+### Audit strict Algorithm 5.2
+
+Statut : preuve expérimentale bornée pour un sous-cas strict, pas preuve de
+complétude générale.
+
+T076 ajoute un audit exact qui compare les ensembles produits par
+`strict_algorithm52_report` aux ensembles stricts exacts obtenus par
+énumération de tous les ordres/frontiers dans le périmètre borné. Le sweep
+observé contient `360` lignes complètes, `0` mismatch, `0` ordre strict
+quasi/pre-circular/circular manqué, `138` lignes avec ordre strict circular
+exact positif, et aucune limite de candidats atteinte.
+
+Obligations couvertes expérimentalement :
+
+- obligation 1 fixed-order : tout ordre compté strict circular est vérifié par
+  `is_strict_circular_robinson_order` ;
+- obligation 4 avec PC-tree : les ordres stricts comptés par le rapport fourni
+  avec `pc_tree` sont filtrés par `represents_order` ;
+- obligation de non-confusion strict/quasi : Fig. 2.2 reste dans les tests et
+  sépare strict quasi de strict circular ;
+- obligation d'incomplétude visible : un cap `max_candidates` bas rend le
+  rapport `complete=False` et ne doit pas produire de rejet.
+
+Limites restantes :
+
+- la preuve que l'Algorithm 5.2 généré couvre tous les ordres stricts
+  compatibles n'est pas écrite ;
+- les résultats sont bornés à l'énumération petite taille ;
+- les cas non stricts et les égalités restent hors périmètre d'un sous-cas
+  strict ;
+- aucune intégration dans `candidate.py` n'est justifiée sans gain large-n
+  mesuré, et elle ne devrait de toute façon être que positive-only avec témoin
+  revérifié.
+
 ### Caractérisation bad-side d'un ordre fixé
 
 Statut : conséquence directe pour ordre fixé + prédicat central exact depuis

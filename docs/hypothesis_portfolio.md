@@ -262,6 +262,13 @@ potentiellement polynomial. Ne pas l'intégrer à `candidate.py` avant d'avoir u
 détection stricte et une génération de candidats stricts vérifiées contre les
 PDF/source notes.
 
+Mise à jour T076 : l'audit borné `make bench-strict-algorithm52` ne trouve aucun
+mismatch entre `strict_algorithm52_report` et l'énumération exacte des ordres
+stricts sur `360` lignes `n=4..7`, avec PC-trees `none/star/balanced/mixed`.
+La piste stricte devient un bon candidat de sous-cas à formaliser, mais pas
+encore une intégration candidate : pas de preuve de complétude générale, pas de
+gain large-n mesuré, et aucun rejet `False` ne serait justifié.
+
 État 2026-05-22 : deux familles explicites ont été ajoutées sans modifier
 `mixed` :
 

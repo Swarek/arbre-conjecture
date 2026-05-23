@@ -233,6 +233,28 @@ pas les cas non stricts, et l'étape suivante doit soit prouver que la générat
 couvre les ordres stricts représentés, soit l'utiliser seulement comme
 diagnostic/certificat positif.
 
+Résultat T076 :
+
+- `tools/pc_strict_algorithm52_audit.py` compare les ensembles vérifiés de
+  `strict_algorithm52_report` aux ensembles exacts obtenus par énumération des
+  ordres/frontiers ;
+- le sweep `make bench-strict-algorithm52` couvre `n=4..7`, PC-trees
+  `none/star/balanced/mixed`, familles `fig22`, `strict_t024`, `cycle`,
+  `permuted_cycle`, `random`, `equal`, et `10` repeats pour les familles
+  aléatoires/permutées ;
+- résultat observé : `360` lignes complètes, `0` ligne incomplète,
+  `0` mismatch, `0` ordre strict quasi/pre-circular/circular manqué,
+  `138` lignes avec ordre strict circular exact positif, aucune limite
+  `max_candidates` atteinte ;
+- un test de régression force aussi `max_candidates=1` sur `cycle_metric(7)` :
+  le rapport devient `complete=False` et ne doit pas être interprété comme
+  rejet.
+
+Décision T076 : cette piste gagne en crédibilité comme générateur de témoins
+stricts, mais elle reste expérimentale. Ne pas intégrer dans `candidate.py`
+tant qu'aucun gain large-n n'est mesuré et tant que la preuve de complétude du
+sous-cas strict dans un PC-tree compact n'est pas écrite.
+
 ## PC-tree exact à nombre de frontiers borné
 
 Statut : sous-cas exact intégré à `candidate.py`, énumératif mais complet quand

@@ -224,6 +224,20 @@ locales `I_x(v)` et les variantes d'arcs de mauvais témoins. Une ligne
 tronquée est incomplète ; un support multi-niveau est un diagnostic de
 corrélation, pas une preuve de non-existence globale ni une décision candidate.
 
+Audit strict Algorithm 5.2 Piste F :
+
+```bash
+make bench-strict-algorithm52
+```
+
+Cette commande écrit `reports/strict_algorithm52_audit.json`. Elle énumère
+exactement les ordres ou frontiers de petites instances, calcule les ensembles
+`strict_quasi`, `strict_precircular` et `strict_circular`, puis les compare aux
+ordres vérifiés produits par `strict_algorithm52_report`. Un mismatch est un
+contre-exemple de complétude de l'artefact strict et doit être régressé. Une
+absence de mismatch reste une preuve expérimentale bornée ; elle ne suffit pas à
+intégrer un rejet `False`, ni à traiter les cas non stricts.
+
 Contrôle promise-aware des permutations locales Piste F/C :
 
 ```bash

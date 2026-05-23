@@ -3742,3 +3742,49 @@
   aucune modification de `candidate.py`.
 - Next action : auditer la complétude de la piste stricte Algorithm 5.2, ou
   formaliser une relation résiduelle exacte pour les quartets bad-side.
+
+## 2026-05-23 strict Algorithm 5.2 exact audit
+
+- Date/heure : 2026-05-23 17:44:47 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : `strict_algorithm52_report`, bien que non prouvé, récupère
+  tous les ordres strict quasi/pre-circular/circular dans les petites instances
+  énumérables, y compris avec PC-tree non-star.
+- Changement fait : ajout de `tools/pc_strict_algorithm52_audit.py`, de la cible
+  `make bench-strict-algorithm52`, d'un test de régression borné et de la
+  documentation T076. `candidate.py` n'a pas été modifié.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `277 passed`, puis `JUSTE`.
+- Plan subagents : trois sidecars lecture seule. Résultats reçus avant
+  documentation finale : deux sidecars recommandent de ne pas intégrer dans
+  `candidate.py` maintenant ; ils demandent un probe préalable, garde
+  positive-only uniquement, revalidation `strict_circular` + cR + représentation,
+  test du cap `max_candidates`, PC-tree non-star, et séparation stricte/non
+  stricte.
+- Commande ad hoc exécutée :
+  comparaison `strict_algorithm52_report` vs `strict_order_report` sur
+  `n=4..7`, familles `cycle/equal/random`, PC-trees `none/star/balanced`.
+- Résultat ad hoc : `624` lignes, `0` mismatch de comptes.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_strict_experiments.py::test_strict_algorithm52_audit_matches_exact_on_bounded_sweep`.
+- Résultat correction ciblée : `1 passed`.
+- Commande exécutée : `rtk make bench-strict-algorithm52`.
+- Résultat benchmark T076 :
+  `reports/strict_algorithm52_audit.json` écrit ; `360` lignes,
+  `360` complètes, `0` ligne incomplète, `0` mismatch,
+  `0` ordre strict quasi manqué, `0` ordre strict pre-circular manqué,
+  `0` ordre strict circular manqué, `138` lignes exactes strict circular
+  positives, `0` limite `max_candidates` atteinte, `max_seconds=0.0376`.
+- Test ajouté : `strict_algorithm52_report(cycle_metric(7), max_candidates=1)`
+  marque `complete=False`, `candidate_count=1`, et ne doit pas être interprété
+  comme rejet strict.
+- Conclusion : T076 renforce la piste stricte comme générateur de témoins et
+  comme sous-cas à formaliser. Il ne prouve pas la complétude générale, ne
+  traite pas les cas non stricts, et ne justifie pas encore une intégration
+  dans `candidate.py`.
+- Next action : soit écrire une preuve structurée du sous-cas strict dans
+  `proof_obligations`, soit mesurer une couverture positive-only large-n avant
+  toute intégration candidate.

@@ -628,6 +628,15 @@ Dernier commit green avant T009 : `07120e4`.
   (`277 passed`, puis `JUSTE`) et `make bench-quick` (`40/40` runs,
   `0` timeout, `0` incomplet). `candidate.py` n'a pas été modifié.
 
+- Checkpoint T076 courant : commit contenant l'audit strict Algorithm 5.2
+  contre énumération exacte bornée. Validation observée : test ciblé audit
+  (`1 passed`), `make bench-strict-algorithm52` (`360` lignes complètes,
+  `0` ligne incomplète, `0` mismatch, `0` ordre strict quasi/pre-circular/cR
+  manqué, `138` lignes positives strict circular exactes,
+  `0` limite candidate atteinte), tests stricts complets à vérifier,
+  `make quick` et `make bench-quick` à exécuter avant commit. `candidate.py`
+  n'a pas été modifié.
+
 ## Rollback
 
 Si une modification régresse et que la cause n’est pas claire :

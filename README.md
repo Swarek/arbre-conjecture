@@ -51,6 +51,7 @@ make bench-sparse-matching
 make bench-sparse-binary-cores
 make bench-quartet-coverage
 make bench-frontier-obstructions
+make bench-strict-algorithm52
 make bench-permutation-like
 make bench-permutation-composition
 make bench-relation-components
@@ -131,6 +132,11 @@ résultats `False` restent diagnostiques.
 exactement représentées sous limite, compte les ordres cR/non-cR, et profile le
 premier quartet cR interdit de chaque mauvais ordre via ses supports PC-tree.
 C'est un diagnostic des corrélations multi-niveaux, pas un solver.
+
+`make bench-strict-algorithm52` écrit `reports/strict_algorithm52_audit.json`.
+Il compare les candidats stricts issus de `strict_algorithm52_report` aux
+ordres stricts exacts énumérés sur petites instances et PC-trees bornés. C'est
+un audit de complétude borné pour le sous-cas strict, pas une preuve générale.
 
 `make bench-permutation-like` écrit `reports/permutation_like_probe.json`. Il
 teste les profils locaux `permutation_like` observés sur `paired_farthest`
