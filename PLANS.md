@@ -1118,3 +1118,67 @@ Décision : conserver comme artefact expérimental T024. Ne pas intégrer dans
 `candidate.py` : la complétude est vérifiée expérimentalement sur petits cas,
 mais pas encore prouvée pour l'existence dans un PC-tree compact ni pour les
 cas non stricts.
+
+## ExecPlan 2026-05-23 - ball circular-ones strict diagnostic
+
+But : tester la piste D en ajoutant un rapport borné qui compare, sur les
+ordres/frontiers énumérables, la contrainte "toutes les boules sont des arcs" à
+`is_quasi_circular_order`, `strict_quasi` et `strict_circular`.
+
+Hypothèse : la famille des boules propres fournit le bon pont circular-ones
+pour générer les ordres quasi-circulaires candidats. Sur les petits cas stricts,
+les ordres dont toutes les boules sont arcs doivent coïncider avec
+`is_quasi_circular_order`; en revanche Fig. 2.2 doit rappeler que ce n'est pas
+une décision cR.
+
+Fichiers à modifier : `src/pc_circular/solvers/strict_experiments.py`,
+`tests/test_strict_experiments.py`, `docs/tracks/piste_d_circular_ones.md`,
+`docs/tracks/README.md`, `docs/proof_obligations.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `PLANS.md`.
+
+Algorithme pressenti : construire toutes les boules propres non triviales
+`B_r(x) = {y : D[x][y] <= r}` pour les rayons observés hors diagonale. Pour un
+ordre donné, tester `is_arc(order, B)` pour chaque boule. Le rapport énumère
+`all_circular_orders(n)` ou les frontiers de `pc_tree` tant que `n <= max_n`,
+compte `ball_arc`, `quasi`, `strict_quasi`, `strict_precircular`,
+`strict_circular`, signale le premier mismatch ball/quasi, et calcule une
+signature de module par vecteur d'appartenance aux boules.
+
+Plan de contre-exemples : Fig. 2.2 doit avoir deux ordres `ball_arc/strict_quasi`
+mais un seul strict circular ; equal-distance doit être ball/quasi/cR non strict
+mais pas strict ; le témoin strict non représenté doit rester absent avec le
+PC-tree `C`; l'exhaustif `n=4` valeurs `{1,2,3}` doit chercher un mismatch
+ball/quasi.
+
+Plan subagents : trois explorateurs lecture seule : invariants
+circular-ones/balles, contre-exemples petits, et API PC-tree/CSP bornée.
+
+Tests à exécuter : tests stricts ciblés, probe exhaustive `n=4` ball/quasi,
+`make unit`, `make quick`, `make bench-quick`.
+
+Risques : traiter les boules triviales comme signal artificiel ; confondre
+quasi-circularité par boules avec circular Robinson ; croire que le rapport
+énumératif est un algorithme scalable ; oublier que l'absence de strict witness
+ne réfute pas un ordre non strict cR.
+
+Résultats observés : `strict_ball_circular_ones_report` ajouté dans
+`strict_experiments.py`. Il énumère les ordres ou frontiers quand `n <= max_n`,
+construit les boules métriques non triviales, compte les ordres où toutes ces
+boules sont des arcs, compare à `is_quasi_circular_order`, `strict_quasi`,
+`strict_precircular` et `strict_circular`, puis fournit une signature de modules
+par appartenance exacte aux boules non triviales. Le rapport expose aussi
+`counts`, `exists`, `order_source`, `incomplete_reasons` et un sanity check de
+représentation PC-tree. Tests ajoutés : `cycle_metric(6)` donne un seul ordre
+ball/quasi/strict ; Fig. 2.2 donne deux ordres ball/quasi mais un seul strict
+circular ; equal-distance garde tous les ordres non stricts mais aucun strict ;
+un random `n=6 seed=7` verrouille un ordre quasi/ball non cR ;
+`cycle_metric(4)` verrouille que les modules sont groupés par signature exacte,
+pas par poids ; le témoin strict non représenté reste absent avec PC-tree ;
+les labels PC-tree invalides sont rejetés, un arbre imbriqué n'a pas de
+mismatch de représentation, et `n=9` est marqué incomplet. Probe locale :
+cycles `n=4..7`, equal-distance et
+random `n=5/6` seeds `0..199` sans mismatch ball/quasi.
+
+Décision : conserver comme diagnostic Piste D. La contrainte de boules confirme
+la génération quasi-circulaire sur petits cas, mais ne décide pas cR et reste
+énumérative dans ce scaffold. Ne pas intégrer dans `candidate.py`.

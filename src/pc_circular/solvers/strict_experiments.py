@@ -6,11 +6,14 @@ instrumentation for Piste F, not a general solver and not used by candidate.py.
 
 from __future__ import annotations
 
-from pc_circular.pc_tree import PCNode, enumerate_frontiers, represents_order
+from pc_circular.pc_tree import PCNode, enumerate_frontiers, labels, represents_order
 from pc_circular.predicates import (
     all_circular_orders,
     canonical_circular_order,
     farthest_sets,
+    is_arc,
+    is_precircular_order_cR,
+    is_quasi_circular_order,
     is_strict_circular_robinson_order,
     is_strict_precircular_order_cR,
     is_strict_quasi_circular_order,
@@ -161,6 +164,143 @@ def strict_algorithm52_report(D, pc_tree: PCNode | None = None, *, max_candidate
     }
 
 
+def strict_ball_circular_ones_report(
+    D,
+    pc_tree: PCNode | None = None,
+    *,
+    max_n: int = 8,
+    frontier_limit: int | None = None,
+) -> dict:
+    """Enumerate small orders and compare ball-arc constraints to predicates.
+
+    This is a bounded Piste D diagnostic.  It tests the circular-ones view of
+    quasi-circularity by requiring every proper metric ball to be an arc in the
+    order, then compares that count to the direct quasi/cR strict predicates.
+    """
+
+    n = validate_dissimilarity(D)
+    balls = _proper_metric_balls(D)
+    modules = _ball_membership_modules(n, balls)
+    base_report = {
+        "implemented": True,
+        "method": "bounded_strict_ball_circular_ones_frontier_report",
+        "n": n,
+        "max_n": max_n,
+        "pc_tree_provided": pc_tree is not None,
+        "frontier_limit": frontier_limit,
+        "ball_count": len(balls),
+        "module_count": len(modules),
+        "modules": modules,
+    }
+    if n > max_n:
+        return {
+            **base_report,
+            "complete": False,
+            "incomplete_reasons": ["n exceeds max_n"],
+            "reason": "n exceeds strict_ball_circular_ones_report max_n",
+            "order_source": None,
+            "counts": None,
+            "exists": {"ball_arc": None, "quasi": None, "strict_circular": None},
+        }
+
+    if pc_tree is None:
+        order_source = "all_circular_orders"
+        orders = list(all_circular_orders(n))
+    else:
+        if set(labels(pc_tree)) != set(range(n)):
+            raise ValueError("pc_tree labels must be exactly 0..n-1")
+        order_source = "pc_tree_frontiers"
+        orders = enumerate_frontiers(pc_tree, canonical=True, limit=frontier_limit)
+
+    ball_arc_orders = []
+    quasi_orders = []
+    strict_quasi_orders = []
+    precircular_orders = []
+    strict_precircular_orders = []
+    strict_circular_orders = []
+    first_ball_quasi_mismatch = None
+    representation_mismatch_count = 0
+    first_representation_mismatch = None
+
+    for order in orders:
+        canonical = canonical_circular_order(order)
+        if pc_tree is not None and not represents_order(pc_tree, canonical):
+            representation_mismatch_count += 1
+            if first_representation_mismatch is None:
+                first_representation_mismatch = canonical
+        ball_arc = _all_balls_are_arcs(canonical, balls)
+        quasi = is_quasi_circular_order(D, canonical)
+        if ball_arc:
+            ball_arc_orders.append(canonical)
+        if quasi:
+            quasi_orders.append(canonical)
+        if ball_arc != quasi and first_ball_quasi_mismatch is None:
+            first_ball_quasi_mismatch = {
+                "order": canonical,
+                "ball_arc": ball_arc,
+                "quasi": quasi,
+                "first_bad_ball": _first_non_arc_ball(canonical, balls),
+            }
+        if is_strict_quasi_circular_order(D, canonical):
+            strict_quasi_orders.append(canonical)
+        if is_precircular_order_cR(D, canonical):
+            precircular_orders.append(canonical)
+        if is_strict_precircular_order_cR(D, canonical):
+            strict_precircular_orders.append(canonical)
+        if is_strict_circular_robinson_order(D, canonical):
+            if pc_tree is None or represents_order(pc_tree, canonical):
+                strict_circular_orders.append(canonical)
+
+    incomplete_reasons = []
+    if frontier_limit is not None and len(orders) >= frontier_limit:
+        incomplete_reasons.append("frontier_limit reached")
+    if representation_mismatch_count:
+        incomplete_reasons.append("enumerated frontier failed represents_order sanity check")
+    complete = not incomplete_reasons
+    counts = {
+        "orders_seen": len(orders),
+        "ball_arc": len(ball_arc_orders),
+        "quasi": len(quasi_orders),
+        "strict_quasi": len(strict_quasi_orders),
+        "precircular": len(precircular_orders),
+        "strict_precircular": len(strict_precircular_orders),
+        "strict_circular": len(strict_circular_orders),
+        "ball_quasi_mismatch": 1 if first_ball_quasi_mismatch is not None else 0,
+        "representation_mismatch": representation_mismatch_count,
+    }
+    exists = {
+        "ball_arc": True if ball_arc_orders else (False if complete else None),
+        "quasi": True if quasi_orders else (False if complete else None),
+        "strict_circular": True if strict_circular_orders else (False if complete else None),
+    }
+
+    return {
+        **base_report,
+        "complete": complete,
+        "incomplete_reasons": incomplete_reasons,
+        "order_source": order_source,
+        "order_count": len(orders),
+        "counts": counts,
+        "exists": exists,
+        "ball_arc_count": len(ball_arc_orders),
+        "quasi_count": len(quasi_orders),
+        "strict_quasi_count": len(strict_quasi_orders),
+        "precircular_count": len(precircular_orders),
+        "strict_precircular_count": len(strict_precircular_orders),
+        "strict_circular_count": len(strict_circular_orders),
+        "ball_arc_witness": ball_arc_orders[0] if ball_arc_orders else None,
+        "quasi_witness": quasi_orders[0] if quasi_orders else None,
+        "strict_quasi_witness": strict_quasi_orders[0] if strict_quasi_orders else None,
+        "strict_circular_witness": strict_circular_orders[0] if strict_circular_orders else None,
+        "first_ball_quasi_mismatch": first_ball_quasi_mismatch,
+        "first_representation_mismatch": first_representation_mismatch,
+        "ball_arc_orders": ball_arc_orders,
+        "quasi_orders": quasi_orders,
+        "strict_quasi_orders": strict_quasi_orders,
+        "strict_circular_orders": strict_circular_orders,
+    }
+
+
 def _strict_J(D, x: int, y: int) -> set[int]:
     if x == y:
         return {x}
@@ -193,3 +333,45 @@ def _segment_options(D, center: int, labels: set[int], first_arc: set[int]) -> l
         _reverse_sort_by_distance(D, center, first_arc) + _sort_by_distance(D, center, second_arc),
     }
     return sorted(order for order in options if len(order) == len(labels))
+
+
+def _proper_metric_balls(D) -> list[tuple[int, tuple[int, ...]]]:
+    n = len(D)
+    balls: set[tuple[int, tuple[int, ...]]] = set()
+    for center in range(n):
+        for radius in sorted(set(D[center])):
+            ball = tuple(point for point in range(n) if D[center][point] <= radius)
+            if 1 < len(ball) < n:
+                balls.add((center, ball))
+    return sorted(balls)
+
+
+def _all_balls_are_arcs(order: tuple[int, ...], balls: list[tuple[int, tuple[int, ...]]]) -> bool:
+    return all(is_arc(order, ball) for _, ball in balls)
+
+
+def _first_non_arc_ball(order: tuple[int, ...], balls: list[tuple[int, tuple[int, ...]]]) -> dict | None:
+    for center, ball in balls:
+        if not is_arc(order, ball):
+            return {"center": center, "ball": ball}
+    return None
+
+
+def _ball_membership_modules(n: int, balls: list[tuple[int, tuple[int, ...]]]) -> list[dict]:
+    buckets: dict[tuple[bool, ...], list[int]] = {}
+    ball_sets = [set(ball) for _, ball in balls]
+    for point in range(n):
+        signature = tuple(point in ball for ball in ball_sets)
+        buckets.setdefault(signature, []).append(point)
+    modules = []
+    for signature, labels in sorted(buckets.items(), key=lambda item: (item[1][0], item[1])):
+        modules.append(
+            {
+                "labels": tuple(labels),
+                "size": len(labels),
+                "ball_ids": tuple(idx for idx, present in enumerate(signature) if present),
+                "signature": signature,
+                "signature_weight": sum(signature),
+            }
+        )
+    return modules

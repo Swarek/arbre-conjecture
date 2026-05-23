@@ -911,3 +911,55 @@
 - Next action : soit formaliser la complétude de la génération strict dans le
   dépôt, soit ajouter un rapport PC-tree/circular-ones borné pour relier ces
   candidats stricts à l'existence représentée par `T`.
+
+## 2026-05-23 ball circular-ones strict diagnostic
+
+- Date/heure : 2026-05-23, Europe/Paris.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les boules métriques non triviales vues comme contraintes
+  d'arcs/circular-ones coïncident avec la quasi-circularité d'un ordre fixé, et
+  peuvent servir de diagnostic pour séparer génération quasi-circulaire et test
+  cR/strict cR.
+- Changement fait : ajout de `strict_ball_circular_ones_report` dans
+  `src/pc_circular/solvers/strict_experiments.py`; ajout de tests cycle,
+  Fig. 2.2, equal-distance, PC-tree non représenté, grande taille incomplète et
+  exhaustif `n=4`.
+- Commande exécutée avant modification : `make quick`.
+- Résultat correction : `89 passed in 0.87s`, puis `JUSTE`.
+- Plan subagents : trois explorateurs lecture seule lancés sur invariants
+  circular-ones/balles, contre-exemples petits et API PC-tree/CSP bornée.
+  Résultats : confirmation que les boules doivent être non triviales
+  `1 < |B| < n`; recommandation d'exposer signatures complètes de modules ;
+  contre-exemples Fig. 2.2, equal-distance, random `n=6 seed=7` star et random
+  `n=6 seed=17` balanced/mixed ; recommandation de champs `counts`, `exists`,
+  `order_source`, `incomplete_reasons` et sanity check `represents_order`.
+- Commande exécutée : `pytest -q tests/test_strict_experiments.py`.
+- Résultat correction : `21 passed`.
+- Probe exécutée : comparaison ball/quasi sur cycles `n=4..7`,
+  equal-distance, random `n=5/6` seeds `0..199`, plus Fig. 2.2.
+- Résultat probe : aucun désaccord ball/quasi ; Fig. 2.2 donne `ball_arc=2`
+  et `strict_circular=1`.
+- Probe exhaustive intégrée aux tests : `n=4`, valeurs `{1,2,3}`.
+- Résultat probe : `729` matrices ; `ball_arc_orders` coïncide exactement avec
+  les ordres `is_quasi_circular_order`, et les ordres strict quasi/strict
+  circular du rapport coïncident avec les prédicats directs.
+- Contre-exemple ajouté : random `n=6 seed=7`, ordre `(0,2,1,4,3,5)` est
+  `ball_arc/quasi` mais pas cR ; le rapport star a `ball_arc=1` et `cR=0`.
+- Gardes PC-tree ajoutés : labels invalides rejetés par `ValueError`, et arbre
+  imbriqué `C(P(0,1), P(2,3), 4)` sans mismatch de représentation.
+- Commande exécutée : `make unit`.
+- Résultat correction : `98 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `98 passed in 1.14s`, puis `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark : `0` timeout, `0` incomplet ; dernier `n=20` via
+  `candidate_universal_bad_witness_bound_all_orders` et
+  `candidate_validated_sampled_witness`, fit polynomial rapide bruité
+  `p ~= 2.69`.
+- Conclusion : la piste D dispose maintenant d'un diagnostic reproductible. Il
+  confirme le rôle des boules comme circular-ones pour quasi-circularité, mais
+  documente aussi que cette contrainte ne décide pas circular Robinson.
+- Next action : construire/intersecter un vrai PC-tree de boules avec le
+  PC-tree fourni, ou chercher des contraintes d'arcs dérivées des quartets cR et
+  les attaquer avec Fig. 2.2/equal-distance/paired-farthest.

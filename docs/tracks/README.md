@@ -17,7 +17,7 @@ ensembles `I_x(v)` sur les branches d'un gros nœud `P`.
 | A - Contraintes locales P/C | `piste_a_local_pc_constraints.md` | Rapport `I_x(v)` implémenté comme diagnostic ; pas solver |
 | B - DP sur PC-tree | `piste_b_dp_pc_tree.md` | Signatures compactées réfutées sur familles stress |
 | C - SAT/CSP | `piste_c_sat_csp.md` | Benchmark interne ajouté ; compilation encore dominante |
-| D - Circular-ones / intersection | `piste_d_circular_ones.md` | Non testée expérimentalement |
+| D - Circular-ones / intersection | `piste_d_circular_ones.md` | Diagnostic boules/circular-ones borné ; pas solver |
 | E - Obstructions farthest/quartets | `piste_e_farthest_quartets.md` | Farthest seul réfuté ; cR quartets restent centraux |
 | F - Complexité / sous-cas | `piste_f_complexity_subcases.md` | Sous-cas universel + témoins positifs intégrés ; Algorithm 5.2 strict en diagnostic |
 
@@ -62,6 +62,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T022 | 2026-05-23 | A/D/F | Projection des farthest sets ajoutée ; sous-cas strict préparé mais non intégré | `project_farthest_sets_to_pc_nodes` |
 | T023 | 2026-05-23 | F | Prédicats stricts d'ordre fixé et rapport strict borné ajoutés ; pas d'intégration candidate | `strict_order_report` |
 | T024 | 2026-05-23 | F | Générateur Algorithm 5.2 strict filtré ; récupère les ordres stricts exacts sur probes bornées | `strict_algorithm52_report` |
+| T025 | 2026-05-23 | D/F | Diagnostic boules non triviales comme contraintes circular-ones ; ball_arc égale quasi sur probes | `strict_ball_circular_ones_report` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

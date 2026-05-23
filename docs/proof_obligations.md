@@ -508,6 +508,46 @@ Limites :
 - les égalités et cas non stricts imposent de garder les clauses dégénérées
   séparées.
 
+### Boules comme contraintes circular-ones
+
+Statut : diagnostic borné Piste D / aucune décision cR.
+
+`strict_ball_circular_ones_report` construit les boules métriques non triviales
+`B_r(x) = {y : D[x][y] <= r}` avec `1 < |B_r(x)| < n`, puis énumère les petits
+ordres ou frontiers représentées pour compter ceux où chaque boule est un arc.
+Le rapport compare ce signal à `is_quasi_circular_order`,
+`is_strict_quasi_circular_order`, `is_precircular_order_cR` et
+`is_strict_circular_robinson_order`.
+
+Ce que cela couvre :
+
+- obligation expérimentale : sur les probes T025, la contrainte "toutes les
+  boules non triviales sont arcs" coïncide avec le prédicat direct
+  `is_quasi_circular_order` ;
+- obligation négative : Fig. 2.2 montre que `ball_arc`/quasi peut avoir deux
+  ordres tandis que strict circular n'en a qu'un ;
+- obligation négative additionnelle : un random `n=6 seed=7` donne un ordre
+  `ball_arc/quasi` mais aucun ordre cR sous star, donc le faux positif n'est
+  pas limité à la figure source ;
+- obligation de représentation : avec PC-tree fourni, le rapport énumère les
+  frontiers de ce PC-tree, donc un ordre strict compté est représenté dans le
+  scaffold borné ;
+- obligation de cas non strict : equal-distance garde tous les ordres
+  `ball_arc/quasi/precircular` mais aucun ordre strict, donc le rapport sépare
+  explicitement non strict et strict.
+
+Limites :
+
+- le rapport est énumératif et marqué incomplet pour `n > max_n` ;
+- il ne construit pas encore le PC-tree/circular-ones des boules ;
+- il ne donne aucune contrainte suffisante pour cR : une fois l'ordre
+  quasi-circulaire trouvé, les quartets cR ou prédicats stricts restent
+  nécessaires ;
+- les singletons sont exclus des boules de diagnostic pour ne pas masquer les
+  signatures de modules, mais cela ne change pas le test d'arc ;
+- les modules sont groupés par signature complète d'appartenance aux boules, pas
+  par simple poids de signature.
+
 ### Prédicats stricts d'ordre fixé
 
 Statut : définitions directes implémentées / base expérimentale Piste F.

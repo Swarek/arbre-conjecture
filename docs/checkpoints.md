@@ -107,6 +107,12 @@ Dernier commit green avant T009 : `07120e4`.
   stricts directs, plus les régressions cycle/Fig. 2.2/random/PC-tree. Validation
   observée : `tests/test_strict_experiments.py`, probe stricte random bornée,
   `make unit`, `make quick`, `make bench-quick`.
+- Checkpoint T025 courant : commit contenant `strict_ball_circular_ones_report`,
+  diagnostic borné comparant boules non triviales comme arcs, quasi-circularité,
+  strict quasi et strict circular, avec signatures exactes de modules par
+  boules et contre-exemple random `ball_arc/quasi` non cR. Validation observée :
+  `tests/test_strict_experiments.py`, probe ball/quasi random bornée,
+  `make unit`, `make quick`, `make bench-quick`.
 
 ## Rollback
 
