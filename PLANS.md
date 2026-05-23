@@ -3969,3 +3969,89 @@ positive-only dans `candidate.py` avec garde de coût et vérification directe,
 soit par une DP treewidth pour les relations non booléennes. Ne pas utiliser
 les UNSAT 2-SAT comme rejets généraux tant que la suffisance du modèle PC-tree
 relationnel n'est pas formalisée.
+
+## ExecPlan 2026-05-23 - Treewidth DP for effective quartet relations
+
+But : transformer le CSP relationnel T059/T060 en solveur exact par élimination
+de largeur bornée, couvrant aussi les domaines non booléens `P3`, toujours hors
+`candidate.py`.
+
+Hypothèse : lorsque `quartet_effective_relation_report` est complet et que le
+graphe primal des `merged_relations` a treewidth exacte sous un cap explicite,
+une bucket-elimination sur les relations fusionnées décide exactement
+l'existence d'une affectation locale dont la frontier est cR dans le scaffold
+supporté. Cela doit accepter les relations non booléennes au lieu de les
+forcer en 2-SAT.
+
+Fichiers visés :
+`src/pc_circular/solvers/sat_like_experiments.py`,
+`tests/test_sat_like_experiments.py`, `tools/pc_csp_internal_benchmark.py`,
+`tests/test_csp_internal_benchmark.py`, `docs/tracks/piste_c_sat_csp.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/proof_obligations.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `docs/tracks/README.md`,
+`PLANS.md`.
+
+Algorithme pressenti : ajouter une option de rapport pour matérialiser toutes
+les `accepted_signatures`, calculer un ordre d'élimination exact borné par
+branch-and-bound simple, puis résoudre par retour arrière ordonné avec
+vérification incrémentale des relations dont toutes les variables sont fixées.
+Ce n'est pas la DP la plus optimisée, mais c'est une DP/CSP exacte bornée et
+falsifiable ; les caps `max_treewidth` et `max_exact_width_variables` doivent
+retourner incomplet, jamais `False`.
+
+Plan de contre-exemples : tester les P3 unaires non booléens, trois blocs P3
+sur `cycle_metric(9)` et `paired_farthest_matching(9)`, tautologies
+equal-distance, constants reject, et un cap de largeur trop bas qui doit
+retourner `treewidth_cap_exceeded`.
+
+Plan subagents : sidecar Piste F/C lecture seule déjà lancé pour API/complexité
+DP ; sidecar contre-exemples lancé pour générateurs adversariaux ; sidecar
+intégration candidate lancé pour décider plus tard si positive-only vaut le
+coût. L'agent principal implémente T061 hors candidate.
+
+Tests à exécuter : tests ciblés
+`tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`,
+`make bench-csp-quick`, puis `make quick`, `make check`, `make bench-quick`.
+`candidate.py` ne doit pas changer dans T061.
+
+Risques : l'ordre greedy existant n'est pas une preuve de treewidth ; il faut
+calculer une largeur exacte sous cap. Les tables tronquées du rapport ne
+suffisent pas ; il faut demander les signatures complètes. Un résultat UNSAT
+DP reste exact seulement dans le scaffold relationnel T059, pas une preuve
+globale du vrai PC-tree Hsu/McConnell.
+
+Résultats observés : `solve_quartet_treewidth_csp` ajouté hors `candidate.py`.
+Le solveur consomme un rapport relationnel matérialisé, calcule un ordre
+d'élimination exact sous `max_treewidth`, fait une élimination de facteurs, puis
+reconstruit un témoin SAT et le vérifie directement cR.
+
+Tests ciblés
+`tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py` :
+`78 passed`. Les tests couvrent :
+
+- UNSAT 2-SAT sans clause vide (`unsat_implication_scc`) pour ne pas limiter
+  les régressions aux contradictions constantes ;
+- P3 non booléen positif sur `cycle_metric(9)` : 2-SAT refuse, DP SAT,
+  treewidth exacte `3`, témoin cR vérifié ;
+- P3 non booléen négatif sur `paired_farthest_matching(9, seed=7)` : DP UNSAT
+  relationnel exact dans le scaffold ;
+- equal-distance tautologique et `four_local_non_cr_core` constant reject ;
+- cap `max_treewidth=2` qui retourne `treewidth_cap_exceeded`, pas `False`.
+
+Benchmark interne : `make bench-csp-quick` écrit
+`reports/csp_internal_benchmark_quick.json` avec `192` lignes supportées,
+`0` mismatch, `0` `quartet_relation_validation_mismatches`, `186` lignes DP
+complètes, `137` SAT, `49` UNSAT, `6` incomplètes par cap de treewidth,
+`0` échec de témoin et treewidth exacte maximale `3` sur les lignes complètes.
+
+Sidecars : le sidecar DP recommande exactement cette bucket-elimination bornée
+et insiste sur les domaines P3 non booléens ; le sidecar contre-exemples fournit
+les tests UNSAT implication, nested positive, P3 positive/negative et clique
+primal ; le sidecar candidate recommande de garder une éventuelle intégration
+T060 en positive-only avec garde stricte, à traiter séparément.
+
+Décision : T061 est un progrès Piste C/F parce qu'il traite les relations non
+booléennes sous largeur bornée au lieu de les jeter hors 2-SAT. Continuer avec
+un catalogue de largeur croissante (`p3_block_tree(k)`) ou une intégration
+positive-only candidate limitée ; ne pas promouvoir les UNSAT relationnels en
+rejets généraux avant preuve du modèle T059.

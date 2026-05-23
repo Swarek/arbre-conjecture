@@ -975,6 +975,57 @@ DP treewidth pour les relations non booléennes. Ne pas utiliser UNSAT 2-SAT en
 candidate avant d'avoir formalisé la suffisance du modèle relationnel et la
 représentation PC-tree.
 
+## Tentative T061 - DP treewidth des relations effectives
+
+Statut : solveur relationnel exact à largeur bornée dans le scaffold T059, hors
+`candidate.py`.
+
+Changement : ajout de `solve_quartet_treewidth_csp`. La fonction demande les
+tables complètes via `store_full_relations=True`, transforme les relations
+fusionnées en facteurs, calcule un ordre d'élimination exact sous
+`max_treewidth`, fait une élimination de facteurs, puis reconstruit un témoin et
+le vérifie directement par `is_precircular_order_cR`.
+
+Ce que T061 ajoute par rapport à T060 :
+
+- les domaines non booléens, par exemple les nœuds `P3` à domaine taille `6`,
+  sont acceptés si la largeur est sous cap ;
+- le cap de largeur retourne `complete=False`, jamais un rejet ;
+- les résultats UNSAT relationnels restent confinés au scaffold expérimental ;
+- le benchmark interne expose le nombre de lignes complètes/incomplètes, la
+  treewidth exacte et les échecs de témoins.
+
+Tests ajoutés :
+
+- matrice C-only `n=5` UNSAT sans clause vide : `solve_quartet_2sat` retourne
+  `unsat_implication_scc`, pour protéger les cycles d'implications ;
+- trois blocs `P3` sur `cycle_metric(9)` : `row_class` non booléen, 2-SAT
+  refuse, DP SAT avec treewidth exacte `3` et témoin cR ;
+- trois blocs `P3` sur `paired_farthest_matching(9, seed=7)` : DP UNSAT
+  relationnel exact dans le scaffold ;
+- equal-distance tautologique et `four_local_non_cr_core` constant reject ;
+- `max_treewidth=2` sur le cas P3 positif : résultat incomplet
+  `treewidth_cap_exceeded`.
+
+Résultat `make bench-csp-quick` :
+
+- `192` lignes supportées, `0` mismatch ;
+- `0` `quartet_relation_validation_mismatches` ;
+- `186` lignes DP complètes ;
+- `137` SAT et `49` UNSAT ;
+- `6` lignes incomplètes par `treewidth_cap_exceeded` ;
+- `0` échec de témoin ;
+- treewidth exacte maximale observée `3` sur les lignes complètes.
+
+Interprétation : T061 fournit le premier solveur exact qui dépasse le sous-cas
+booléen 2-SAT dans ce scaffold. Il ne prouve toujours pas le problème général :
+la construction du CSP relationnel reste énumérative, les vrais PC-trees
+Hsu/McConnell peuvent exiger une preuve séparée, et une famille
+`p3_block_tree(k)` montre que la largeur du graphe primal peut croître.
+
+Prochaine action : cataloguer la croissance de largeur sur `p3_block_tree(k)`
+et décider si une intégration positive-only dans `candidate.py` mérite le coût.
+
 ## Tentative T021 - Repair positive-only pour paired-farthest
 
 Statut : idée saine comme générateur expérimental vérifié, mais non intégrée à

@@ -1115,3 +1115,37 @@ candidate tant que la preuve de suffisance du modèle relationnel n'est pas
 écrite. Le prochain vrai levier de complexité est donc soit une intégration
 positive-only vérifiée, soit une DP par treewidth sur les relations non
 booléennes.
+
+## Résultat T061 - DP relationnelle à treewidth bornée
+
+Statut : sous-cas FPT expérimental dans le scaffold T059, hors candidate.
+
+T061 ajoute une résolution par élimination de facteurs pour les relations de
+quartets matérialisées. Le solveur calcule une treewidth exacte sous cap,
+refuse les lignes trop larges comme incomplètes, et traite les domaines non
+booléens tant que le produit des domaines des bags reste borné par la largeur.
+
+Sur `make bench-csp-quick` :
+
+- `192` lignes supportées ;
+- `186` lignes DP complètes ;
+- `137` lignes SAT ;
+- `49` lignes UNSAT dans le CSP relationnel ;
+- `6` lignes incomplètes par `treewidth_cap_exceeded` ;
+- treewidth exacte maximale `3` sur les lignes complètes ;
+- `0` échec de témoin SAT.
+
+Tests de complexité ajoutés :
+
+- trois blocs `P3` donnent des domaines taille `6`, non 2-SAT, mais résolubles
+  à treewidth `3` ;
+- le même schéma en paired-farthest donne un UNSAT relationnel exact ;
+- un cap `max_treewidth=2` sur ce cas retourne incomplet, ce qui garde visible
+  le paramètre de largeur.
+
+Interprétation complexité : la bonne borne expérimentale est maintenant
+`O(m q^(w+1))` après construction des relations, avec `q` taille maximale de
+domaine local et `w` treewidth du graphe primal. La construction actuelle du
+rapport reste le coût dominant et n'est pas encore une solution polynomiale
+générale. Le générateur `p3_block_tree(k)` doit devenir le stress principal pour
+montrer quand cette piste devient exponentielle.

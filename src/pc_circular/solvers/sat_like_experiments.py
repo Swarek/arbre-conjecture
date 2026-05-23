@@ -1013,6 +1013,7 @@ def quartet_effective_relation_report(
     limit: Optional[int] = None,
     max_min_scope_search_size: int = 8,
     validate: bool = True,
+    store_full_relations: bool = False,
 ) -> dict:
     """Build an exact effective-relation report for quartet constraints.
 
@@ -1180,7 +1181,7 @@ def quartet_effective_relation_report(
             "allowed_types": allowed_types,
             **summary,
         }
-        if len(accepted_signatures) <= 16:
+        if store_full_relations or len(accepted_signatures) <= 16:
             relation_row["accepted_signatures"] = tuple(sorted(accepted_signatures))
         report["quartet_relations"].append(relation_row)
 
@@ -1222,7 +1223,7 @@ def quartet_effective_relation_report(
             "quartet_count": entry["quartet_count"],
             "quartets": tuple(entry["quartets"]),
         }
-        if len(accepted_signatures) <= 32:
+        if store_full_relations or len(accepted_signatures) <= 32:
             merged_row["accepted_signatures"] = tuple(sorted(accepted_signatures))
         report["merged_relations"].append(merged_row)
         merged_summaries.append((scope, accepted_signatures))
@@ -1495,6 +1496,332 @@ def solve_quartet_2sat(
             assignment[path] = domain[0]
         else:
             assignment[path] = domain[choice_indices[path]]
+    order = canonical_circular_order(frontier_from_assignment(pc_tree, assignment))
+    result["assignment"] = tuple(sorted(assignment.items()))
+    result["order"] = list(order)
+    result["reason"] = "sat"
+    if validate_witness:
+        result["counts"]["witness_validated"] = True
+        result["counts"]["witness_is_cr"] = is_precircular_order_cR(D, order)
+        if not result["counts"]["witness_is_cr"]:
+            result["complete"] = False
+            result["exists"] = None
+            result["reason"] = "witness_failed_direct_cr_validation"
+    return result
+
+
+def _scopes_to_primal_graph(scopes: Sequence[Sequence[Path]]) -> dict[Path, set[Path]]:
+    graph: dict[Path, set[Path]] = {}
+    for scope in scopes:
+        scope_tuple = tuple(scope)
+        for path in scope_tuple:
+            graph.setdefault(path, set())
+        for left_idx, left in enumerate(scope_tuple):
+            for right in scope_tuple[left_idx + 1 :]:
+                graph[left].add(right)
+                graph[right].add(left)
+    return graph
+
+
+def _eliminate_graph_node(graph: dict[Path, set[Path]], node: Path) -> dict[Path, set[Path]]:
+    working = {path: set(neighbors) for path, neighbors in graph.items() if path != node}
+    neighbors = tuple(graph[node])
+    for left_idx, left in enumerate(neighbors):
+        for right in neighbors[left_idx + 1 :]:
+            if left in working and right in working:
+                working[left].add(right)
+                working[right].add(left)
+    for neighbors_set in working.values():
+        neighbors_set.discard(node)
+    return working
+
+
+def _exact_treewidth_order(
+    scopes: Sequence[Sequence[Path]],
+    *,
+    max_treewidth: int,
+    max_variables: int,
+) -> dict:
+    if max_treewidth < 0:
+        raise ValueError("max_treewidth must be non-negative")
+    if max_variables < 0:
+        raise ValueError("max_variables must be non-negative")
+
+    graph = _scopes_to_primal_graph(scopes)
+    if len(graph) > max_variables:
+        return {
+            "complete": False,
+            "reason": "exact_width_variable_cap_exceeded",
+            "variable_count": len(graph),
+            "variable_cap": max_variables,
+            "treewidth": None,
+            "order": (),
+        }
+    if not graph:
+        return {
+            "complete": True,
+            "reason": "empty_primal_graph",
+            "variable_count": 0,
+            "variable_cap": max_variables,
+            "treewidth": 0,
+            "order": (),
+        }
+
+    best_width = max_treewidth + 1
+    best_order: tuple[Path, ...] | None = None
+
+    def search(working: dict[Path, set[Path]], order: tuple[Path, ...], width: int) -> None:
+        nonlocal best_width, best_order
+        if not working:
+            if width < best_width:
+                best_width = width
+                best_order = order
+            return
+
+        candidates = sorted(
+            working,
+            key=lambda path: (_fill_edge_count(working, path), len(working[path]), path),
+        )
+        for path in candidates:
+            next_width = max(width, len(working[path]))
+            if next_width > max_treewidth or next_width >= best_width:
+                continue
+            search(_eliminate_graph_node(working, path), order + (path,), next_width)
+
+    search(graph, (), 0)
+    if best_order is None:
+        return {
+            "complete": False,
+            "reason": "treewidth_cap_exceeded",
+            "variable_count": len(graph),
+            "variable_cap": max_variables,
+            "treewidth": None,
+            "treewidth_cap": max_treewidth,
+            "order": (),
+        }
+    return {
+        "complete": True,
+        "reason": "exact_treewidth_computed",
+        "variable_count": len(graph),
+        "variable_cap": max_variables,
+        "treewidth": best_width,
+        "treewidth_cap": max_treewidth,
+        "order": best_order,
+    }
+
+
+def _factor_rows_from_relation(relation: dict, domains: dict[Path, tuple[tuple[int, ...], ...]]) -> dict:
+    scope = tuple(relation["scope"])
+    if "accepted_signatures" not in relation:
+        raise ValueError("full accepted_signatures are required for treewidth CSP solving")
+    rows = set()
+    for signature in relation["accepted_signatures"]:
+        choices = dict(signature)
+        rows.add(tuple(choices[path] for path in scope))
+    if not scope and relation["accepted_signature_count"] == 0:
+        rows = set()
+    return {"scope": scope, "rows": rows}
+
+
+def _factor_accepts(factor: dict, assignment: dict[Path, tuple[int, ...]]) -> bool:
+    row = tuple(assignment[path] for path in factor["scope"])
+    return row in factor["rows"]
+
+
+def _project_factor_assignment(
+    assignment: dict[Path, tuple[int, ...]],
+    scope: Sequence[Path],
+) -> tuple[tuple[int, ...], ...]:
+    return tuple(assignment[path] for path in scope)
+
+
+def _bucket_elimination_satisfiable(
+    domains: dict[Path, tuple[tuple[int, ...], ...]],
+    factors: Sequence[dict],
+    elimination_order: Sequence[Path],
+) -> tuple[bool, dict]:
+    working = [
+        {"scope": tuple(factor["scope"]), "rows": set(factor["rows"])}
+        for factor in factors
+        if factor["scope"] or factor["rows"] != {()}
+    ]
+    counts = {
+        "initial_factors": len(working),
+        "generated_factors": 0,
+        "max_bucket_factor_count": 0,
+        "max_bucket_scope_size": 0,
+        "max_generated_rows": 0,
+    }
+
+    for path in elimination_order:
+        bucket = [factor for factor in working if path in factor["scope"]]
+        if not bucket:
+            continue
+        rest = [factor for factor in working if path not in factor["scope"]]
+        union_scope = tuple(sorted({item for factor in bucket for item in factor["scope"]}))
+        projected_scope = tuple(item for item in union_scope if item != path)
+        counts["max_bucket_factor_count"] = max(counts["max_bucket_factor_count"], len(bucket))
+        counts["max_bucket_scope_size"] = max(counts["max_bucket_scope_size"], len(union_scope))
+
+        projected_rows = set()
+        for values in product(*(domains[item] for item in union_scope)):
+            assignment = dict(zip(union_scope, values))
+            if all(_factor_accepts(factor, assignment) for factor in bucket):
+                projected_rows.add(_project_factor_assignment(assignment, projected_scope))
+        if not projected_rows:
+            counts["generated_factors"] += 1
+            return False, counts
+        counts["max_generated_rows"] = max(counts["max_generated_rows"], len(projected_rows))
+        if projected_scope:
+            rest.append({"scope": projected_scope, "rows": projected_rows})
+            counts["generated_factors"] += 1
+        working = rest
+
+    for factor in working:
+        if not factor["rows"]:
+            return False, counts
+    return True, counts
+
+
+def _find_factor_witness_assignment(
+    domains: dict[Path, tuple[tuple[int, ...], ...]],
+    factors: Sequence[dict],
+    variable_order: Sequence[Path],
+) -> Assignment | None:
+    assigned: Assignment = {}
+    factors_tuple = tuple(factors)
+
+    def consistent() -> bool:
+        for factor in factors_tuple:
+            if all(path in assigned for path in factor["scope"]):
+                if not _factor_accepts(factor, assigned):
+                    return False
+        return True
+
+    def search(index: int) -> Assignment | None:
+        if index == len(variable_order):
+            return dict(assigned) if consistent() else None
+        path = variable_order[index]
+        for choice in domains[path]:
+            assigned[path] = choice
+            if consistent():
+                found = search(index + 1)
+                if found is not None:
+                    return found
+            del assigned[path]
+        return None
+
+    return search(0)
+
+
+def solve_quartet_treewidth_csp(
+    D,
+    pc_tree: PCNode,
+    *,
+    max_p_degree: int = 3,
+    relation_report: Optional[dict] = None,
+    max_treewidth: int = 3,
+    max_exact_width_variables: int = 16,
+    validate_witness: bool = True,
+) -> dict:
+    """Solve the effective-quartet CSP by exact bounded-width elimination.
+
+    The result is exact only for complete ``quartet_effective_relation_report``
+    instances.  Width or materialization caps return incomplete results rather
+    than negative decisions.
+    """
+
+    validate_dissimilarity(D)
+    report = relation_report or quartet_effective_relation_report(
+        D,
+        pc_tree,
+        max_p_degree=max_p_degree,
+        validate=False,
+        store_full_relations=True,
+    )
+    result = {
+        "implemented": True,
+        "solver": "quartet_effective_relation_treewidth_csp",
+        "complete": False,
+        "exists": None,
+        "order": None,
+        "assignment": None,
+        "reason": None,
+        "relation_row_class": report["row_class"],
+        "used_two_sat": False,
+        "counts": {
+            "variables": 0,
+            "active_variables": 0,
+            "relations": len(report["merged_relations"]),
+            "non_boolean_variables": 0,
+            "max_domain_size": 0,
+            "treewidth_exact": None,
+            "treewidth_cap": max_treewidth,
+            "exact_width_variable_cap": max_exact_width_variables,
+            "witness_validated": False,
+            "witness_is_cr": False,
+        },
+        "elimination_order": (),
+        "note": "exact only for complete materialized effective-quartet relation reports under the configured treewidth cap",
+    }
+    if not report["complete"]:
+        result["reason"] = "incomplete_relation_report"
+        return result
+    if report["counts"].get("validation_mismatch_count"):
+        result["reason"] = "relation_validation_mismatch"
+        return result
+
+    domains = report["encoding"]["domains"]
+    result["counts"]["variables"] = len(domains)
+    result["counts"]["max_domain_size"] = max((len(domain) for domain in domains.values()), default=0)
+    result["counts"]["non_boolean_variables"] = sum(1 for domain in domains.values() if len(domain) > 2)
+
+    try:
+        factors = [_factor_rows_from_relation(relation, domains) for relation in report["merged_relations"]]
+    except ValueError:
+        result["reason"] = "relations_not_materialized"
+        return result
+
+    for factor in factors:
+        if not factor["scope"] and not factor["rows"]:
+            result["complete"] = True
+            result["exists"] = False
+            result["reason"] = "unsat_empty_scope_relation"
+            return result
+
+    scopes = [factor["scope"] for factor in factors]
+    active_variables = tuple(sorted({path for scope in scopes for path in scope}))
+    result["counts"]["active_variables"] = len(active_variables)
+    width_report = _exact_treewidth_order(
+        scopes,
+        max_treewidth=max_treewidth,
+        max_variables=max_exact_width_variables,
+    )
+    if not width_report["complete"]:
+        result["reason"] = width_report["reason"]
+        result["counts"]["treewidth_exact"] = width_report["treewidth"]
+        return result
+
+    elimination_order = tuple(width_report["order"])
+    result["elimination_order"] = elimination_order
+    result["counts"]["treewidth_exact"] = width_report["treewidth"]
+    sat, dp_counts = _bucket_elimination_satisfiable(domains, factors, elimination_order)
+    result["counts"].update(dp_counts)
+    result["complete"] = True
+    result["exists"] = sat
+    if not sat:
+        result["reason"] = "unsat_treewidth_csp"
+        return result
+
+    search_order = tuple(reversed(elimination_order))
+    assignment = _find_factor_witness_assignment(domains, factors, search_order)
+    if assignment is None:
+        result["complete"] = False
+        result["exists"] = None
+        result["reason"] = "witness_reconstruction_failed"
+        return result
+    for path, domain in domains.items():
+        assignment.setdefault(path, domain[0])
     order = canonical_circular_order(frontier_from_assignment(pc_tree, assignment))
     result["assignment"] = tuple(sorted(assignment.items()))
     result["order"] = list(order)

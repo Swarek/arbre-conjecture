@@ -36,6 +36,7 @@ from pc_circular.solvers.sat_like_experiments import (  # noqa: E402
     quartet_effective_relation_report,
     quartet_pc_scope_report,
     solve_quartet_2sat,
+    solve_quartet_treewidth_csp,
     solve_pruned_nogood_csp_from_compilation,
 )
 
@@ -292,6 +293,7 @@ def run_benchmark(
                         D,
                         T,
                         max_p_degree=max_p_degree,
+                        store_full_relations=True,
                     )
                     quartet_relation_seconds = time.perf_counter() - quartet_relation_start
 
@@ -303,6 +305,15 @@ def run_benchmark(
                         relation_report=quartet_relation_profile,
                     )
                     quartet_2sat_seconds = time.perf_counter() - quartet_2sat_start
+
+                    quartet_treewidth_start = time.perf_counter()
+                    quartet_treewidth_result = solve_quartet_treewidth_csp(
+                        D,
+                        T,
+                        max_p_degree=max_p_degree,
+                        relation_report=quartet_relation_profile,
+                    )
+                    quartet_treewidth_seconds = time.perf_counter() - quartet_treewidth_start
 
                     first_hit_solve_start = time.perf_counter()
                     first_hit_solve_result = solve_pruned_nogood_csp_from_compilation(
@@ -358,6 +369,7 @@ def run_benchmark(
                     quartet_relation_counts = quartet_relation_profile["counts"]
                     quartet_relation_primal = quartet_relation_profile["primal_graph"]
                     quartet_2sat_counts = quartet_2sat_result["counts"]
+                    quartet_treewidth_counts = quartet_treewidth_result["counts"]
                     signatures = _signature_set(compilation)
                     support_signatures = _signature_set(support_compilation)
                     grouped_signatures = _signature_set(grouped_compilation)
@@ -393,6 +405,7 @@ def run_benchmark(
                             "quartet_scope_report_seconds": quartet_scope_seconds,
                             "quartet_relation_report_seconds": quartet_relation_seconds,
                             "quartet_2sat_seconds": quartet_2sat_seconds,
+                            "quartet_treewidth_seconds": quartet_treewidth_seconds,
                             "first_hit_solve_seconds": first_hit_solve_seconds,
                             "direct_seconds": direct_seconds,
                             "atoms": len(compilation["atoms"]),
@@ -831,6 +844,44 @@ def run_benchmark(
                             "quartet_2sat_witness_is_cr": quartet_2sat_counts[
                                 "witness_is_cr"
                             ],
+                            "quartet_treewidth_complete": quartet_treewidth_result[
+                                "complete"
+                            ],
+                            "quartet_treewidth_exists": quartet_treewidth_result["exists"],
+                            "quartet_treewidth_reason": quartet_treewidth_result["reason"],
+                            "quartet_treewidth_variables": quartet_treewidth_counts[
+                                "variables"
+                            ],
+                            "quartet_treewidth_active_variables": quartet_treewidth_counts[
+                                "active_variables"
+                            ],
+                            "quartet_treewidth_non_boolean_variables": (
+                                quartet_treewidth_counts["non_boolean_variables"]
+                            ),
+                            "quartet_treewidth_max_domain_size": quartet_treewidth_counts[
+                                "max_domain_size"
+                            ],
+                            "quartet_treewidth_exact": quartet_treewidth_counts[
+                                "treewidth_exact"
+                            ],
+                            "quartet_treewidth_initial_factors": quartet_treewidth_counts.get(
+                                "initial_factors", 0
+                            ),
+                            "quartet_treewidth_generated_factors": quartet_treewidth_counts.get(
+                                "generated_factors", 0
+                            ),
+                            "quartet_treewidth_max_bucket_scope_size": (
+                                quartet_treewidth_counts.get("max_bucket_scope_size", 0)
+                            ),
+                            "quartet_treewidth_max_generated_rows": (
+                                quartet_treewidth_counts.get("max_generated_rows", 0)
+                            ),
+                            "quartet_treewidth_witness_validated": (
+                                quartet_treewidth_counts["witness_validated"]
+                            ),
+                            "quartet_treewidth_witness_is_cr": quartet_treewidth_counts[
+                                "witness_is_cr"
+                            ],
                             "profile_ambiguous_no_hit_assignments": profile_counts[
                                 "ambiguous_no_hit_assignments"
                             ],
@@ -933,6 +984,9 @@ def run_benchmark(
             ),
             "median_quartet_2sat_seconds": _median(
                 [row["quartet_2sat_seconds"] for row in supported_rows]
+            ),
+            "median_quartet_treewidth_seconds": _median(
+                [row["quartet_treewidth_seconds"] for row in supported_rows]
             ),
             "median_solve_seconds": _median([row["solve_seconds"] for row in supported_rows]),
             "median_support_solve_seconds": _median(
@@ -1298,6 +1352,50 @@ def run_benchmark(
                 for row in supported_rows
                 if row["quartet_2sat_exists"] is True and not row["quartet_2sat_witness_is_cr"]
             ),
+            "quartet_treewidth_complete_rows": sum(
+                1 for row in supported_rows if row["quartet_treewidth_complete"]
+            ),
+            "quartet_treewidth_exists_true_rows": sum(
+                1 for row in supported_rows if row["quartet_treewidth_exists"] is True
+            ),
+            "quartet_treewidth_exists_false_rows": sum(
+                1 for row in supported_rows if row["quartet_treewidth_exists"] is False
+            ),
+            "quartet_treewidth_incomplete_rows": sum(
+                1 for row in supported_rows if not row["quartet_treewidth_complete"]
+            ),
+            "quartet_treewidth_reason_histogram": dict(
+                sorted(
+                    {
+                        reason: sum(
+                            1 for row in supported_rows if row["quartet_treewidth_reason"] == reason
+                        )
+                        for reason in {row["quartet_treewidth_reason"] for row in supported_rows}
+                    }.items(),
+                    key=lambda item: str(item[0]),
+                )
+            ),
+            "quartet_treewidth_max_exact": max(
+                [
+                    row["quartet_treewidth_exact"]
+                    for row in supported_rows
+                    if row["quartet_treewidth_exact"] is not None
+                ],
+                default=0,
+            ),
+            "quartet_treewidth_max_domain_size": max(
+                [row["quartet_treewidth_max_domain_size"] for row in supported_rows],
+                default=0,
+            ),
+            "quartet_treewidth_non_boolean_rows": sum(
+                1 for row in supported_rows if row["quartet_treewidth_non_boolean_variables"]
+            ),
+            "quartet_treewidth_witness_failures": sum(
+                1
+                for row in supported_rows
+                if row["quartet_treewidth_exists"] is True
+                and not row["quartet_treewidth_witness_is_cr"]
+            ),
             "profile_pair_side_split_work_ratio": (
                 sum(row["profile_pair_side_split_checks"] for row in supported_rows)
                 / sum(row["profile_classification_atom_checks"] for row in supported_rows)
@@ -1443,6 +1541,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         or report["summary"]["quartet_scope_projection_mismatches"]
         or report["summary"]["quartet_relation_validation_mismatches"]
         or report["summary"]["quartet_2sat_witness_failures"]
+        or report["summary"]["quartet_treewidth_witness_failures"]
         else 0
     )
 

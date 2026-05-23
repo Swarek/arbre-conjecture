@@ -3027,3 +3027,59 @@
 - Next action : poursuivre soit une intégration positive-only vérifiée dans
   `candidate.py`, soit une DP treewidth pour les relations non booléennes, en
   continuant le catalogue de contre-exemples sur les nœuds `P3+`.
+
+## 2026-05-23 treewidth DP for effective quartet relations
+
+- Date/heure : 2026-05-23 13:51:53 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : le CSP relationnel T059 peut être résolu exactement par
+  élimination sous treewidth bornée, y compris avec domaines non booléens `P3`,
+  en gardant toute ligne au-dessus des caps comme incomplète.
+- Changement fait : ajout de `store_full_relations` à
+  `quartet_effective_relation_report`, ajout de
+  `solve_quartet_treewidth_csp` hors `candidate.py`, calcul exact borné d'ordre
+  d'élimination, élimination de facteurs, reconstruction/validation de témoin,
+  métriques DP dans `tools/pc_csp_internal_benchmark.py`, et tests adversariaux
+  P3 non booléens, UNSAT implication, tautologie, constant reject et cap de
+  largeur.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop` propre
+  au commit `ae1ea84`; `257 passed`, puis `JUSTE`.
+- Plan subagents : trois sidecars lecture seule. Résultats : Piste F/C
+  recommande la bucket-elimination bornée avec table complète ; contre-exemples
+  fournit UNSAT implication, support imbriqué, P3 positif/négatif et clique
+  primal `p3_block_tree(k)` ; intégration candidate recommande de garder T060
+  en positive-only avec garde stricte si elle est tentée plus tard.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`.
+- Résultat correction ciblée : `78 passed`.
+- Tests ajoutés : UNSAT 2-SAT sans clause vide ; trois blocs `P3` sur
+  `cycle_metric(9)` SAT par DP treewidth ; trois blocs `P3` sur
+  `paired_farthest_matching(9, seed=7)` UNSAT relationnel ; equal-distance
+  tautologique ; `four_local_non_cr_core` constant reject ; cap
+  `max_treewidth=2` retournant `treewidth_cap_exceeded`.
+- Commande exécutée : `make bench-csp-quick`.
+- Résultat benchmark interne : `reports/csp_internal_benchmark_quick.json`
+  écrit ; `192` lignes supportées, `0` mismatch, `0`
+  `quartet_relation_validation_mismatches`, `186`
+  `quartet_treewidth_complete_rows`, `137` SAT, `49` UNSAT, `6` incomplètes par
+  `treewidth_cap_exceeded`, `0` échec de témoin et treewidth exacte maximale
+  `3` sur les lignes complètes.
+- Commande exécutée : `make quick`.
+- Résultat correction : `262 passed`, puis `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `8` tailles, `40/40` runs réussis, `0` timeout et `0` incomplet.
+  `candidate.py` n'a pas été modifié.
+- Conclusion : T061 dépasse le sous-cas 2-SAT booléen dans le scaffold en
+  traitant les domaines non booléens sous largeur bornée. Ce n'est toujours pas
+  une solution générale : la construction relationnelle reste énumérative, les
+  lignes trop larges sont incomplètes, et les UNSAT restent confinés au modèle
+  T059 tant que sa suffisance globale n'est pas prouvée.
+- Next action : profiler `p3_block_tree(k)` comme famille de largeur croissante
+  et décider si une intégration positive-only dans `candidate.py` apporte un
+  gain mesurable sans ralentir `make bench`.

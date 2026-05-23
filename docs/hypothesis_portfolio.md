@@ -76,11 +76,12 @@ arbres et vérifier si elles sont suffisantes.
 Raisons possibles d’échec : les grands nœuds `P` induisent des contraintes
 d’ordre cyclique non binaires.
 
-Prochain essai concret : après T060, décider si `solve_quartet_2sat` peut être
-intégré seulement en témoin positif vérifié dans `candidate.py`, puis attaquer
-les relations non booléennes par DP de treewidth ou catalogue de gadgets. Garder
-séparés les UNSAT 2-SAT tant que la suffisance globale du modèle relationnel
-n'est pas prouvée.
+Prochain essai concret : après T061, mesurer la croissance de largeur sur
+`p3_block_tree(k)` et décider si une intégration positive-only de
+`solve_quartet_2sat` ou `solve_quartet_treewidth_csp` dans `candidate.py`
+apporte de vrais témoins nouveaux sous garde de coût. Garder séparés les UNSAT
+relationnels tant que la suffisance globale du modèle relationnel n'est pas
+prouvée.
 
 ## Piste D : intersection de contraintes type PC-tree / circular-ones
 

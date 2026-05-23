@@ -16,10 +16,10 @@ ensembles `I_x(v)` sur les branches d'un gros nœud `P`.
 | --- | --- | --- |
 | A - Contraintes locales P/C | `piste_a_local_pc_constraints.md` | Rapport `I_x(v)` implémenté comme diagnostic ; pas solver |
 | B - DP sur PC-tree | `piste_b_dp_pc_tree.md` | Bad-side exact ordre fixé ; pas encore de signature compacte |
-| C - SAT/CSP | `piste_c_sat_csp.md` | Solveur 2-SAT des relations effectives ajouté hors candidate |
+| C - SAT/CSP | `piste_c_sat_csp.md` | Solveurs 2-SAT puis DP treewidth des relations effectives hors candidate |
 | D - Circular-ones / intersection | `piste_d_circular_ones.md` | Boules validées pour quasi ; arcs bad-witness naïfs réfutés |
 | E - Obstructions farthest/quartets | `piste_e_farthest_quartets.md` | Farthest seul réfuté ; bad-witness one-side donne des certificats hub bas |
-| F - Complexité / sous-cas | `piste_f_complexity_subcases.md` | Sous-cas booléen 2-SAT résolu dans le scaffold ; non booléen ouvert |
+| F - Complexité / sous-cas | `piste_f_complexity_subcases.md` | Non booléen traité sous treewidth bornée ; largeur générale ouverte |
 
 ## Règle d’édition
 
@@ -99,6 +99,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T058 | 2026-05-23 | C/F/E | Rapport de portée PC-tree par quartets : support conservateur taille 3, portée effective observée `<=2` sur la gate | `quartet_pc_scope_report` |
 | T059 | 2026-05-23 | C/F/E | Relations effectives de quartets fusionnées : validation cR, graphe primal, 2-SAT booléen et catalogue non booléen séparés | `quartet_effective_relation_report` |
 | T060 | 2026-05-23 | C/F | Solveur 2-SAT exact sur les relations effectives booléennes ; SAT/UNSAT et témoins vérifiés hors candidate | `solve_quartet_2sat` |
+| T061 | 2026-05-23 | C/F | DP/treewidth exacte bornée sur relations effectives, incluant les domaines non booléens `P3` | `solve_quartet_treewidth_csp` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

@@ -177,6 +177,14 @@ def test_csp_internal_benchmark_reports_separate_compile_and_solve_metrics():
     assert row["quartet_2sat_binary_clauses"] == 6
     assert row["quartet_2sat_empty_clauses"] == 0
     assert row["quartet_2sat_witness_is_cr"]
+    assert row["quartet_treewidth_complete"]
+    assert row["quartet_treewidth_exists"] is True
+    assert row["quartet_treewidth_reason"] == "sat"
+    assert row["quartet_treewidth_variables"] == 4
+    assert row["quartet_treewidth_active_variables"] == 3
+    assert row["quartet_treewidth_exact"] == 2
+    assert row["quartet_treewidth_max_domain_size"] == 2
+    assert row["quartet_treewidth_witness_is_cr"]
     assert report["summary"]["total_first_hit_position_sum"] == row["first_hit_position_sum"]
     assert report["summary"]["total_first_hit_atom_checks_if_exhaustive_seen"] == row[
         "first_hit_atom_checks_if_exhaustive_seen"
@@ -286,3 +294,11 @@ def test_csp_internal_benchmark_reports_separate_compile_and_solve_metrics():
     assert report["summary"]["quartet_2sat_reason_histogram"] == {"sat": 1}
     assert report["summary"]["quartet_2sat_total_clauses"] == 6
     assert report["summary"]["quartet_2sat_witness_failures"] == 0
+    assert report["summary"]["quartet_treewidth_complete_rows"] == 1
+    assert report["summary"]["quartet_treewidth_exists_true_rows"] == 1
+    assert report["summary"]["quartet_treewidth_exists_false_rows"] == 0
+    assert report["summary"]["quartet_treewidth_incomplete_rows"] == 0
+    assert report["summary"]["quartet_treewidth_reason_histogram"] == {"sat": 1}
+    assert report["summary"]["quartet_treewidth_max_exact"] == 2
+    assert report["summary"]["quartet_treewidth_max_domain_size"] == 2
+    assert report["summary"]["quartet_treewidth_witness_failures"] == 0

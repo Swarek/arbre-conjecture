@@ -54,6 +54,7 @@ from pc_circular.solvers.sat_like_experiments import (
     solve_compiled_bad_side_nogood_csp,
     solve_compiled_nogood_csp,
     solve_quartet_2sat,
+    solve_quartet_treewidth_csp,
     solve_pruned_bad_side_nogood_csp,
     solve_nogood_csp,
     solve_pruned_nogood_csp,
@@ -601,6 +602,132 @@ def test_quartet_2sat_default_path_does_not_require_full_validation_enumeration(
     assert result["complete"]
     assert result["exists"]
     assert result["counts"]["witness_is_cr"]
+
+
+def test_quartet_2sat_reports_implication_unsat_without_empty_clause():
+    D = [
+        [0, 2, 1, 3, 2],
+        [2, 0, 2, 2, 3],
+        [1, 2, 0, 1, 2],
+        [3, 2, 1, 0, 2],
+        [2, 3, 2, 2, 0],
+    ]
+    T = balanced_pc_tree(5, kind="C")
+    relation_report = quartet_effective_relation_report(D, T, max_p_degree=3)
+    result = solve_quartet_2sat(D, T, max_p_degree=3, relation_report=relation_report)
+
+    assert relation_report["row_class"] == "two_sat_candidate"
+    assert relation_report["counts"]["merged_relation_constant_reject_count"] == 0
+    assert relation_report["counts"]["relation_accept_assignments"] == relation_report["counts"][
+        "direct_cr_assignments"
+    ] == 0
+    assert result["complete"]
+    assert result["exists"] is False
+    assert result["reason"] == "unsat_implication_scc"
+    assert result["counts"]["empty_clauses"] == 0
+
+
+def _p3_block_tree(block_count):
+    return c_node(
+        [
+            p_node([leaf(3 * idx), leaf(3 * idx + 1), leaf(3 * idx + 2)])
+            for idx in range(block_count)
+        ]
+    )
+
+
+def test_quartet_treewidth_csp_solves_non_boolean_p3_positive_case():
+    D = cycle_metric(9)
+    T = _p3_block_tree(3)
+    relation_report = quartet_effective_relation_report(
+        D,
+        T,
+        max_p_degree=3,
+        store_full_relations=True,
+    )
+    two_sat = solve_quartet_2sat(D, T, max_p_degree=3, relation_report=relation_report)
+    result = solve_quartet_treewidth_csp(D, T, max_p_degree=3, relation_report=relation_report)
+
+    assert relation_report["row_class"] == "non_boolean_relation_catalog"
+    assert relation_report["counts"]["merged_relation_kind_histogram"] == {
+        "binary_non_boolean_catalog": 6,
+        "unary_non_boolean": 3,
+    }
+    assert two_sat["complete"] is False
+    assert two_sat["reason"] == "not_two_sat_candidate:non_boolean_relation_catalog"
+    assert result["complete"]
+    assert result["exists"]
+    assert result["reason"] == "sat"
+    assert result["used_two_sat"] is False
+    assert result["counts"]["treewidth_exact"] == 3
+    assert result["counts"]["non_boolean_variables"] == 3
+    assert result["counts"]["max_domain_size"] == 6
+    assert result["counts"]["witness_is_cr"]
+    assert is_precircular_order_cR(D, result["order"])
+
+
+def test_quartet_treewidth_csp_solves_non_boolean_p3_negative_case():
+    D = paired_farthest_matching(9, rng=random.Random(7))
+    T = _p3_block_tree(3)
+    relation_report = quartet_effective_relation_report(
+        D,
+        T,
+        max_p_degree=3,
+        store_full_relations=True,
+    )
+    result = solve_quartet_treewidth_csp(D, T, max_p_degree=3, relation_report=relation_report)
+
+    assert relation_report["row_class"] == "non_boolean_relation_catalog"
+    assert relation_report["counts"]["merged_relation_constant_reject_count"] == 3
+    assert relation_report["counts"]["relation_accept_assignments"] == relation_report["counts"][
+        "direct_cr_assignments"
+    ] == 0
+    assert result["complete"]
+    assert result["exists"] is False
+    assert result["reason"] == "unsat_treewidth_csp"
+    assert result["counts"]["treewidth_exact"] == 3
+
+
+def test_quartet_treewidth_csp_handles_tautology_and_constant_reject():
+    tautology_D = equal_distance_instance(6)
+    tautology_T = balanced_pc_tree(6, kind="C")
+    tautology = solve_quartet_treewidth_csp(tautology_D, tautology_T, max_p_degree=3)
+
+    assert tautology["complete"]
+    assert tautology["exists"]
+    assert tautology["counts"]["treewidth_exact"] == 0
+    assert tautology["counts"]["active_variables"] == 0
+    assert tautology["counts"]["witness_is_cr"]
+
+    reject_D = four_local_non_cr_core()
+    reject_T = balanced_pc_tree(5, kind="C")
+    reject = solve_quartet_treewidth_csp(reject_D, reject_T, max_p_degree=3)
+
+    assert reject["complete"]
+    assert reject["exists"] is False
+    assert reject["reason"] == "unsat_empty_scope_relation"
+
+
+def test_quartet_treewidth_csp_reports_width_cap_without_false_negative():
+    D = cycle_metric(9)
+    T = _p3_block_tree(3)
+    relation_report = quartet_effective_relation_report(
+        D,
+        T,
+        max_p_degree=3,
+        store_full_relations=True,
+    )
+    result = solve_quartet_treewidth_csp(
+        D,
+        T,
+        max_p_degree=3,
+        relation_report=relation_report,
+        max_treewidth=2,
+    )
+
+    assert result["complete"] is False
+    assert result["exists"] is None
+    assert result["reason"] == "treewidth_cap_exceeded"
 
 
 def test_quartet_allowed_types_match_direct_full_orders_on_seeded_frontiers():

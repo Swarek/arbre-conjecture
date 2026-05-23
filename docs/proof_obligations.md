@@ -1556,12 +1556,40 @@ Limites après T060 :
 - les vrais PC-trees Hsu/McConnell non enracinés peuvent avoir des subtilités
   non capturées par le scaffold `PCNode`.
 
-Limites restantes après T059/T060 :
+T061 étend le traitement relationnel aux domaines non booléens sous largeur
+bornée, toujours dans le scaffold expérimental :
+
+- `solve_quartet_treewidth_csp` exige un rapport complet avec relations
+  matérialisées ;
+- un ordre d'élimination exact est cherché sous `max_treewidth` et
+  `max_exact_width_variables` ;
+- les facteurs sont éliminés en projetant les affectations compatibles ;
+- si SAT, une affectation locale témoin est reconstruite et l'ordre obtenu est
+  vérifié directement cR.
+
+Obligations couvertes par T061 dans ce périmètre :
+
+- obligation 2 expérimentale : les relations non booléennes `P3` ne sont plus
+  rejetées hors du solveur ; elles sont résolues par le CSP relationnel ;
+- obligation 4 : tout témoin SAT reconstruit est validé par le prédicat cR fixé ;
+- obligation 5 partielle : après construction du rapport, le solveur est FPT en
+  `O(m q^(w+1))` pour domaine maximal `q`, nombre de relations `m` et treewidth
+  bornée `w`.
+
+Limites après T061 :
+
+- les lignes au-dessus du cap de largeur restent incomplètes, jamais négatives ;
+- les UNSAT du CSP relationnel ne doivent pas encore être interprétés comme une
+  preuve générale hors scaffold ;
+- la construction des relations par quartets reste énumérative et domine le
+  coût actuel ;
+- une famille de blocs `P3` peut faire croître la largeur, donc la piste n'est
+  pas une preuve de polynomialité générale.
+
+Limites restantes après T059/T060/T061 :
 
 - la validation reste par énumération complète des affectations locales ; elle
   ne prouve pas une complexité polynomiale ;
-- les nœuds `P3` montrent déjà des relations non booléennes de domaines taille
-  `6`; elles ne doivent pas être appelées 2-SAT ;
 - une borne greedy de treewidth n'est pas une décomposition certifiée ni une
   preuve de complexité ;
 - les vrais PC-trees Hsu/McConnell non enracinés peuvent avoir des subtilités
