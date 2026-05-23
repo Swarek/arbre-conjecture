@@ -196,6 +196,13 @@ paddée. Ces signaux restent expérimentaux, mais ils donnent deux prochaines
 cibles : isoler les permutations-like sous le promise `T(D)` et minimiser
 l'interaction UNSAT entre parasites unaires et relation fonctionnelle.
 
+Mise à jour T068 : l'interaction UNSAT T067 se minimise en un noyau relationnel
+de taille `2` dans le CSP matérialisé : une unaire non booléenne sur le bloc
+`0` et une relation binaire `sparse_partial_matching` entre `0` et `1`. La
+projection gauche brute de la binaire est disjointe des valeurs acceptées par
+l'unaire. C'est un diagnostic de conflit uniaire+binaire, pas une preuve de
+dureté globale.
+
 Sous-cas ajouté : explorer le cas strict comme algorithme spécialisé
 potentiellement polynomial. Ne pas l'intégrer à `candidate.py` avant d'avoir une
 détection stricte et une génération de candidats stricts vérifiées contre les

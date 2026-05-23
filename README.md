@@ -46,6 +46,7 @@ make bench-single-p-stress
 make bench-relation-catalog
 make bench-relation-shapes
 make bench-relation-chains
+make bench-relation-unsat-cores
 make acceptance
 ```
 
@@ -93,6 +94,12 @@ compose les relations non booléennes fonctionnelles observées entre blocs `P3`
 et compare les comptes satisfaisant les seules relations fonctionnelles, les
 relations binaires, les parasites et tout le CSP matérialisé. C’est un
 diagnostic de corrélation, pas une décision générale.
+
+`make bench-relation-unsat-cores` écrit
+`reports/relation_unsat_core_probe.json`. Il minimise les lignes
+`interaction_unsat` de ce CSP matérialisé en noyaux de relations, avec tests de
+suppression et projections brutes. C’est un artefact de diagnostic, pas un
+certificat global de non-existence.
 
 Dans `tools/pc_circular_conjecture_test.py`, la sortie `JUSTE` signifie seulement
 que la candidate a été égale à l’oracle exact sur les instances générées par ce

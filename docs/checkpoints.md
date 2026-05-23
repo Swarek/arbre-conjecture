@@ -543,6 +543,15 @@ Dernier commit green avant T009 : `07120e4`.
   `tests/test_csp_internal_benchmark.py` (`6 passed`), `make quick`
   (`268 passed`, puis `JUSTE`) et `make bench-quick` (`40/40` runs,
   `0` timeout, `0` incomplet). `candidate.py` n'a pas été modifié.
+- Checkpoint T068 courant : commit contenant la minimisation du noyau
+  `interaction_unsat`. Validation observée : test ciblé unsat-core
+  (`1 passed`), tests ciblés `tests/test_csp_internal_benchmark.py`
+  (`7 passed`), `make bench-relation-unsat-cores` (`40` lignes complètes,
+  `0` mismatch, `1` ligne `interaction_unsat`, `min_core_size=2`),
+  `make quick` (`269 passed`, puis `JUSTE`) et `make bench-quick` (`40/40`
+  runs, `0` timeout, `0` incomplet). Résultat observé : le noyau minimal est un
+  conflit local entre une unaire non booléenne et une binaire
+  `sparse_partial_matching`; `candidate.py` n'a pas été modifié.
 
 ## Rollback
 

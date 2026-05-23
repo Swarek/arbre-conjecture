@@ -1183,6 +1183,33 @@ future, les tuples de relation ne peuvent pas être remplacés par une simple
 statistique de forme ; l'interaction entre unaires et binaires doit rester
 visible.
 
+## Tentative T068 - Noyau UNSAT minimal d'interaction
+
+Statut : diagnostic CSP matérialisé, hors `candidate.py`.
+
+Changement : ajout de `tools/pc_relation_unsat_core_probe.py`, câblé par
+`make bench-relation-unsat-cores`. L'outil reprend les lignes
+`interaction_unsat`, énumère les affectations locales sous limite, puis cherche
+des noyaux de relations de cardinalité minimale. Il reporte les tests de
+suppression, les quartets source et les projections brutes des tuples acceptés.
+
+Résultat observé sur le cas ciblé `five_local_non_cr` avec `p3_block_tree(2)` :
+
+- `full_accept_count=0`, mais `binary_non_boolean_accept_count=4` et
+  `parasite_accept_count=16` ;
+- noyau minimal de taille `2` : l'unaire non booléenne sur `0` et la binaire
+  `sparse_partial_matching` entre `0` et `1` ;
+- valeurs acceptées par l'unaire sur `0` : `[0,1,3,5]` ;
+- projection gauche brute de la binaire : `[2,4]` ;
+- intersection vide, donc conflit unaire+binaire ;
+- supprimer l'une des deux relations rend le noyau satisfaisable.
+
+Interprétation : T068 corrige la lecture trop large de T067. L'UNSAT observé
+n'est pas encore un gadget de cycle global ; c'est un conflit local entre un
+parasite unaire et une relation binaire sparse. Cela reste utile pour tester les
+compressions relationnelles, mais ce n'est ni un solver, ni une preuve de
+dureté.
+
 ## Tentative T021 - Repair positive-only pour paired-farthest
 
 Statut : idée saine comme générateur expérimental vérifié, mais non intégrée à

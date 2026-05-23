@@ -1319,3 +1319,33 @@ Interprétation prudente :
 Prochaine action Piste F : minimiser l'interaction UNSAT et lancer une recherche
 promise-aware autour des deux permutations-like `paired_farthest`, en essayant
 de supprimer aussi le `constant_accept` ou de le montrer inoffensif.
+
+## Résultat T068 - Noyau UNSAT minimal d'interaction
+
+Statut : diagnostic expérimental, non preuve.
+
+T068 ajoute `make bench-relation-unsat-cores`. Le rapport
+`reports/relation_unsat_core_probe.json` cherche des noyaux de cardinalité
+minimale dans les lignes `interaction_unsat` du CSP matérialisé.
+
+Métriques principales du benchmark T068 :
+
+- `rows=40`, toutes complètes ;
+- `validation_mismatches=0` ;
+- `interaction_unsat_rows=1` ;
+- `rows_with_minimal_core=1` ;
+- `min_core_size=2` ;
+- `constant_reject_rows=28`.
+
+Le noyau minimal du cas `five_local_non_cr` sur `p3_block_tree(2)` contient :
+
+- relation `1` : unaire non booléenne sur le bloc `0`, valeurs acceptées
+  `[0,1,3,5]` ;
+- relation `2` : binaire `sparse_partial_matching` entre `0` et `1`, tuples
+  bruts acceptés `[(2,3),(4,1)]` ;
+- conflit : projection gauche `[2,4]` disjointe de l'unaire `[0,1,3,5]`.
+
+Interprétation prudente : le signal T067 `interaction_unsat` est maintenant un
+artefact minimal et régressé, mais il n'est pas un gadget NP-hard autonome. Il
+montre surtout qu'une relation fonctionnelle sparse peut devenir contradictoire
+avec une seule contrainte unaire parasite.

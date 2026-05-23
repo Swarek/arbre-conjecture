@@ -3339,3 +3339,52 @@
   pas été modifié.
 - Next action : minimiser la ligne `interaction_unsat` et lancer une recherche
   promise-aware autour des deux permutations-like `paired_farthest`.
+
+## 2026-05-23 interaction UNSAT core minimization
+
+- Date/heure : 2026-05-23 16:07:30 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : la ligne `interaction_unsat` T067 peut être minimisée en
+  un noyau relationnel lisible. Le noyau est un diagnostic du CSP matérialisé,
+  pas un certificat négatif global.
+- Changement fait : ajout de `tools/pc_relation_unsat_core_probe.py`, de la
+  cible `make bench-relation-unsat-cores`, d'un test de régression et de la
+  documentation T068. L'outil reporte tuples bruts, projections, suppression de
+  relations et suppression de quartets source.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop` avec
+  seulement `PLANS.md` modifié par l'ExecPlan et le tool T068 en brouillon ;
+  `268 passed`, puis `JUSTE`.
+- Plan subagents : trois sidecars lecture seule. Résultats reçus : un sidecar
+  recommande un langage prudent "diagnostic CSP matérialisé" ; un second
+  corrige l'hypothèse initiale et prédit un noyau de taille `2` composé de
+  l'unaire sur `0` et de la binaire `0-1`, avec `unary(1)` comme bruit.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_csp_internal_benchmark.py::test_relation_unsat_core_probe_minimizes_interaction_unsat`.
+- Résultat correction ciblée : `1 passed`.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_csp_internal_benchmark.py`.
+- Résultat correction ciblée élargie : `7 passed`.
+- Commande exécutée : `make bench-relation-unsat-cores`.
+- Résultat benchmark T068 : `reports/relation_unsat_core_probe.json` écrit ;
+  `40` lignes, `40` complètes, `0` mismatch, `1` ligne `interaction_unsat`,
+  `1` ligne avec noyau minimal, `min_core_size=2`, `28` lignes avec
+  `constant_reject`.
+- Noyau minimal observé : relation `1` unaire non booléenne sur `0`, valeurs
+  acceptées `[0,1,3,5]`, plus relation `2` binaire
+  `sparse_partial_matching` entre `0` et `1`, tuples bruts acceptés
+  `[(2,3),(4,1)]`. La projection gauche `[2,4]` est disjointe de l'unaire.
+- Commande exécutée : `make quick`.
+- Résultat correction finale : `269 passed`, puis `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `8` tailles, `40/40` runs réussis, `0` timeout et `0` incomplet.
+- Conclusion : T068 transforme le signal T067 en artefact minimal régressé et
+  corrige l'interprétation : l'UNSAT est ici un conflit unaire+binaire local,
+  pas un gadget global ni une preuve de dureté. `candidate.py` n'a pas été
+  modifié.
+- Next action : explorer les profils `permutation_like` `paired_farthest` sous
+  contrôle promise-aware, ou shrinker plus finement les quartets source du
+  noyau T068.

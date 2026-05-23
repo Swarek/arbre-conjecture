@@ -4409,3 +4409,72 @@ faibles : une ligne `interaction_unsat` montre que parasites seuls et relation
 fonctionnelle seule ne suffisent pas à expliquer le rejet. Continuer par une
 minimisation de cette interaction ou par une recherche promise-aware autour des
 permutations-like.
+
+## ExecPlan 2026-05-23 - Interaction UNSAT core minimization
+
+But : minimiser la ligne `interaction_unsat` de T067 en un noyau de relations
+lisible, pour savoir si l'obstruction vient d'une vraie interaction
+unaire+binaire et en faire un artefact de régression exploitable.
+
+Hypothèse : le cas `five_local_non_cr` sur `p3_block_tree(2)` contient un noyau
+UNSAT minimal composé d'une relation binaire fonctionnelle et de contraintes
+unaires. Chaque contrainte seule ou paire stricte est satisfaisable, mais la
+conjonction complète est vide.
+
+Fichiers visés : `tools/pc_relation_unsat_core_probe.py`,
+`tests/test_csp_internal_benchmark.py`, `Makefile`, `README.md`,
+`docs/experiment_protocol.md`, `docs/hypothesis_portfolio.md`,
+`docs/tracks/piste_c_sat_csp.md`,
+`docs/tracks/piste_f_complexity_subcases.md`,
+`docs/proof_obligations.md`, `docs/experiment_log.md`,
+`docs/checkpoints.md`, `docs/tracks/README.md`, `PLANS.md`.
+
+Algorithme pressenti : reconstruire le rapport
+`quartet_effective_relation_report(..., store_full_relations=True)` pour une
+famille bornée, énumérer les affectations locales complètes, sélectionner les
+lignes sans `constant_reject` où les parasites seuls et les binaires seuls sont
+satisfaisables mais le CSP complet est UNSAT, puis chercher par force brute les
+sous-ensembles minimaux de relations qui rejettent toutes les affectations. Pour
+chaque relation du noyau, reporter scope, kind, taille de domaine, tuples
+acceptés et witness SAT quand on retire la relation.
+
+Plan de contre-exemples : démarrer avec le cas T067
+`five_local_non_cr/block_count=2`, puis scanner les familles T067 bornées pour
+vérifier si d'autres noyaux interactionnels apparaissent. Le résultat attendu
+minimum est un noyau minimal durable ; s'il n'existe pas, T067 était mal
+classifié.
+
+Plan subagents : trois sidecars lecture seule : définition du noyau minimal,
+format de régression durable, et langage preuve/limites.
+
+Tests à exécuter : test ciblé du core probe, `make bench-relation-unsat-cores`,
+tests ciblés CSP, `make quick`, et `make bench-quick`. `candidate.py` ne doit
+pas changer.
+
+Risques : un noyau minimal dans le CSP matérialisé ne prouve pas une obstruction
+du problème général hors scaffold. Il faut distinguer `constant_reject`, UNSAT
+par parasites seuls, UNSAT par binaires seuls, et vraie interaction dans ce
+modèle fini.
+
+Résultats observés : ajout de `tools/pc_relation_unsat_core_probe.py`, cible
+`make bench-relation-unsat-cores`, test ciblé et documentation T068. Le rapport
+`reports/relation_unsat_core_probe.json` contient `40` lignes complètes,
+`0` mismatch, `1` ligne `interaction_unsat`, `1` ligne avec noyau minimal,
+`min_core_size=2` et `28` lignes avec `constant_reject`. Le cas ciblé
+`five_local_non_cr/p3_block_tree(2)` se minimise en une unaire non booléenne
+sur `0` et une binaire `sparse_partial_matching` entre `0` et `1`. La projection
+gauche brute de la binaire `[2,4]` est disjointe des valeurs acceptées par
+l'unaire `[0,1,3,5]`.
+
+Tests observés : test ciblé unsat-core `1 passed`; tests ciblés
+`tests/test_csp_internal_benchmark.py` : `7 passed`; `make
+bench-relation-unsat-cores` écrit `reports/relation_unsat_core_probe.json` avec
+`40` lignes complètes, `0` mismatch et `min_core_size=2`; `make quick` passe
+avec `269 passed`, puis `JUSTE`; `make bench-quick` garde `40/40` runs réussis,
+`0` timeout et `0` incomplet.
+
+Décision : T068 transforme le signal T067 en artefact minimal et régressé, mais
+il réfute l'interprétation plus ambitieuse d'un gadget global : le noyau est un
+conflit unaire+binaire local dans le CSP matérialisé. Continuer soit vers la
+recherche promise-aware des profils `permutation_like`, soit vers un shrink de
+quartets source plus fin.

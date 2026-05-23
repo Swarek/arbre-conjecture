@@ -153,6 +153,20 @@ binaires non booléennes, les parasites et toutes les relations. Une ligne
 `interaction_unsat` est un signal expérimental de corrélation entre contraintes,
 pas un certificat négatif du problème général.
 
+Minimisation de noyaux UNSAT Piste F/C :
+
+```bash
+make bench-relation-unsat-cores
+```
+
+Cette commande écrit `reports/relation_unsat_core_probe.json`. Le rapport
+reprend les lignes `interaction_unsat` du CSP relationnel matérialisé et cherche
+des noyaux de relations de cardinalité minimale sous une borne explicite. Pour
+chaque noyau, il reporte les relations, les variables, les quartets source, les
+tests de suppression et les projections brutes qui expliquent le conflit. Un
+noyau trouvé est un diagnostic local du modèle matérialisé ; il ne prouve ni
+UNSAT global, ni NP-difficulté, ni correction d'un solver.
+
 ## Interprétation
 
 Un algorithme qui passe les gates peut encore être faux. Après chaque succès, il

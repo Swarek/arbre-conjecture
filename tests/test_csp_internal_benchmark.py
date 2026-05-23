@@ -3,6 +3,7 @@ from tools.pc_csp_width_stress import run_width_stress
 from tools.pc_relation_catalog import run_relation_catalog
 from tools.pc_relation_chain_probe import run_relation_chain_probe
 from tools.pc_relation_shape_search import run_relation_shape_search
+from tools.pc_relation_unsat_core_probe import run_relation_unsat_core_probe
 from tools.pc_single_p_domain_stress import run_single_p_domain_stress
 
 
@@ -532,3 +533,66 @@ def test_relation_chain_probe_finds_permutation_like_near_misses():
         row["binary_relation_profiles"][0]["shape"] == "permutation_like"
         for row in candidates
     )
+
+
+def test_relation_unsat_core_probe_minimizes_interaction_unsat():
+    report = run_relation_unsat_core_probe(
+        block_counts=[2],
+        instance_kinds=["five_local_non_cr"],
+        repeats=1,
+        seed=20260550,
+    )
+
+    summary = report["summary"]
+    assert summary["rows"] == 1
+    assert summary["complete_rows"] == 1
+    assert summary["validation_mismatches"] == 0
+    assert summary["interaction_unsat_rows"] == 1
+    assert summary["rows_with_minimal_core"] == 1
+    assert summary["min_core_size"] == 2
+    assert summary["constant_reject_rows"] == 0
+
+    row = report["rows"][0]
+    assert row["full_accept_count"] == 0
+    assert row["binary_non_boolean_accept_count"] == 4
+    assert row["parasite_accept_count"] == 16
+    assert row["minimal_core_count"] == 1
+
+    core = row["minimal_cores"][0]
+    assert core["relation_indices"] == [1, 2]
+    assert core["relation_kinds"] == [
+        "unary_non_boolean",
+        "binary_non_boolean_catalog",
+    ]
+    assert core["relation_shapes"] == ["unary_non_boolean", "sparse_partial_matching"]
+    assert core["variables"] == ["0", "1"]
+    assert core["variable_count"] == 2
+    assert core["core_assignment_space"] == 36
+    assert core["core_quartet_count"] == 6
+    assert core["core_accept_count"] == 0
+    assert core["proper_subsets_satisfiable"] is True
+
+    removal_counts = {
+        check["removed_relation_index"]: check["satisfying_assignment_count"]
+        for check in core["proper_removal_checks"]
+    }
+    assert removal_counts == {1: 4, 2: 48}
+
+    conflict = core["projection_conflicts"][0]
+    assert conflict["binary_relation_index"] == 2
+    assert conflict["unary_relation_index"] == 1
+    assert conflict["variable"] == "0"
+    assert conflict["status"] == "empty_intersection"
+    assert conflict["binary_projection_indices"] == [2, 4]
+    assert conflict["unary_accepted_indices"] == [0, 1, 3, 5]
+
+    unary, binary = core["relations"]
+    assert unary["accepted_index_tuples"] == [[0], [1], [3], [5]]
+    assert binary["shape"] == "sparse_partial_matching"
+    assert binary["accepted_index_tuples"] == [[2, 3], [4, 1]]
+    assert binary["canonical_accepted_index_tuples"] == [[1, 4], [3, 2]]
+
+    quartet_removals = core["source_quartet_removal_checks"]
+    assert len(quartet_removals) == 6
+    assert any(check["satisfying_assignment_count"] == 0 for check in quartet_removals)
+    assert any(check["satisfying_assignment_count"] > 0 for check in quartet_removals)

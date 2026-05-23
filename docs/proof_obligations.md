@@ -248,6 +248,15 @@ matérialisé : il faut encore prouver la suffisance du modèle relationnel, le
 contrôle des parasites, la réalisation par une matrice globale `D`, le respect
 du promise PC-tree et une borne de complexité.
 
+T068 minimise cette ligne `interaction_unsat` dans le même CSP matérialisé. Le
+noyau de cardinalité minimale observé contient une relation unaire non
+booléenne et une relation binaire `sparse_partial_matching`. Le conflit exact
+est une intersection vide entre les valeurs admises par l'unaire sur le bloc
+`0` et la projection gauche brute de la binaire. Cette minimisation ne ferme pas
+les obligations de preuve : elle ne prouve pas que le CSP matérialisé est une
+réduction suffisante générale, ne respecte pas encore le promise
+Hsu/McConnell, et ne donne aucune borne de complexité pour les domaines `P`.
+
 ### Caractérisation bad-side d'un ordre fixé
 
 Statut : conséquence directe pour ordre fixé + prédicat central exact depuis
