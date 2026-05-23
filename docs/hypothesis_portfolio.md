@@ -14,6 +14,12 @@ surtout pour trois axes : universalité comme variante polynomial-looking mais
 distincte de l'existence, sous-cas strict, et projection des ensembles
 `I_x(v) = {i : B_i intersecte F_x}` sur les branches d'un nœud `P`.
 
+Complément externe 2026-05-23 : la revue
+`docs/external_reviews/gpt55_bad_side_quartet_strategy_2026-05-23.md` doit être
+lue comme un routage multi-pistes, pas comme une instruction de se concentrer
+sur T057. Elle alimente bad-side fixed-order, quartet CSP, 2-SAT/treewidth,
+circular-ones/universalité et catalogue de relations non booléennes.
+
 ## Piste A : contraintes locales sur nœuds P/C
 
 Intuition : les croisements de cordes farthest-neighbor imposent peut-être des
@@ -76,12 +82,13 @@ arbres et vérifier si elles sont suffisantes.
 Raisons possibles d’échec : les grands nœuds `P` induisent des contraintes
 d’ordre cyclique non binaires.
 
-Prochain essai concret : après T062, tester si une intégration positive-only de
-`solve_quartet_2sat` ou `solve_quartet_treewidth_csp` dans `candidate.py`
-apporte de vrais témoins nouveaux sous garde de coût ; sinon basculer vers le
-catalogue de relations non booléennes/gadgets. Garder séparés les UNSAT
-relationnels tant que la suffisance globale du modèle relationnel n'est pas
-prouvée.
+Prochain essai concret : après T062 et la revue R002, tester d'abord par un
+probe borné si une intégration positive-only de `solve_quartet_2sat` ou
+`solve_quartet_treewidth_csp` dans `candidate.py` apporte de vrais témoins
+nouveaux sous garde de coût. Sans gain mesuré, basculer vers le catalogue de
+relations non booléennes/gadgets ou vers la collision de second ordre T057.
+Garder séparés les UNSAT relationnels tant que la suffisance globale du modèle
+relationnel n'est pas prouvée.
 
 ## Piste D : intersection de contraintes type PC-tree / circular-ones
 

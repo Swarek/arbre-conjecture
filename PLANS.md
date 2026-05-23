@@ -4122,3 +4122,39 @@ Piste C/F. Continuer soit en intégrant seulement des témoins positifs sous
 garde stricte dans `candidate.py`, soit en cherchant des gadgets relationnels
 non booléens plus expressifs ; ne pas présenter la DP treewidth comme
 polynomiale générale.
+
+## ExecPlan 2026-05-23 - Recadrage externe multi-pistes
+
+But : préserver la nouvelle analyse GPT 5.5 Pro fournie par l'utilisateur tout
+en corrigeant son biais de prompt vers T056/T057. Le dépôt doit rester lisible
+par piste, avec T057 comme une piste de compression parmi d'autres.
+
+Hypothèse : la revue externe apporte des lemmes et stress tests utiles
+bad-side/quartets, mais le plan optimal consiste à router ces idées vers les
+pistes existantes plutôt qu'à bloquer le Goal sur la seule collision de second
+ordre.
+
+Fichiers visés : `docs/external_reviews/`,
+`docs/tracks/README.md`, `docs/hypothesis_portfolio.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `PLANS.md`.
+
+Algorithme pressenti : créer une synthèse durable de la revue externe, mettre à
+jour l'addendum périmé par T060-T062, et expliciter la prochaine décision :
+probe positive-only candidate, catalogue non booléen/gadgets, collision T057 ou
+piste circular-ones/universalité.
+
+Tests à exécuter : `make quick`. Aucun changement algorithmique n'est prévu.
+
+Risques : documenter trop fortement une revue externe pourrait la faire passer
+pour une preuve. Chaque section doit donc garder le statut "analyse externe,
+non preuve interne".
+
+Résultats observés : ajout de
+`docs/external_reviews/gpt55_bad_side_quartet_strategy_2026-05-23.md`, mise à
+jour de l'addendum externe après T060-T062, et routage explicite dans le
+portefeuille/tracks. `make quick` passe avec `264 passed`, puis `JUSTE`.
+
+Décision : garder T057 comme piste de compression à falsifier, mais poursuivre
+le Goal par décision multi-pistes. Prochaine étape recommandée : probe borné de
+gain positive-only T060/T061 avant toute intégration candidate ; sans gain,
+basculer vers catalogue non booléen/gadgets ou collision de second ordre.

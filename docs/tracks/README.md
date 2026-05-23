@@ -10,6 +10,12 @@ perdre : cas strict polynomial potentiel, diagnostic d'universalité séparé de
 l'existence, projection locale des quartets au nœud décisif, et question des
 ensembles `I_x(v)` sur les branches d'un gros nœud `P`.
 
+Note transverse 2026-05-23 : `docs/external_reviews/gpt55_bad_side_quartet_strategy_2026-05-23.md`
+conserve la revue externe centree bad-side/quartets. Elle est explicitement
+routee vers plusieurs pistes : bad-side fixed-order, CSP de quartets, 2-SAT,
+treewidth, circular-ones/universalite, gadgets non booleens et collisions T057.
+Elle ne remplace ni les tests ni les obligations de preuve.
+
 ## Index
 
 | Piste | Fichier | Statut courant |
@@ -96,6 +102,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T056 | 2026-05-23 | B/C/F | Collisions de contexte : `mask_multiset` et même l'état de masques complet ne sont pas des états DP autonomes | `component_mask_quotient_context_collision_profile` |
 | T057 | 2026-05-23 | B/C/F | Signature d'obligations ouvertes one-hop : compression visible mais diagnostic borné et encore non récursif | `component_mask_open_boundary_profile` |
 | R001 | 2026-05-23 | B/C/D/E/F | Revue externe globale post-T057 re-routée vers cinq pistes, pas seulement collision T057 | `docs/external_reviews/gpt55_global_strategy_2026-05-23.md` |
+| R002 | 2026-05-23 | B/C/D/E/F | Revue externe bad-side/quartets recadrée après critique utilisateur : T057 reste une piste, pas le plan unique | `docs/external_reviews/gpt55_bad_side_quartet_strategy_2026-05-23.md` |
 | T058 | 2026-05-23 | C/F/E | Rapport de portée PC-tree par quartets : support conservateur taille 3, portée effective observée `<=2` sur la gate | `quartet_pc_scope_report` |
 | T059 | 2026-05-23 | C/F/E | Relations effectives de quartets fusionnées : validation cR, graphe primal, 2-SAT booléen et catalogue non booléen séparés | `quartet_effective_relation_report` |
 | T060 | 2026-05-23 | C/F | Solveur 2-SAT exact sur les relations effectives booléennes ; SAT/UNSAT et témoins vérifiés hors candidate | `solve_quartet_2sat` |

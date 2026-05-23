@@ -506,6 +506,10 @@ Dernier commit green avant T009 : `07120e4`.
   `make bench-quick` (`40/40` runs, `0` timeout, `0` incomplet). Résultat
   observé : `p3_block_tree(k)` rend la largeur de T061 visible comme paramètre
   limitant ; `candidate.py` n'a pas été modifié.
+- Checkpoint R002/T063 courant : commit contenant le recadrage documentaire de
+  la revue GPT 5.5 Pro bad-side/quartets après critique utilisateur. Validation
+  observée : `make quick` (`264 passed`, puis `JUSTE`). Aucun changement
+  algorithmique ni modification de `candidate.py`.
 
 ## Rollback
 

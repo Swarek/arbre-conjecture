@@ -32,11 +32,14 @@ au moins les pistes suivantes actives :
   a portée effective `<=2`, mais le support structurel peut être taille `3`.
   Statut dépôt : preuve expérimentale T058/T059, pas théorème général.
 - Sous-cas booléen : arité `<=2` plus domaines booléens suggère 2-SAT exact.
-  Statut dépôt : détecté par `row_class="two_sat_candidate"`, solveur 2-SAT
-  encore à écrire.
+  Statut dépôt : détecté par `row_class="two_sat_candidate"` et implémenté hors
+  `candidate.py` par T060. Les SAT sont des témoins vérifiés ; les UNSAT restent
+  confinés au modèle relationnel tant que sa suffisance globale n'est pas
+  prouvée.
 - Treewidth : si le graphe primal des relations fusionnées a largeur bornée,
-  une DP exacte standard est possible. Statut dépôt : métrique de largeur
-  ajoutée, DP encore à écrire.
+  une DP exacte standard est possible. Statut dépôt : T061 implémente une DP
+  exacte bornée hors `candidate.py`, et T062 ajoute `p3_block_tree(k)` comme
+  stress de largeur croissante.
 
 ## Expériences A Garder Séparées
 
@@ -49,3 +52,24 @@ au moins les pistes suivantes actives :
 Ces expériences doivent produire des artefacts séparés : test, générateur,
 contre-exemple minimal, lemme négatif ou entrée de piste. Une réussite de T057
 ne prouve pas 2-SAT/treewidth ; une réussite 2-SAT ne prouve pas la DP générale.
+
+## Mise A Jour Apres T060-T062
+
+Le recadrage utilisateur reste valide, mais le statut a avance :
+
+- T060 a ferme l'experience "sous-cas booleen par 2-SAT" dans le scaffold
+  supporté, sans integration candidate.
+- T061 a ajoute une DP treewidth exacte bornee pour les relations effectives,
+  couvrant aussi les domaines non booleens `P3`.
+- T062 a fourni une famille de stress `p3_block_tree(k)` montrant que la largeur
+  croit et que les caps doivent produire `treewidth_cap_exceeded` plutot qu'un
+  faux rejet.
+
+La prochaine decision ne doit donc pas etre "continuer T057 ou non", mais
+choisir entre :
+
+- une integration positive-only strictement gardee de T060/T061 dans
+  `candidate.py`, uniquement si un probe montre de vrais temoins nouveaux ;
+- un catalogue de relations non booleennes/gadgets pour evaluer la durete ;
+- une collision de second ordre contre T057 ;
+- une piste circular-ones/universalite gardee separee de l'existence.

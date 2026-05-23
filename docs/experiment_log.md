@@ -3130,3 +3130,28 @@
 - Next action : tester l'intérêt réel d'une intégration positive-only dans
   `candidate.py` sous garde stricte, ou poursuivre le catalogue de relations
   non booléennes/gadgets.
+
+## 2026-05-23 external bad-side/quartet strategy reroute
+
+- Date/heure : 2026-05-23 14:11:24 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : la nouvelle revue GPT 5.5 Pro fournie par l'utilisateur
+  doit être conservée comme input de recherche, mais re-routée vers plusieurs
+  pistes car le prompt était trop ancré sur T056/T057.
+- Changement fait : ajout d'une synthèse durable
+  `docs/external_reviews/gpt55_bad_side_quartet_strategy_2026-05-23.md`,
+  correction de l'addendum externe périmé par T060-T062, et mise à jour du
+  portefeuille pour dire explicitement que T057 reste une piste, pas le plan
+  unique.
+- Commande exécutée avant modification : arrêt d'un probe ad hoc trop large
+  sans sortie exploitable ; aucun résultat scientifique n'en a été tiré.
+- Commande exécutée : `make quick`.
+- Résultat correction : `264 passed`, puis `JUSTE`.
+- Résultat benchmark : non applicable, changement documentaire.
+- Conclusion : la documentation sépare maintenant la revue externe en axes
+  bad-side, quartet CSP, 2-SAT/treewidth, circular-ones/universalité, gadgets
+  non booléens et collision T057. Elle ne prétend pas résoudre le problème.
+- Next action : lancer un probe borné pour mesurer si T060/T061 apportent de
+  vrais témoins positifs nouveaux avant toute intégration dans `candidate.py`,
+  ou basculer vers le catalogue de relations non booléennes/gadgets.
