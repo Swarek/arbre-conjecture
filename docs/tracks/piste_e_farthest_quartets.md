@@ -110,6 +110,13 @@ T027 compile cette même obstruction comme atomes CSP : pour chaque paire
 quartets cR : elle reste une contrainte de séparation de deux témoins, pas une
 contrainte d'arc sur tout `B(a,b)`.
 
+T075 ajoute un profil exact par frontier. Sur le sweep borné
+`balanced/mixed`, `n=5..8`, les `494` frontiers non-cR profilées ont toutes un
+premier quartet interdit dont les feuilles se répartissent sur `3` supports
+PC-tree. Cela confirme que le quartet bad-side est le bon objet fixed-order,
+mais que son exploitation dans un PC-tree exige de transporter des corrélations
+entre niveaux.
+
 ## Obstruction 4-locale réfutée
 
 Statut : contre-exemple minimal enregistré.

@@ -78,6 +78,15 @@ non-cR, mais les projections locales `I_x(v)` restent compatibles à chaque nœu
 La piste viable est donc une intersection avec une contrainte circular-ones
 globale auxiliaire, pas un filtre local indépendant appliqué nœud par nœud.
 
+Complément T075 : `make bench-frontier-obstructions` confirme ce diagnostic sur
+un sweep borné. Les `494` frontiers non-cR profilées sont toutes dans des lignes
+où le rapport local `I_x(v)` est silencieux, et le premier quartet cR interdit
+utilise toujours `3` supports PC-tree. Les variantes d'arc de mauvais témoins
+restent seulement diagnostiques : `B(a,b) union {a,b}` échoue comme prédicat
+nécessaire sur les lignes cR, et `B(a,b)` arc produit encore quelques mismatchs
+sur cycles. La conclusion reste qu'il faut une contrainte globale de projection
+ou une relation de séparateur, pas une circular-ones locale indépendante.
+
 ## Risques
 
 - Les contraintes cR peuvent ne pas être exprimables comme contraintes d’arcs

@@ -618,6 +618,16 @@ Dernier commit green avant T009 : `07120e4`.
   positive-only non justifiée pour l'instant ; `candidate.py` n'a pas été
   modifié.
 
+- Checkpoint T075 courant : commit contenant le probe de supports exacts des
+  obstructions de frontiers. Validation observée : test ciblé local
+  (`1 passed`), `make bench-frontier-obstructions` (`40` lignes complètes,
+  `0` troncature, `624` frontiers, `494` non-cR, `494` non-cR avec projections
+  locales silencieuses, `494` obstructions multi-niveaux profilées,
+  `support_path_count_histogram={"3": 494}`), tests locaux
+  `tests/test_local_constraints.py` (`43 passed`), `make quick`
+  (`277 passed`, puis `JUSTE`) et `make bench-quick` (`40/40` runs,
+  `0` timeout, `0` incomplet). `candidate.py` n'a pas été modifié.
+
 ## Rollback
 
 Si une modification régresse et que la cause n’est pas claire :

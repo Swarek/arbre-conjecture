@@ -3684,3 +3684,61 @@
   dans ce sweep. Les rejets relationnels restent exclus de `candidate.py`.
 - Next action : basculer vers le probe A/D de supports exacts de quartets
   non-cR, ou vers l'audit de complétude stricte Algorithm 5.2.
+
+## 2026-05-23 frontier obstruction support probe
+
+- Date/heure : 2026-05-23 17:35:52 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les projections locales `I_x(v)` peuvent être silencieuses
+  alors que toutes les frontiers représentées sont non-cR ; le premier quartet
+  cR interdit devrait révéler une corrélation multi-niveaux plutôt qu'une
+  obstruction locale indépendante.
+- Changement fait : ajout de
+  `tools/pc_frontier_obstruction_support_probe.py`, de la cible
+  `make bench-frontier-obstructions`, d'un test de régression T075 et de la
+  documentation A/D/E. `candidate.py` n'a pas été modifié.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `276 passed`, puis `JUSTE`.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_local_constraints.py::test_frontier_obstruction_support_probe_sees_silent_ix_negative_tree`.
+- Résultat correction ciblée : `1 passed`.
+- Commande exécutée :
+  `PYTHONPATH=src:. .venv/bin/python tools/pc_frontier_obstruction_support_probe.py --sizes 7 --pc-trees mixed --instance-kinds even_high_cycle_low_hub --repeats 1 --frontier-limit 100 --max-non-cr-orders 100 --output reports/frontier_obstruction_support_probe_smoke.json`.
+- Résultat smoke : `1` ligne complète, `16` frontiers, `0` cR, `16` non-cR,
+  `16` frontiers non-cR avec projections `I_x(v)` silencieuses,
+  `16` obstructions multi-niveaux, `support_path_count_histogram={"3": 16}`.
+- Commande exécutée initialement :
+  `rtk make bench-frontier-obstructions` avec périmètre plus large incluant
+  `star` et `paired_farthest`.
+- Résultat initial : run arrêté après plus de deux minutes ; le périmètre
+  énumérait trop de frontiers pour une gate de diagnostic courante. Le test a
+  été réduit sans changer l'oracle ni les prédicats.
+- Commande exécutée finale : `rtk make bench-frontier-obstructions`.
+- Résultat benchmark T075 :
+  `reports/frontier_obstruction_support_probe.json` écrit ; `40` lignes,
+  `40` complètes, `0` troncature, `624` frontiers, `130` cR, `494` non-cR,
+  `494` non-cR profilées, `40` lignes `I_x(v)` silencieuses,
+  `494` non-cR silencieuses, `494` obstructions multi-niveaux,
+  `0` obstruction mono-support profilée,
+  `support_path_count_histogram={"3": 494}`,
+  `root_support_size_histogram={"1": 84, "2": 410}`.
+- Détail diagnostic : `bad_witness_one_side` rejette tous les non-cR profilés,
+  mais les variantes `B(a,b)` arc et `B(a,b) union {a,b}` gardent des mismatchs
+  et restent explicitement non décisionnelles.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_local_constraints.py`.
+- Résultat correction ciblée élargie : `43 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction finale : `277 passed`, puis `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `8` tailles, `40/40` runs réussis, `0` timeout et `0` incomplet.
+- Conclusion : T075 renforce le contre-signal contre les règles locales
+  indépendantes par nœud. Les obstructions exactes de frontiers nécessitent une
+  relation de bord ou une contrainte globale auxiliaire ; elles ne justifient
+  aucune modification de `candidate.py`.
+- Next action : auditer la complétude de la piste stricte Algorithm 5.2, ou
+  formaliser une relation résiduelle exacte pour les quartets bad-side.

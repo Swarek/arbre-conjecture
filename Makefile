@@ -1,7 +1,7 @@
 PYTHON ?= $(shell if [ -x .venv/bin/python ]; then echo .venv/bin/python; elif command -v python3 >/dev/null 2>&1; then echo python3; else echo python; fi)
 PYTEST ?= $(PYTHON) -m pytest
 
-.PHONY: quick check hunt-counterexamples bench-quick bench bench-piste-f bench-csp-quick bench-width-stress bench-single-p-stress bench-relation-catalog bench-relation-shapes bench-relation-chains bench-relation-unsat-cores bench-sparse-matching bench-sparse-binary-cores bench-quartet-coverage bench-permutation-like bench-permutation-composition bench-relation-components unit acceptance
+.PHONY: quick check hunt-counterexamples bench-quick bench bench-piste-f bench-csp-quick bench-width-stress bench-single-p-stress bench-relation-catalog bench-relation-shapes bench-relation-chains bench-relation-unsat-cores bench-sparse-matching bench-sparse-binary-cores bench-quartet-coverage bench-frontier-obstructions bench-permutation-like bench-permutation-composition bench-relation-components unit acceptance
 
 unit:
 	$(PYTEST) -q
@@ -183,6 +183,18 @@ bench-quartet-coverage:
 	  --seed 20260580 \
 	  --max-treewidth 5 \
 	  --output reports/quartet_solver_coverage_probe.json
+
+bench-frontier-obstructions:
+	mkdir -p reports && \
+	$(PYTHON) tools/pc_frontier_obstruction_support_probe.py \
+	  --sizes 5,6,7,8 \
+	  --pc-trees balanced,mixed \
+	  --instance-kinds cycle,random,equal,four_local_non_cr,five_local_non_cr,even_high_cycle_low_hub \
+	  --repeats 1 \
+	  --frontier-limit 512 \
+	  --max-non-cr-orders 80 \
+	  --seed 20260590 \
+	  --output reports/frontier_obstruction_support_probe.json
 
 bench-permutation-like:
 	mkdir -p reports && \

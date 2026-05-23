@@ -35,6 +35,9 @@ from pc_circular.solvers.local_constraints import (
     pc_tree_guided_low_hub_matching_witness_report,
     project_farthest_sets_to_pc_nodes,
 )
+from tools.pc_frontier_obstruction_support_probe import (
+    run_frontier_obstruction_support_probe,
+)
 
 
 def _binary_low_hub_from_edges(m, edges):
@@ -130,6 +133,39 @@ def test_low_hub_i_projection_is_silent_on_refined_negative_pc_tree():
     assert all(node["proper_nontrivial_count"] == 0 for node in report["nodes"])
     assert all(node["laminar_violation_count"] == 0 for node in report["nodes"])
     assert all(node["declared_order_interval_violation_count"] == 0 for node in report["nodes"])
+
+
+def test_frontier_obstruction_support_probe_sees_silent_ix_negative_tree():
+    report = run_frontier_obstruction_support_probe(
+        sizes=[7],
+        pc_trees=["mixed"],
+        instance_kinds=["even_high_cycle_low_hub"],
+        repeats=1,
+        frontier_limit=100,
+        max_non_cr_orders=100,
+    )
+
+    summary = report["summary"]
+    assert summary["rows"] == 1
+    assert summary["complete_rows"] == 1
+    assert summary["frontiers_seen"] == 16
+    assert summary["cr_frontiers"] == 0
+    assert summary["non_cr_frontiers"] == 16
+    assert summary["profiled_non_cr_frontiers"] == 16
+    assert summary["ix_silent_rows"] == 1
+    assert summary["ix_silent_but_non_cr_frontiers"] == 16
+    assert summary["multi_level_profiled_obstruction_count"] == 16
+    assert summary["single_support_profiled_obstruction_count"] == 0
+    assert summary["support_path_count_histogram"] == {"3": 16}
+    assert summary["root_support_size_histogram"] == {"1": 6, "2": 10}
+
+    row = report["rows"][0]
+    assert row["ix_projection_silent"] is True
+    assert row["set_arc_precircular_mismatches"] == 0
+    assert row["with_endpoints_precircular_mismatches"] == 0
+    assert row["examples"][0]["requires_multi_level_correlation"] is True
+    assert row["examples"][0]["support_path_count"] == 3
+    assert row["examples"][0]["bad_witness_one_side"] is False
 
 
 def test_low_hub_strong_ordering_accepts_c4_and_rejects_c6_c8():

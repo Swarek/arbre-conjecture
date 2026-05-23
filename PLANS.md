@@ -4831,3 +4831,70 @@ le mode positive-only n'apporte aucun témoin nouveau dans le sweep, et les
 rejets relationnels ne sont pas des décisions générales. Continuer plutôt vers
 un probe A/D sur supports de quartets exacts ou vers l'audit strict Algorithm
 5.2.
+
+## ExecPlan 2026-05-23 - Exact frontier obstruction support probe
+
+But : basculer hors mining relationnel et mesurer, sur des frontiers représentées
+exactement, où apparaît le premier quartet cR interdit dans le PC-tree. Le but
+est de produire un diagnostic A/D : obstruction visible par support de quartet,
+silence éventuel des projections farthest `I_x(v)`, et échec des variantes
+naïves circular-ones par arcs de mauvais témoins.
+
+Hypothèse : certaines instances ont des projections farthest locales
+compatibles/silencieuses alors que chaque frontier représentée est non-cR ; les
+quartets exacts devraient alors montrer que l'obstruction nécessite une
+corrélation multi-niveaux plutôt qu'une contrainte locale `I_x(v)`.
+
+Fichiers visés : `tools/pc_frontier_obstruction_support_probe.py`,
+`tests/test_local_constraints.py`, `Makefile`, `README.md`,
+`docs/experiment_protocol.md`, `docs/hypothesis_portfolio.md`,
+`docs/tracks/piste_a_local_pc_constraints.md`,
+`docs/tracks/piste_d_circular_ones.md`,
+`docs/tracks/piste_e_farthest_quartets.md`,
+`docs/proof_obligations.md`, `docs/experiment_log.md`,
+`docs/checkpoints.md`, `docs/tracks/README.md`, `PLANS.md`.
+
+Algorithme pressenti : énumérer les frontiers représentées sous `frontier_limit`
+pour `star`, `balanced`, `mixed`. Pour chaque order, tester
+`passes_bad_side_precircular_cR`; pour les non-cR profilés, prendre
+`classify_order_obstructions`, projeter le quartet via
+`measure_obstruction_support` et `quartet_support_paths`, puis agréger
+`support_path_count`, root support, supports complets par nœud, et les rapports
+`bad_witness_arc_order_report`.
+
+Plan de contre-exemples : inclure `even_high_cycle_low_hub` avec `mixed` comme
+cas connu où `project_farthest_sets_to_pc_nodes` est silencieux alors que
+l'oracle PC-tree est négatif. Scanner aussi `cycle`, `random`, `equal`,
+`paired_farthest`, `four_local_non_cr`, `five_local_non_cr` sur `n <= 8`.
+
+Plan subagents : les subagents T074 ont déjà recommandé ce probe A/D et l'audit
+strict. Pas de nouveau fanout nécessaire pour l'implémentation bornée ; garder
+l'audit strict comme prochaine piste si T075 donne seulement un diagnostic.
+
+Tests à exécuter : test ciblé du probe sur `even_high_cycle_low_hub/mixed`,
+`make bench-frontier-obstructions`, tests locaux concernés, `make quick`,
+`make bench-quick`. `candidate.py` ne doit pas changer.
+
+Risques : l'énumération des frontiers est bornée ; une ligne tronquée n'est pas
+une preuve. Le premier quartet non-cR par ordre n'est pas forcément minimal au
+sens global. Les supports du scaffold `PCNode` ne prouvent pas encore la
+structure Hsu/McConnell générale.
+
+Résultats observés : ajout de
+`tools/pc_frontier_obstruction_support_probe.py`, cible
+`make bench-frontier-obstructions`, test ciblé local et documentation T075.
+Le premier périmètre large incluant `star` et `paired_farthest` a été arrêté
+après plus de deux minutes : il énumérait trop de frontiers pour une cible de
+diagnostic courante. La cible Makefile finale est bornée à `balanced/mixed`,
+`n=5..8`, `frontier_limit=512`, `max_non_cr_orders=80`. Le benchmark final
+contient `40` lignes complètes, `0` troncature, `624` frontiers inspectées,
+`130` cR, `494` non-cR, `494` non-cR profilées, `40` lignes avec projections
+`I_x(v)` silencieuses, `494` non-cR silencieuses, `494` obstructions
+multi-niveaux, `0` obstruction mono-support profilée,
+`support_path_count_histogram={"3": 494}`, `root_support_size_histogram={"1":
+84, "2": 410}`.
+
+Décision : T075 remplit le diagnostic A/D demandé et renforce le rejet des
+règles locales indépendantes par nœud. Ne pas intégrer dans `candidate.py`.
+Prochaine piste recommandée : audit strict Algorithm 5.2, ou formalisation
+d'une vraie relation de bord pour les quartets bad-side.

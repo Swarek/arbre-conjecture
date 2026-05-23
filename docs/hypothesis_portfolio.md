@@ -51,6 +51,13 @@ laminaires ou intervalles circulaires dans les ordres admissibles des branches.
 Un résultat positif pointerait vers circular-ones local ; un résultat négatif
 alimenterait la piste NP-difficulté.
 
+Mise à jour T075 : le probe `make bench-frontier-obstructions` énumère des
+frontiers représentées et profile le premier quartet cR interdit. Sur le sweep
+borné `n=5..8`, `balanced/mixed`, les `494` frontiers non-cR profilées restent
+silencieuses pour les projections locales `I_x(v)` et exigent toutes un
+support multi-niveau. La prochaine tentative locale doit porter une relation de
+bord, pas seulement des ensembles projetés par nœud.
+
 ## Piste B : programmation dynamique sur le PC-tree
 
 Intuition : un état de frontière pourrait résumer les contraintes externes d’un
@@ -135,6 +142,12 @@ Sous-piste à garder séparée : les contraintes de 2-balls/clusters de
 Brucker-Osswald peuvent être traitables par hypercycles/circular-ones, mais la
 condition cR actuelle est une contrainte de croisement de cordes, pas une simple
 contrainte de consécutivité.
+
+Mise à jour T075 : le probe frontier/support confirme que les variantes
+circular-ones locales ne capturent pas les obstructions multi-niveaux. Même
+quand `project_farthest_sets_to_pc_nodes` est silencieux sur tous les nœuds, les
+frontiers non-cR exhibent un quartet bad-side exact. La piste D doit donc
+chercher une intersection globale ou un modèle de projection-adjacence.
 
 ## Piste E : obstructions interdites par quartets farthest-neighbor
 

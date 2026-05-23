@@ -50,6 +50,7 @@ make bench-relation-unsat-cores
 make bench-sparse-matching
 make bench-sparse-binary-cores
 make bench-quartet-coverage
+make bench-frontier-obstructions
 make bench-permutation-like
 make bench-permutation-composition
 make bench-relation-components
@@ -124,6 +125,12 @@ diagnostic de noyau local, pas une preuve de dureté.
 aux solveurs expérimentaux 2-SAT/treewidth sur `p3_block_tree(k)` et ne compte
 que les témoins positifs validés directement comme couverture potentielle. Les
 résultats `False` restent diagnostiques.
+
+`make bench-frontier-obstructions` écrit
+`reports/frontier_obstruction_support_probe.json`. Il énumère des frontiers
+exactement représentées sous limite, compte les ordres cR/non-cR, et profile le
+premier quartet cR interdit de chaque mauvais ordre via ses supports PC-tree.
+C'est un diagnostic des corrélations multi-niveaux, pas un solver.
 
 `make bench-permutation-like` écrit `reports/permutation_like_probe.json`. Il
 teste les profils locaux `permutation_like` observés sur `paired_farthest`

@@ -209,6 +209,21 @@ représenté par construction comme couverture potentielle. Les résultats
 `False`/UNSAT du modèle relationnel restent des diagnostics tant que les
 obligations de preuve globales ne sont pas fermées.
 
+Supports exacts d'obstructions de frontiers Piste A/D :
+
+```bash
+make bench-frontier-obstructions
+```
+
+Cette commande écrit `reports/frontier_obstruction_support_probe.json`. Elle
+énumère les frontiers représentées sous `frontier_limit`, teste chaque ordre par
+le prédicat fixed-order bad-side, puis profile le premier quartet cR interdit
+des frontiers non-cR avec `measure_obstruction_support` et
+`quartet_support_paths`. Le rapport compare aussi le silence des projections
+locales `I_x(v)` et les variantes d'arcs de mauvais témoins. Une ligne
+tronquée est incomplète ; un support multi-niveau est un diagnostic de
+corrélation, pas une preuve de non-existence globale ni une décision candidate.
+
 Contrôle promise-aware des permutations locales Piste F/C :
 
 ```bash

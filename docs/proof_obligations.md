@@ -1858,3 +1858,34 @@ Limites :
   des paires reste explicitement énuméré ;
 - les contre-exemples T046 montrent qu'une signature locale par ensembles
   projetés ou par simples variables "côté A/B" est insuffisante.
+
+### Diagnostic T075 : support multi-niveau des premiers quartets non-cR
+
+Statut : obligation négative expérimentale pour les règles locales `I_x(v)`,
+pas preuve d'un algorithme.
+
+Le probe `pc_frontier_obstruction_support_probe.py` énumère des frontiers
+représentées, vérifie cR par le prédicat fixed-order bad-side, puis profile le
+premier quartet cR interdit de chaque mauvais ordre.
+
+Ce que T075 couvre :
+
+- obligation 1 fixed-order : les frontiers sont classées par
+  `passes_bad_side_precircular_cR`, pas par un filtre farthest approximatif ;
+- obligation de non-suffisance locale : dans le sweep borné, `494` frontiers
+  non-cR apparaissent dans des lignes où les projections locales `I_x(v)` sont
+  silencieuses ;
+- obligation de structure : les premiers quartets interdits profilés utilisent
+  toujours `3` supports PC-tree, donc une décision locale indépendante par nœud
+  ne peut pas expliquer ces rejets.
+
+Limites :
+
+- le probe énumère seulement sous `frontier_limit` et ne prouve rien sur les
+  lignes tronquées ;
+- le premier quartet d'un ordre n'est pas nécessairement une obstruction
+  minimale globale ;
+- les supports sont ceux du scaffold `PCNode`, pas encore une preuve
+  Hsu/McConnell générale ;
+- les mismatchs des variantes `B(a,b)` arc et `B(a,b) union {a,b}` rappellent
+  qu'elles ne doivent pas être promues en prédicats de décision.

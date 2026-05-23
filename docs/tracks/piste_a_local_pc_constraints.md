@@ -126,6 +126,36 @@ Conclusion : une règle locale fondée seulement sur les ensembles projetés
 low-hub. La prochaine piste locale doit transporter l'ordre relatif des paires
 ou construire une vraie intersection globale.
 
+## T075 - Supports exacts des frontiers non-cR
+
+Statut : diagnostic A/D borné, contre-signal contre les règles locales
+indépendantes.
+
+Artefact ajouté : `tools/pc_frontier_obstruction_support_probe.py` et cible
+`make bench-frontier-obstructions`.
+
+Le probe énumère des frontiers représentées exactement sous `frontier_limit`.
+Pour chaque frontier, il teste `passes_bad_side_precircular_cR`. Pour les
+frontiers non-cR profilées, il extrait le premier quartet cR interdit, mesure
+ses projections par `measure_obstruction_support`, calcule
+`quartet_support_paths`, et compare le résultat au rapport local
+`project_farthest_sets_to_pc_nodes`.
+
+Résultat du sweep borné `n=5..8`, `balanced/mixed` :
+
+- `40` lignes complètes, `0` troncature ;
+- `624` frontiers inspectées, `494` non-cR ;
+- les `40` lignes ont des projections `I_x(v)` silencieuses ;
+- les `494` frontiers non-cR silencieuses profilées exigent toutes un support
+  multi-niveau (`support_path_count_histogram = {"3": 494}`) ;
+- aucun premier quartet profilé n'est contenu dans un support local unique.
+
+Conclusion : T075 renforce T040/T046. Les projections locales par nœud peuvent
+être parfaitement silencieuses pendant que l'obstruction fixed-order existe
+dans chaque frontier. Une règle locale utile doit donc mémoriser une relation de
+bord ou construire une contrainte globale auxiliaire ; elle ne peut pas se
+limiter aux ensembles `I_x(v)` indépendants par nœud.
+
 ## T022 - Rapport `project_farthest_sets_to_pc_nodes`
 
 Statut : diagnostic implémenté, explicitement non décisionnel.
@@ -169,7 +199,7 @@ pour décider l'existence. Il ne doit pas être appelé par `candidate.py`.
 
 ## Prochaine action
 
-Construire un outil qui énumère tous les mauvais ordres représentés par un petit
-PC-tree et mesure si chaque violation possède un support local borné. Si le
-diagnostic `I_x(v)` est ajouté, le garder dans les rapports d'obstruction et
-non comme décision d'existence.
+Auditer maintenant la piste stricte Algorithm 5.2 ou formaliser une relation de
+bord exacte pour les quartets, puisque le probe T075 remplit le diagnostic
+frontier/support demandé et confirme que le signal local `I_x(v)` reste
+insuffisant.
