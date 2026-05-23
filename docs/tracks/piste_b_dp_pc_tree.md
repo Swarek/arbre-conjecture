@@ -415,3 +415,27 @@ descend nettement sous ce ratio sans créer d'états mixtes, il pourra devenir
 intéressant. Mais une preuve devra encore montrer que les états se composent à
 travers les frontières du PC-tree sans reconstruire les frontiers ni revisiter
 tous les témoins.
+
+## Résultats T055
+
+Statut : exploration de quotients d'état, pas DP.
+
+T055 compare plusieurs projections de l'état T054. Les quotients
+`mask_multiset`, `hit_components`, `hit_pairs` et `decision_only` ne créent pas
+d'états mixtes sur la gate rapide, tandis que le contrôle négatif
+`side_blind_schema` devient massivement mixte. Cela confirme que les masques,
+et pas seulement la forme du support, portent l'information locale de décision.
+
+Lecture DP :
+
+- `decision_only` et `hit_components` sont localement exacts, mais trop proches
+  d'une table de décision du support pour constituer une signature composable ;
+- `mask_multiset` est le quotient non tautologique le plus intéressant :
+  ratio `0.3959` sur la gate rapide et `0.4088` sur le stress `n=8`, sans état
+  mixte observé ;
+- aucune de ces mesures ne prouve que deux sous-arbres avec le même quotient
+  auront le même comportement face au contexte parent.
+
+Prochaine obligation pour continuer côté DP : construire un test de composition
+parent-enfant, ou produire un contre-exemple où deux affectations ayant le même
+quotient local divergent après extension dans un support plus large.

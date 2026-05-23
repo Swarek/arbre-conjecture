@@ -418,6 +418,17 @@ Dernier commit green avant T009 : `07120e4`.
   observé : `2920` états pour `6224` affectations (`0.4692`), bucket moyen
   `2.1315`, bucket max `4`; quotient exact mais faible, pas DP compacte.
   `candidate.py` n'a pas été modifié.
+- Checkpoint T055 courant : commit contenant les quotients d'états de masques
+  hors candidate. Validation observée :
+  `tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`
+  (`50 passed`), `make bench-csp-quick` (`192` lignes, `0` mismatch),
+  probe stress `n=8` (`30` lignes, `0` mismatch), `make quick`
+  (`233 passed`, puis `JUSTE`), `make check` (`JUSTE`), `make bench-quick`
+  (`40/40` runs, `0` timeout, `0` incomplet). Résultat observé :
+  `mask_multiset` compresse à `0.3959` sur la gate rapide sans état mixte,
+  tandis que `side_blind_schema` descend à `0.1250` mais produit `358` états
+  mixtes ; le cas minimal `cycle_metric(4)`/`balanced_pc_tree(4, kind="C")`
+  est régressé. Aucun changement dans `candidate.py`.
 
 ## Rollback
 

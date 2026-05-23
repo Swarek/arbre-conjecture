@@ -62,6 +62,38 @@ def _signature_set(compilation: dict) -> set[tuple]:
     }
 
 
+def _aggregate_component_mask_quotients(rows: Sequence[dict]) -> dict:
+    aggregate: dict[str, dict] = {}
+    total_assignments = sum(
+        row["profile_hit_assignments"] + row["profile_no_hit_assignments"] for row in rows
+    )
+    for row in rows:
+        for name, quotient in row["profile_component_mask_quotients"].items():
+            target = aggregate.setdefault(
+                name,
+                {
+                    "state_count": 0,
+                    "hit_state_count": 0,
+                    "no_hit_state_count": 0,
+                    "mixed_count": 0,
+                    "max_bucket_size": 0,
+                    "ratio": 0.0,
+                    "average_bucket_size": 0.0,
+                },
+            )
+            target["state_count"] += quotient["state_count"]
+            target["hit_state_count"] += quotient["hit_state_count"]
+            target["no_hit_state_count"] += quotient["no_hit_state_count"]
+            target["mixed_count"] += quotient["mixed_count"]
+            target["max_bucket_size"] = max(target["max_bucket_size"], quotient["max_bucket_size"])
+    for quotient in aggregate.values():
+        if total_assignments:
+            quotient["ratio"] = quotient["state_count"] / total_assignments
+        if quotient["state_count"]:
+            quotient["average_bucket_size"] = total_assignments / quotient["state_count"]
+    return dict(sorted(aggregate.items()))
+
+
 def run_benchmark(
     *,
     sizes: Sequence[int],
@@ -441,6 +473,9 @@ def run_benchmark(
                             "profile_component_mask_state_projection_work_ratio": profile_counts[
                                 "component_mask_state_projection_work_ratio"
                             ],
+                            "profile_component_mask_quotients": profile_counts[
+                                "component_mask_quotients"
+                            ],
                             "profile_ambiguous_no_hit_assignments": profile_counts[
                                 "ambiguous_no_hit_assignments"
                             ],
@@ -698,6 +733,9 @@ def run_benchmark(
                 / sum(row["profile_classification_atom_checks"] for row in supported_rows)
                 if sum(row["profile_classification_atom_checks"] for row in supported_rows)
                 else 0.0
+            ),
+            "profile_component_mask_quotients": _aggregate_component_mask_quotients(
+                supported_rows
             ),
             "profile_pair_side_split_work_ratio": (
                 sum(row["profile_pair_side_split_checks"] for row in supported_rows)

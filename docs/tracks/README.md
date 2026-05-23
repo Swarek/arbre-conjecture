@@ -92,6 +92,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T052 | 2026-05-23 | C/B/F | Cache des côtés par support triple : cache simple encore trop cher, modèle bitset-composantes prometteur | `_witness_side_cache_key` |
 | T053 | 2026-05-23 | C/B/F | Profil bitset/composantes réel : exact mais encore plus cher que first-hit en coût réel ; la projection reste prometteuse | `_pair_side_bitset_outcome` |
 | T054 | 2026-05-23 | C/B/F | Cardinalité des états de masques : quotient local exact mais faible, environ facteur 2 seulement | `component_mask_state_*` |
+| T055 | 2026-05-23 | C/B/F | Quotients d'états de masques : quelques quotients locaux compressent mieux, mais les contrôles sans masques deviennent mixtes | `component_mask_quotients` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

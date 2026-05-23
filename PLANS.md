@@ -3397,3 +3397,77 @@ classifient exactement le hit/no-hit local, mais la compression observée n'est
 qu'un facteur `~2` et ne donne pas de DP compacte. La prochaine piste doit soit
 chercher un quotient plus abstrait mais sound, soit changer d'axe vers un
 sous-cas prouvable ou une obstruction de complexité.
+
+## ExecPlan 2026-05-23 - quotient component-mask states
+
+But : tester des quotients plus abstraits des états T054 afin de savoir s'il
+existe une compression nettement plus forte qui reste sound localement, ou si
+les abstractions naturelles mélangent hit et no-hit.
+
+Hypothèse : certains détails de l'état complet
+`((pair, component, side_mask), ...)` peuvent peut-être être supprimés sans
+perdre le hit/no-hit local. Des candidats prudents sont les états réduits aux
+seuls masques de hit, ou aux composantes non triviales. Des candidats risqués
+sont les multisets de masques sans labels/paires/composantes. Un quotient est
+réfuté dès qu'il contient à la fois des affectations hit et no-hit.
+
+Fichiers à modifier :
+`src/pc_circular/solvers/sat_like_experiments.py`,
+`tests/test_sat_like_experiments.py`, `tests/test_csp_internal_benchmark.py`,
+`tools/pc_csp_internal_benchmark.py`, `docs/tracks/piste_c_sat_csp.md`,
+`docs/tracks/piste_b_dp_pc_tree.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/proof_obligations.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `docs/tracks/README.md`,
+`PLANS.md`.
+
+Algorithme pressenti : calculer plusieurs projections de l'état complet par
+affectation de support, puis mesurer pour chacune : nombre d'états, ratio,
+bucket max/moyen, nombre d'états mixtes et premier témoin mixte. Les projections
+initiales : `full`, `active` sans composantes à masque `0`, `hit_only` gardant
+seulement les composantes `0b11`, `mask_multiset`, et `pair_mask_multiset`.
+Seuls les quotients sans état mixte peuvent être considérés comme candidats DP.
+
+Plan de contre-exemples : tout état mixte devient un contre-exemple de quotient
+et doit être documenté avec la projection concernée. Tester les cas déjà
+régressés : support imbriqué, component identity, paired-farthest label
+identity, no-hit non décisionnel, plus familles stress `random`,
+`permuted_cycle`, `paired_farthest`.
+
+Plan subagents : Piste C liste les quotients plausibles/risqués ; Piste
+contre-exemples cherche des états mixtes minimaux ; Piste F mesure si les ratios
+des quotients restent utiles sur familles stress.
+
+Tests à exécuter : tests ciblés
+`tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`,
+`make bench-csp-quick`, `make quick`, `make check`, `make bench-quick`.
+`candidate.py` ne doit pas changer.
+
+Risques : un quotient très compressé mais mixte est inutilisable ; un quotient
+non mixte sur les probes n'est pas une preuve ; un état `hit_only` peut être
+trivialement sound pour hit/no-hit local mais inutile pour composition globale.
+
+Résultats observés : ajout de `_component_mask_state_quotients` et des champs
+`component_mask_quotients` au profil et au benchmark CSP. Tests ciblés
+`tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py` :
+`50 passed`. Le sidecar contre-exemples donne un cas minimal
+`cycle_metric(4)`/`balanced_pc_tree(4, kind="C")`, régressé par
+`test_component_mask_quotient_negative_control_has_minimal_mixed_state`, où
+`side_blind_schema` est mixte mais `mask_multiset` ne l'est pas.
+`make bench-csp-quick` : `192` lignes, `0` mismatch. Ratios sur
+la gate rapide : `full=0.4692`, `mask_multiset=0.3959`,
+`hit_components=0.2121`, `hit_pairs=0.2121`, `decision_only=0.1825`,
+`side_blind_schema=0.1250` avec `358` états mixtes. Probe stress `n=8` :
+`full=0.4921`, `mask_multiset=0.4088`, `hit_components=0.2273`,
+`decision_only=0.1821`, `side_blind_schema` avec `181` états mixtes. Sidecar
+Piste C recommande de traiter `decision_only`/`hit_components` comme quotients
+locaux tautologiques, `mask_multiset` comme candidat non tautologique, et
+`side_blind_schema` comme contrôle négatif. Gates finales : `make quick`
+(`233 passed`, puis `JUSTE`), `make check` (`JUSTE`), `make bench-quick`
+(`8` tailles, `40` runs réussis, `0` timeout, `0` incomplet).
+
+Décision : conserver T055 comme diagnostic de quotients. Il montre une
+compression locale plus forte que T054, mais pas encore une DP : les quotients
+les plus compressés perdent presque toute information de composition, et le
+contrôle sans masques devient mixte. La prochaine expérience utile doit tester
+la stabilité de `mask_multiset` ou `hit_components` sous extension par contexte
+parent.

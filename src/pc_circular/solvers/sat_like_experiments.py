@@ -772,6 +772,32 @@ def _component_mask_state(
     }
 
 
+def _component_mask_state_quotients(state: tuple) -> dict[str, tuple]:
+    """Return diagnostic quotients of a full component-mask state."""
+
+    pair_masks: dict[tuple[int, int], list[int]] = {}
+    hit_components = []
+    hit_pairs = set()
+    for pair, component, mask in state:
+        pair_masks.setdefault(pair, []).append(mask)
+        if mask == 0b11:
+            hit_components.append((pair, component))
+            hit_pairs.add(pair)
+
+    has_hit = bool(hit_components)
+    return {
+        "full": state,
+        "mask_multiset": tuple(sorted(mask for _, _, mask in state)),
+        "pair_mask_multiset": tuple(
+            (pair, tuple(sorted(masks))) for pair, masks in sorted(pair_masks.items())
+        ),
+        "hit_components": tuple(sorted(hit_components)),
+        "hit_pairs": tuple(sorted(hit_pairs)),
+        "decision_only": (has_hit,),
+        "side_blind_schema": tuple((pair, component) for pair, component, _ in state),
+    }
+
+
 def _domain_product_size(encoding: dict, support: Sequence[Path]) -> int:
     result = 1
     for path in support:
@@ -1143,6 +1169,9 @@ def _profile_single_support_group(
     component_mask_state_witness_visits = 0
     component_mask_state_side_cache_hits = 0
     component_mask_state_side_cache_misses = 0
+    component_mask_quotient_counts: dict[str, dict[tuple, int]] = {}
+    component_mask_quotient_hit_values: dict[str, dict[tuple, bool]] = {}
+    component_mask_quotient_mixed: dict[str, set[tuple]] = {}
     truncated = False
 
     for choices in product(*domain_lists):
@@ -1257,6 +1286,13 @@ def _profile_single_support_group(
                     "atom_scan_hit": hit,
                     "component_mask_state_hit": mask_state["hit"],
                 }
+        for quotient_name, quotient_state in _component_mask_state_quotients(state).items():
+            quotient_counts = component_mask_quotient_counts.setdefault(quotient_name, {})
+            quotient_counts[quotient_state] = quotient_counts.get(quotient_state, 0) + 1
+            quotient_hit_values = component_mask_quotient_hit_values.setdefault(quotient_name, {})
+            previous_quotient_hit = quotient_hit_values.setdefault(quotient_state, mask_state["hit"])
+            if previous_quotient_hit != mask_state["hit"]:
+                component_mask_quotient_mixed.setdefault(quotient_name, set()).add(quotient_state)
 
         for path, choice in signature:
             key = (path, choice)
@@ -1310,6 +1346,22 @@ def _profile_single_support_group(
     component_mask_state_hit_count = sum(component_mask_state_hit_values.values())
     component_mask_state_no_hit_count = component_mask_state_count - component_mask_state_hit_count
     component_mask_state_max_bucket = max(component_mask_state_counts.values(), default=0)
+    component_mask_quotients = {}
+    for quotient_name, quotient_counts in sorted(component_mask_quotient_counts.items()):
+        quotient_state_count = len(quotient_counts)
+        quotient_hit_values = component_mask_quotient_hit_values[quotient_name]
+        quotient_hit_count = sum(quotient_hit_values.values())
+        component_mask_quotients[quotient_name] = {
+            "state_count": quotient_state_count,
+            "hit_state_count": quotient_hit_count,
+            "no_hit_state_count": quotient_state_count - quotient_hit_count,
+            "mixed_count": len(component_mask_quotient_mixed.get(quotient_name, set())),
+            "max_bucket_size": max(quotient_counts.values(), default=0),
+            "ratio": quotient_state_count / assignments_seen if assignments_seen else 0.0,
+            "average_bucket_size": (
+                assignments_seen / quotient_state_count if quotient_state_count else 0.0
+            ),
+        }
 
     return {
         "support": support,
@@ -1400,6 +1452,7 @@ def _profile_single_support_group(
             if classification_atom_checks
             else 0.0
         ),
+        "component_mask_quotients": component_mask_quotients,
         "pair_side_split_work_ratio": (
             pair_side_split_checks / classification_atom_checks
             if classification_atom_checks
@@ -1505,6 +1558,7 @@ def _grouped_support_outcome_profile(
             "component_mask_state_side_cache_misses": 0,
             "component_mask_state_work_ratio": 0.0,
             "component_mask_state_projection_work_ratio": 0.0,
+            "component_mask_quotients": {},
             "pure_hit_slice_count": 0,
             "pure_no_hit_slice_count": 0,
             "unary_hit_certified_assignments": 0,
@@ -1654,6 +1708,27 @@ def _grouped_support_outcome_profile(
         counts["component_mask_state_side_cache_misses"] += group[
             "component_mask_state_side_cache_misses"
         ]
+        for quotient_name, quotient in group["component_mask_quotients"].items():
+            aggregate = counts["component_mask_quotients"].setdefault(
+                quotient_name,
+                {
+                    "state_count": 0,
+                    "hit_state_count": 0,
+                    "no_hit_state_count": 0,
+                    "mixed_count": 0,
+                    "max_bucket_size": 0,
+                    "ratio": 0.0,
+                    "average_bucket_size": 0.0,
+                },
+            )
+            aggregate["state_count"] += quotient["state_count"]
+            aggregate["hit_state_count"] += quotient["hit_state_count"]
+            aggregate["no_hit_state_count"] += quotient["no_hit_state_count"]
+            aggregate["mixed_count"] += quotient["mixed_count"]
+            aggregate["max_bucket_size"] = max(
+                aggregate["max_bucket_size"],
+                quotient["max_bucket_size"],
+            )
         counts["pure_hit_slice_count"] += group["pure_hit_slice_count"]
         counts["pure_no_hit_slice_count"] += group["pure_no_hit_slice_count"]
         counts["unary_hit_certified_assignments"] += group["unary_hit_certified_assignments"]
@@ -1700,6 +1775,13 @@ def _grouped_support_outcome_profile(
         counts["component_mask_state_average_bucket_size"] = (
             counts["grouped_support_assignments_seen"] / counts["component_mask_state_count"]
         )
+    for quotient in counts["component_mask_quotients"].values():
+        if counts["grouped_support_assignments_seen"]:
+            quotient["ratio"] = quotient["state_count"] / counts["grouped_support_assignments_seen"]
+        if quotient["state_count"]:
+            quotient["average_bucket_size"] = (
+                counts["grouped_support_assignments_seen"] / quotient["state_count"]
+            )
     if counts["classification_atom_checks"]:
         counts["component_mask_state_work_ratio"] = (
             (

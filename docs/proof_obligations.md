@@ -1376,6 +1376,26 @@ Limites T054 :
 - aucune intégration dans `candidate.py`, donc aucune obligation de décision
   générale n'est satisfaite par T054.
 
+T055 mesure des quotients plus abstraits de ces états. Les quotients
+`mask_multiset`, `hit_components`, `hit_pairs` et `decision_only` n'ont pas
+d'état mixte sur la gate rapide, tandis que le contrôle `side_blind_schema`
+produit des états mixtes. Le cas minimal régressé
+`cycle_metric(4)`/`balanced_pc_tree(4, kind="C")` montre déjà que supprimer les
+masques fusionne des affectations hit et no-hit dans un seul état.
+
+Limites T055 :
+
+- absence d'état mixte sur les probes n'est pas une preuve de soundness globale
+  d'un quotient ;
+- `decision_only`, `hit_components` et `hit_pairs` sont proches d'une table de
+  décision locale et ne fournissent pas d'information évidente pour composer les
+  sous-arbres ;
+- `mask_multiset` perd les paires et composantes, donc il doit être testé
+  contre des contextes parents avant toute utilisation DP ;
+- le contrôle `side_blind_schema` prouve que la forme du support sans masques
+  est insuffisante ;
+- toujours aucune intégration dans `candidate.py` ni preuve de complexité.
+
 ### Prédicats stricts d'ordre fixé
 
 Statut : définitions directes implémentées / base expérimentale Piste F.

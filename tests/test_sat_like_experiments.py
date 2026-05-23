@@ -597,12 +597,38 @@ def test_bad_side_support_outcome_profile_matches_first_hit_accounting():
         )
         / profile["counts"]["classification_atom_checks"]
     )
+    quotients = profile["counts"]["component_mask_quotients"]
+    assert quotients["full"]["state_count"] == profile["counts"]["component_mask_state_count"]
+    assert quotients["full"]["mixed_count"] == 0
+    assert quotients["mask_multiset"]["mixed_count"] == 0
+    assert quotients["pair_mask_multiset"]["mixed_count"] == 0
+    assert quotients["hit_components"]["mixed_count"] == 0
+    assert quotients["decision_only"]["state_count"] < quotients["full"]["state_count"]
+    assert quotients["side_blind_schema"]["mixed_count"] > 0
     assert profile["counts"]["unary_no_hit_certified_assignments"] == 0
     assert profile["counts"]["ambiguous_no_hit_assignments"] == profile["counts"]["no_hit_assignments"]
     assert profile["counts"]["ambiguous_no_hit_ratio"] == 1.0
     assert profile["groups"][0]["no_hit_exhaustive_atom_checks"] >= profile["groups"][-1][
         "no_hit_exhaustive_atom_checks"
     ]
+
+
+def test_component_mask_quotient_negative_control_has_minimal_mixed_state():
+    profile = bad_side_grouped_support_outcome_profile(
+        cycle_metric(4),
+        balanced_pc_tree(4, kind="C"),
+        max_p_degree=3,
+    )
+    quotients = profile["counts"]["component_mask_quotients"]
+
+    assert profile["counts"]["support_group_count"] == 1
+    assert profile["counts"]["grouped_support_assignments_seen"] == 8
+    assert quotients["full"]["state_count"] == 4
+    assert quotients["full"]["mixed_count"] == 0
+    assert quotients["mask_multiset"]["state_count"] == 3
+    assert quotients["mask_multiset"]["mixed_count"] == 0
+    assert quotients["side_blind_schema"]["state_count"] == 1
+    assert quotients["side_blind_schema"]["mixed_count"] == 1
 
 
 def test_witness_side_cache_key_keeps_nested_support_choices():
@@ -724,6 +750,7 @@ def test_bad_side_support_outcome_profile_reports_limit_and_unsupported():
     assert unsupported["counts"]["component_mask_state_count"] == 0
     assert unsupported["counts"]["component_mask_state_side_cache_hits"] == 0
     assert unsupported["counts"]["component_mask_state_side_cache_misses"] == 0
+    assert unsupported["counts"]["component_mask_quotients"] == {}
     assert unsupported["groups"] == []
 
 
@@ -749,6 +776,7 @@ def test_bad_side_support_outcome_profile_equal_distance_has_no_groups():
     assert profile["counts"]["component_mask_state_count"] == 0
     assert profile["counts"]["component_mask_state_mismatches"] == 0
     assert profile["counts"]["component_mask_state_witness_visits"] == 0
+    assert profile["counts"]["component_mask_quotients"] == {}
     assert "exists" not in profile
     assert "order" not in profile
     assert "accepted_frontiers" not in profile

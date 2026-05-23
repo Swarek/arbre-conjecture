@@ -119,6 +119,11 @@ def test_csp_internal_benchmark_reports_separate_compile_and_solve_metrics():
         )
         / row["profile_classification_atom_checks"]
     )
+    quotients = row["profile_component_mask_quotients"]
+    assert quotients["full"]["state_count"] == row["profile_component_mask_state_count"]
+    assert quotients["full"]["mixed_count"] == 0
+    assert quotients["mask_multiset"]["mixed_count"] == 0
+    assert quotients["decision_only"]["state_count"] <= quotients["full"]["state_count"]
     assert report["summary"]["total_first_hit_position_sum"] == row["first_hit_position_sum"]
     assert report["summary"]["total_first_hit_atom_checks_if_exhaustive_seen"] == row[
         "first_hit_atom_checks_if_exhaustive_seen"
@@ -160,3 +165,6 @@ def test_csp_internal_benchmark_reports_separate_compile_and_solve_metrics():
     assert report["summary"]["profile_component_mask_state_projection_work_ratio"] == row[
         "profile_component_mask_state_projection_work_ratio"
     ]
+    summary_quotients = report["summary"]["profile_component_mask_quotients"]
+    assert summary_quotients["full"]["state_count"] == row["profile_component_mask_state_count"]
+    assert summary_quotients["full"]["mixed_count"] == 0

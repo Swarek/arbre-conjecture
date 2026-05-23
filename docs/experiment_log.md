@@ -2619,3 +2619,64 @@
   vers un sous-cas prouvable / une obstruction de complexité. Toute suite DP
   doit prouver la composition parent-enfant des états, pas seulement leur
   cardinalité locale.
+
+## 2026-05-23 quotient component-mask states
+
+- Date/heure : 2026-05-23 10:00:10 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : des projections plus abstraites de l'état complet T054
+  peuvent compresser davantage les affectations de support tout en restant
+  sound pour le hit/no-hit local. Un quotient est réfuté s'il contient des
+  états mixtes hit/no-hit.
+- Changement fait : ajout de `_component_mask_state_quotients` et des champs
+  `component_mask_quotients` au profil support-level et au benchmark CSP
+  interne. Quotients mesurés : `full`, `mask_multiset`,
+  `pair_mask_multiset`, `hit_components`, `hit_pairs`, `decision_only`, et
+  contrôle négatif `side_blind_schema`. Aucun changement dans `candidate.py`.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `232 passed`, puis `JUSTE`.
+- Plan subagents : trois sidecars lecture seule. Résultats : Piste C classe
+  `mask_multiset` comme quotient non tautologique intéressant et
+  `side_blind_schema` comme contrôle négatif ; Piste F confirme que les ratios
+  locaux s'améliorent mais sans gain de coût sur familles stress ; le sidecar
+  contre-exemples trouve un cas minimal `cycle_metric(4)` où
+  `side_blind_schema` a un état mixte, tandis que les quotients gardant les
+  masques restent non mixtes sur ses probes bornées.
+- Commande exécutée :
+  `pytest -q tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`.
+- Résultat correction ciblée : `50 passed`.
+- Régression ajoutée :
+  `test_component_mask_quotient_negative_control_has_minimal_mixed_state`
+  fixe le contrôle négatif sur `cycle_metric(4)` et
+  `balanced_pc_tree(4, kind="C")`.
+- Commande exécutée : `make bench-csp-quick`.
+- Résultat benchmark interne : `reports/csp_internal_benchmark_quick.json`
+  écrit ; `192` lignes, `0` mismatch. Ratios principaux :
+  `full=0.4692`, `mask_multiset=0.3959`, `hit_components=0.2121`,
+  `hit_pairs=0.2121`, `decision_only=0.1825`, et `side_blind_schema=0.1250`
+  avec `358` états mixtes.
+- Commande exécutée : probe stress
+  `tools/pc_csp_internal_benchmark.py --sizes 8 --repeats 3 --instance-kinds
+  random,cycle,non_strict,paired_farthest,permuted_cycle --pc-trees
+  balanced,mixed`.
+- Résultat probe stress : `30` lignes, `0` mismatch ; ratios
+  `full=0.4921`, `mask_multiset=0.4088`, `hit_components=0.2273`,
+  `decision_only=0.1821`, `side_blind_schema=0.1250` avec `181` états mixtes.
+- Commande exécutée : `make quick`.
+- Résultat correction : `233 passed`, puis `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `8` tailles, `40` runs réussis, `0` timeout et `0` incomplet. `candidate.py`
+  n'a pas été modifié par T055.
+- Conclusion : T055 trouve des quotients locaux plus compressés que T054, mais
+  les plus forts sont proches de la décision locale et ne prouvent aucune
+  composition DP. Le contrôle sans masques devient mixte, ce qui confirme que
+  les masques portent une information nécessaire.
+- Next action : tester la stabilité de `mask_multiset` ou `hit_components` sous
+  extension par contexte parent, ou changer d'axe vers un sous-cas prouvable si
+  cette composition échoue.

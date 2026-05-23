@@ -899,3 +899,24 @@ une version optimiste de la DP bitset où les états locaux seraient massivement
 moins nombreux que les affectations. La prochaine piste doit soit trouver un
 état plus quotienté mais encore sound, soit changer d'axe vers un sous-cas
 prouvable ou une obstruction de complexité.
+
+## Résultat T055 - Quotients plus abstraits
+
+Statut : mesure de complexité empirique hors candidate.
+
+Les quotients T055 réduisent davantage la cardinalité locale :
+
+- `full` : ratio `0.4692` ;
+- `mask_multiset` : `0.3959` ;
+- `hit_components` / `hit_pairs` : `0.2121` ;
+- `decision_only` : `0.1825` ;
+- contrôle négatif `side_blind_schema` : `0.1250` mais `358` états mixtes.
+
+Le probe stress `n=8` confirme la tendance : `mask_multiset` reste autour de
+`0.4088`, `hit_components` autour de `0.2273`, et le contrôle sans masques a
+`181` états mixtes.
+
+Conclusion complexité : il existe des quotients locaux plus forts, mais les
+plus compressés sont des vues très proches de la décision locale et ne donnent
+pas une structure DP composable. Le quotient `mask_multiset` est le meilleur
+candidat non tautologique à tester ensuite contre un contexte parent.

@@ -609,6 +609,63 @@ composition parent-enfant des états qui évite les visites de témoins, ou
 trouver un état plus abstrait qui reste sound sans perdre labels, paires,
 composantes et choix imbriqués.
 
+## Tentative T055 - Quotients d'états de masques
+
+Statut : diagnostic Piste C, hors `candidate.py`.
+
+Hypothèse testée : des projections plus abstraites de l'état T054 peuvent
+compresser davantage tout en gardant le hit/no-hit local. Chaque quotient est
+évalué par `state_count`, ratio, bucket max/moyen et surtout `mixed_count`. Un
+quotient mixte contient à la fois des affectations hit et no-hit et est donc
+réfuté comme classifieur local.
+
+Quotients profilés :
+
+- `full` : état T054 complet ;
+- `pair_mask_multiset` : garde la paire et le multiset de masques ;
+- `mask_multiset` : garde seulement le multiset global de masques ;
+- `hit_components` : garde seulement les composantes split `0b11` ;
+- `hit_pairs` : garde seulement les paires ayant une composante split ;
+- `decision_only` : garde seulement le booléen hit/no-hit local ;
+- `side_blind_schema` : contrôle négatif qui garde la structure sans masques.
+
+Résultats `make bench-csp-quick` :
+
+- `full` : ratio `0.4692`, `0` mixte ;
+- `mask_multiset` : ratio `0.3959`, `0` mixte ;
+- `hit_components` et `hit_pairs` : ratio `0.2121`, `0` mixte ;
+- `decision_only` : ratio `0.1825`, `0` mixte mais quotient tautologique ;
+- `side_blind_schema` : ratio `0.1250`, `358` états mixtes.
+
+Probe stress `n=8` :
+
+- `full` : ratio `0.4921` ;
+- `mask_multiset` : `0.4088` ;
+- `hit_components` : `0.2273` ;
+- `decision_only` : `0.1821` ;
+- `side_blind_schema` : `181` états mixtes.
+
+Contre-exemple minimal au contrôle négatif : sur `cycle_metric(4)` avec
+`balanced_pc_tree(4, kind="C")`, un unique support groupé donne `8`
+affectations et `side_blind_schema` fusionne tout en `1` état mixte. Le même cas
+garde `full` non mixte avec `4` états et `mask_multiset` non mixte avec `3`
+états. Le test
+`test_component_mask_quotient_negative_control_has_minimal_mixed_state`
+préserve ce diagnostic.
+
+Interprétation : les quotients qui conservent explicitement l'information de
+hit local peuvent compresser nettement plus que T054, mais les plus forts
+(`hit_components`, `hit_pairs`, `decision_only`) sont proches du résultat de
+décision locale et ne portent pas les informations nécessaires à une composition
+globale évidente. Le contrôle `side_blind_schema` confirme que supprimer les
+masques rend le quotient non sound.
+
+Conclusion : T055 donne des candidats de quotient à étudier, surtout
+`mask_multiset` comme quotient non tautologique, mais ne fournit toujours pas de
+DP. La prochaine question est externe au support groupé : ces quotients se
+composent-ils à travers un parent PC-tree sans perdre les paires et les choix
+imbriqués ?
+
 ## Tentative T021 - Repair positive-only pour paired-farthest
 
 Statut : idée saine comme générateur expérimental vérifié, mais non intégrée à
