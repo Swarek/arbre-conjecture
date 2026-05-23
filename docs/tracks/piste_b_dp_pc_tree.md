@@ -342,3 +342,22 @@ le first-hit actuel sur la gate rapide (`pair_side_split_work_ratio=1.7732`).
 Conséquence DP : il faut factoriser le calcul des côtés lui-même, probablement
 par sous-arbre ou par paire endpoint, sinon le passage atom -> composante ne
 suffit pas.
+
+## Résultats T052
+
+Statut : brique de signature DP, pas encore solver.
+
+Le cache T052 valide expérimentalement que le côté d'un mauvais témoin `w`
+relativement à `{a,b}` est déterminé par la signature du support minimal du
+triple `(a,b,w)`. Cela donne un atome d'état DP plus local que le support
+quartet complet.
+
+Limite : le cache simple réduit les recalculs de côtés mais reste à `1.1836x`
+du coût first-hit sur la gate rapide. Le signal positif vient du modèle
+bitset-composantes (`0.6650x`) : une DP prometteuse devrait transporter des
+masques de côtés par composante de témoins plutôt que recalculer ou rescanner
+les témoins.
+
+Contre-exemple à une signature trop faible : si on omet les choix imbriqués du
+support triple, deux affectations peuvent avoir le même choix root mais placer
+le témoin sur des côtés opposés.

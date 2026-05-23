@@ -3179,3 +3179,72 @@ Décision : conserver T051 comme diagnostic exact et comme résultat négatif
 contre deux compressions naïves : tranches unaires seules et pair-side
 recalculé naïvement. La prochaine piste doit soit précompiler les côtés des
 témoins à travers le PC-tree, soit changer de famille de signature DP.
+
+## ExecPlan 2026-05-23 - cached witness-side profile
+
+But : tester si le coût du diagnostic pair-side T051 vient surtout du recalcul
+répété du côté d'un même mauvais témoin `w` relativement à une paire `{a,b}`.
+
+Hypothèse : le côté de `w` par rapport à `{a,b}` dépend seulement de la
+signature locale minimale des variables qui ordonnent le triple `(a,b,w)`. On
+peut donc cacher cette valeur par `(a,b,w, signature_triple)` à travers les
+supports groupés. Si le cache réduit le travail pair-side sous le first-hit
+atomique, cela donne une piste de compilation support-level ; sinon cela
+réfute une autre compression naïve.
+
+Fichiers à modifier : `src/pc_circular/solvers/sat_like_experiments.py`,
+`tests/test_sat_like_experiments.py`, `tools/pc_csp_internal_benchmark.py`,
+`tests/test_csp_internal_benchmark.py`, `docs/tracks/piste_c_sat_csp.md`,
+`docs/tracks/piste_b_dp_pc_tree.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/proof_obligations.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `docs/tracks/README.md`,
+`PLANS.md`.
+
+Algorithme pressenti : enrichir `_pair_side_split_outcome` avec un cache de
+côtés. Pour chaque demande `(pair,witness)`, calculer
+`quartet_support_paths(T, (a,b,w))`, projeter la signature restreinte de
+l'affectation courante sur ce support triple, puis réutiliser le côté si cette
+clé a déjà été vue. Garder en parallèle les anciens compteurs logiques
+pair-side pour comparer `cached_checks` et `uncached_checks`.
+
+Plan de contre-exemples : un mismatch cache vs pair-side serait un
+contre-exemple à la clé minimale et doit être régressé. Tester également
+equal-distance, `limit=1`, gros `P` unsupported, et vérifier que le profil ne
+devient pas un solver ni un certificat positif.
+
+Plan subagents : un sidecar audite la soundness de la clé triple ; un sidecar
+mesure le gain potentiel sur familles adverses ; un sidecar propose les tests
+anti-faux-sens.
+
+Tests à exécuter : tests ciblés `tests/test_sat_like_experiments.py` et
+`tests/test_csp_internal_benchmark.py`, `make bench-csp-quick`, `make quick`,
+`make check`; `make bench-quick` si le checkpoint reste hors candidate mais
+touche les benchmarks.
+
+Risques : le cache peut réduire des compteurs sans donner de borne
+asymptotique ; la signature triple peut être insuffisante si une orientation
+globale canonique influençait la projection, donc le diagnostic doit rester
+sur la projection support-local brute et non sur une canonicalisation globale.
+
+Résultats observés : ajout de `_witness_side_cache_key` et des compteurs
+`pair_side_split_side_cache_*`, `pair_side_split_cached_*` et
+`pair_side_split_bitset_cached_*` dans le profil T051. Import du corpus de
+références utilisateur dans `docs/references/`. Tests ciblés
+`tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py` :
+`45 passed`. `make bench-csp-quick` : `192` lignes, `0` mismatch,
+`profile_pair_side_split_mismatches=0`. Sur la gate rapide, le travail pair-side
+brut reste `74248` checks pour `41872` atom-checks first-hit
+(`1.7732x`). Le cache de côtés descend à `49558` checks (`1.1836x`) grâce à
+`24690` hits de cache et `12778` misses. Le modèle bitset-composantes descend à
+`27846` checks (`0.6650x`). Par famille, le cache simple gagne sur
+`cycle/block/ultrametric/non_strict` mais perd encore sur
+`random/permuted_cycle/paired_farthest`; le modèle bitset gagne partout sauf
+`paired_farthest` où il reste autour de `1.0x`. Gates candidate finales :
+`make quick` (`227 passed`, puis `JUSTE`), `make check` (`JUSTE`),
+`make bench-quick` (`40/40` runs réussis, `0` timeout, `0` incomplet).
+
+Décision : conserver T052 comme preuve expérimentale que la clé
+`(pair,witness,signature_triple)` est sound et utile, mais insuffisante seule.
+La vraie prochaine piste n'est pas le cache de projection simple : c'est une
+implémentation bitset/composantes ou une DP qui transporte les masques de côtés
+par composante.

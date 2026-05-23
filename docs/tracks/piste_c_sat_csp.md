@@ -478,6 +478,40 @@ Prochaine action : précompiler les côtés de témoins par paire à travers les
 variables du PC-tree, ou basculer vers une signature DP qui transporte les
 composantes de témoins ouvertes au lieu d'une table d'affectations.
 
+## Tentative T052 - Cache des côtés de témoins
+
+Statut : diagnostic Piste C exact sur la gate interne, hors `candidate.py`.
+
+Hypothèse testée : le côté d'un témoin `w` par rapport à une paire `{a,b}` ne
+dépend que de la signature locale du support minimal du triple `(a,b,w)`.
+Le profil T052 ajoute donc une clé de cache
+`(pair,witness,signature_triple)`, où `signature_triple` contient tous les
+choix de `quartet_support_paths(T, (a,b,w))`.
+
+Résultats :
+
+- tests ciblés : `45 passed` ;
+- `make bench-csp-quick` : `192` lignes, `0` mismatch et
+  `profile_pair_side_split_mismatches=0` ;
+- travail pair-side brut : `74248` checks, ratio `1.7732` contre first-hit ;
+- travail pair-side avec cache des côtés : `49558` checks, ratio `1.1836` ;
+- hits/misses du cache de côtés : `24690` / `12778` ;
+- modèle bitset-composantes : `27846` checks, ratio `0.6650`.
+
+Interprétation : le cache de projections triples supprime une grande partie des
+recalculs de côtés, mais le coût des checks de composantes reste trop haut. En
+revanche, le modèle bitset indique qu'une représentation des composantes par
+masques de témoins pourrait battre first-hit sur les familles de la gate, sauf
+cas paired-farthest où le ratio reste proche de `1`.
+
+Contre-exemple verrouillé contre une clé trop faible : dans
+`C(leaf(0), P(leaf(1), leaf(2)), leaf(3))`, la paire `(0,2)` et le témoin `1`
+ont besoin du choix imbriqué `(1,)`; une clé qui garde seulement le choix root
+confond les deux côtés.
+
+Prochaine action : implémenter un diagnostic bitset réel par composante, en
+gardant la comparaison stricte aux signatures first-hit et au CSP cR direct.
+
 ## Tentative T021 - Repair positive-only pour paired-farthest
 
 Statut : idée saine comme générateur expérimental vérifié, mais non intégrée à

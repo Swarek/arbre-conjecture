@@ -330,14 +330,35 @@ def run_benchmark(
                             "profile_pair_side_split_side_checks": profile_counts[
                                 "pair_side_split_side_checks"
                             ],
+                            "profile_pair_side_split_side_cache_hits": profile_counts[
+                                "pair_side_split_side_cache_hits"
+                            ],
+                            "profile_pair_side_split_side_cache_misses": profile_counts[
+                                "pair_side_split_side_cache_misses"
+                            ],
+                            "profile_pair_side_split_component_checks": profile_counts[
+                                "pair_side_split_component_checks"
+                            ],
                             "profile_pair_side_split_component_witness_checks": profile_counts[
                                 "pair_side_split_component_witness_checks"
+                            ],
+                            "profile_pair_side_split_cached_checks": profile_counts[
+                                "pair_side_split_cached_checks"
+                            ],
+                            "profile_pair_side_split_bitset_cached_checks": profile_counts[
+                                "pair_side_split_bitset_cached_checks"
                             ],
                             "profile_pair_side_split_mismatches": profile_counts[
                                 "pair_side_split_mismatches"
                             ],
                             "profile_pair_side_split_work_ratio": profile_counts[
                                 "pair_side_split_work_ratio"
+                            ],
+                            "profile_pair_side_split_cached_work_ratio": profile_counts[
+                                "pair_side_split_cached_work_ratio"
+                            ],
+                            "profile_pair_side_split_bitset_cached_work_ratio": profile_counts[
+                                "pair_side_split_bitset_cached_work_ratio"
                             ],
                             "profile_ambiguous_no_hit_assignments": profile_counts[
                                 "ambiguous_no_hit_assignments"
@@ -486,14 +507,41 @@ def run_benchmark(
             "total_profile_pair_side_split_side_checks": sum(
                 row["profile_pair_side_split_side_checks"] for row in supported_rows
             ),
+            "total_profile_pair_side_split_side_cache_hits": sum(
+                row["profile_pair_side_split_side_cache_hits"] for row in supported_rows
+            ),
+            "total_profile_pair_side_split_side_cache_misses": sum(
+                row["profile_pair_side_split_side_cache_misses"] for row in supported_rows
+            ),
+            "total_profile_pair_side_split_component_checks": sum(
+                row["profile_pair_side_split_component_checks"] for row in supported_rows
+            ),
             "total_profile_pair_side_split_component_witness_checks": sum(
                 row["profile_pair_side_split_component_witness_checks"] for row in supported_rows
+            ),
+            "total_profile_pair_side_split_cached_checks": sum(
+                row["profile_pair_side_split_cached_checks"] for row in supported_rows
+            ),
+            "total_profile_pair_side_split_bitset_cached_checks": sum(
+                row["profile_pair_side_split_bitset_cached_checks"] for row in supported_rows
             ),
             "profile_pair_side_split_mismatches": sum(
                 row["profile_pair_side_split_mismatches"] for row in supported_rows
             ),
             "profile_pair_side_split_work_ratio": (
                 sum(row["profile_pair_side_split_checks"] for row in supported_rows)
+                / sum(row["profile_classification_atom_checks"] for row in supported_rows)
+                if sum(row["profile_classification_atom_checks"] for row in supported_rows)
+                else 0.0
+            ),
+            "profile_pair_side_split_cached_work_ratio": (
+                sum(row["profile_pair_side_split_cached_checks"] for row in supported_rows)
+                / sum(row["profile_classification_atom_checks"] for row in supported_rows)
+                if sum(row["profile_classification_atom_checks"] for row in supported_rows)
+                else 0.0
+            ),
+            "profile_pair_side_split_bitset_cached_work_ratio": (
+                sum(row["profile_pair_side_split_bitset_cached_checks"] for row in supported_rows)
                 / sum(row["profile_classification_atom_checks"] for row in supported_rows)
                 if sum(row["profile_classification_atom_checks"] for row in supported_rows)
                 else 0.0

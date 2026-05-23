@@ -64,6 +64,21 @@ def test_csp_internal_benchmark_reports_separate_compile_and_solve_metrics():
         row["profile_pair_side_split_side_checks"]
         + row["profile_pair_side_split_component_witness_checks"]
     )
+    assert row["profile_pair_side_split_side_checks"] == (
+        row["profile_pair_side_split_side_cache_hits"]
+        + row["profile_pair_side_split_side_cache_misses"]
+    )
+    assert row["profile_pair_side_split_cached_checks"] == (
+        row["profile_pair_side_split_side_cache_misses"]
+        + row["profile_pair_side_split_component_witness_checks"]
+    )
+    assert row["profile_pair_side_split_bitset_cached_checks"] == (
+        row["profile_pair_side_split_side_cache_misses"]
+        + row["profile_pair_side_split_component_checks"]
+    )
+    assert row["profile_pair_side_split_bitset_cached_checks"] <= row[
+        "profile_pair_side_split_cached_checks"
+    ]
     assert report["summary"]["total_first_hit_position_sum"] == row["first_hit_position_sum"]
     assert report["summary"]["total_first_hit_atom_checks_if_exhaustive_seen"] == row[
         "first_hit_atom_checks_if_exhaustive_seen"
@@ -77,4 +92,10 @@ def test_csp_internal_benchmark_reports_separate_compile_and_solve_metrics():
     assert report["summary"]["profile_pair_side_split_mismatches"] == 0
     assert report["summary"]["total_profile_pair_side_split_checks"] == row[
         "profile_pair_side_split_checks"
+    ]
+    assert report["summary"]["total_profile_pair_side_split_cached_checks"] == row[
+        "profile_pair_side_split_cached_checks"
+    ]
+    assert report["summary"]["total_profile_pair_side_split_bitset_cached_checks"] == row[
+        "profile_pair_side_split_bitset_cached_checks"
     ]

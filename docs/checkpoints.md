@@ -386,6 +386,17 @@ Dernier commit green avant T009 : `07120e4`.
   first-hit (`profile_pair_side_split_work_ratio=1.7732`) ; les tranches
   unaires couvrent `1888/3320` no-hit globalement mais `0%` sur les familles
   cycliques de la gate rapide.
+- Checkpoint T052 courant : commit contenant `_witness_side_cache_key` et le
+  profil cached witness-side hors candidate, plus le corpus de références sous
+  `docs/references/`. Validation observée :
+  `tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`
+  (`45 passed`), `make bench-csp-quick` (`192` lignes, `0` mismatch,
+  `profile_pair_side_split_mismatches=0`), `make quick` (`227 passed`, puis
+  `JUSTE`), `make check`, `make bench-quick` (`40/40` runs, `0` timeout,
+  `0` incomplet). Résultat observé : cache simple des
+  côtés `49558` checks, ratio `1.1836x` first-hit ; modèle
+  bitset-composantes `27846` checks, ratio `0.6650x`; la clé triple complète
+  est protégée par un test de choix imbriqué.
 
 ## Rollback
 

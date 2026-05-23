@@ -516,6 +516,18 @@ def _side_of_witness_between_pair(order: Sequence[int], pair: tuple[int, int], w
     return 0 if 0 < distance_aw < distance_ab else 1
 
 
+def _witness_side_cache_key(
+    pc_tree: PCNode,
+    support_assignment: Assignment,
+    pair: tuple[int, int],
+    witness: int,
+) -> tuple[tuple[int, int], int, NogoodSignature]:
+    """Return the minimal support-local key determining one witness side."""
+
+    triple_support = quartet_support_paths(pc_tree, (pair[0], pair[1], witness))
+    return (pair, witness, _nogood_signature(support_assignment, triple_support))
+
+
 def _bad_witness_components_by_pair(
     support_atoms: Sequence[dict],
 ) -> dict[tuple[int, int], tuple[tuple[int, ...], ...]]:
@@ -556,23 +568,35 @@ def _pair_side_split_outcome(
     pc_tree: PCNode,
     support_assignment: Assignment,
     components_by_pair: dict[tuple[int, int], tuple[tuple[int, ...], ...]],
+    side_cache: dict[tuple[tuple[int, int], int, NogoodSignature], int],
 ) -> dict:
     """Classify a support assignment by witness-component side splits."""
 
     side_checks = 0
+    side_cache_hits = 0
+    side_cache_misses = 0
+    component_checks = 0
     component_witness_checks = 0
     for pair, components in components_by_pair.items():
         witnesses = sorted({witness for component in components for witness in component})
         sides: dict[int, int] = {}
         for witness in witnesses:
-            order = _project_labels_order_from_support_assignment(
-                pc_tree,
-                (pair[0], pair[1], witness),
-                support_assignment,
-            )
-            sides[witness] = _side_of_witness_between_pair(order, pair, witness)
+            cache_key = _witness_side_cache_key(pc_tree, support_assignment, pair, witness)
+            if cache_key in side_cache:
+                sides[witness] = side_cache[cache_key]
+                side_cache_hits += 1
+            else:
+                order = _project_labels_order_from_support_assignment(
+                    pc_tree,
+                    (pair[0], pair[1], witness),
+                    support_assignment,
+                )
+                sides[witness] = _side_of_witness_between_pair(order, pair, witness)
+                side_cache[cache_key] = sides[witness]
+                side_cache_misses += 1
             side_checks += 1
         for component in components:
+            component_checks += 1
             first_side = None
             for witness in component:
                 component_witness_checks += 1
@@ -582,8 +606,13 @@ def _pair_side_split_outcome(
                     return {
                         "hit": True,
                         "side_checks": side_checks,
+                        "side_cache_hits": side_cache_hits,
+                        "side_cache_misses": side_cache_misses,
+                        "component_checks": component_checks,
                         "component_witness_checks": component_witness_checks,
                         "checks": side_checks + component_witness_checks,
+                        "cached_checks": side_cache_misses + component_witness_checks,
+                        "bitset_cached_checks": side_cache_misses + component_checks,
                         "pair": pair,
                         "component": component,
                     }
@@ -591,8 +620,13 @@ def _pair_side_split_outcome(
     return {
         "hit": False,
         "side_checks": side_checks,
+        "side_cache_hits": side_cache_hits,
+        "side_cache_misses": side_cache_misses,
+        "component_checks": component_checks,
         "component_witness_checks": component_witness_checks,
         "checks": side_checks + component_witness_checks,
+        "cached_checks": side_cache_misses + component_witness_checks,
+        "bitset_cached_checks": side_cache_misses + component_checks,
         "pair": None,
         "component": None,
     }
@@ -913,6 +947,7 @@ def _profile_single_support_group(
     support_atoms: list[dict],
     *,
     limit: Optional[int],
+    side_cache: dict[tuple[tuple[int, int], int, NogoodSignature], int],
 ) -> dict:
     """Profile hit/no-hit outcomes for one support group.
 
@@ -935,8 +970,13 @@ def _profile_single_support_group(
     pair_side_split_hit_assignments = 0
     pair_side_split_no_hit_assignments = 0
     pair_side_split_side_checks = 0
+    pair_side_split_side_cache_hits = 0
+    pair_side_split_side_cache_misses = 0
+    pair_side_split_component_checks = 0
     pair_side_split_component_witness_checks = 0
     pair_side_split_checks = 0
+    pair_side_split_cached_checks = 0
+    pair_side_split_bitset_cached_checks = 0
     pair_side_split_mismatches = 0
     first_pair_side_split_mismatch = None
     truncated = False
@@ -969,10 +1009,20 @@ def _profile_single_support_group(
         else:
             no_hit_signatures.add(signature)
 
-        pair_side_split = _pair_side_split_outcome(pc_tree, support_assignment, components_by_pair)
+        pair_side_split = _pair_side_split_outcome(
+            pc_tree,
+            support_assignment,
+            components_by_pair,
+            side_cache,
+        )
         pair_side_split_checks += pair_side_split["checks"]
         pair_side_split_side_checks += pair_side_split["side_checks"]
+        pair_side_split_side_cache_hits += pair_side_split["side_cache_hits"]
+        pair_side_split_side_cache_misses += pair_side_split["side_cache_misses"]
+        pair_side_split_component_checks += pair_side_split["component_checks"]
         pair_side_split_component_witness_checks += pair_side_split["component_witness_checks"]
+        pair_side_split_cached_checks += pair_side_split["cached_checks"]
+        pair_side_split_bitset_cached_checks += pair_side_split["bitset_cached_checks"]
         if pair_side_split["hit"]:
             pair_side_split_hit_assignments += 1
         else:
@@ -1057,7 +1107,22 @@ def _profile_single_support_group(
         "pair_side_split_no_hit_assignments": pair_side_split_no_hit_assignments,
         "pair_side_split_checks": pair_side_split_checks,
         "pair_side_split_side_checks": pair_side_split_side_checks,
+        "pair_side_split_side_cache_hits": pair_side_split_side_cache_hits,
+        "pair_side_split_side_cache_misses": pair_side_split_side_cache_misses,
+        "pair_side_split_component_checks": pair_side_split_component_checks,
         "pair_side_split_component_witness_checks": pair_side_split_component_witness_checks,
+        "pair_side_split_cached_checks": pair_side_split_cached_checks,
+        "pair_side_split_bitset_cached_checks": pair_side_split_bitset_cached_checks,
+        "pair_side_split_cached_work_ratio": (
+            pair_side_split_cached_checks / classification_atom_checks
+            if classification_atom_checks
+            else 0.0
+        ),
+        "pair_side_split_bitset_cached_work_ratio": (
+            pair_side_split_bitset_cached_checks / classification_atom_checks
+            if classification_atom_checks
+            else 0.0
+        ),
         "pair_side_split_work_ratio": (
             pair_side_split_checks / classification_atom_checks
             if classification_atom_checks
@@ -1123,9 +1188,16 @@ def _grouped_support_outcome_profile(
             "pair_side_split_no_hit_assignments": 0,
             "pair_side_split_checks": 0,
             "pair_side_split_side_checks": 0,
+            "pair_side_split_side_cache_hits": 0,
+            "pair_side_split_side_cache_misses": 0,
+            "pair_side_split_component_checks": 0,
             "pair_side_split_component_witness_checks": 0,
+            "pair_side_split_cached_checks": 0,
+            "pair_side_split_bitset_cached_checks": 0,
             "pair_side_split_mismatches": 0,
             "pair_side_split_work_ratio": 0.0,
+            "pair_side_split_cached_work_ratio": 0.0,
+            "pair_side_split_bitset_cached_work_ratio": 0.0,
             "first_pair_side_split_mismatch": None,
             "pure_hit_slice_count": 0,
             "pure_no_hit_slice_count": 0,
@@ -1154,6 +1226,7 @@ def _grouped_support_outcome_profile(
     report["counts"]["support_group_count"] = len(atoms_by_support)
 
     group_profiles: list[dict] = []
+    side_cache: dict[tuple[tuple[int, int], int, NogoodSignature], int] = {}
     truncated = False
     for support, support_atoms in atoms_by_support.items():
         if limit is None:
@@ -1169,6 +1242,7 @@ def _grouped_support_outcome_profile(
             support,
             support_atoms,
             limit=remaining_limit,
+            side_cache=side_cache,
         )
         group_profiles.append(group)
         counts = report["counts"]
@@ -1184,8 +1258,15 @@ def _grouped_support_outcome_profile(
         counts["pair_side_split_no_hit_assignments"] += group["pair_side_split_no_hit_assignments"]
         counts["pair_side_split_checks"] += group["pair_side_split_checks"]
         counts["pair_side_split_side_checks"] += group["pair_side_split_side_checks"]
+        counts["pair_side_split_side_cache_hits"] += group["pair_side_split_side_cache_hits"]
+        counts["pair_side_split_side_cache_misses"] += group["pair_side_split_side_cache_misses"]
+        counts["pair_side_split_component_checks"] += group["pair_side_split_component_checks"]
         counts["pair_side_split_component_witness_checks"] += group[
             "pair_side_split_component_witness_checks"
+        ]
+        counts["pair_side_split_cached_checks"] += group["pair_side_split_cached_checks"]
+        counts["pair_side_split_bitset_cached_checks"] += group[
+            "pair_side_split_bitset_cached_checks"
         ]
         counts["pair_side_split_mismatches"] += group["pair_side_split_mismatches"]
         if (
@@ -1235,6 +1316,12 @@ def _grouped_support_outcome_profile(
     if counts["classification_atom_checks"]:
         counts["pair_side_split_work_ratio"] = (
             counts["pair_side_split_checks"] / counts["classification_atom_checks"]
+        )
+        counts["pair_side_split_cached_work_ratio"] = (
+            counts["pair_side_split_cached_checks"] / counts["classification_atom_checks"]
+        )
+        counts["pair_side_split_bitset_cached_work_ratio"] = (
+            counts["pair_side_split_bitset_cached_checks"] / counts["classification_atom_checks"]
         )
 
     group_profiles.sort(

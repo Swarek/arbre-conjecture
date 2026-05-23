@@ -18,6 +18,9 @@ from pc_circular.solvers.sat_like_experiments import (
     _cyclic_atom_occurs,
     _nogood_matches,
     _project_atom_order_from_support_assignment,
+    _project_labels_order_from_support_assignment,
+    _side_of_witness_between_pair,
+    _witness_side_cache_key,
     accepted_frontiers_by_csp,
     assignment_frontier_report,
     bad_side_grouped_support_outcome_profile,
@@ -520,6 +523,23 @@ def test_bad_side_support_outcome_profile_matches_first_hit_accounting():
     assert profile["counts"]["pair_side_split_mismatches"] == 0
     assert profile["counts"]["first_pair_side_split_mismatch"] is None
     assert profile["counts"]["pair_side_split_checks"] > 0
+    assert profile["counts"]["pair_side_split_side_cache_hits"] > 0
+    assert profile["counts"]["pair_side_split_side_cache_misses"] > 0
+    assert profile["counts"]["pair_side_split_side_checks"] == (
+        profile["counts"]["pair_side_split_side_cache_hits"]
+        + profile["counts"]["pair_side_split_side_cache_misses"]
+    )
+    assert profile["counts"]["pair_side_split_cached_checks"] == (
+        profile["counts"]["pair_side_split_side_cache_misses"]
+        + profile["counts"]["pair_side_split_component_witness_checks"]
+    )
+    assert profile["counts"]["pair_side_split_bitset_cached_checks"] == (
+        profile["counts"]["pair_side_split_side_cache_misses"]
+        + profile["counts"]["pair_side_split_component_checks"]
+    )
+    assert profile["counts"]["pair_side_split_bitset_cached_checks"] < profile["counts"][
+        "classification_atom_checks"
+    ]
     assert profile["counts"]["unary_no_hit_certified_assignments"] == 0
     assert profile["counts"]["ambiguous_no_hit_assignments"] == profile["counts"]["no_hit_assignments"]
     assert profile["counts"]["ambiguous_no_hit_ratio"] == 1.0
@@ -528,20 +548,64 @@ def test_bad_side_support_outcome_profile_matches_first_hit_accounting():
     ]
 
 
+def test_witness_side_cache_key_keeps_nested_support_choices():
+    T = c_node([leaf(0), p_node([leaf(1), leaf(2)]), leaf(3)])
+    pair = (0, 2)
+    witness = 1
+    assignment_a = {(): (0, 1, 2), (1,): (0, 1)}
+    assignment_b = {(): (0, 1, 2), (1,): (1, 0)}
+
+    assert quartet_support_paths(T, (pair[0], pair[1], witness)) == ((), (1,))
+    assert _witness_side_cache_key(T, assignment_a, pair, witness) != _witness_side_cache_key(
+        T,
+        assignment_b,
+        pair,
+        witness,
+    )
+
+    order_a = _project_labels_order_from_support_assignment(T, (pair[0], pair[1], witness), assignment_a)
+    order_b = _project_labels_order_from_support_assignment(T, (pair[0], pair[1], witness), assignment_b)
+    assert order_a == (0, 1, 2)
+    assert order_b == (0, 2, 1)
+    assert _side_of_witness_between_pair(order_a, pair, witness) != _side_of_witness_between_pair(
+        order_b,
+        pair,
+        witness,
+    )
+
+
 def test_bad_side_support_outcome_profile_reports_limit_and_unsupported():
     D = cycle_metric(6)
     T = balanced_pc_tree(6, kind="mixed")
     limited = bad_side_grouped_support_outcome_profile(D, T, max_p_degree=3, limit=1)
 
     assert limited["complete"] is False
+    assert "exists" not in limited
+    assert "order" not in limited
+    assert "accepted_frontiers" not in limited
     assert limited["counts"]["grouped_support_assignments_seen"] == 1
     assert limited["counts"]["groups_profiled"] == 1
     assert limited["counts"]["hit_assignments"] + limited["counts"]["no_hit_assignments"] == 1
+    assert (
+        limited["counts"]["pair_side_split_hit_assignments"]
+        + limited["counts"]["pair_side_split_no_hit_assignments"]
+        == 1
+    )
+    assert limited["counts"]["pair_side_split_side_checks"] == (
+        limited["counts"]["pair_side_split_side_cache_hits"]
+        + limited["counts"]["pair_side_split_side_cache_misses"]
+    )
 
     unsupported = bad_side_grouped_support_outcome_profile(cycle_metric(5), star_pc_tree(5), max_p_degree=3)
     assert unsupported["complete"] is False
+    assert "exists" not in unsupported
+    assert "order" not in unsupported
+    assert "accepted_frontiers" not in unsupported
     assert unsupported["encoding"]["unsupported"]
     assert unsupported["counts"]["grouped_support_assignments_seen"] == 0
+    assert unsupported["counts"]["pair_side_split_side_cache_hits"] == 0
+    assert unsupported["counts"]["pair_side_split_side_cache_misses"] == 0
+    assert unsupported["groups"] == []
 
 
 def test_bad_side_support_outcome_profile_equal_distance_has_no_groups():
@@ -552,6 +616,15 @@ def test_bad_side_support_outcome_profile_equal_distance_has_no_groups():
     assert profile["counts"]["support_group_count"] == 0
     assert profile["counts"]["hit_assignments"] == 0
     assert profile["counts"]["no_hit_assignments"] == 0
+    assert profile["counts"]["classification_atom_checks"] == 0
+    assert profile["counts"]["pair_side_split_checks"] == 0
+    assert profile["counts"]["pair_side_split_side_cache_hits"] == 0
+    assert profile["counts"]["pair_side_split_side_cache_misses"] == 0
+    assert profile["counts"]["pair_side_split_cached_checks"] == 0
+    assert profile["counts"]["pair_side_split_bitset_cached_checks"] == 0
+    assert "exists" not in profile
+    assert "order" not in profile
+    assert "accepted_frontiers" not in profile
     assert profile["groups"] == []
 
 

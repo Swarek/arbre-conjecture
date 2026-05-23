@@ -825,3 +825,22 @@ Le test pair-side/composantes n'a aucun mismatch sur `192` lignes, mais son
 travail agrégé est `1.7732` fois le first-hit mesuré. Cela réfute l'idée qu'une
 simple reformulation par paires suffit à améliorer la complexité sans cache ou
 DP supplémentaire.
+
+## Résultat T052 - Cache triple et modèle bitset
+
+Statut : mesure de complexité interne, hors candidate.
+
+Le cache par `(pair,witness,signature_triple)` réduit fortement les projections
+de côtés (`24690` hits pour `12778` misses sur la gate rapide), mais le travail
+total pair-side cached reste `1.1836x` first-hit. Par famille, il gagne sur
+`cycle`, `block`, `ultrametric`, `non_strict`, mais perd sur `random`,
+`permuted_cycle` et `paired_farthest`.
+
+Le modèle bitset-composantes descend à `0.6650x` first-hit globalement. Ratios
+par famille/tree observés : environ `0.48` pour `ultrametric`, `0.55` pour
+`block`, `0.59` pour `cycle`, `0.83..0.84` pour `random`, `0.75..0.89` pour
+`permuted_cycle`, et `1.01..1.07` pour `paired_farthest`.
+
+Conclusion complexité : le goulot n'est plus seulement la projection de côtés ;
+il faut compresser les checks de composantes. `paired_farthest` reste la famille
+à garder comme stress test pour tout modèle bitset.

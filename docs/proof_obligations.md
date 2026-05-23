@@ -1323,6 +1323,24 @@ Limites T051 :
 - les cas `limit` et `unsupported` restent des profils partiels, jamais des
   rejets.
 
+T052 ajoute un cache expérimental des côtés de témoins. La clé
+`(pair,witness,signature_triple)` est sound dans le scaffold si
+`signature_triple` inclut tous les choix de
+`quartet_support_paths(T, (a,b,w))`, sans canonicaliser le triple modulo
+renversement. Les tests verrouillent un cas imbriqué où omettre le choix
+interne `(1,)` confond deux côtés opposés.
+
+Limites T052 :
+
+- ce cache ne décide toujours aucun ordre et reste hors `candidate.py` ;
+- le cache simple réduit les projections de côtés mais reste plus coûteux que
+  first-hit sur la gate rapide (`1.1836x`) ;
+- le modèle bitset-composantes est prometteur expérimentalement (`0.6650x`),
+  mais ce n'est qu'un modèle de coût tant que les masques ne sont pas compilés
+  en structure de données réelle ;
+- aucune borne asymptotique sur le nombre de signatures triples ou de
+  composantes n'est encore prouvée.
+
 ### Prédicats stricts d'ordre fixé
 
 Statut : définitions directes implémentées / base expérimentale Piste F.

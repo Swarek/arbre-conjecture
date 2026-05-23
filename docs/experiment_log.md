@@ -2448,3 +2448,59 @@
   une vraie DP.
 - Next action : précompiler/mettre en cache les côtés de témoins par paire et
   sous-arbre, ou basculer vers une signature DP de composantes ouvertes.
+
+## 2026-05-23 cached witness-side profile
+
+- Date/heure : 2026-05-23 09:44:00 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : le côté d'un témoin `w` relativement à une paire `{a,b}`
+  dépend seulement de la signature locale du support minimal du triple
+  `(a,b,w)`. Un cache par `(pair,witness,signature_triple)` devrait réduire le
+  coût pair-side T051 ; si ce n'est pas suffisant, il faut viser les checks de
+  composantes.
+- Changement fait : ajout de `_witness_side_cache_key`, compteurs
+  `pair_side_split_side_cache_hits/misses`,
+  `pair_side_split_cached_checks`, et modèle de coût
+  `pair_side_split_bitset_cached_checks`; extension du benchmark interne et des
+  tests. Import aussi du corpus de références utilisateur dans
+  `docs/references/`, avec manifeste. Aucun changement dans `candidate.py`.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre sur `a852ca9`; `226 passed`, puis `JUSTE`.
+- Plan subagents : trois sidecars lecture seule. Résultats : audit soundness
+  confirmant que la clé triple complète est correcte et donnant un
+  contre-exemple si le choix imbriqué est omis ; probe complexité `96` cas où le
+  cache de côtés réduit les projections à `27.9%` des brutes mais reste
+  `0.94x` first-hit une fois les composantes incluses ; tests recommandés pour
+  garder le cache comme diagnostic non décisionnel.
+- Commande exécutée :
+  `pytest -q tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`.
+- Résultat correction : `45 passed`.
+- Commande exécutée : `make bench-csp-quick`.
+- Résultat benchmark interne : `reports/csp_internal_benchmark_quick.json`
+  écrit ; `192` lignes, `0` mismatch, `0` support/grouped/first-hit mismatch,
+  `0` mismatch de signatures, `profile_pair_side_split_mismatches=0`.
+  Travail pair-side brut `74248` checks (`1.7732x` first-hit), cache simple
+  `49558` checks (`1.1836x`), modèle bitset-composantes `27846` checks
+  (`0.6650x`), hits/misses de cache `24690/12778`.
+- Résultat par familles : cache simple gagnant sur
+  `cycle/block/ultrametric/non_strict`, perdant sur
+  `random/permuted_cycle/paired_farthest`. Le modèle bitset gagne partout sauf
+  `paired_farthest`, qui reste autour de `1.0x`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `227 passed`, puis `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `40/40` runs réussis, `0` timeout et `0` incomplet sur les tailles
+  `4,5,6,8,10,12,16,20`. `candidate.py` n'a pas été modifié par T052.
+- Conclusion : T052 montre que la signature triple est une brique correcte,
+  mais que le cache simple ne suffit pas comme amélioration algorithmique. Le
+  prochain progrès crédible est une vraie structure bitset/composantes ou une
+  DP qui transporte ces masques.
+- Next action : implémenter un profil bitset réel par composante et tester
+  `paired_farthest` comme stress family, ou basculer vers une DP de masques de
+  côtés.
