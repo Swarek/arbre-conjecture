@@ -167,6 +167,20 @@ tests de suppression et les projections brutes qui expliquent le conflit. Un
 noyau trouvé est un diagnostic local du modèle matérialisé ; il ne prouve ni
 UNSAT global, ni NP-difficulté, ni correction d'un solver.
 
+Conflits `sparse_partial_matching` Piste F/C :
+
+```bash
+make bench-sparse-matching
+```
+
+Cette commande écrit `reports/sparse_matching_conflict_probe.json`. Le rapport
+isole les relations de forme `sparse_partial_matching`, leurs projections
+gauche/droite, les unaires restrictives sur les mêmes variables, les
+intersections vides projection/unaire, et les composantes formées seulement de
+relations sparse. Une composante sparse insatisfiable ou une intersection vide
+est un diagnostic local du CSP matérialisé ; elle ne devient pas un gadget sans
+contrôle des parasites, du promise PC-tree et d'une construction globale de `D`.
+
 Contrôle promise-aware des permutations locales Piste F/C :
 
 ```bash

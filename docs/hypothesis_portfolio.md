@@ -225,6 +225,13 @@ parasites dans le scaffold `paired_farthest/P3x{k}`. Un composant multi-arêtes
 parasite-free serait un nouveau candidat gadget ; son absence est seulement un
 signal négatif expérimental.
 
+Mise à jour T072 : la piste `sparse_partial_matching` est traitée comme
+diagnostic de conflits locaux. Le test prioritaire mesure les intersections
+vides entre projections sparse et unaires, ainsi que les composantes formées
+seulement de relations sparse. Un noyau binaire sparse sans parasite serait un
+signal nouveau ; un conflit unaire+binaire confirme surtout une limite des
+compressions qui séparent binaires et parasites.
+
 Sous-cas ajouté : explorer le cas strict comme algorithme spécialisé
 potentiellement polynomial. Ne pas l'intégrer à `candidate.py` avant d'avoir une
 détection stricte et une génération de candidats stricts vérifiées contre les

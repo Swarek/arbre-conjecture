@@ -25,7 +25,7 @@ Elle ne remplace ni les tests ni les obligations de preuve.
 | C - SAT/CSP | `piste_c_sat_csp.md` | Solveurs 2-SAT puis DP treewidth des relations effectives hors candidate |
 | D - Circular-ones / intersection | `piste_d_circular_ones.md` | Boules validées pour quasi ; arcs bad-witness naïfs réfutés |
 | E - Obstructions farthest/quartets | `piste_e_farthest_quartets.md` | Farthest seul réfuté ; bad-witness one-side donne des certificats hub bas |
-| F - Complexité / sous-cas | `piste_f_complexity_subcases.md` | Permutation-like parasite-free et interaction UNSAT observées dans le scaffold |
+| F - Complexité / sous-cas | `piste_f_complexity_subcases.md` | Relations non booléennes, parasites et sparse matching cartographiés dans le scaffold |
 
 ## Règle d’édition
 
@@ -117,6 +117,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T069 | 2026-05-23 | F/C | Contrôle promise-aware borné : `permutation_like` parasite-free seulement quand `P3/P3` égale les ordres quasi exacts en `n=6` | `make bench-permutation-like` |
 | T070 | 2026-05-23 | F/C | Composition multi-blocs : aucun réseau `permutation_like` propre sur `P3x{k}` pour `k=2,3,4` dans le sweep | `make bench-permutation-composition` |
 | T071 | 2026-05-23 | F/C | Composantes toutes relations non booléennes : multi-arêtes visibles mais testées contre les parasites restrictifs | `make bench-relation-components` |
+| T072 | 2026-05-23 | F/C | `sparse_partial_matching` : conflits projection/unaire et composantes sparse binaires isolés comme diagnostic | `make bench-sparse-matching` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

@@ -1299,6 +1299,40 @@ serait un nouveau candidat de gadget. Une composante multi-arêtes bloquée par
 corrélation dans le scaffold ; ce n'est pas une preuve d'impossibilité ni une
 preuve de dureté.
 
+## Tentative T072 - Conflits `sparse_partial_matching`
+
+Statut : diagnostic CSP matérialisé, hors `candidate.py`.
+
+Changement : ajout de `tools/pc_sparse_matching_conflict_probe.py`, câblé par
+`make bench-sparse-matching`. L'outil extrait les relations de forme primaire
+`sparse_partial_matching`, leurs projections brutes, les unaires restrictives
+sur les mêmes variables, et les composantes formées seulement de relations
+sparse.
+
+Résultat `make bench-sparse-matching` :
+
+- `40` lignes, toutes complètes ;
+- `0` mismatch de validation ;
+- `14` lignes avec au moins une relation sparse ;
+- `21` instances de relations sparse ;
+- `8` hashes sparse distincts ;
+- `6` lignes avec conflit projection/unaire à intersection vide ;
+- `10` conflits projection/unaire à intersection vide ;
+- `6` lignes avec composante sparse multi-arêtes ;
+- `3` lignes avec composante sparse binaire insatisfiable ;
+- `28` lignes avec `constant_reject`.
+
+Le cas T068 `five_local_non_cr/k=2` est réobservé comme seul conflit sparse
+sans `constant_reject` : projection gauche `[2,4]` contre unaire acceptant
+`[0,1,3,5]`, intersection vide. Les composantes sparse binaires insatisfiables
+observées apparaissent dans des lignes `random` avec `constant_reject`.
+
+Interprétation : T072 donne deux signaux distincts. Le noyau T068 reste un
+conflit unaire+binaire local. Les composantes sparse binaires insatisfiables
+sont plus intéressantes comme corrélation entre binaires, mais elles restent
+contaminées par constantes dans ce sweep. Aucun de ces résultats n'est encore
+un gadget global.
+
 ## Tentative T021 - Repair positive-only pour paired-farthest
 
 Statut : idée saine comme générateur expérimental vérifié, mais non intégrée à

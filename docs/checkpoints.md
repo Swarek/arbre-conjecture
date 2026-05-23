@@ -582,6 +582,17 @@ Dernier commit green avant T009 : `07120e4`.
   observé : les réseaux non booléens existent hors `permutation_like`, mais
   restent tous bloqués par parasites dans `paired_farthest/P3x{k}` ;
   `candidate.py` n'a pas été modifié.
+- Checkpoint T072 courant : commit contenant le probe des conflits
+  `sparse_partial_matching`. Validation observée : test ciblé sparse
+  (`1 passed`), `make bench-sparse-matching` (`40` lignes complètes,
+  `0` mismatch, `21` relations sparse, `10` conflits projection/unaire vides,
+  `3` composantes sparse binaires insatisfiables, `28` lignes avec
+  `constant_reject`), tests ciblés `tests/test_csp_internal_benchmark.py`
+  (`11 passed`), `make quick` (`273 passed`, puis `JUSTE`) et
+  `make bench-quick` (`40/40` runs, `0` timeout, `0` incomplet). Résultat
+  observé : le noyau T068 est confirmé comme conflit unaire+binaire local ;
+  les composantes binaires sparse restent contaminées par constantes ;
+  `candidate.py` n'a pas été modifié.
 
 ## Rollback
 

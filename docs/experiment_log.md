@@ -3534,3 +3534,56 @@
 - Next action : cibler `sparse_partial_matching` et les conflits
   unaire+binaire T068, ou construire une famille `D` explicitement conçue pour
   éliminer les parasites.
+
+## 2026-05-23 sparse partial matching conflict probe
+
+- Date/heure : 2026-05-23 17:05:00 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les relations `sparse_partial_matching` T068/T071 sont
+  peut-être surtout des témoins de conflit local avec unaires, plutôt que des
+  gadgets autonomes. Un signal plus fort serait une composante sparse binaire
+  insatisfiable sans parasite constant.
+- Changement fait : ajout de `tools/pc_sparse_matching_conflict_probe.py`, de la
+  cible `make bench-sparse-matching`, d'un test de régression et de la
+  documentation T072. L'outil mesure projections sparse, intersections avec
+  unaires, composantes sparse seules et constantes de contexte.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `272 passed`, puis `JUSTE`.
+- Plan subagents : trois sidecars lecture seule. Résultats reçus : un sidecar
+  recommande de ne pas limiter le sweep à `paired_farthest`, car T071 n'y montre
+  aucun sparse ; un autre recommande une API directe sur
+  `quartet_effective_relation_report`; un troisième recommande le wording
+  prudent "témoin local d'interaction parasite".
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_csp_internal_benchmark.py::test_sparse_matching_conflict_probe_classifies_unary_and_binary_conflicts`.
+- Résultat correction ciblée : `1 passed`.
+- Commande exécutée : `make bench-sparse-matching`.
+- Résultat benchmark T072 : `reports/sparse_matching_conflict_probe.json`
+  écrit ; `40` lignes, `40` complètes, `0` mismatch, `14` lignes avec relation
+  sparse, `21` instances sparse, `8` hashes distincts, `6` lignes avec conflit
+  projection/unaire à intersection vide, `10` conflits vides, `6` lignes avec
+  composante sparse multi-arêtes, `3` lignes avec composante sparse binaire
+  insatisfiable, `max_sparse_component_edges=3`, `28` lignes avec
+  `constant_reject`.
+- Détail : `paired_farthest` donne `0` relation sparse dans ce sweep ;
+  `five_local_non_cr/k=2` reproduit le noyau T068 sans `constant_reject` ;
+  les `3` composantes sparse binaires insatisfiables apparaissent dans des
+  lignes `random` avec `constant_reject`.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_csp_internal_benchmark.py`.
+- Résultat correction ciblée élargie : `11 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction finale : `273 passed`, puis `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `8` tailles, `40/40` runs réussis, `0` timeout et `0` incomplet.
+- Conclusion : `sparse_partial_matching` est confirmé comme
+  diagnostic utile de conflit local. Les composantes binaires sparse sont un
+  signal nouveau, mais encore contaminé par constantes. `candidate.py` n'a pas
+  été modifié.
+- Next action : chercher si une des composantes sparse binaires
+  insatisfiables survit après suppression des constantes, ou construire une
+  famille `D` qui conserve les deux binaires sparse sans `constant_reject`.

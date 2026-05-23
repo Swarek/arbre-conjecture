@@ -288,6 +288,14 @@ composante multi-arêtes et `617` relations binaires non booléennes, mais `0`
 ligne multi-arêtes parasite-free ; c'est une limite expérimentale du scaffold,
 pas un théorème.
 
+T072 isole la forme `sparse_partial_matching`. Le sweep observé contient `21`
+relations sparse sur `14` lignes, `10` conflits projection/unaire à intersection
+vide, et `3` lignes où les relations sparse seules forment une composante
+insatisfiable. Ces `3` lignes ont encore des `constant_reject`, et le seul cas
+sans constante reprend le noyau unaire+binaire T068. Le statut reste donc :
+contre-exemple utile aux compressions qui sépareraient les relations binaires
+des unaires, pas gadget autonome ni preuve de dureté.
+
 ### Caractérisation bad-side d'un ordre fixé
 
 Statut : conséquence directe pour ordre fixé + prédicat central exact depuis

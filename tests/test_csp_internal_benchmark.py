@@ -5,6 +5,7 @@ from tools.pc_relation_chain_probe import run_relation_chain_probe
 from tools.pc_relation_component_probe import run_relation_component_probe
 from tools.pc_relation_shape_search import run_relation_shape_search
 from tools.pc_relation_unsat_core_probe import run_relation_unsat_core_probe
+from tools.pc_sparse_matching_conflict_probe import run_sparse_matching_conflict_probe
 from tools.pc_permutation_like_probe import run_permutation_like_probe
 from tools.pc_permutation_composition_probe import run_permutation_composition_probe
 from tools.pc_single_p_domain_stress import run_single_p_domain_stress
@@ -748,3 +749,70 @@ def test_relation_component_probe_reports_multi_edge_relations_blocked_by_parasi
         "small_domain_bridge": 3,
         "total_cover_dense": 1,
     }
+
+
+def test_sparse_matching_conflict_probe_classifies_unary_and_binary_conflicts():
+    report = run_sparse_matching_conflict_probe(
+        block_counts=[2, 3],
+        repeats=8,
+        seed=20260550,
+    )
+
+    summary = report["summary"]
+    assert summary["rows"] == 40
+    assert summary["complete_rows"] == 40
+    assert summary["validation_mismatches"] == 0
+    assert summary["assignment_incomplete_rows"] == 0
+    assert summary["sparse_rows"] == 14
+    assert summary["sparse_relation_instances"] == 21
+    assert summary["unique_sparse_hashes"] == 8
+    assert summary["rows_with_empty_projection_conflict"] == 6
+    assert summary["empty_projection_conflict_instances"] == 10
+    assert summary["rows_with_sparse_multi_edge_component"] == 6
+    assert summary["rows_with_sparse_zero_component"] == 3
+    assert summary["max_sparse_component_edges"] == 3
+    assert summary["rows_with_constant_reject"] == 28
+    assert "not prove" in summary["interpretation"]
+
+    assert summary["by_instance_kind"]["paired_farthest"]["sparse_rows"] == 0
+    assert summary["by_instance_kind"]["five_local_non_cr"]["sparse_rows"] == 2
+    assert summary["by_instance_kind"]["random"]["sparse_zero_component_rows"] == 3
+    assert summary["row_class_histogram"]["sparse_binary_component_unsat"] == 3
+    assert (
+        summary["row_class_histogram"][
+            "sparse_unary_empty_conflict_without_constant"
+        ]
+        == 1
+    )
+
+    t068_row = next(
+        row
+        for row in report["rows"]
+        if row["instance_kind"] == "five_local_non_cr" and row["block_count"] == 2
+    )
+    assert t068_row["seed"] == 20308448
+    assert t068_row["row_class"] == "sparse_unary_empty_conflict_without_constant"
+    assert t068_row["constant_reject_count"] == 0
+    assert t068_row["sparse_relation_count"] == 1
+    assert t068_row["empty_projection_conflict_count"] == 1
+    conflict = t068_row["sparse_unary_conflicts"][0]
+    assert conflict["status"] == "empty_intersection"
+    assert conflict["variable"] == "0"
+    assert conflict["sparse_projection_indices"] == [2, 4]
+    assert conflict["unary_accepted_indices"] == [0, 1, 3, 5]
+    assert conflict["sparse_relation"]["accepted_index_tuples"] == [[2, 3], [4, 1]]
+
+    binary_unsat = next(
+        row
+        for row in report["rows"]
+        if row["row_class"] == "sparse_binary_component_unsat"
+    )
+    assert binary_unsat["constant_reject_count"] > 0
+    assert binary_unsat["sparse_zero_component_count"] == 1
+    zero_component = next(
+        component
+        for component in binary_unsat["sparse_components"]
+        if component["zero_accept"]
+    )
+    assert zero_component["edge_count"] == 2
+    assert zero_component["accept_count"] == 0

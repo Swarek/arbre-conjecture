@@ -47,6 +47,7 @@ make bench-relation-catalog
 make bench-relation-shapes
 make bench-relation-chains
 make bench-relation-unsat-cores
+make bench-sparse-matching
 make bench-permutation-like
 make bench-permutation-composition
 make bench-relation-components
@@ -103,6 +104,12 @@ diagnostic de corrélation, pas une décision générale.
 `interaction_unsat` de ce CSP matérialisé en noyaux de relations, avec tests de
 suppression et projections brutes. C’est un artefact de diagnostic, pas un
 certificat global de non-existence.
+
+`make bench-sparse-matching` écrit
+`reports/sparse_matching_conflict_probe.json`. Il isole les relations
+`sparse_partial_matching`, leurs projections, leurs conflits avec les unaires et
+leurs composantes binaires. C’est un diagnostic de parasites et de compression,
+pas un gadget de dureté.
 
 `make bench-permutation-like` écrit `reports/permutation_like_probe.json`. Il
 teste les profils locaux `permutation_like` observés sur `paired_farthest`

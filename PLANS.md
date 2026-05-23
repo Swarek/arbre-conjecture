@@ -4626,3 +4626,71 @@ Décision : T071 généralise le signal négatif T070. Les relations non
 sweep elles sont toutes bloquées par parasites restrictifs. La prochaine piste
 devrait cibler `sparse_partial_matching` et ses conflits unaire+binaire, ou
 construire explicitement une famille `D` qui élimine les parasites.
+
+## ExecPlan 2026-05-23 - Sparse partial matching conflict probe
+
+But : isoler ce que la forme `sparse_partial_matching` apporte réellement après
+T068/T071 : conflit unaire+binaire local, composante binaire sparse autonome,
+ou artefact toujours expliqué par parasites.
+
+Hypothèse : les `sparse_partial_matching` observés sont fréquents et lisibles,
+mais les noyaux UNSAT actuels sont surtout des conflits entre projection sparse
+et unaire restrictive. Un signal plus fort serait une composante de deux ou
+plusieurs relations sparse insatisfiable sans aucune unaire, ou un cas
+parasite-free avec contraintes sparse non triviales.
+
+Fichiers visés : `tools/pc_sparse_matching_conflict_probe.py`,
+`tests/test_csp_internal_benchmark.py`, `Makefile`, `README.md`,
+`docs/experiment_protocol.md`, `docs/hypothesis_portfolio.md`,
+`docs/tracks/piste_c_sat_csp.md`,
+`docs/tracks/piste_f_complexity_subcases.md`,
+`docs/proof_obligations.md`, `docs/experiment_log.md`,
+`docs/checkpoints.md`, `docs/tracks/README.md`, `PLANS.md`.
+
+Algorithme pressenti : réutiliser `quartet_effective_relation_report`,
+`_binary_relation_profile` et `classify_relation_shape`. Pour chaque ligne,
+extraire les relations de shape primaire `sparse_partial_matching`, leurs
+projections gauche/droite, les unaires restrictives sur les mêmes variables,
+les intersections projection/unaire, et les composantes formées seulement de
+relations sparse. Compter les conflits à intersection vide, les composantes
+sparse multi-arêtes, les composantes sparse insatisfiables, et les contextes
+avec ou sans `constant_reject`.
+
+Plan de contre-exemples : scanner les familles T067/T068 (`cycle`,
+`paired_farthest`, `random`, `equal`, `four_local_non_cr`, `five_local_non_cr`)
+sur `k=2,3` puis un sweep `paired_farthest` plus long si nécessaire. Chercher
+un noyau sans unaire ; sinon documenter que les conflits sparse observés se
+réduisent à des intersections vides avec des unaires.
+
+Plan subagents : trois sidecars lecture seule : définition des métriques,
+réutilisation du code existant, et formulation prudente preuve/stratégie.
+L'agent principal implémente et garde les gates.
+
+Tests à exécuter : test ciblé du probe sparse, `make bench-sparse-matching`,
+tests CSP ciblés, `make quick`, et `make bench-quick`. `candidate.py` ne doit
+pas changer.
+
+Risques : un conflit projection/unaire est utile pour casser des compressions
+locales, mais ce n'est pas un gadget de dureté. Les relations sparse dans le
+scaffold ne prouvent ni promise Hsu/McConnell, ni réalisabilité isolée par une
+matrice globale `D`.
+
+Résultats observés : ajout de `tools/pc_sparse_matching_conflict_probe.py`,
+cible `make bench-sparse-matching`, test ciblé et documentation T072. Le rapport
+`reports/sparse_matching_conflict_probe.json` contient `40` lignes complètes,
+`0` mismatch, `14` lignes avec relation sparse, `21` instances sparse,
+`8` hashes distincts, `6` lignes avec conflit projection/unaire à intersection
+vide, `10` conflits vides, `6` lignes avec composante sparse multi-arêtes,
+`3` lignes avec composante sparse binaire insatisfiable, `max_sparse_component_edges=3`,
+et `28` lignes avec `constant_reject`.
+
+Tests observés : test ciblé sparse probe `1 passed` ; tests ciblés
+`tests/test_csp_internal_benchmark.py` : `11 passed` ;
+`make bench-sparse-matching` écrit le rapport avec les métriques ci-dessus ;
+`make quick` passe avec `273 passed`, puis `JUSTE` ; `make bench-quick` garde
+`40/40` runs réussis, `0` timeout et `0` incomplet.
+
+Décision : `sparse_partial_matching` reste principalement un témoin
+de conflit local avec unaires/constantes. Les composantes sparse binaires
+insatisfiables sont un signal plus fort, mais elles restent contaminées par
+`constant_reject` dans ce sweep. Ne pas intégrer à `candidate.py`.

@@ -1447,3 +1447,41 @@ mais leur usage comme gadgets est bloqué par parasites dans la famille
 `paired_farthest/P3x{k}`. La prochaine piste F la plus concrète est de cibler
 `sparse_partial_matching` et les conflits unaire+binaire T068, car c'est déjà un
 noyau minimal explicite.
+
+## Résultat T072 - Analyse `sparse_partial_matching`
+
+Statut : diagnostic expérimental, non preuve.
+
+T072 ajoute `make bench-sparse-matching`. Le rapport
+`reports/sparse_matching_conflict_probe.json` isole les relations
+`sparse_partial_matching`, les conflits de projection avec les unaires, et les
+composantes formées uniquement de relations sparse.
+
+Métriques principales du benchmark T072 :
+
+- `rows=40`, toutes complètes ;
+- `validation_mismatches=0` ;
+- `sparse_rows=14` ;
+- `sparse_relation_instances=21` ;
+- `unique_sparse_hashes=8` ;
+- `rows_with_empty_projection_conflict=6` ;
+- `empty_projection_conflict_instances=10` ;
+- `rows_with_sparse_multi_edge_component=6` ;
+- `rows_with_sparse_zero_component=3` ;
+- `max_sparse_component_edges=3` ;
+- `rows_with_constant_reject=28`.
+
+Répartition utile :
+
+- `paired_farthest` ne produit aucune relation sparse dans ce sweep ;
+- `five_local_non_cr` reproduit le conflit T068 ;
+- les `3` composantes sparse binaires insatisfiables apparaissent dans des
+  lignes `random`, toutes avec `constant_reject`.
+
+Conclusion prudente : `sparse_partial_matching` est surtout, pour l'instant, un
+témoin local de corrélation avec unaires ou constantes. Il est utile pour casser
+des compressions qui sépareraient les binaires des parasites, mais il ne fournit
+pas encore un gadget autonome. La suite raisonnable serait de chercher une
+famille où les composantes sparse binaires restent insatisfiables après
+suppression des constantes, ou de prouver que ces constantes sont structurelles
+dans le scaffold actuel.
