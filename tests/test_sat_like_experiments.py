@@ -538,6 +538,25 @@ def test_quartet_2sat_handles_equal_distance_and_non_strict_tautologies():
         assert result["counts"]["witness_is_cr"]
 
 
+def test_quartet_2sat_defaults_inactive_non_boolean_domains():
+    D = equal_distance_instance(6)
+    T = p3_block_tree(2)
+    relation_report = quartet_effective_relation_report(D, T, max_p_degree=3)
+    result = solve_quartet_2sat(D, T, max_p_degree=3, relation_report=relation_report)
+
+    assert relation_report["row_class"] == "two_sat_candidate"
+    assert relation_report["counts"]["effective_acceptance_scope_size_histogram"] == {0: 15}
+    assert relation_report["counts"]["merged_relation_kind_histogram"] == {"constant_accept": 1}
+    assert {len(domain) for domain in relation_report["encoding"]["domains"].values()} == {2, 6}
+    assert result["complete"]
+    assert result["exists"]
+    assert result["reason"] == "sat"
+    assert result["counts"]["clauses"] == 0
+    assert result["counts"]["inactive_variables_defaulted"] == 2
+    assert result["counts"]["witness_is_cr"]
+    assert is_precircular_order_cR(D, result["order"])
+
+
 def test_quartet_2sat_reports_constant_reject_as_unsat_not_unsupported():
     cases = [
         (quasi_circular_not_circular_four_point(), c_node([leaf(3), leaf(0), leaf(1), leaf(2)])),

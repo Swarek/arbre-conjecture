@@ -3631,3 +3631,56 @@
 - Next action : construire une famille `D` qui tente de conserver ces
   projections disjointes en supprimant les constantes, ou changer de forme
   relationnelle après deux échecs de composabilité propre.
+
+## 2026-05-23 quartet solver positive coverage probe
+
+- Date/heure : 2026-05-23 17:19:40 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : après deux tentatives sparse sans gadget propre,
+  `solve_quartet_2sat` et `solve_quartet_treewidth_csp` peuvent peut-être
+  fournir des témoins positifs certifiés que `candidate.py` ne trouve pas,
+  même si leurs résultats `False` restent diagnostiques.
+- Changement fait : correction de `solve_quartet_2sat` pour les variables de
+  domaine non booléen inactives dans les rapports tautologiques ; ajout de
+  `tools/pc_quartet_solver_coverage_probe.py`, de la cible
+  `make bench-quartet-coverage`, de tests ciblés et de la documentation T074.
+  `candidate.py` n'a pas été modifié.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `274 passed`, puis `JUSTE`.
+- Plan subagents : trois sidecars lecture seule. Résultats reçus : un sidecar
+  recommande le probe de couverture positive-only 2-SAT/treewidth et liste les
+  métriques ; un sidecar recommande un prochain probe A/D sur supports exacts
+  de quartets non-cR ; un sidecar recommande plutôt un audit strict Algorithm
+  5.2. L'agent principal a choisi la couverture positive-only parce qu'un crash
+  2-SAT bloquait ce probe.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_sat_like_experiments.py::test_quartet_2sat_defaults_inactive_non_boolean_domains tests/test_csp_internal_benchmark.py::test_quartet_solver_coverage_probe_counts_positive_only_witnesses`.
+- Résultat correction ciblée : `2 passed`.
+- Commande exécutée : `make bench-quartet-coverage`.
+- Résultat benchmark T074 : `reports/quartet_solver_coverage_probe.json`
+  écrit ; `80` lignes, `80` rapports relationnels complets, `0` mismatch,
+  `14` lignes positives candidate, `8` lignes incomplètes candidate,
+  `4` lignes 2-SAT positives, `80` lignes treewidth complètes, `14` lignes
+  treewidth positives validées, `0` nouveau témoin positif, `66` lignes
+  `False` seulement diagnostiques, `0` échec de témoin,
+  `max_treewidth_exact=5`, `max_domain_size=6`.
+- Commande exécutée :
+  `PYTHONPATH=src:. .venv/bin/python tools/pc_quartet_solver_coverage_probe.py --block-counts 6 --instance-kinds cycle,equal,random --repeats 2 --max-treewidth 6 --output reports/quartet_solver_coverage_probe_k6_smoke.json`.
+- Résultat smoke additionnel : `4` lignes, `0` mismatch, `0` nouveau témoin
+  positif, `0` échec de témoin, `max_treewidth_exact=6`.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`.
+- Résultat correction ciblée élargie : `91 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction finale : `276 passed`, puis `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `8` tailles, `40/40` runs réussis, `0` timeout et `0` incomplet.
+- Conclusion : T074 répare un bug d'infrastructure et montre que l'intégration
+  positive-only des solveurs relationnels n'apporte pas de couverture nouvelle
+  dans ce sweep. Les rejets relationnels restent exclus de `candidate.py`.
+- Next action : basculer vers le probe A/D de supports exacts de quartets
+  non-cR, ou vers l'audit de complétude stricte Algorithm 5.2.

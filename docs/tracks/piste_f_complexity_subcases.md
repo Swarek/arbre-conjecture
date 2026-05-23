@@ -1519,3 +1519,32 @@ Conclusion prudente : T073 renforce le diagnostic "corrélation binaire sparse",
 mais affaiblit son statut de gadget. Le prochain signal utile serait soit une
 famille construite où le même conflit survit sans constantes, soit une preuve
 que les constantes sont inévitables pour cette forme dans le scaffold étudié.
+
+## Résultat T074 - Couverture positive-only des solveurs de quartets
+
+Statut : benchmark de limite d'intégration, non preuve.
+
+T074 ajoute `make bench-quartet-coverage`. Le rapport
+`reports/quartet_solver_coverage_probe.json` mesure si les solveurs exacts du
+CSP matérialisé donnent des témoins positifs que la candidate ne trouve pas.
+
+Métriques principales :
+
+- `rows=80` ;
+- `relation_complete_rows=80` ;
+- `relation_validation_mismatches=0` ;
+- `candidate_positive_rows=14` ;
+- `candidate_incomplete_rows=8` ;
+- `two_sat_safe_positive_rows=4` ;
+- `treewidth_complete_rows=80` ;
+- `treewidth_safe_positive_rows=14` ;
+- `new_positive_rows=0` ;
+- `safe_false_diagnostic_rows=66` ;
+- `witness_failures=0` ;
+- `max_treewidth_exact=5` ;
+- `max_domain_size=6`.
+
+Conclusion prudente : la DP treewidth est utile comme oracle expérimental et
+comme classification FPT, mais dans ce sweep elle n'améliore pas la candidate
+en mode positive-only. Les `False` relationnels restent exclus de toute
+intégration générale.

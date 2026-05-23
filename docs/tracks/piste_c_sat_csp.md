@@ -1371,6 +1371,49 @@ déguisées. Mais ils ne donnent pas encore de gadget propre, car toutes les
 lignes observées restent accompagnées de `constant_reject`. Ne pas intégrer à
 `candidate.py`.
 
+## Tentative T074 - Couverture positive-only 2-SAT/treewidth
+
+Statut : probe de couverture et correctif d'infrastructure, hors `candidate.py`.
+
+Changement : `solve_quartet_2sat` reconstruit maintenant un témoin même quand
+un rapport 2-SAT-candidate contient des domaines `P` non booléens inactifs :
+ces variables reçoivent un choix arbitraire et le témoin reste validé
+directement par cR. Sans ce correctif, `equal_distance_instance(6)` sur
+`p3_block_tree(2)` levait un `KeyError` malgré un rapport tautologique.
+
+Ajout de `tools/pc_quartet_solver_coverage_probe.py`, câblé par
+`make bench-quartet-coverage`. Le rapport compare `candidate.py`,
+`solve_quartet_2sat` et `solve_quartet_treewidth_csp` sur `p3_block_tree(k)`.
+Seuls les témoins `True` validés directement cR et représentés par construction
+sont comptés comme couverture potentielle ; les `False` relationnels restent
+diagnostiques.
+
+Résultat `make bench-quartet-coverage` :
+
+- `80` lignes : `k=2,3,4,5`, six familles, `8` repeats pour `random` et
+  `paired_farthest` ;
+- `80` rapports relationnels complets ;
+- `0` mismatch de validation ;
+- `14` lignes positives pour la candidate ;
+- `8` lignes où la candidate reste incomplète ;
+- `4` lignes 2-SAT complètes positives ;
+- `80` lignes treewidth complètes ;
+- `14` lignes treewidth positives validées ;
+- `0` témoin positif nouveau par rapport à la candidate ;
+- `66` lignes avec résultat `False` relationnel seulement diagnostique ;
+- `0` échec de témoin ;
+- `max_treewidth_exact=5`, `max_domain_size=6`.
+
+Smoke additionnel `k=6` sur `cycle/equal/random` : `4` lignes, `0` nouveau
+témoin positif, `0` échec de témoin.
+
+Interprétation : T074 évite une mauvaise intégration coûteuse. Les solveurs
+relationnels retrouvent des témoins déjà couverts par la candidate
+(`cycle`, `equal`, quelques petites lignes), et leurs rejets sur les autres
+lignes ne sont pas utilisables comme décisions générales. Prochaine piste :
+soit un probe A/D sur supports exacts de quartets non-cR dans les frontiers, soit
+le strict Algorithm 5.2 audit recommandé par subagent.
+
 ## Tentative T021 - Repair positive-only pour paired-farthest
 
 Statut : idée saine comme générateur expérimental vérifié, mais non intégrée à

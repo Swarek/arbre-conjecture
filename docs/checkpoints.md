@@ -606,6 +606,18 @@ Dernier commit green avant T009 : `07120e4`.
   accompagnés de `constant_reject` dans ce sweep ; `candidate.py` n'a pas été
   modifié.
 
+- Checkpoint T074 courant : commit contenant le probe de couverture
+  positive-only des solveurs de quartets et la réparation 2-SAT pour domaines
+  non booléens inactifs. Validation observée : tests ciblés (`2 passed`),
+  `make bench-quartet-coverage` (`80` lignes complètes, `0` mismatch,
+  `14` positives treewidth validées, `0` nouveau témoin positif,
+  `0` échec de témoin, `max_treewidth_exact=5`), smoke `k=6`
+  (`4` lignes, `0` nouveau positif), tests ciblés élargis (`91 passed`),
+  `make quick` (`276 passed`, puis `JUSTE`) et `make bench-quick` (`40/40`
+  runs, `0` timeout, `0` incomplet). Résultat observé : intégration
+  positive-only non justifiée pour l'instant ; `candidate.py` n'a pas été
+  modifié.
+
 ## Rollback
 
 Si une modification régresse et que la cause n’est pas claire :

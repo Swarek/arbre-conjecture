@@ -5,6 +5,7 @@ from tools.pc_relation_chain_probe import run_relation_chain_probe
 from tools.pc_relation_component_probe import run_relation_component_probe
 from tools.pc_relation_shape_search import run_relation_shape_search
 from tools.pc_relation_unsat_core_probe import run_relation_unsat_core_probe
+from tools.pc_quartet_solver_coverage_probe import run_quartet_solver_coverage_probe
 from tools.pc_sparse_binary_core_probe import run_sparse_binary_core_probe
 from tools.pc_sparse_matching_conflict_probe import run_sparse_matching_conflict_probe
 from tools.pc_permutation_like_probe import run_permutation_like_probe
@@ -882,3 +883,50 @@ def test_sparse_binary_core_probe_explains_zero_components_by_shared_projection(
     ]
     assert len(quartet_counts) == 15
     assert all(count == 0 for count in quartet_counts)
+
+
+def test_quartet_solver_coverage_probe_counts_positive_only_witnesses():
+    report = run_quartet_solver_coverage_probe(
+        block_counts=[2, 3],
+        instance_kinds=["cycle", "equal", "random"],
+        repeats=2,
+        seed=20260580,
+        max_treewidth=5,
+    )
+
+    summary = report["summary"]
+    assert summary["rows"] == 8
+    assert summary["relation_complete_rows"] == 8
+    assert summary["relation_validation_mismatches"] == 0
+    assert summary["candidate_positive_rows"] == 4
+    assert summary["candidate_incomplete_rows"] == 0
+    assert summary["two_sat_complete_rows"] == 2
+    assert summary["two_sat_safe_positive_rows"] == 2
+    assert summary["treewidth_complete_rows"] == 8
+    assert summary["treewidth_safe_positive_rows"] == 4
+    assert summary["quartet_safe_positive_rows"] == 4
+    assert summary["new_positive_rows"] == 0
+    assert summary["safe_false_diagnostic_rows"] == 4
+    assert summary["witness_failures"] == 0
+    assert summary["max_treewidth_exact"] == 3
+    assert summary["max_domain_size"] == 6
+    assert summary["treewidth_reason_histogram"] == {
+        "sat": 4,
+        "unsat_empty_scope_relation": 4,
+    }
+    assert summary["integration_status_histogram"] == {
+        "already_found_by_candidate": 4,
+        "no_positive_witness": 4,
+    }
+    assert "False or UNSAT rows are not candidate decisions" in summary["interpretation"]
+
+    equal_row = next(row for row in report["rows"] if row["instance_kind"] == "equal")
+    assert equal_row["two_sat_complete"]
+    assert equal_row["two_sat_exists"]
+    assert equal_row["two_sat_inactive_variables_defaulted"] == 2
+    assert equal_row["witness_represents_tree"] is True
+
+    random_row = next(row for row in report["rows"] if row["instance_kind"] == "random")
+    assert random_row["candidate_exists"] is False
+    assert random_row["quartet_safe_positive"] is False
+    assert random_row["quartet_safe_false_diagnostic"] is True

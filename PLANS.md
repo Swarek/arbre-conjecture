@@ -4754,3 +4754,80 @@ Décision : T073 confirme que les noyaux sparse binaires sont des conflits de
 projections partagées dans le CSP matérialisé, mais aucun noyau propre sans
 constante n'a été trouvé. Continuer par une famille construite pour supprimer
 les `constant_reject`, ou basculer vers un autre type de relation non booléenne.
+
+## ExecPlan 2026-05-23 - Quartet solver coverage and inactive-domain repair
+
+But : reprendre la Piste C hors sparse en mesurant si les solveurs
+`solve_quartet_2sat` et `solve_quartet_treewidth_csp` trouvent des témoins
+positifs que `candidate.py` ne trouve pas encore, sous garde de validation
+directe. Réparer au passage le crash observé quand un rapport 2-SAT-candidate
+ne contraint pas certains domaines `P` non booléens.
+
+Hypothèse : les solveurs relationnels peuvent produire des témoins certifiés
+dans des PC-trees `p3_block_tree(k)` où la candidate reste incomplète. Les
+résultats `False` ne doivent pas être intégrés à la candidate tant que le modèle
+relationnel n'est pas prouvé globalement. Le crash 2-SAT sur variables
+non booléennes inactives est un bug de reconstruction de témoin, pas un signal
+mathématique.
+
+Fichiers visés : `src/pc_circular/solvers/sat_like_experiments.py`,
+`tools/pc_quartet_solver_coverage_probe.py`,
+`tests/test_sat_like_experiments.py`, `tests/test_csp_internal_benchmark.py`,
+`Makefile`, `README.md`, `docs/experiment_protocol.md`,
+`docs/hypothesis_portfolio.md`, `docs/tracks/piste_c_sat_csp.md`,
+`docs/tracks/piste_f_complexity_subcases.md`,
+`docs/proof_obligations.md`, `docs/experiment_log.md`,
+`docs/checkpoints.md`, `docs/tracks/README.md`, `PLANS.md`.
+
+Algorithme pressenti : dans `solve_quartet_2sat`, affecter arbitrairement les
+variables de domaine non booléen qui ne figurent pas dans les clauses, puis
+valider le témoin par le prédicat cR. Ajouter un probe qui exécute candidate,
+rapport relationnel, 2-SAT et DP treewidth sur `p3_block_tree(k)` et plusieurs
+familles, puis compte les témoins `True` validés que la candidate ne retourne
+pas.
+
+Plan de contre-exemples : inclure `equal` pour le cas tautologique avec domaines
+`P` inactifs, `cycle` pour les témoins positifs structurés, `paired_farthest`
+et `random` pour les parasites/UNSAT/incomplétudes. Tout témoin positif
+rapporté doit être revérifié cR et représenté par construction ; tout crash
+est une régression du harnais.
+
+Plan subagents : trois sidecars lecture seule : couverture positive-only C,
+piste stricte/sous-cas prouvé, et piste A/D non sparse. L'agent principal garde
+la correction, le probe, les gates et le commit.
+
+Tests à exécuter : test ciblé 2-SAT inactive-domain, test ciblé du nouveau
+probe, tests `tests/test_sat_like_experiments.py` et
+`tests/test_csp_internal_benchmark.py`, `make bench-quartet-coverage`,
+`make quick`, puis `make bench-quick`. `candidate.py` ne doit pas changer dans
+ce checkpoint sauf si le probe démontre un gain sûr et borné, ce qui n'est pas
+l'objectif immédiat.
+
+Risques : un témoin DP/treewidth validé prouve seulement `exists=True` pour
+l'instance scaffold, pas une preuve de complétude globale. Un `False` des
+solveurs relationnels doit rester diagnostic. La construction des relations est
+encore énumérative, donc une intégration directe peut coûter trop cher.
+
+Résultats observés : correction de `solve_quartet_2sat` pour défaut des
+variables non booléennes inactives, ajout de
+`tools/pc_quartet_solver_coverage_probe.py`, cible
+`make bench-quartet-coverage`, tests ciblés et documentation T074. Le benchmark
+principal contient `80` lignes, `80` rapports relationnels complets,
+`0` mismatch, `14` positives candidate, `8` incomplètes candidate,
+`4` positives 2-SAT, `80` lignes treewidth complètes, `14` positives treewidth
+validées, `0` nouveau témoin positif, `66` lignes `False` diagnostiques,
+`0` échec de témoin, `max_treewidth_exact=5`, `max_domain_size=6`.
+
+Tests observés : test ciblé inactive-domain et test ciblé coverage `2 passed` ;
+`make bench-quartet-coverage` écrit le rapport ci-dessus ; smoke additionnel
+`k=6` sur `cycle/equal/random` : `4` lignes, `0` nouveau témoin positif,
+`0` échec de témoin ; tests élargis
+`tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py` :
+`91 passed` ; `make quick` passe avec `276 passed`, puis `JUSTE` ;
+`make bench-quick` garde `40/40` runs réussis, `0` timeout et `0` incomplet.
+
+Décision : ne pas intégrer 2-SAT/treewidth dans `candidate.py` maintenant :
+le mode positive-only n'apporte aucun témoin nouveau dans le sweep, et les
+rejets relationnels ne sont pas des décisions générales. Continuer plutôt vers
+un probe A/D sur supports de quartets exacts ou vers l'audit strict Algorithm
+5.2.

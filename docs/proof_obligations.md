@@ -304,6 +304,14 @@ source ne suffit pas dans l'exemple canonique seed `20281931`. Statut :
 diagnostic local plus précis, mais toujours aucune obligation de preuve fermée
 pour une réduction de dureté ou pour un solver général.
 
+T074 corrige une faiblesse de reconstruction dans `solve_quartet_2sat` :
+les variables non booléennes inactives d'un rapport tautologique peuvent être
+fixées arbitrairement avant validation du témoin. Le probe de couverture associé
+montre `14` témoins treewidth validés sur `80` lignes, mais `0` témoin nouveau
+par rapport à `candidate.py`. Statut : amélioration d'infrastructure et
+contre-signal à une intégration positive-only immédiate ; aucune suffisance
+globale ni aucun rejet général prouvé.
+
 ### Caractérisation bad-side d'un ordre fixé
 
 Statut : conséquence directe pour ordre fixé + prédicat central exact depuis

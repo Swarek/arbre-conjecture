@@ -1,7 +1,7 @@
 PYTHON ?= $(shell if [ -x .venv/bin/python ]; then echo .venv/bin/python; elif command -v python3 >/dev/null 2>&1; then echo python3; else echo python; fi)
 PYTEST ?= $(PYTHON) -m pytest
 
-.PHONY: quick check hunt-counterexamples bench-quick bench bench-piste-f bench-csp-quick bench-width-stress bench-single-p-stress bench-relation-catalog bench-relation-shapes bench-relation-chains bench-relation-unsat-cores bench-sparse-matching bench-sparse-binary-cores bench-permutation-like bench-permutation-composition bench-relation-components unit acceptance
+.PHONY: quick check hunt-counterexamples bench-quick bench bench-piste-f bench-csp-quick bench-width-stress bench-single-p-stress bench-relation-catalog bench-relation-shapes bench-relation-chains bench-relation-unsat-cores bench-sparse-matching bench-sparse-binary-cores bench-quartet-coverage bench-permutation-like bench-permutation-composition bench-relation-components unit acceptance
 
 unit:
 	$(PYTEST) -q
@@ -173,6 +173,16 @@ bench-sparse-binary-cores:
 	  --repeats 8 \
 	  --seed 20260550 \
 	  --output reports/sparse_binary_core_probe.json
+
+bench-quartet-coverage:
+	mkdir -p reports && \
+	$(PYTHON) tools/pc_quartet_solver_coverage_probe.py \
+	  --block-counts 2,3,4,5 \
+	  --instance-kinds cycle,paired_farthest,random,equal,four_local_non_cr,five_local_non_cr \
+	  --repeats 8 \
+	  --seed 20260580 \
+	  --max-treewidth 5 \
+	  --output reports/quartet_solver_coverage_probe.json
 
 bench-permutation-like:
 	mkdir -p reports && \

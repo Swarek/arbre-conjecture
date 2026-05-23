@@ -195,6 +195,20 @@ quartet source réouvre des affectations. Une ligne sans constante serait un
 candidat expérimental plus fort ; une ligne avec constante reste un diagnostic
 local du CSP matérialisé.
 
+Couverture positive-only des solveurs de quartets Piste C :
+
+```bash
+make bench-quartet-coverage
+```
+
+Cette commande écrit `reports/quartet_solver_coverage_probe.json`. Elle compare
+la candidate courante aux solveurs expérimentaux `solve_quartet_2sat` et
+`solve_quartet_treewidth_csp` sur des arbres `p3_block_tree(k)`. Le rapport
+compte seulement les témoins `True` dont l'ordre est directement vérifié cR et
+représenté par construction comme couverture potentielle. Les résultats
+`False`/UNSAT du modèle relationnel restent des diagnostics tant que les
+obligations de preuve globales ne sont pas fermées.
+
 Contrôle promise-aware des permutations locales Piste F/C :
 
 ```bash

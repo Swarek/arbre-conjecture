@@ -1428,6 +1428,7 @@ def solve_quartet_2sat(
             "empty_clauses": 0,
             "rejected_tuples": 0,
             "relations": len(report["merged_relations"]),
+            "inactive_variables_defaulted": 0,
             "witness_validated": False,
             "witness_is_cr": False,
         },
@@ -1494,6 +1495,9 @@ def solve_quartet_2sat(
     for path, domain in domains.items():
         if len(domain) == 1:
             assignment[path] = domain[0]
+        elif path not in choice_indices:
+            assignment[path] = domain[0]
+            result["counts"]["inactive_variables_defaulted"] += 1
         else:
             assignment[path] = domain[choice_indices[path]]
     order = canonical_circular_order(frontier_from_assignment(pc_tree, assignment))

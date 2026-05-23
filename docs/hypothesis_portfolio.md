@@ -105,6 +105,12 @@ insatisfiables observées dans le sweep T072 sont toutes accompagnées de
 disjointes sur une variable partagée, mais ne sont pas encore des gadgets
 parasite-free.
 
+Mise à jour T074 : un probe de couverture positive-only des solveurs
+`solve_quartet_2sat` et `solve_quartet_treewidth_csp` sur `p3_block_tree(k)`
+n'a trouvé aucun témoin positif nouveau par rapport à `candidate.py` dans le
+sweep courant. L'intégration de ces solveurs dans la candidate n'est donc pas
+justifiée sans nouvelle famille ou garde de coût plus ciblée.
+
 ## Piste D : intersection de contraintes type PC-tree / circular-ones
 
 Intuition : la condition circular Robinson pourrait être reformulée comme une

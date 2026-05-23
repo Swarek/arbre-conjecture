@@ -49,6 +49,7 @@ make bench-relation-chains
 make bench-relation-unsat-cores
 make bench-sparse-matching
 make bench-sparse-binary-cores
+make bench-quartet-coverage
 make bench-permutation-like
 make bench-permutation-composition
 make bench-relation-components
@@ -117,6 +118,12 @@ pas un gadget de dureté.
 binaires insatisfiables, teste la suppression des constantes, les intersections
 de projections partagées et les retraits de relations/quartets source. C’est un
 diagnostic de noyau local, pas une preuve de dureté.
+
+`make bench-quartet-coverage` écrit
+`reports/quartet_solver_coverage_probe.json`. Il compare la candidate courante
+aux solveurs expérimentaux 2-SAT/treewidth sur `p3_block_tree(k)` et ne compte
+que les témoins positifs validés directement comme couverture potentielle. Les
+résultats `False` restent diagnostiques.
 
 `make bench-permutation-like` écrit `reports/permutation_like_probe.json`. Il
 teste les profils locaux `permutation_like` observés sur `paired_farthest`
