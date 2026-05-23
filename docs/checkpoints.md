@@ -239,6 +239,17 @@ Dernier commit green avant T009 : `07120e4`.
   les matchings permutés sont trouvés au premier couple d'ordres, `mixed/star`
   reste `0` timeout et `0` incomplet jusqu'à `n=100`, médiane `0.0267s` à
   `n=100`.
+- Checkpoint T040 courant : commit contenant
+  `iter_low_hub_strong_ordering_witnesses`, la recherche candidate de témoin
+  strong-ordering représenté par un PC-tree non-star, et la borne de frontiers
+  root-aware pour ne pas sauter des énumérations exactes canoniques. Il ajoute
+  les régressions matching non-star `n=18`, matching raffiné `n=10` à `720`
+  frontiers réelles, et faux silence local `I_x(v)` sur `C6 + hub` raffiné.
+  Validation observée : tests ciblés candidate/local-constraints, `make unit`,
+  `make quick`, `make hunt-counterexamples`, `make check`, `make bench-quick`,
+  `make bench`, et probe ciblée matching low-hub star jusqu'à `n=101`. Résultat
+  observé : `mixed/star` reste `0` timeout et `0` incomplet jusqu'à `n=100`,
+  médiane `0.0265s` à `n=100`.
 
 ## Rollback
 

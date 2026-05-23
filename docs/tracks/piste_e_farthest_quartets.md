@@ -213,14 +213,16 @@ régression `test_even_high_cycle_low_hub_subcase_regression`.
 
 ## Strong ordering low-hub
 
-Statut : conjecture expérimentale pour le cas binaire hub bas ; intégration
-candidate seulement comme témoin positif vérifié.
+Statut : suffisance prouvée pour le témoin `hubs, A, B` quand un strong
+ordering est donné ; intégration candidate seulement comme témoin positif
+vérifié et représenté.
 
 `low_hub_strong_ordering_report` teste bornément si le graphe haut privé des
 hubs admet un strong ordering. Ce diagnostic explique les certificats T034/T035
 dans un langage commun : graphe non biparti impossible ; graphe biparti sans
 strong ordering impossible dans les probes ; strong ordering trouvé donne le
-témoin naturel `hubs, A, B`, vérifié ensuite par le prédicat cR direct.
+témoin naturel `hubs, A, B`, qui est cR par le lemme bad-side et reste vérifié
+ensuite par le prédicat fixed-order exact.
 
 Résultat T036 : exhaustif oracle jusqu'à `5` sommets non-hub sans mismatch ;
 sur tous les graphes à `6` sommets non-hub, le diagnostic retrouve `5117`
@@ -249,10 +251,20 @@ matchings avec plusieurs hubs, triangle haut avec `low=0`, et positif qui reste
 complétude : un scan subagent trouve seulement `1542/5117` positifs
 strong-ordering à `m=6` avec `max_permutation_pairs=1`.
 
+Résultat T040 : `iter_low_hub_strong_ordering_witnesses` parcourt plusieurs
+témoins strong-ordering au lieu de s'arrêter au premier témoin global. La
+candidate l'utilise pour trouver un témoin représenté par le PC-tree. Régression
+ajoutée : un matching low-hub `n=18` avec racine `C` et deux gros blocs `P`
+représente un ordre cR, mais pas le premier témoin strong-ordering ; avant T040,
+la candidate restait placeholder après `64` samples, après T040 elle trouve un
+témoin représenté après `761` couples testés. Les limites restent explicites :
+si la borne de permutations est atteinte, l'absence de témoin représenté reste
+incomplète.
+
 ## Prochaine action
 
 Utiliser les témoins `find_precircular_cR_violation` comme source principale
-d’obstructions. Pour low-hub, chercher une preuve de suffisance du strong
-ordering ou une réduction polynomial-time, puis attaquer cette preuve avec des
-PC-trees non-star où le premier témoin strong-ordering n'est pas forcément
-représenté.
+d’obstructions. Pour low-hub, chercher une réduction polynomial-time de
+reconnaissance strong-ordering ou un diagnostic d'intersection PC-tree plus
+compact. T041 probable : sous-cas chain/Ferrers permuté ou rapport CSP non-star
+hors candidate.

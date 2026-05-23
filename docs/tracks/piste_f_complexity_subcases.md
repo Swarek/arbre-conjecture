@@ -244,8 +244,13 @@ ce PC-tree. La candidate calcule d'abord un upper bound récursif saturé sur le
 nombre de frontiers du scaffold :
 
 - feuille : `1` ;
-- nœud `P` : produit des enfants fois `degree!` ;
-- nœud `C` : produit des enfants fois `2` ;
+- nœud `P` interne : produit des enfants fois `degree!` ;
+- nœud `C` interne : produit des enfants fois `2` ;
+- nœud `P` racine depuis T040 : produit des enfants fois les permutations
+  circulaires de branches modulo renversement ;
+- nœud `C` racine depuis T040 : produit des enfants sans facteur `2`
+  supplémentaire, car l'orientation inverse est le même ordre circulaire modulo
+  renversement ;
 - toute multiplication est saturée à `EXACT_PC_TREE_FRONTIER_LIMIT + 1`.
 
 Si cette borne est au plus la limite, la candidate énumère toutes les frontiers
@@ -515,6 +520,26 @@ Limites T039 :
   positifs strong-ordering à `m=6` ;
 - les statuts `unsupported_permutation_limit` restent incomplets, pas négatifs ;
 - un PC-tree non-star peut ne pas représenter le premier témoin strong-ordering.
+
+Résultat T040 :
+
+- la candidate ne s'arrête plus au premier témoin strong-ordering global quand
+  un PC-tree est fourni. Elle parcourt l'itérateur borné
+  `iter_low_hub_strong_ordering_witnesses` et accepte seulement un ordre qui
+  passe le prédicat fixed-order exact et `represents_order(T, order)` ;
+- régression non-star : matching low-hub `n=18`, racine `C`, deux blocs `P`.
+  Le PC-tree a une borne de frontiers au-dessus de la limite exacte, les
+  `64` premiers samples ne sont pas cR, mais un témoin cR représenté existe ;
+- résultat observé : le nouveau chemin trouve un témoin représenté après `761`
+  couples de permutations, avec `complete=True` positif. Le benchmark ciblé
+  matching/star reste `0` timeout et `0` incomplet jusqu'à `n=101`.
+
+Limites T040 :
+
+- la recherche reste bornée par `LOW_HUB_STRONG_ORDERING_PERMUTATION_LIMIT` ;
+- aucun échec de l'itérateur n'est un rejet ;
+- la reconnaissance strong-ordering reste énumérative, même si la suffisance du
+  témoin `hubs,A,B` est maintenant documentée comme preuve bad-side.
 
 ## Témoin cycle par distances minimales
 

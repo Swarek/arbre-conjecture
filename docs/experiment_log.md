@@ -1747,3 +1747,71 @@
   identifier l'algorithme polynomial exact correspondant, tout en cherchant des
   contre-exemples sur PC-trees non-star et graphes bipartis positifs où le
   premier témoin n'est pas représenté.
+
+## 2026-05-23 represented low-hub strong-ordering witness search
+
+- Date/heure : 2026-05-23 06:03:35 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : la candidate peut certifier des positifs low-hub non-star
+  en parcourant plusieurs témoins strong-ordering et en acceptant seulement un
+  ordre représenté par le PC-tree et vérifié cR, sans convertir une limite de
+  recherche en rejet.
+- Changement fait : ajout de
+  `iter_low_hub_strong_ordering_witnesses`; `candidate.py` utilise maintenant
+  cet itérateur pour chercher un témoin représenté ; `_pc_tree_frontier_upper_bound`
+  tient compte des permutations circulaires à la racine pour réduire les
+  surestimations sûres mais trop pessimistes ; régressions ajoutées pour un
+  matching non-star `n=18`, un PC-tree raffiné `n=10` dont la borne réelle est
+  `720`, et un faux silence local `I_x(v)` sur `C6 + hub`.
+- Commande exécutée avant modification : `make quick`.
+- Résultat correction avant modification : `163 passed`, puis `JUSTE`.
+- Plan subagents : cinq sidecars lecture seule. Résultats : preuve bad-side de
+  la suffisance du témoin `hubs,A,B` pour un strong ordering donné ; proposition
+  CSP non-star comme diagnostic, pas solver ; faux silence local `I_x(v)` sur
+  PC-tree raffiné ; recommandation T041 sur chain/Ferrers permuté ; contre-
+  exemple `n=10` où la borne de frontiers empêchait une énumération exacte de
+  `720` frontiers.
+- Contre-exemple initial : `matching_high_graph_plus_low_hub(18)` avec racine
+  `C` et deux gros blocs `P`; avant T040, la candidate restait placeholder
+  après `64` samples ; après T040, elle trouve un témoin représenté après
+  `761` couples de permutations.
+- Contre-exemple subagent : `matching_high_graph_plus_low_hub(10)` avec
+  `p_node([c_node([4,0,7,2]), 1,3,5,6,8,9])`; l'oracle PC-tree est positif, la
+  borne ancienne saturait au-dessus de `4096`, mais le nombre réel de frontiers
+  canoniques est `720`. La borne root-aware rend ce cas exact.
+- Contre-exemple local A/D : `even_high_cycle_plus_low_hub(7)` avec
+  `balanced_pc_tree(7, kind="mixed")` ; toutes les `16` frontiers sont non-cR,
+  mais les projections locales `I_x(v)` restent compatibles sur tous les nœuds.
+- Commande exécutée : `pytest -q tests/test_candidate.py tests/test_local_constraints.py`.
+- Résultat correction : `59 passed`.
+- Commande exécutée : benchmark ciblé
+  `matching_high_graph_plus_low_hub/star`, tailles `21,41,81,101`, répétitions
+  `3`, timeout `2.0`.
+- Résultat benchmark ciblé :
+  `reports/complexity_matching_low_hub_t040_probe.json` écrit ; `0` timeout,
+  `0` incomplet ; à `n=101`, médiane `0.1812s`, p95 `0.1818s`.
+- Commande exécutée : `make unit`.
+- Résultat correction : `167 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `167 passed`, puis `JUSTE`.
+- Commande exécutée : `make hunt-counterexamples`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark rapide : `reports/complexity_report_quick.json` écrit ;
+  `0` timeout, `0` incomplet ; à `n=20`, médiane `0.000983s`, p95
+  `0.001069s`.
+- Commande exécutée : `make bench`.
+- Résultat benchmark fort : `reports/complexity_report.json` écrit ; `0`
+  timeout, `0` incomplet jusqu'à `n=100`, médiane `0.0265s`, p95 `0.0363s`,
+  fit polynomial empirique `p ~= 1.72`.
+- Conclusion : T040 améliore un vrai positif PC-tree non-star et corrige une
+  borne trop pessimiste, tout en gardant les échecs de recherche incomplets. La
+  suffisance d'un strong ordering donné est maintenant documentée comme preuve
+  bad-side, mais la reconnaissance PC-tree-compatible reste non générale.
+- Next action : implémenter le sous-cas chain/Ferrers low-hub permuté comme
+  certificat positif vérifié, ou ajouter le rapport CSP non-star proposé par le
+  sidecar pour mesurer précisément les cas où le témoin global n'est pas
+  représenté.

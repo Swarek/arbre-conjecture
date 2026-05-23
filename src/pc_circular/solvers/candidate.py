@@ -38,7 +38,7 @@ from pc_circular.predicates import (
     validate_dissimilarity,
 )
 from pc_circular.solvers import brute_force
-from pc_circular.solvers.local_constraints import low_hub_strong_ordering_report
+from pc_circular.solvers.local_constraints import iter_low_hub_strong_ordering_witnesses
 
 
 EXACT_BRUTE_FORCE_LIMIT = 8
@@ -89,7 +89,23 @@ def _factorial_capped(value: int, cap: int) -> int:
     return result
 
 
-def _pc_tree_frontier_upper_bound(node: PCNode, *, cap: int = EXACT_PC_TREE_FRONTIER_LIMIT) -> int:
+def _root_p_circular_choices(degree: int, cap: int) -> int:
+    if degree <= 2:
+        return 1
+    result = 1
+    for factor in range(2, degree):
+        result *= factor
+        if result > 2 * cap:
+            return cap + 1
+    return max(1, result // 2)
+
+
+def _pc_tree_frontier_upper_bound(
+    node: PCNode,
+    *,
+    cap: int = EXACT_PC_TREE_FRONTIER_LIMIT,
+    _root: bool = True,
+) -> int:
     """Return a capped upper bound on represented scaffold frontiers."""
 
     if node.kind == "leaf":
@@ -97,15 +113,18 @@ def _pc_tree_frontier_upper_bound(node: PCNode, *, cap: int = EXACT_PC_TREE_FRON
 
     count = 1
     for child in node.children:
-        child_count = _pc_tree_frontier_upper_bound(child, cap=cap)
+        child_count = _pc_tree_frontier_upper_bound(child, cap=cap, _root=False)
         count = _multiply_capped(count, child_count, cap)
         if count > cap:
             return count
 
     if node.kind == "P":
-        local_choices = _factorial_capped(len(node.children), cap)
+        if _root:
+            local_choices = _root_p_circular_choices(len(node.children), cap)
+        else:
+            local_choices = _factorial_capped(len(node.children), cap)
     else:
-        local_choices = 1 if len(node.children) <= 1 else 2
+        local_choices = 1 if _root or len(node.children) <= 1 else 2
     return _multiply_capped(count, local_choices, cap)
 
 
@@ -461,29 +480,28 @@ def _paired_farthest_witness_result(D, n: int, pc_tree: Optional[PCNode]):
 
 
 def _low_hub_strong_ordering_witness_result(D, n: int, pc_tree: Optional[PCNode]):
-    report = low_hub_strong_ordering_report(
+    for report in iter_low_hub_strong_ordering_witnesses(
         D,
         max_permutation_pairs=LOW_HUB_STRONG_ORDERING_PERMUTATION_LIMIT,
-    )
-    if report["strong_ordering_exists"] is not True or report["witness_order"] is None:
-        return None
-    order = _validate_order_shape(report["witness_order"], n)
-    if not report["witness_order_is_cr"] or not passes_bad_side_precircular_cR(D, order):
-        return None
-    if pc_tree is not None and not represents_order(pc_tree, order):
-        return None
-    return {
-        "exists": True,
-        "order": list(order),
-        "complete": True,
-        "solver": "candidate_low_hub_strong_ordering_witness",
-        "checked_permutation_pairs": report.get("checked_permutation_pairs", 0),
-        "permutation_pair_limit": LOW_HUB_STRONG_ORDERING_PERMUTATION_LIMIT,
-        "hub_labels": list(report.get("hub_labels", ())),
-        "part_a": list(report.get("part_a", ())),
-        "part_b": list(report.get("part_b", ())),
-        "note": "bounded low-hub strong-ordering diagnostic produced a represented order that was verified directly as circular Robinson",
-    }
+    ):
+        order = _validate_order_shape(report["witness_order"], n)
+        if not report["witness_order_is_cr"] or not passes_bad_side_precircular_cR(D, order):
+            continue
+        if pc_tree is not None and not represents_order(pc_tree, order):
+            continue
+        return {
+            "exists": True,
+            "order": list(order),
+            "complete": True,
+            "solver": "candidate_low_hub_strong_ordering_witness",
+            "checked_permutation_pairs": report.get("checked_permutation_pairs", 0),
+            "permutation_pair_limit": LOW_HUB_STRONG_ORDERING_PERMUTATION_LIMIT,
+            "hub_labels": list(report.get("hub_labels", ())),
+            "part_a": list(report.get("part_a", ())),
+            "part_b": list(report.get("part_b", ())),
+            "note": "bounded low-hub strong-ordering diagnostic produced a represented order that was verified directly as circular Robinson",
+        }
+    return None
 
 
 def _universal_order_result(n: int, quasi_orders, pc_tree: Optional[PCNode]):

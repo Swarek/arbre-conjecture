@@ -7,10 +7,20 @@ from pc_circular.generators import (
     matching_high_graph_plus_low_hub,
     quasi_circular_not_circular_four_point,
 )
-from pc_circular.pc_tree import c_node, leaf, p_node, star_pc_tree
+from pc_circular.oracle import exact_oracle_pc_tree
+from pc_circular.pc_tree import (
+    balanced_pc_tree,
+    c_node,
+    enumerate_frontiers,
+    leaf,
+    p_node,
+    star_pc_tree,
+)
+from pc_circular.predicates import passes_bad_side_precircular_cR
 from pc_circular.solvers import brute_force
 from pc_circular.solvers.local_constraints import (
     classify_order_obstructions,
+    iter_low_hub_strong_ordering_witnesses,
     low_hub_strong_ordering_report,
     measure_obstruction_support,
     project_farthest_sets_to_pc_nodes,
@@ -96,6 +106,22 @@ def test_farthest_projection_reports_declared_c_node_interval_violation():
     assert {"point": 4, "projection": (0, 2)} in root["declared_order_interval_violations"]
 
 
+def test_low_hub_i_projection_is_silent_on_refined_negative_pc_tree():
+    D = even_high_cycle_plus_low_hub(7)
+    T = balanced_pc_tree(7, kind="mixed")
+
+    assert exact_oracle_pc_tree(D, T)["exists"] is False
+    frontiers = enumerate_frontiers(T, canonical=True)
+    assert len(frontiers) == 16
+    assert all(not passes_bad_side_precircular_cR(D, order) for order in frontiers)
+
+    report = project_farthest_sets_to_pc_nodes(D, T)
+    assert all(node["circular_ones_status"] == "compatible" for node in report["nodes"])
+    assert all(node["proper_nontrivial_count"] == 0 for node in report["nodes"])
+    assert all(node["laminar_violation_count"] == 0 for node in report["nodes"])
+    assert all(node["declared_order_interval_violation_count"] == 0 for node in report["nodes"])
+
+
 def test_low_hub_strong_ordering_accepts_c4_and_rejects_c6_c8():
     c4 = _binary_low_hub_from_edges(4, [(1, 2), (2, 3), (3, 4), (1, 4)])
     c4_report = low_hub_strong_ordering_report(c4)
@@ -134,6 +160,16 @@ def test_low_hub_strong_ordering_accepts_permuted_matching_with_component_priori
             assert report["strong_ordering_exists"] is True
             assert report["checked_permutation_pairs"] == 1
             assert report["witness_order_is_cr"] is True
+
+
+def test_low_hub_strong_ordering_witness_iterator_continues_past_first_witness():
+    D = matching_high_graph_plus_low_hub(18)
+    witnesses = list(iter_low_hub_strong_ordering_witnesses(D, max_permutation_pairs=20))
+
+    assert witnesses
+    assert all(item["status"] == "strong_ordering_found" for item in witnesses)
+    assert all(item["witness_order_is_cr"] is True for item in witnesses)
+    assert len({item["witness_order"] for item in witnesses}) > 1
 
 
 def test_low_hub_strong_ordering_accepts_matching_with_multiple_hubs():

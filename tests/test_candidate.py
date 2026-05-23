@@ -352,6 +352,56 @@ def test_candidate_low_hub_strong_ordering_witness_accepts_permuted_matching_sta
     assert represents_order(star_pc_tree(21), result["order"])
 
 
+def test_candidate_low_hub_strong_ordering_searches_for_represented_nonstar_witness():
+    D = matching_high_graph_plus_low_hub(18)
+    T = c_node(
+        [
+            p_node([leaf(0), leaf(17)]),
+            p_node([leaf(i) for i in (9, 2, 3, 4, 5, 6, 7, 8)]),
+            p_node([leaf(i) for i in (10, 11, 12, 13, 14, 15, 16, 1)]),
+        ]
+    )
+    planted_order = (0, 17, 9, 2, 3, 4, 5, 6, 7, 8, 1, 10, 11, 12, 13, 14, 15, 16)
+
+    assert _pc_tree_frontier_upper_bound(T) > EXACT_PC_TREE_FRONTIER_LIMIT
+    assert represents_order(T, planted_order)
+    assert is_precircular_order_cR(D, planted_order)
+
+    result = solve(D, pc_tree=T)
+
+    assert result["exists"] is True
+    assert result["complete"] is True
+    assert result["solver"] == "candidate_low_hub_strong_ordering_witness"
+    assert result["checked_permutation_pairs"] > 1
+    assert is_precircular_order_cR(D, result["order"])
+    assert represents_order(T, result["order"])
+
+
+def test_candidate_exact_pc_tree_uses_circular_root_bound_for_refined_matching_positive():
+    D = matching_high_graph_plus_low_hub(10)
+    T = p_node(
+        [
+            c_node([leaf(i) for i in (4, 0, 7, 2)]),
+            leaf(1),
+            leaf(3),
+            leaf(5),
+            leaf(6),
+            leaf(8),
+            leaf(9),
+        ]
+    )
+
+    assert _pc_tree_frontier_upper_bound(T) == len(enumerate_frontiers(T, canonical=True)) == 720
+    result = solve(D, pc_tree=T)
+
+    assert result["exists"] is True
+    assert result["complete"] is True
+    assert result["solver"] == "candidate_exact_bounded_pc_tree_frontiers"
+    assert result["frontier_count"] == 720
+    assert is_precircular_order_cR(D, result["order"])
+    assert represents_order(T, result["order"])
+
+
 def test_candidate_low_hub_strong_ordering_witness_does_not_accept_tree_negative():
     D = equal_distance_instance(8)
     for a, b in [(1, 2), (1, 5), (2, 3), (2, 4), (3, 6), (4, 7)]:

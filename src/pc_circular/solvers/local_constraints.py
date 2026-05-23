@@ -347,6 +347,187 @@ def low_hub_strong_ordering_report(D, *, max_permutation_pairs: int = 100_000):
     }
 
 
+def iter_low_hub_strong_ordering_witnesses(D, *, max_permutation_pairs: int = 100_000):
+    """Yield bounded low-hub strong-ordering witnesses.
+
+    This is a positive-witness iterator for ``candidate.py``.  It deliberately
+    yields only orders that have already passed the strong-ordering test and the
+    fixed-order cR verifier; callers must still check PC-tree representation.
+    Hitting ``max_permutation_pairs`` is an incomplete search, not a rejection.
+    """
+
+    n = validate_dissimilarity(D)
+    off_diagonal_values = sorted({D[i][j] for i in range(n) for j in range(i + 1, n)})
+    if len(off_diagonal_values) <= 1:
+        order = tuple(range(n))
+        if passes_bad_side_precircular_cR(D, order):
+            yield {
+                "method": "bounded_low_hub_strong_ordering_witness_iterator",
+                "n": n,
+                "complete": True,
+                "status": "empty_high_graph",
+                "strong_ordering_exists": True,
+                "low_value": off_diagonal_values[0] if off_diagonal_values else 0,
+                "high_value": None,
+                "hub_labels": order,
+                "high_graph_labels": (),
+                "max_permutation_pairs": max_permutation_pairs,
+                "part_a": (),
+                "part_b": (),
+                "witness_order": order,
+                "witness_order_is_cr": True,
+                "checked_permutation_pairs": 0,
+            }
+        return
+    if len(off_diagonal_values) != 2:
+        return
+
+    _low, high = off_diagonal_values
+    neighbors = {
+        i: tuple(j for j in range(n) if i != j and D[i][j] == high)
+        for i in range(n)
+    }
+    hubs = tuple(i for i, values in neighbors.items() if not values)
+    high_vertices = tuple(i for i, values in neighbors.items() if values)
+    if not hubs:
+        return
+    if not high_vertices:
+        order = tuple(hubs)
+        if passes_bad_side_precircular_cR(D, order):
+            yield {
+                "method": "bounded_low_hub_strong_ordering_witness_iterator",
+                "n": n,
+                "complete": True,
+                "status": "empty_high_graph",
+                "strong_ordering_exists": True,
+                "low_value": _low,
+                "high_value": high,
+                "hub_labels": hubs,
+                "high_graph_labels": high_vertices,
+                "max_permutation_pairs": max_permutation_pairs,
+                "part_a": (),
+                "part_b": (),
+                "witness_order": order,
+                "witness_order_is_cr": True,
+                "checked_permutation_pairs": 0,
+            }
+        return
+
+    components = _bipartite_components(high_vertices, neighbors)
+    if components is None:
+        return
+
+    partition_count = 2 ** len(components)
+    checked_permutation_pairs = 0
+    seen_witness_orders = set()
+    base = {
+        "method": "bounded_low_hub_strong_ordering_witness_iterator",
+        "n": n,
+        "complete": True,
+        "low_value": _low,
+        "high_value": high,
+        "hub_labels": hubs,
+        "high_graph_labels": high_vertices,
+        "max_permutation_pairs": max_permutation_pairs,
+        "component_count": len(components),
+        "partition_count": partition_count,
+    }
+    def flip_search(flips):
+        part_a = []
+        part_b = []
+        component_a_order = []
+        component_b_order = []
+        for flip, (left, right) in zip(flips, components):
+            if flip:
+                chosen_a = right
+                chosen_b = left
+            else:
+                chosen_a = left
+                chosen_b = right
+            part_a.extend(chosen_a)
+            part_b.extend(chosen_b)
+            component_a_order.extend(chosen_a)
+            component_b_order.extend(chosen_b)
+        part_a = tuple(sorted(part_a))
+        part_b = tuple(sorted(part_b))
+
+        high_edges = {(a, b) for a in part_a for b in part_b if D[a][b] == high}
+        priority_a_orders = tuple(dict.fromkeys((part_a, tuple(reversed(part_a)))))
+        priority_b_orders = tuple(dict.fromkeys((part_b, tuple(reversed(part_b)))))
+        component_pair = (tuple(component_a_order), tuple(component_b_order))
+        reversed_component_pair = (tuple(reversed(component_a_order)), tuple(reversed(component_b_order)))
+        priority_pairs = tuple(
+            dict.fromkeys(
+                (
+                    component_pair,
+                    reversed_component_pair,
+                    *((A_order, B_order) for A_order in priority_a_orders for B_order in priority_b_orders),
+                )
+            )
+        )
+        return {
+            "part_a": part_a,
+            "part_b": part_b,
+            "high_edges": high_edges,
+            "priority_pairs": priority_pairs,
+        }
+
+    def witness_report(A_order, B_order, high_edges):
+        nonlocal checked_permutation_pairs
+        if checked_permutation_pairs >= max_permutation_pairs:
+            return "limit"
+        checked_permutation_pairs += 1
+        if not _has_strong_ordering(A_order, B_order, high_edges):
+            return None
+        witness_order = tuple(hubs) + tuple(A_order) + tuple(B_order)
+        if witness_order in seen_witness_orders:
+            return None
+        seen_witness_orders.add(witness_order)
+        if not passes_bad_side_precircular_cR(D, witness_order):
+            return None
+        return {
+            **base,
+            "status": "strong_ordering_found",
+            "strong_ordering_exists": True,
+            "checked_permutation_pairs": checked_permutation_pairs,
+            "part_a": tuple(A_order),
+            "part_b": tuple(B_order),
+            "witness_order": witness_order,
+            "witness_order_is_cr": True,
+        }
+
+    seen_priority_pairs = set()
+    for flips in product((0, 1), repeat=len(components)):
+        search = flip_search(flips)
+        for A_order, B_order in search["priority_pairs"]:
+            key = (A_order, B_order)
+            if key in seen_priority_pairs:
+                continue
+            seen_priority_pairs.add(key)
+            report = witness_report(A_order, B_order, search["high_edges"])
+            if report == "limit":
+                return
+            if report is not None:
+                yield report
+
+    for flips in product((0, 1), repeat=len(components)):
+        search = flip_search(flips)
+        part_a = search["part_a"]
+        part_b = search["part_b"]
+        high_edges = search["high_edges"]
+        seen_order_pairs = set(search["priority_pairs"])
+        for A_order in permutations(part_a):
+            for B_order in permutations(part_b):
+                if (A_order, B_order) in seen_order_pairs:
+                    continue
+                seen_order_pairs.add((A_order, B_order))
+                report = witness_report(A_order, B_order, high_edges)
+                if report == "limit":
+                    return
+                if report is not None:
+                    yield report
+
+
 def project_farthest_sets_to_pc_nodes(D, T: PCNode, *, circular_ones_degree_limit: int = 8):
     """Project every farthest set onto the branches of every PC-tree node.
 

@@ -71,6 +71,13 @@ Les sources Hsu/McConnell et Hsu PC-vs-PQ sont listées dans
 arrangements circular-ones, mais l’implémentation actuelle reste un scaffold
 minimal.
 
+Complément T040 : les contraintes circular-ones locales par nœud ne suffisent
+pas. Sur `even_high_cycle_plus_low_hub(7)` avec
+`balanced_pc_tree(7, kind="mixed")`, toutes les frontiers représentées sont
+non-cR, mais les projections locales `I_x(v)` restent compatibles à chaque nœud.
+La piste viable est donc une intersection avec une contrainte circular-ones
+globale auxiliaire, pas un filtre local indépendant appliqué nœud par nœud.
+
 ## Risques
 
 - Les contraintes cR peuvent ne pas être exprimables comme contraintes d’arcs

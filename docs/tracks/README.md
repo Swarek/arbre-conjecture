@@ -77,6 +77,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T037 | 2026-05-23 | E/F | Diagnostic strong-ordering intégré seulement comme témoin positif vérifié et représenté | `candidate_low_hub_strong_ordering_witness` |
 | T038 | 2026-05-23 | B/F | Test fixed-order bad-side exact promu en prédicat `O(n^3)` pour accélérer les validations candidate | `passes_bad_side_precircular_cR` |
 | T039 | 2026-05-23 | E/F | Matching low-hub permuté ajouté ; priorité composante-alignée et garde `low=0` pour le diagnostic strong-ordering | `matching_high_graph_plus_low_hub` |
+| T040 | 2026-05-23 | E/F/A/D | Recherche de témoin strong-ordering représenté dans PC-tree non-star ; faux silence local `I_x(v)` régressé | `iter_low_hub_strong_ordering_witnesses` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

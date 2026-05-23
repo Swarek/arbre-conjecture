@@ -2185,3 +2185,87 @@ soit prouver la suffisance strong-ordering pour le cas binaire hub bas complet,
 soit remplacer l'énumération factorielle par une reconnaissance polynomiale de
 graphe biparti à strong ordering, en gardant les tests `C6/C8`, tree négatif,
 low-zero et positifs retardés comme garde-fous.
+
+## ExecPlan 2026-05-23 - represented low-hub strong-ordering witness search
+
+But : corriger un trou positif non-star du diagnostic low-hub : le premier
+témoin strong-ordering peut ne pas être représenté par le PC-tree, alors qu'un
+autre témoin strong-ordering représenté existe.
+
+Hypothèse : dans le cas binaire low-hub, une recherche bornée de témoins
+strong-ordering filtrés par `represents_order(T, order)` peut certifier des
+positifs PC-tree non-star sans affaiblir les rejets ni prétendre à la
+complétude. Un témoin accepté reste sound parce qu'il est vérifié par
+`passes_bad_side_precircular_cR` puis par `represents_order`.
+
+Fichiers à modifier : `src/pc_circular/solvers/local_constraints.py`,
+`src/pc_circular/solvers/candidate.py`, `tests/test_candidate.py`,
+`tests/test_local_constraints.py` si un helper public est ajouté,
+`tests/test_regression_counterexamples.py` si le cas devient une régression
+durable, `docs/proof_obligations.md`, `docs/tracks/piste_e_farthest_quartets.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/tracks/README.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `PLANS.md`.
+
+Algorithme pressenti : extraire de `low_hub_strong_ordering_report` un itérateur
+borné qui parcourt les témoins strong-ordering prioritaires puis factoriels,
+sans s'arrêter au premier témoin non représenté. La candidate l'utilise
+seulement quand `pc_tree` est fourni : elle teste chaque témoin par le prédicat
+fixed-order exact et par `represents_order`; si aucun témoin représenté n'est
+trouvé avant la limite, le résultat reste incomplet.
+
+Plan de contre-exemples : construire un matching low-hub `n=18` avec PC-tree
+racine `C` contenant deux gros blocs `P` pour les deux parts. Le PC-tree
+représente un ordre cR avec une composante flipped, mais pas le premier témoin
+du diagnostic ; la candidate actuelle retourne placeholder après 64 samples.
+Vérifier aussi que `C6/C8` et le tree négatif ne deviennent pas de faux
+positifs, que les petites limites restent `unsupported`, et que les gates oracle
+ne changent pas.
+
+Plan subagents : cinq sidecars lecture seule. Un audite la preuve de suffisance
+low-hub strong-ordering, un cherche des contre-exemples PC-tree non-star, un
+évalue l'option CSP/nogoods, un analyse les projections locales A/D, un classe
+les sous-cas F encore sûrs. L'intégration reste dans le rollout principal.
+
+Tests à exécuter : tests ciblés candidate/local-constraints, `make unit`,
+`make quick`, `make hunt-counterexamples`, `make check`, `make bench-quick`, et
+benchmark ciblé sur le nouveau cas non-star si un générateur dédié est ajouté.
+`make bench` si `candidate.py` change.
+
+Risques : faire exploser la recherche factorielle ; accepter un témoin hors
+PC-tree ; transformer une limite de recherche en faux négatif ; dupliquer trop
+de logique entre rapport diagnostic et itérateur de témoins.
+
+Résultats observés : un premier contre-exemple positif non-star a été construit
+avec `matching_high_graph_plus_low_hub(18)` et un PC-tree racine `C` à deux
+gros blocs `P`. Avant T040, la candidate retournait
+`candidate_large_n_placeholder` après `64` samples ; après l'ajout de
+`iter_low_hub_strong_ordering_witnesses`, elle trouve un témoin représenté
+après `761` couples de permutations. Un second contre-exemple subagent à
+`n=10` a montré que `_pc_tree_frontier_upper_bound` surestimait les frontiers
+canoniques d'une racine circulaire (`4097` contre `720` réels) ; la borne est
+maintenant root-aware et permet l'énumération exacte bornée de ce cas. Le
+contre-exemple local `I_x(v)` silencieux sur `even_high_cycle_plus_low_hub(7)`
+avec `balanced_pc_tree(7, kind="mixed")` est régressé.
+
+Résultats subagents : l'audit proof-side fournit une preuve bad-side de la
+suffisance de tout strong ordering donné pour le témoin `hubs,A,B`. Le sidecar
+CSP recommande un rapport non-star hors candidate, car la compilation reste
+énumérative. Le sidecar A/D fournit le faux silence local `I_x(v)`. Le sidecar
+F recommande T041 sur le sous-cas chain/Ferrers permuté. Le sidecar
+contre-exemples fournit le cas `n=10` ci-dessus.
+
+Validation : tests ciblés `tests/test_candidate.py tests/test_local_constraints.py`
+donnent `59 passed`. `make unit` donne `167 passed`. `make quick` donne
+`167 passed` puis `JUSTE`. `make hunt-counterexamples` et `make check` donnent
+`JUSTE`. `make bench-quick` donne `0` timeout et `0` incomplet ; à `n=20`,
+médiane `0.000983s`, p95 `0.001069s`. `make bench` donne `0` timeout et `0`
+incomplet jusqu'à `n=100`; à `n=100`, médiane `0.0265s`, p95 `0.0363s`, fit
+polynomial empirique `p ~= 1.72`. Probe ciblée matching low-hub/star T040 :
+`0` timeout et `0` incomplet jusqu'à `n=101`, médiane `0.1812s`.
+
+Décision : intégrer T040 comme double progrès : (1) recherche positive
+strong-ordering représentée dans les PC-trees non-star, toujours bornée et
+validée ; (2) borne de frontiers canoniques root-aware pour ne pas rater des
+petits PC-trees exacts. Ne pas transformer l'absence de témoin strong-ordering
+représenté en rejet. Prochaine piste recommandée : T041
+`permuted_chain_high_graph_plus_low_hub` ou rapport CSP non-star diagnostique.

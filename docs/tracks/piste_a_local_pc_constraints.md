@@ -89,6 +89,23 @@ besoin d'un diagnostic, avec histogrammes `|I_x|`, violations laminaires,
 violations d'intervalles pour `C`, et circular-ones exact seulement pour petit
 degré. Ne pas intégrer comme filtre dans `candidate.py`.
 
+## T040 - Faux silence local sur PC-tree raffiné
+
+Statut : contre-exemple régressé contre une suffisance locale naïve.
+
+`even_high_cycle_plus_low_hub(7)` avec `balanced_pc_tree(7, kind="mixed")` a
+`16` frontiers, toutes non-cR par oracle exact. Pourtant
+`project_farthest_sets_to_pc_nodes` ne signale aucun nœud local problématique :
+`circular_ones_status == "compatible"`, `proper_nontrivial_count == 0`,
+`laminar_violation_count == 0` et `declared_order_interval_violation_count == 0`
+sur tous les nœuds.
+
+Conclusion : les projections `I_x(v)` peuvent détecter une obstruction au root
+d'un star tree, mais devenir silencieuses quand le PC-tree raffine en nœuds
+binaires. Une contrainte utile devra donc soit construire une contrainte globale
+auxiliaire de type circular-ones à intersecter avec le PC-tree, soit conserver
+des corrélations entre niveaux.
+
 ## T022 - Rapport `project_farthest_sets_to_pc_nodes`
 
 Statut : diagnostic implémenté, explicitement non décisionnel.

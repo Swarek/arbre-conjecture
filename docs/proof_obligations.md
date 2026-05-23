@@ -416,9 +416,10 @@ Limites :
 
 ### Strong ordering du graphe haut avec hub bas
 
-Statut : conjecture structurante + diagnostic borné. T037 en intègre seulement
-la direction positive vérifiée comme générateur de témoin ; ce n'est pas un
-théorème de caractérisation.
+Statut : suffisance du témoin strong-ordering prouvée pour le sous-cas binaire
+hub bas ; reconnaissance et compatibilité PC-tree encore bornées. T037/T040 en
+intègrent seulement la direction positive vérifiée comme générateur de témoin ;
+ce n'est pas un théorème de caractérisation complète du problème PC-tree.
 
 Pour une matrice binaire `low/high` avec au moins un hub bas universel, T035
 suggère la conjecture suivante sous star/all-orders : il existe un ordre cR si
@@ -428,7 +429,7 @@ strong ordering de graphe biparti. Un strong ordering est une bipartition
 arêtes croisées `a_i b_l` et `a_k b_j` forcent aussi les arêtes droites
 `a_i b_j` et `a_k b_l`.
 
-Conséquence prouvée partielle :
+Conséquence prouvée partielle côté nécessité :
 
 - nécessité locale : dans tout ordre cR coupé en un hub bas, chaque sommet a
   tous ses voisins hauts du même côté. Cela oriente les arêtes hautes d'une
@@ -436,21 +437,32 @@ Conséquence prouvée partielle :
 - une violation du strong ordering produit une paire basse avec deux mauvais
   témoins sur deux arcs opposés, donc viole la condition bad-side d'ordre fixé.
 
-Suffisance conjecturale :
+Suffisance prouvée pour un strong ordering donné :
 
-- si un strong ordering est donné, l'ordre `hubs, A_order, B_order` est
-  expérimentalement cR sur les familles testées, et
-  `low_hub_strong_ordering_report` vérifie toujours ce témoin par le prédicat
-  fixed-order bad-side exact ;
-- il reste à écrire la preuve complète pour toutes les paires, toutes les
-  composantes et tous les cas dégénérés avec plusieurs hubs.
+- pour une paire à distance `high`, aucun témoin mauvais n'existe ;
+- pour deux hubs, aucun témoin mauvais n'existe ;
+- pour `hub, a_i`, les seuls témoins mauvais sont dans `N(a_i) subset B`, donc
+  ils sont tous sur un seul arc de l'ordre `hubs, A_order, B_order`; de même
+  pour `hub, b_j` ;
+- pour deux sommets d'une même part, tous les témoins mauvais sont dans l'autre
+  part, qui est contiguë, donc ils sont encore sur un seul arc ;
+- pour une paire basse croisée `a_i, b_j` non arête, le strong ordering force
+  les voisinages `N(b_j)` dans `A` et `N(a_i)` dans `B` à être des intervalles.
+  Les deux configurations qui placeraient des témoins mauvais sur les deux arcs
+  donneraient deux arêtes croisées et forceraient l'arête droite `a_i b_j`,
+  contradiction ;
+- donc aucune paire basse n'a de mauvais témoins sur les deux arcs. Par le
+  lemme bad-side d'ordre fixé, `hubs, A_order, B_order` est cR. Les égalités et
+  le cas `low=0` restent couverts par le `>` strict du témoin mauvais.
 
-Conséquence directe utilisée par la candidate T037 :
+Conséquence directe utilisée par la candidate T037/T040 :
 
 - si le diagnostic produit un ordre, que `candidate.py` valide sa forme, que
   `passes_bad_side_precircular_cR(D, order)` est vrai, et que `represents_order(T,
   order)` est vrai quand un PC-tree est fourni, alors retourner `exists=True`
   est sound indépendamment de la conjecture strong-ordering ;
+- T040 parcourt plusieurs témoins strong-ordering pour trouver un témoin
+  représenté par le PC-tree au lieu de s'arrêter au premier témoin global ;
 - aucun statut négatif du diagnostic n'est utilisé comme rejet complet, et une
   limite de permutations reste un résultat incomplet.
 
@@ -486,6 +498,16 @@ Preuve expérimentale T039 :
 - une petite limite de permutations reste documentée comme incomplète même sur
   certains positifs.
 
+Preuve expérimentale T040 :
+
+- un PC-tree non-star à `n=18` avec deux gros blocs `P` représente un témoin
+  matching low-hub cR, mais pas le premier témoin strong-ordering global ;
+- avant T040, la candidate restait `candidate_large_n_placeholder` après les
+  `64` samples ; après T040, elle trouve un témoin représenté après `761`
+  couples de permutations contrôlés par la limite ;
+- le benchmark ciblé matching/star reste inchangé qualitativement : `0`
+  timeout et `0` incomplet jusqu'à `n=101` dans la probe T040.
+
 Conséquence partielle prouvée T039 :
 
 - pour un graphe haut matching, choisir une orientation de chaque composante
@@ -496,10 +518,12 @@ Conséquence partielle prouvée T039 :
 
 Obligations ouvertes avant théorème général :
 
-- prouver la suffisance du strong ordering pour tous les cas binaires hub bas ;
-- remplacer l'énumération factorielle par un algorithme polynomial de
+- prouver la nécessité complète du strong ordering pour tous les cas binaires
+  hub bas, ou documenter un contre-exemple ;
+- remplacer l'énumération bornée/factorielle par un algorithme polynomial de
   reconnaissance ou documenter précisément la borne ;
-- vérifier la représentation PC-tree de tout témoin positif ;
+- vérifier la représentation PC-tree de tout témoin positif, ce qui est fait par
+  la candidate mais pas encore par un algorithme complet de recherche ;
 - séparer star/all-orders et existence dans un PC-tree arbitraire ;
 - traiter en preuve les cas où le niveau bas hors diagonale vaut `0` et les cas
   dégénérés avec plusieurs hubs ; le code les teste mais cela ne remplace pas un
@@ -575,6 +599,13 @@ Statut : sous-cas exact intégré à la candidate pour le scaffold P/C/leaf.
 de l'énumération sur le nombre de frontiers représentées. Si ce bound est au
 plus `EXACT_PC_TREE_FRONTIER_LIMIT`, toutes les frontiers sont énumérées sans
 limite et testées par `is_precircular_order_cR`.
+
+Depuis T040, la borne distingue la racine circulaire des nœuds internes : un
+nœud `P` racine compte les permutations circulaires de ses branches modulo
+renversement, et un nœud `C` racine ne compte pas deux orientations qui deviennent
+identiques modulo renversement circulaire. Les nœuds internes gardent une borne
+linéaire conservatrice. Cette correction reste un surcomptage sûr, mais évite de
+saturer des cas où l'énumération canonique réelle est petite.
 
 Ce que cela couvre :
 
