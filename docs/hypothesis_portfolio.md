@@ -99,6 +99,12 @@ Mise à jour T064 : avant toute intégration treewidth dans `candidate.py`,
 toujours reporter aussi la taille maximale de domaine local. Une ligne de
 treewidth `0` sur un gros `P` peut cacher `(n-1)!/2` états.
 
+Mise à jour T073 : les composantes binaires `sparse_partial_matching`
+insatisfiables observées dans le sweep T072 sont toutes accompagnées de
+`constant_reject`. Elles sont utiles comme diagnostic de projections
+disjointes sur une variable partagée, mais ne sont pas encore des gadgets
+parasite-free.
+
 ## Piste D : intersection de contraintes type PC-tree / circular-ones
 
 Intuition : la condition circular Robinson pourrait être reformulée comme une

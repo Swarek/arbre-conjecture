@@ -181,6 +181,20 @@ relations sparse. Une composante sparse insatisfiable ou une intersection vide
 est un diagnostic local du CSP matérialisé ; elle ne devient pas un gadget sans
 contrôle des parasites, du promise PC-tree et d'une construction globale de `D`.
 
+Noyaux binaires sparse Piste F/C :
+
+```bash
+make bench-sparse-binary-cores
+```
+
+Cette commande écrit `reports/sparse_binary_core_probe.json`. Elle reprend les
+composantes `sparse_partial_matching` insatisfiables et vérifie si elles
+survivent sans `constant_reject`, si leur conflit vient de projections
+disjointes sur une variable partagée, et si le retrait d'une relation ou d'un
+quartet source réouvre des affectations. Une ligne sans constante serait un
+candidat expérimental plus fort ; une ligne avec constante reste un diagnostic
+local du CSP matérialisé.
+
 Contrôle promise-aware des permutations locales Piste F/C :
 
 ```bash

@@ -48,6 +48,7 @@ make bench-relation-shapes
 make bench-relation-chains
 make bench-relation-unsat-cores
 make bench-sparse-matching
+make bench-sparse-binary-cores
 make bench-permutation-like
 make bench-permutation-composition
 make bench-relation-components
@@ -110,6 +111,12 @@ certificat global de non-existence.
 `sparse_partial_matching`, leurs projections, leurs conflits avec les unaires et
 leurs composantes binaires. C’est un diagnostic de parasites et de compression,
 pas un gadget de dureté.
+
+`make bench-sparse-binary-cores` écrit
+`reports/sparse_binary_core_probe.json`. Il inspecte les composantes sparse
+binaires insatisfiables, teste la suppression des constantes, les intersections
+de projections partagées et les retraits de relations/quartets source. C’est un
+diagnostic de noyau local, pas une preuve de dureté.
 
 `make bench-permutation-like` écrit `reports/permutation_like_probe.json`. Il
 teste les profils locaux `permutation_like` observés sur `paired_farthest`

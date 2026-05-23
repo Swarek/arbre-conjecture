@@ -593,6 +593,18 @@ Dernier commit green avant T009 : `07120e4`.
   observé : le noyau T068 est confirmé comme conflit unaire+binaire local ;
   les composantes binaires sparse restent contaminées par constantes ;
   `candidate.py` n'a pas été modifié.
+- Checkpoint T073 courant : commit contenant le probe de suppression des
+  constantes pour les noyaux binaires `sparse_partial_matching`. Validation
+  observée : test ciblé sparse binary core (`1 passed`),
+  `make bench-sparse-binary-cores` (`40` lignes complètes, `0` mismatch,
+  `3` composantes sparse zéro, `0` ligne sparse zéro sans `constant_reject`,
+  `3` composantes avec projection partagée vide, `max_zero_component_edges=2`),
+  tests ciblés `tests/test_csp_internal_benchmark.py` (`12 passed`),
+  `make quick` (`274 passed`, puis `JUSTE`) et `make bench-quick` (`40/40`
+  runs, `0` timeout, `0` incomplet). Résultat observé : les noyaux sparse
+  binaires sont des conflits de projections partagées, mais restent tous
+  accompagnés de `constant_reject` dans ce sweep ; `candidate.py` n'a pas été
+  modifié.
 
 ## Rollback
 

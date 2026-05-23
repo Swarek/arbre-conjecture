@@ -4694,3 +4694,63 @@ Décision : `sparse_partial_matching` reste principalement un témoin
 de conflit local avec unaires/constantes. Les composantes sparse binaires
 insatisfiables sont un signal plus fort, mais elles restent contaminées par
 `constant_reject` dans ce sweep. Ne pas intégrer à `candidate.py`.
+
+## ExecPlan 2026-05-23 - Sparse binary core suppression probe
+
+But : déterminer si les composantes binaires `sparse_partial_matching`
+insatisfiables observées en T072 sont des noyaux binaires intrinsèques ou des
+signaux déjà dominés par des contraintes constantes.
+
+Hypothèse : les trois composantes sparse binaires T072 sont de vrais conflits
+de projections sur une variable partagée, mais toutes les lignes observées
+restent déjà rejetées par `constant_reject`. Un signal plus fort pour la piste
+gadget serait une composante sparse binaire insatisfiable dans une ligne sans
+`constant_reject`.
+
+Fichiers visés : `tools/pc_sparse_binary_core_probe.py`,
+`tests/test_csp_internal_benchmark.py`, `Makefile`, `README.md`,
+`docs/experiment_protocol.md`, `docs/hypothesis_portfolio.md`,
+`docs/tracks/piste_c_sat_csp.md`,
+`docs/tracks/piste_f_complexity_subcases.md`,
+`docs/proof_obligations.md`, `docs/experiment_log.md`,
+`docs/checkpoints.md`, `docs/tracks/README.md`, `PLANS.md`.
+
+Algorithme pressenti : réutiliser le rapport relationnel complet et la
+classification `sparse_partial_matching`. Pour chaque composante sparse
+insatisfiable, calculer les projections par variable partagée, les intersections
+vides, le nombre d'affectations après suppression de chaque relation sparse,
+le nombre d'affectations après suppression de chaque quartet source, et les
+comptes `full`, `no_constant`, `non_constant`, `sparse_only`.
+
+Plan de contre-exemples : scanner les mêmes familles que T072 sur `k=2,3`.
+Chercher une ligne `constant_reject_count == 0` avec composante sparse
+insatisfiable. Si aucune n'apparaît, enregistrer le résultat comme contre-signal
+à la composabilité propre des relations sparse dans ce sweep.
+
+Tests à exécuter : test ciblé du nouveau probe, `make bench-sparse-binary-cores`,
+tests CSP ciblés, `make quick`, et `make bench-quick`. `candidate.py` ne doit
+pas changer.
+
+Risques : le probe travaille sur le scaffold relationnel matérialisé, pas sur
+une reconstruction Hsu/McConnell générale. Même une composante sparse propre ne
+prouverait pas NP-difficulté ; une absence dans ce sweep ne prouverait pas
+impossibilité.
+
+Résultats observés : ajout de `tools/pc_sparse_binary_core_probe.py`, cible
+`make bench-sparse-binary-cores`, test ciblé et documentation T073. Le rapport
+`reports/sparse_binary_core_probe.json` contient `40` lignes complètes,
+`0` mismatch, `0` ligne incomplète, `3` lignes avec composante sparse zéro,
+`3` composantes sparse zéro, `0` ligne sparse zéro sans `constant_reject`,
+`3` lignes sparse zéro avec `constant_reject`, `3` composantes avec projection
+partagée vide, et `max_zero_component_edges=2`.
+
+Tests observés : test ciblé sparse binary core `1 passed` ;
+`make bench-sparse-binary-cores` écrit le rapport avec les métriques ci-dessus ;
+tests ciblés `tests/test_csp_internal_benchmark.py` : `12 passed` ;
+`make quick` passe avec `274 passed`, puis `JUSTE` ; `make bench-quick` garde
+`40/40` runs réussis, `0` timeout et `0` incomplet.
+
+Décision : T073 confirme que les noyaux sparse binaires sont des conflits de
+projections partagées dans le CSP matérialisé, mais aucun noyau propre sans
+constante n'a été trouvé. Continuer par une famille construite pour supprimer
+les `constant_reject`, ou basculer vers un autre type de relation non booléenne.

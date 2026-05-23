@@ -1333,6 +1333,44 @@ sont plus intéressantes comme corrélation entre binaires, mais elles restent
 contaminées par constantes dans ce sweep. Aucun de ces résultats n'est encore
 un gadget global.
 
+## Tentative T073 - Noyaux binaires sparse et suppression des constantes
+
+Statut : diagnostic CSP matérialisé, hors `candidate.py`.
+
+Changement : ajout de `tools/pc_sparse_binary_core_probe.py`, câblé par
+`make bench-sparse-binary-cores`. L'outil reprend les composantes sparse
+insatisfiables T072 et mesure : comptes `full`/`no_constant`/`sparse_only`,
+projections sur variables partagées, retrait de chaque relation sparse, et
+retrait de chaque quartet source.
+
+Résultat `make bench-sparse-binary-cores` :
+
+- `40` lignes, toutes complètes ;
+- `0` mismatch de validation ;
+- `0` ligne incomplète sous la borne d'affectations ;
+- `3` lignes avec composante sparse zéro ;
+- `3` composantes sparse zéro ;
+- `0` ligne sparse zéro sans `constant_reject` ;
+- `3` lignes sparse zéro avec `constant_reject` ;
+- `3` lignes restent UNSAT après suppression des constantes, parce que la
+  composante sparse elle-même est déjà contradictoire ;
+- `3` composantes ont une projection partagée à intersection vide ;
+- retirer une relation sparse entière réouvre des affectations dans les
+  `3` composantes ;
+- `max_zero_component_edges=2`.
+
+Exemple canonique : `random`, `k=3`, seed `20281931`, relations `5` et `6`.
+La variable partagée `0` a les projections `[0,5]` et `[1,3]`, intersection
+vide. Retirer une des deux relations réouvre `12` affectations. Retirer un seul
+quartet source ne réouvre rien dans cet exemple, ce qui suggère que chaque
+relation sparse est elle-même une intersection de plusieurs quartets redondants.
+
+Interprétation : T073 confirme que les noyaux sparse binaires sont de vrais
+conflits de projections dans le CSP matérialisé, pas seulement des unaires
+déguisées. Mais ils ne donnent pas encore de gadget propre, car toutes les
+lignes observées restent accompagnées de `constant_reject`. Ne pas intégrer à
+`candidate.py`.
+
 ## Tentative T021 - Repair positive-only pour paired-farthest
 
 Statut : idée saine comme générateur expérimental vérifié, mais non intégrée à

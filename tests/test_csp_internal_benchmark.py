@@ -5,6 +5,7 @@ from tools.pc_relation_chain_probe import run_relation_chain_probe
 from tools.pc_relation_component_probe import run_relation_component_probe
 from tools.pc_relation_shape_search import run_relation_shape_search
 from tools.pc_relation_unsat_core_probe import run_relation_unsat_core_probe
+from tools.pc_sparse_binary_core_probe import run_sparse_binary_core_probe
 from tools.pc_sparse_matching_conflict_probe import run_sparse_matching_conflict_probe
 from tools.pc_permutation_like_probe import run_permutation_like_probe
 from tools.pc_permutation_composition_probe import run_permutation_composition_probe
@@ -816,3 +817,68 @@ def test_sparse_matching_conflict_probe_classifies_unary_and_binary_conflicts():
     )
     assert zero_component["edge_count"] == 2
     assert zero_component["accept_count"] == 0
+
+
+def test_sparse_binary_core_probe_explains_zero_components_by_shared_projection():
+    report = run_sparse_binary_core_probe(
+        block_counts=[2, 3],
+        repeats=8,
+        seed=20260550,
+    )
+
+    summary = report["summary"]
+    assert summary["rows"] == 40
+    assert summary["complete_rows"] == 40
+    assert summary["validation_mismatches"] == 0
+    assert summary["assignment_incomplete_rows"] == 0
+    assert summary["rows_with_sparse_zero_component"] == 3
+    assert summary["zero_sparse_component_instances"] == 3
+    assert summary["constant_free_zero_sparse_rows"] == 0
+    assert summary["zero_sparse_rows_with_constant_reject"] == 3
+    assert summary["zero_sparse_rows_no_constant_unsat"] == 3
+    assert summary["zero_sparse_components_with_empty_shared_projection"] == 3
+    assert summary["zero_sparse_components_all_relation_removal_sat"] == 3
+    assert summary["max_zero_component_edges"] == 2
+    assert summary["row_class_histogram"] == {
+        "no_sparse_zero_component": 37,
+        "sparse_zero_with_constant_reject": 3,
+    }
+    assert "not hardness evidence" in summary["interpretation"]
+
+    row = next(
+        row
+        for row in report["rows"]
+        if row["row_class"] == "sparse_zero_with_constant_reject"
+    )
+    assert row["seed"] == 20281931
+    assert row["constant_reject_count"] == 5
+    assert row["sparse_zero_component_count"] == 1
+    assert row["no_constant_accept_count"] == 0
+    assert row["full_accept_count"] == 0
+
+    component = row["zero_components"][0]
+    assert component["nodes"] == ["0", "1", "2"]
+    assert component["edge_count"] == 2
+    assert component["accept_count"] == 0
+    assert component["proper_relation_removal_all_sat"] is True
+    assert component["empty_shared_projection_conflict_count"] == 1
+
+    conflict = component["shared_projection_conflicts"][0]
+    assert conflict["status"] == "empty_intersection"
+    assert conflict["variable"] == "0"
+    assert conflict["left_projection_indices"] == [0, 5]
+    assert conflict["right_projection_indices"] == [1, 3]
+    assert conflict["intersection_indices"] == []
+
+    removal_counts = {
+        check["removed_relation_index"]: check["satisfying_assignment_count"]
+        for check in component["proper_relation_removal_checks"]
+    }
+    assert removal_counts == {5: 12, 6: 12}
+
+    quartet_counts = [
+        check["satisfying_assignment_count"]
+        for check in component["source_quartet_removal_checks"]
+    ]
+    assert len(quartet_counts) == 15
+    assert all(count == 0 for count in quartet_counts)

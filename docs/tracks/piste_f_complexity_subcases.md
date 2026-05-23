@@ -1485,3 +1485,37 @@ pas encore un gadget autonome. La suite raisonnable serait de chercher une
 famille où les composantes sparse binaires restent insatisfiables après
 suppression des constantes, ou de prouver que ces constantes sont structurelles
 dans le scaffold actuel.
+
+## Résultat T073 - Noyaux binaires sparse
+
+Statut : diagnostic expérimental, non preuve.
+
+T073 ajoute `make bench-sparse-binary-cores`. Le rapport
+`reports/sparse_binary_core_probe.json` inspecte les composantes sparse zéro :
+suppression des constantes, projections partagées, retrait de relations et
+retrait de quartets source.
+
+Métriques principales du benchmark T073 :
+
+- `rows=40`, toutes complètes ;
+- `validation_mismatches=0` ;
+- `assignment_incomplete_rows=0` ;
+- `rows_with_sparse_zero_component=3` ;
+- `zero_sparse_component_instances=3` ;
+- `constant_free_zero_sparse_rows=0` ;
+- `zero_sparse_rows_with_constant_reject=3` ;
+- `zero_sparse_rows_no_constant_unsat=3` ;
+- `zero_sparse_components_with_empty_shared_projection=3` ;
+- `zero_sparse_components_all_relation_removal_sat=3` ;
+- `max_zero_component_edges=2`.
+
+Les trois noyaux apparaissent dans `random/k=3`. Ils sont expliqués par des
+projections disjointes sur une variable partagée : par exemple seed `20281931`,
+variable `0`, projections `[0,5]` et `[1,3]`. Retirer une relation sparse
+entière réouvre des affectations, mais la ligne reste accompagnée de
+`constant_reject`.
+
+Conclusion prudente : T073 renforce le diagnostic "corrélation binaire sparse",
+mais affaiblit son statut de gadget. Le prochain signal utile serait soit une
+famille construite où le même conflit survit sans constantes, soit une preuve
+que les constantes sont inévitables pour cette forme dans le scaffold étudié.

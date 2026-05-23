@@ -296,6 +296,14 @@ sans constante reprend le noyau unaire+binaire T068. Le statut reste donc :
 contre-exemple utile aux compressions qui sépareraient les relations binaires
 des unaires, pas gadget autonome ni preuve de dureté.
 
+T073 inspecte ces `3` composantes sparse zéro. Elles sont toutes expliquées par
+des projections disjointes sur une variable partagée, et retirer une relation
+sparse entière réouvre des affectations. En revanche, aucune ligne sparse zéro
+sans `constant_reject` n'a été trouvée dans le sweep, et retirer un seul quartet
+source ne suffit pas dans l'exemple canonique seed `20281931`. Statut :
+diagnostic local plus précis, mais toujours aucune obligation de preuve fermée
+pour une réduction de dureté ou pour un solver général.
+
 ### Caractérisation bad-side d'un ordre fixé
 
 Statut : conséquence directe pour ordre fixé + prédicat central exact depuis

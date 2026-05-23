@@ -3587,3 +3587,47 @@
 - Next action : chercher si une des composantes sparse binaires
   insatisfiables survit après suppression des constantes, ou construire une
   famille `D` qui conserve les deux binaires sparse sans `constant_reject`.
+
+## 2026-05-23 sparse binary core suppression probe
+
+- Date/heure : 2026-05-23 17:10:14 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les composantes binaires `sparse_partial_matching`
+  insatisfiables T072 sont peut-être de vrais conflits de projections
+  partagées, mais elles ne sont utiles comme gadgets que si elles survivent
+  sans `constant_reject`.
+- Changement fait : ajout de `tools/pc_sparse_binary_core_probe.py`, de la
+  cible `make bench-sparse-binary-cores`, d'un test de régression et de la
+  documentation T073. `candidate.py` n'a pas été modifié.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_csp_internal_benchmark.py::test_sparse_binary_core_probe_explains_zero_components_by_shared_projection`.
+- Résultat correction ciblée : `1 passed`.
+- Commande exécutée : `make bench-sparse-binary-cores`.
+- Résultat benchmark T073 : `reports/sparse_binary_core_probe.json` écrit ;
+  `40` lignes, `40` complètes, `0` mismatch, `0` ligne incomplète, `3` lignes
+  avec composante sparse zéro, `3` composantes sparse zéro,
+  `0` ligne sparse zéro sans `constant_reject`, `3` lignes sparse zéro avec
+  `constant_reject`, `3` lignes zéro encore UNSAT après suppression des
+  constantes, `3` composantes avec projection partagée vide,
+  `3` composantes où retirer une relation sparse entière réouvre des
+  affectations, `max_zero_component_edges=2`.
+- Détail canonique : `random`, `k=3`, seed `20281931` ; projections sur la
+  variable partagée `0` égales à `[0,5]` et `[1,3]`, intersection vide.
+  Retirer une relation sparse entière réouvre `12` affectations ; retirer un
+  seul quartet source ne réouvre aucune affectation dans cet exemple.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_csp_internal_benchmark.py`.
+- Résultat correction ciblée élargie : `12 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction finale : `274 passed`, puis `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `8` tailles, `40/40` runs réussis, `0` timeout et `0` incomplet.
+- Conclusion : T073 confirme que les noyaux sparse binaires sont des conflits
+  binaires réels dans le CSP matérialisé, mais aucun noyau parasite-free n'a
+  été trouvé. Le résultat reste un diagnostic, pas une preuve de dureté ni une
+  amélioration de solver.
+- Next action : construire une famille `D` qui tente de conserver ces
+  projections disjointes en supprimant les constantes, ou changer de forme
+  relationnelle après deux échecs de composabilité propre.

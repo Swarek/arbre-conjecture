@@ -118,6 +118,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T070 | 2026-05-23 | F/C | Composition multi-blocs : aucun réseau `permutation_like` propre sur `P3x{k}` pour `k=2,3,4` dans le sweep | `make bench-permutation-composition` |
 | T071 | 2026-05-23 | F/C | Composantes toutes relations non booléennes : multi-arêtes visibles mais testées contre les parasites restrictifs | `make bench-relation-components` |
 | T072 | 2026-05-23 | F/C | `sparse_partial_matching` : conflits projection/unaire et composantes sparse binaires isolés comme diagnostic | `make bench-sparse-matching` |
+| T073 | 2026-05-23 | F/C | Noyaux sparse binaires : projections partagées disjointes confirmées, mais toutes les lignes restent avec `constant_reject` | `make bench-sparse-binary-cores` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les
