@@ -1456,3 +1456,64 @@
   pas une résolution du problème général ni des cas `paired_farthest/mixed`.
 - Next action : attaquer les graphes hauts bipartis avec hub bas, ou relier le
   certificat bad-side source/puits aux contraintes locales d'un nœud `P`.
+
+## 2026-05-23 even high cycle low-hub certificate
+
+- Date/heure : 2026-05-23 05:07:00 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : dans le cas binaire `low/high` avec hub bas universel, la
+  bipartition du graphe haut n'est pas suffisante. Les cycles hauts induits
+  pairs de longueur au moins `6` devraient être négatifs, contrairement à `C4`.
+- Changement fait : ajout de `even_high_cycle_plus_low_hub`; ajout de
+  `candidate_even_high_cycle_low_hub_obstruction`; régressions `C6`/`C8` et
+  contrôle positif `C4`; documentation du lemme strong-ordering nécessaire.
+- Commande exécutée avant modification : `make quick`.
+- Résultat correction avant modification : `137 passed in 2.98s`, puis
+  `JUSTE`.
+- Plan subagents : trois sidecars lecture seule. Résultats : un subagent trouve
+  exhaustivement que les `60` négatifs bipartis à `6` sommets non-hub sont des
+  labellisations de `C6`; un subagent recommande de nommer le sous-cas comme
+  cycle pair induit plutôt que "biparti" ; un subagent identifie la
+  caractérisation plus large plausible par strong ordering / bipartite
+  permutation graph, à garder hors candidate pour l'instant.
+- Probe exhaustive : pour `m` sommets non-hub avec hub bas, les graphes hauts
+  bipartis sont tous positifs pour `m <= 5`. Pour `m=6`, `5117` positifs et
+  `60` négatifs ; les négatifs ont tous degré haut `(2,2,2,2,2,2)`, donc sont
+  les cycles `C6`.
+- Contre-exemples/contrôles : `C4 + hub` positif ; `C6 + hub` négatif ;
+  `C8 + hub` négatif et sans obstruction induite de taille `6` ; `K3,3 + hub`
+  positif, donc "contient un cycle pair" n'est pas une obstruction suffisante.
+- Preuve du sous-cas : un ordre cR coupé au hub bas impose une condition de
+  strong ordering sur le graphe haut. Un cycle induit pair `C_{2r}`, `r >= 3`,
+  viole cette condition en prenant le plus petit sommet d'une part et ses deux
+  voisins cycliques ; la condition forcerait une corde absente du cycle induit.
+- Commande exécutée : `pytest -q tests/test_candidate.py tests/test_generators.py tests/test_regression_counterexamples.py`.
+- Résultat correction : `54 passed`.
+- Commande exécutée : benchmark ciblé
+  `tools/pc_circular_complexity_benchmark.py --sizes 7,9,11,13,21,41,61,81 --repeats 10 --instance-kind even_high_cycle_plus_low_hub --pc-tree star`.
+- Résultat benchmark ciblé : `reports/complexity_even_high_cycle_low_hub.json`
+  écrit ; `0` timeout, `0` incomplet ; à `n=81`, médiane `0.00248s` et branche
+  `candidate_even_high_cycle_low_hub_obstruction`.
+- Commande exécutée : `make unit`.
+- Résultat correction : `142 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `142 passed`, puis `JUSTE`.
+- Commande exécutée : `make hunt-counterexamples`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark rapide : `reports/complexity_report_quick.json` écrit ;
+  `0` timeout, `0` incomplet.
+- Commande exécutée : `make bench`.
+- Résultat benchmark fort : `reports/complexity_report.json` écrit ; `0`
+  timeout, `0` incomplet jusqu'à `n=100`, médiane `2.0883s` à `n=100`, fit
+  polynomial empirique `p ~= 3.24`.
+- Conclusion : T035 ajoute un sous-cas négatif polynomial strictement plus loin
+  que les obstructions `(4,5,6)` : `C8` plus hub bas est négatif sans
+  obstruction induite de taille `6`. Le cas biparti général reste ouvert ; le
+  candidat strong-ordering est une piste, pas une solution intégrée.
+- Next action : tester la conjecture strong-ordering sur graphes hauts hub bas
+  avec un détecteur expérimental borné, puis isoler un sous-cas positif prouvé
+  comme chain/complete-bipartite/matching représenté par le PC-tree.

@@ -18,8 +18,8 @@ ensembles `I_x(v)` sur les branches d'un gros nœud `P`.
 | B - DP sur PC-tree | `piste_b_dp_pc_tree.md` | Bad-side exact ordre fixé ; pas encore de signature compacte |
 | C - SAT/CSP | `piste_c_sat_csp.md` | Nogoods bad-side divisent les atomes ; compilation encore dominante |
 | D - Circular-ones / intersection | `piste_d_circular_ones.md` | Boules validées pour quasi ; arcs bad-witness naïfs réfutés |
-| E - Obstructions farthest/quartets | `piste_e_farthest_quartets.md` | Farthest seul réfuté ; bad-witness one-side donne un certificat non-biparti |
-| F - Complexité / sous-cas | `piste_f_complexity_subcases.md` | Sous-cas universel, témoins positifs, PC-tree borné exact et hub bas non-biparti |
+| E - Obstructions farthest/quartets | `piste_e_farthest_quartets.md` | Farthest seul réfuté ; bad-witness one-side donne des certificats hub bas |
+| F - Complexité / sous-cas | `piste_f_complexity_subcases.md` | Sous-cas universel, témoins positifs, PC-tree borné exact et certificats hub bas |
 
 ## Règle d’édition
 
@@ -72,6 +72,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T032 | 2026-05-23 | E/F | Contre-exemple 5-points à la caractérisation 4-locale ; certificat héréditaire étendu aux tailles 4 et 5 | `four_local_non_cr_core` |
 | T033 | 2026-05-23 | E/F | Contre-exemple 6-points à la caractérisation 5-locale ; cycle haut impair plus hub bas certifié négatif | `candidate_odd_high_cycle_low_hub_obstruction` |
 | T034 | 2026-05-23 | E/F | Certificat cycle impair généralisé à tout graphe haut non biparti avec hub bas | `candidate_non_bipartite_high_graph_low_hub_obstruction` |
+| T035 | 2026-05-23 | E/F | Les graphes hauts bipartis ne suffisent pas ; cycle haut pair induit `>=6` certifié négatif | `candidate_even_high_cycle_low_hub_obstruction` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

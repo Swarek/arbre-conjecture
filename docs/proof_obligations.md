@@ -347,6 +347,60 @@ Limites :
   être négative pour une autre raison ;
 - il est négatif seulement et ne fournit aucun témoin positif.
 
+### Cycle haut pair induit avec hub bas
+
+Statut : certificat négatif prouvé pour le sous-cas exact cycle + hubs,
+intégré à la candidate.
+
+`candidate_even_high_cycle_low_hub_obstruction` traite les matrices à deux
+distances positives `low < high` dont le graphe des arêtes `high` est formé
+d'un cycle induit pair connecté de longueur au moins `6`, plus au moins un hub
+isolé dans ce graphe. Le cas `C4` est explicitement exclu : il admet des ordres
+cR.
+
+Preuve :
+
+- dans toute matrice binaire avec hub bas `h`, couper un ordre cR supposé en
+  `h` ;
+- pour chaque sommet `v`, tous ses voisins hauts doivent être du même côté de
+  `v`, sinon la paire basse `{h,v}` a des mauvais témoins sur les deux arcs ;
+- dans une composante haute bipartie, cela donne une bipartition source/puits ;
+- en restreignant l'ordre linéaire aux sources `A` et aux puits `B`, on obtient
+  une condition de strong ordering nécessaire : si `a_i < a_k`, `b_j < b_l`,
+  et si les arêtes croisées `a_i b_l`, `a_k b_j` sont hautes, alors les deux
+  arêtes droites `a_i b_j`, `a_k b_l` doivent aussi être hautes. Sinon la paire
+  basse manquante a les deux arêtes croisées comme mauvais témoins sur des arcs
+  opposés ;
+- un cycle induit `C_{2r}` avec `r >= 3` n'a pas de strong ordering. Prendre le
+  plus petit sommet `a_p` de sa part `A`. Ses deux voisins cycliques sont
+  `b_{p-1}` et `b_p`. Si `b_{p-1} < b_p`, les arêtes croisées
+  `a_p b_p` et `a_{p-1} b_{p-1}` forceraient la corde `a_{p-1} b_p`, absente
+  dans un cycle induit de longueur au moins `6`. Le cas symétrique
+  `b_p < b_{p-1}` force de même la corde `a_{p+1} b_{p-1}` ;
+- donc aucun ordre cR ne peut exister.
+
+Ce que cela couvre :
+
+- obligation 1 : le certificat dérive de la condition bad-side exacte d'un
+  ordre fixé ;
+- obligation 2 négative : l'absence de strong ordering pour les cycles induits
+  pairs de longueur `>=6` prouve la non-existence globale ;
+- obligation 3 : aucun ordre représenté par le PC-tree n'est manqué, car aucun
+  ordre complet n'existe ;
+- obligation 5 : la détection scanne les deux valeurs de distance et vérifie
+  degré `2` + connexité du graphe haut, donc coût polynomial en `n`.
+
+Limites :
+
+- le certificat ne traite que le graphe haut exactement cycle induit plus hubs ;
+- il ne rejette pas les graphes bipartis arbitraires, car `K_{3,3}` plus hub
+  est positif dans les probes malgré ses cycles pairs non induits ;
+- le lemme de strong ordering suggère une caractérisation plus large du cas
+  binaire hub bas, mais cette caractérisation complète n'est pas encore
+  intégrée ni prouvée dans le dépôt ;
+- les encodages avec niveau bas hors diagonale `0` restent hors de la détection
+  actuelle.
+
 ### Témoins positifs échantillonnés
 
 Statut : conséquence directe / clarification de la candidate.

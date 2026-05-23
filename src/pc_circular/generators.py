@@ -239,6 +239,20 @@ def odd_high_cycle_plus_low_hub(n: int) -> list[list[int]]:
     return D
 
 
+def even_high_cycle_plus_low_hub(n: int) -> list[list[int]]:
+    """Binary family: an even high-distance cycle plus one low universal hub."""
+
+    cycle_size = n - 1
+    if cycle_size < 6 or cycle_size % 2 != 0:
+        raise ValueError("even_high_cycle_plus_low_hub requires n-1 even and at least 6")
+    D = equal_distance_instance(n, value=1)
+    for offset in range(cycle_size):
+        a = 1 + offset
+        b = 1 + ((offset + 1) % cycle_size)
+        D[a][b] = D[b][a] = 2
+    return D
+
+
 def non_bipartite_high_graph_plus_low_hub(n: int) -> list[list[int]]:
     """Binary family: a non-bipartite high graph plus one low universal hub."""
 
@@ -261,6 +275,7 @@ def small_paper_like_instances() -> list[list[list[int]]]:
         four_local_non_cr_core(),
         five_local_non_cr_core(),
         odd_high_cycle_plus_low_hub(6),
+        even_high_cycle_plus_low_hub(7),
         non_bipartite_high_graph_plus_low_hub(6),
         non_strict_large_farthest_instance(5),
     ]
@@ -328,6 +343,8 @@ def instance_by_kind(
         return padded_five_local_non_cr(n)
     if kind == "odd_high_cycle_plus_low_hub":
         return odd_high_cycle_plus_low_hub(n)
+    if kind == "even_high_cycle_plus_low_hub":
+        return even_high_cycle_plus_low_hub(n)
     if kind == "non_bipartite_high_graph_plus_low_hub":
         return non_bipartite_high_graph_plus_low_hub(n)
     if kind == "mixed":

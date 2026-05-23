@@ -4,6 +4,7 @@ import random
 from pc_circular.generators import (
     cycle_metric,
     equal_distance_instance,
+    even_high_cycle_plus_low_hub,
     non_bipartite_high_graph_plus_low_hub,
     odd_high_cycle_plus_low_hub,
     paired_farthest_matching,
@@ -29,6 +30,7 @@ from pc_circular.solvers.candidate import (
     EXACT_QUASI_ORDER_LIMIT,
     SMALL_FORBIDDEN_SUBMATRIX_ORDER,
     SMALL_FORBIDDEN_SUBMATRIX_ORDERS,
+    _even_high_cycle_low_hub_result,
     _minimum_distance_cycle_order,
     _paired_farthest_order,
     _pc_tree_frontier_upper_bound,
@@ -279,6 +281,38 @@ def test_candidate_non_bipartite_high_graph_low_hub_obstruction_handles_branches
     assert result["solver"] == "candidate_non_bipartite_high_graph_low_hub_obstruction"
     assert result["hub_labels"] == [0]
     assert set(result["high_graph_labels"]) == set(range(1, 12))
+
+
+def test_candidate_even_high_cycle_low_hub_obstruction_proves_large_negative():
+    D = even_high_cycle_plus_low_hub(9)
+
+    assert _small_forbidden_submatrix_result(D, 9) is None
+    result = solve(D, pc_tree=star_pc_tree(9))
+
+    assert result["exists"] is False
+    assert result["complete"] is True
+    assert result["solver"] == "candidate_even_high_cycle_low_hub_obstruction"
+    assert result["hub_labels"] == [0]
+    assert set(result["cycle_labels"]) == set(range(1, 9))
+
+
+def test_candidate_even_high_cycle_low_hub_obstruction_keeps_c4_positive_control():
+    D = equal_distance_instance(5)
+    for a, b in [(1, 2), (2, 3), (3, 4), (1, 4)]:
+        D[a][b] = D[b][a] = 2
+
+    assert _even_high_cycle_low_hub_result(D, 5) is None
+    assert brute_force.solve(D)["exists"] is True
+
+
+def test_candidate_even_high_cycle_low_hub_obstruction_ignores_k33_positive_control():
+    D = equal_distance_instance(7)
+    for a in (1, 2, 3):
+        for b in (4, 5, 6):
+            D[a][b] = D[b][a] = 2
+
+    assert _even_high_cycle_low_hub_result(D, 7) is None
+    assert brute_force.solve(D)["exists"] is True
 
 
 def test_candidate_non_sized_quasi_orders_remain_incomplete_when_sample_misses_witness():

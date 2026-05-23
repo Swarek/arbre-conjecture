@@ -16,6 +16,8 @@ The current implementation is deliberately conservative:
   side-by-side paired witness and accepts it only after the same verification.
 * for small forbidden induced submatrices and for binary non-bipartite high
   graphs with a low-universal hub, it can return proved negative certificates.
+* for a binary even high-cycle of length at least 6 with a low-universal hub,
+  it can return a proved negative certificate.
 
 This is not a solution to the general problem.  Future goals should replace
 the large-n placeholder with a proved algorithm or a clearly scoped sub-case.
@@ -262,6 +264,50 @@ def _non_bipartite_high_graph_low_hub_result(D, n: int):
     }
 
 
+def _even_high_cycle_low_hub_result(D, n: int):
+    positive_values = sorted({D[i][j] for i in range(n) for j in range(i + 1, n) if D[i][j] > 0})
+    if len(positive_values) != 2:
+        return None
+    _low, high = positive_values
+
+    high_neighbors = {
+        i: [j for j in range(n) if i != j and D[i][j] == high]
+        for i in range(n)
+    }
+    hubs = [i for i, neighbors in high_neighbors.items() if not neighbors]
+    cycle_vertices = [i for i, neighbors in high_neighbors.items() if neighbors]
+    if not hubs or len(cycle_vertices) < 6 or len(cycle_vertices) % 2 != 0:
+        return None
+    if any(len(high_neighbors[i]) != 2 for i in cycle_vertices):
+        return None
+
+    cycle_set = set(cycle_vertices)
+    if any(neighbor not in cycle_set for i in cycle_vertices for neighbor in high_neighbors[i]):
+        return None
+
+    start = cycle_vertices[0]
+    seen = {start}
+    stack = [start]
+    while stack:
+        current = stack.pop()
+        for neighbor in high_neighbors[current]:
+            if neighbor not in seen:
+                seen.add(neighbor)
+                stack.append(neighbor)
+    if seen != cycle_set:
+        return None
+
+    return {
+        "exists": False,
+        "order": None,
+        "complete": True,
+        "solver": "candidate_even_high_cycle_low_hub_obstruction",
+        "hub_labels": hubs,
+        "cycle_labels": cycle_vertices,
+        "note": "the high-distance graph is an even cycle of length at least 6 with a low-universal hub, which is incompatible with the bad-witness one-side condition",
+    }
+
+
 def _minimum_distance_cycle_order(D, n: int) -> tuple[int, ...] | None:
     if n < 4:
         return None
@@ -463,6 +509,10 @@ def solve(D, quasi_orders=None, pc_tree=None):
     non_bipartite_high_graph_result = _non_bipartite_high_graph_low_hub_result(D, n)
     if non_bipartite_high_graph_result is not None:
         return non_bipartite_high_graph_result
+
+    even_high_cycle_result = _even_high_cycle_low_hub_result(D, n)
+    if even_high_cycle_result is not None:
+        return even_high_cycle_result
 
     exact_quasi_orders_result = _bounded_quasi_orders_exact_result(D, n, quasi_orders)
     if exact_quasi_orders_result is not None:

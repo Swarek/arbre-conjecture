@@ -1799,3 +1799,79 @@ respectives environ `0.00053s` et `0.00052s` via
 Décision : intégrer comme sous-cas négatif polynomial prouvé. Continuer ensuite
 vers les limites du binaire hub : graphes hauts bipartis, plus de deux niveaux
 de distance, ou liens avec les choix locaux d'un gros nœud `P`.
+
+## ExecPlan 2026-05-23 - even high cycle with low hub
+
+But : attaquer le cas laissé ouvert par T034 : matrices binaires `low/high`
+avec hub bas universel et graphe haut biparti. Chercher d'abord un
+contre-exemple ou un sous-cas négatif prouvé, sans prétendre caractériser tous
+les graphes bipartis.
+
+Hypothèse : la bipartition du graphe haut n'est pas suffisante. Un cycle haut
+induit pair de longueur au moins `6` avec hub bas devrait être impossible,
+alors que `C4` reste positif. Ce serait une famille bipartie négative qui
+échappe aux scans d'obstructions induites de tailles `(4,5,6)` dès `C8`.
+
+Fichiers à modifier : si l'hypothèse survit aux probes,
+`src/pc_circular/generators.py`, `src/pc_circular/solvers/candidate.py`,
+`tests/test_candidate.py`, `tests/test_generators.py`,
+`tests/test_regression_counterexamples.py`, puis
+`docs/proof_obligations.md`, `docs/tracks/piste_e_farthest_quartets.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/tracks/README.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md` et `PLANS.md`.
+
+Algorithme pressenti : détecter les matrices à exactement deux distances
+positives où le graphe haut est formé d'un unique cycle pair de taille au moins
+`6` plus au moins un hub isolé. Retourner `False complete=True` seulement dans
+ce sous-cas structurel. Garder T034 pour tous les graphes hauts non bipartis.
+
+Plan de contre-exemples : énumérer tous les graphes hauts avec un hub bas
+jusqu'à `6` sommets non-hub ; vérifier que les négatifs bipartis de taille `6`
+coïncident avec les `C6` induits ; vérifier que `C8` plus hub est négatif mais
+non détecté par les scans `(4,5,6)` ; ajouter des régressions durables.
+
+Plan subagents : trois sidecars lecture seule. Un vérifie la preuve/structure
+du cas biparti, un cherche des contre-exemples exhaustifs ou random, et un
+prépare l'intégration minimale candidate/générateurs/benchmarks.
+
+Tests à exécuter : tests ciblés candidats/générateurs/régressions, `make unit`,
+`make quick`, `make hunt-counterexamples`, `make check`, `make bench-quick`,
+benchmark ciblé `even_high_cycle_plus_low_hub/star`, et `make bench` si la
+candidate change.
+
+Risques : généraliser à des graphes bipartis arbitraires sans preuve ; confondre
+cycle induit et cycle avec cordes ; intégrer un rejet négatif alors que seul le
+cas exact cycle-plus-hubs est prouvé ; oublier que les petits `C6` sont déjà
+capturés par brute force ou scan 6-points.
+
+Résultats observés : probes locales et subagents confirment que les graphes
+hauts bipartis avec hub bas ne sont pas tous positifs. Exhaustif avec `m`
+sommets non-hub : pour `m <= 5`, tous les graphes hauts bipartis sont positifs
+à l'oracle exact ; pour `m = 6`, il y a `5117` positifs et `60` négatifs, et
+les `60` négatifs sont exactement les labellisations de `C6`. Probes ciblées :
+`C4 + hub` positif, `C6 + hub` négatif, `C8 + hub` négatif, `K3,3 + hub`
+positif. Le sous-cas général plausible devient "graphe haut avec strong
+ordering", mais il n'est pas intégré.
+
+Changements intégrés : ajout de `even_high_cycle_plus_low_hub` dans
+`generators.py`; ajout de
+`candidate_even_high_cycle_low_hub_obstruction` dans `candidate.py`, limité aux
+graphes hauts exactement cycle pair induit de longueur au moins `6` plus hubs
+isolés ; tests ciblés et régressions. La preuve documentée utilise le lemme
+nécessaire de strong ordering pour le cas binaire hub bas, puis le fait qu'un
+cycle induit `C_{2r}`, `r >= 3`, ne peut pas satisfaire ce strong ordering.
+
+Validation observée : `pytest -q tests/test_candidate.py tests/test_generators.py
+tests/test_regression_counterexamples.py` `54 passed`; `make unit`
+`142 passed`; `make quick` `142 passed` puis `JUSTE`;
+`make hunt-counterexamples` `JUSTE`; `make check` `JUSTE`;
+`make bench-quick` `0` timeout et `0` incomplet ; `make bench` `0` timeout et
+`0` incomplet jusqu'à `n=100`, fit polynomial empirique `p ~= 3.24`.
+Benchmark ciblé `even_high_cycle_plus_low_hub/star`, tailles
+`7,9,11,13,21,41,61,81`, répétitions `10` : `0` timeout, `0` incomplet ; à
+`n=81`, médiane `0.00248s`.
+
+Décision : intégrer comme sous-cas négatif polynomial étroit. Ne pas intégrer la
+caractérisation strong-ordering complète avant d'avoir un détecteur/witness
+robuste, des contrôles positifs `K_{p,q}`/chain/matching, et une preuve de
+représentation PC-tree pour les témoins positifs.

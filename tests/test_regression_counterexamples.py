@@ -7,6 +7,7 @@ results when the conjecture tester finds a disagreement.
 from itertools import combinations
 
 from pc_circular.generators import (
+    even_high_cycle_plus_low_hub,
     five_local_non_cr_core,
     four_local_non_cr_core,
     non_bipartite_high_graph_plus_low_hub,
@@ -224,3 +225,7 @@ def test_non_bipartite_high_graph_low_hub_subcase_regression():
     D = non_bipartite_high_graph_plus_low_hub(9)
 
     assert exact_oracle_pc_tree([[D[i][j] for j in range(6)] for i in range(6)], None)["exists"] is False
+
+
+def test_even_high_cycle_low_hub_subcase_regression():
+    assert exact_oracle_pc_tree(even_high_cycle_plus_low_hub(7), None)["exists"] is False

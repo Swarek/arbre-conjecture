@@ -417,11 +417,29 @@ Résultat structurel T033/T034 :
   `6,8,10,12,20,40`, répétitions `3` : `0` timeout, `0` incomplet ; `n=40`
   médiane `0.00052s`.
 
+Résultat structurel T035 :
+
+- les graphes hauts bipartis avec hub bas ne sont pas tous positifs ;
+- le premier négatif biparti minimal apparaît à `6` sommets non-hub, et les
+  `60` négatifs exhaustifs sont les labellisations de `C6` ;
+- le générateur `even_high_cycle_plus_low_hub(n)` encode les cycles hauts
+  induits pairs avec hub bas ;
+- la candidate ajoute `candidate_even_high_cycle_low_hub_obstruction`, qui
+  rejette en temps polynomial le sous-cas exact cycle pair induit de longueur
+  `>=6` plus hubs bas ;
+- `C4` plus hub et `K_{3,3}` plus hub restent des contrôles positifs à ne pas
+  rejeter par cette branche ;
+- benchmark ciblé `even_high_cycle_plus_low_hub/star`, tailles
+  `7,9,11,13,21,41,61,81`, répétitions `10` : `0` timeout, `0` incomplet ;
+  à `n=81`, médiane `0.00248s`.
+
 Limite ajoutée :
 
 - les obstructions 4-points ne sont pas une caractérisation ; les obstructions
   `(4,5,6)` ne doivent pas non plus être présentées comme une caractérisation
   sans preuve séparée.
+- la conjecture plus large "low-hub binaire positif ssi graphe haut admet un
+  strong ordering" reste une piste, pas une candidate intégrée.
 
 ## Témoin cycle par distances minimales
 

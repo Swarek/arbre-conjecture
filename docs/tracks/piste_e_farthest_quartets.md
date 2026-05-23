@@ -184,6 +184,33 @@ Artefacts : `odd_high_cycle_plus_low_hub`,
 `non_bipartite_high_graph_plus_low_hub`,
 `candidate_non_bipartite_high_graph_low_hub_obstruction`.
 
+## Cycle haut pair induit plus hub bas
+
+Statut : sous-cas négatif structurel prouvé pour les cycles induits pairs de
+longueur au moins `6`.
+
+T035 montre que la frontière après T034 n'est pas "graphe haut biparti donc
+positif". Avec un hub bas universel, `C4` haut est positif, mais `C6`, `C8` et
+les cycles induits pairs plus longs sont négatifs.
+
+La preuve passe par le lemme nécessaire de strong ordering du cas binaire hub
+bas. Dans tout ordre cR coupé au hub, chaque sommet a ses voisins hauts d'un
+seul côté ; dans une composante bipartie, cela induit des sources et puits. Les
+ordres restreints aux deux parts doivent satisfaire la condition strong
+ordering, sinon une paire basse manquante reçoit deux mauvais témoins sur deux
+arcs opposés. Un cycle induit `C_{2r}`, `r >= 3`, viole toujours cette condition
+en prenant le plus petit sommet d'une part et ses deux voisins cycliques.
+
+Preuve expérimentale : les graphes hauts bipartis avec un hub bas et jusqu'à
+`5` sommets non-hub sont tous positifs ; à `6` sommets non-hub, les `60`
+négatifs sont exactement les labellisations de `C6`. `C8` plus hub est négatif
+et n'a aucune obstruction induite de taille `6`, donc il échappe au scan
+héréditaire `(4,5,6)`.
+
+Artefacts : `even_high_cycle_plus_low_hub`,
+`candidate_even_high_cycle_low_hub_obstruction`,
+régression `test_even_high_cycle_low_hub_subcase_regression`.
+
 ## Prochaine action
 
 Utiliser les témoins `find_precircular_cR_violation` comme source principale

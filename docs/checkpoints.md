@@ -188,6 +188,16 @@ Dernier commit green avant T009 : `07120e4`.
   `non_bipartite_high_graph_plus_low_hub/star`. Résultat observé :
   `mixed/star` garde `0` timeout et `0` incomplet jusqu'à `n=100` ; la famille
   non-cycle non-bipartie est rejetée en temps polynomial.
+- Checkpoint T035 courant : commit contenant le générateur
+  `even_high_cycle_plus_low_hub`, le certificat négatif
+  `candidate_even_high_cycle_low_hub_obstruction`, et les régressions montrant
+  que `C6` plus hub bas est négatif tandis que `C8` échappe au scan
+  héréditaire `(4,5,6)`. Validation observée : tests
+  candidats/générateurs/régressions ciblés, `make unit`, `make quick`,
+  `make hunt-counterexamples`, `make check`, `make bench-quick`, `make bench`,
+  et benchmark ciblé `even_high_cycle_plus_low_hub/star`. Résultat observé :
+  `mixed/star` reste `0` timeout et `0` incomplet jusqu'à `n=100`; la famille
+  cycle haut pair induit est rejetée en temps polynomial.
 
 ## Rollback
 

@@ -3,6 +3,7 @@ import random
 
 from pc_circular.generators import (
     MIXED_INSTANCE_KINDS,
+    even_high_cycle_plus_low_hub,
     five_local_non_cr_core,
     four_local_non_cr_core,
     instance_by_kind,
@@ -38,6 +39,7 @@ def test_instance_by_kind_accepts_explicit_piste_f_families():
     assert validate_dissimilarity(instance_by_kind(5, kind="four_local_non_cr")) == 5
     assert validate_dissimilarity(instance_by_kind(6, kind="five_local_non_cr")) == 6
     assert validate_dissimilarity(instance_by_kind(6, kind="odd_high_cycle_plus_low_hub")) == 6
+    assert validate_dissimilarity(instance_by_kind(7, kind="even_high_cycle_plus_low_hub")) == 7
     assert validate_dissimilarity(instance_by_kind(6, kind="non_bipartite_high_graph_plus_low_hub")) == 6
 
 
@@ -96,6 +98,15 @@ def test_non_bipartite_high_graph_plus_low_hub_is_large_negative_family():
         for i in range(9)
     ]
     assert max(high_degree) > 2
+
+
+def test_even_high_cycle_plus_low_hub_has_no_six_point_obstruction_at_c8():
+    D = even_high_cycle_plus_low_hub(9)
+
+    assert not brute_force.solve(even_high_cycle_plus_low_hub(7))["exists"]
+    for subset in combinations(range(9), 6):
+        submatrix = [[D[i][j] for j in subset] for i in subset]
+        assert brute_force.solve(submatrix)["exists"]
 
 
 def test_instance_metadata_preserves_mixed_rng_sequence():
