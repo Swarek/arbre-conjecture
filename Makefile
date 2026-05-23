@@ -1,7 +1,7 @@
 PYTHON ?= $(shell if [ -x .venv/bin/python ]; then echo .venv/bin/python; elif command -v python3 >/dev/null 2>&1; then echo python3; else echo python; fi)
 PYTEST ?= $(PYTHON) -m pytest
 
-.PHONY: quick check hunt-counterexamples bench-quick bench bench-piste-f bench-csp-quick bench-width-stress bench-single-p-stress bench-relation-catalog bench-relation-shapes bench-relation-chains bench-relation-unsat-cores bench-sparse-matching bench-sparse-binary-cores bench-quartet-coverage bench-frontier-obstructions bench-strict-algorithm52 bench-permutation-like bench-permutation-composition bench-relation-components unit acceptance
+.PHONY: quick check hunt-counterexamples bench-quick bench bench-piste-f bench-csp-quick bench-width-stress bench-single-p-stress bench-relation-catalog bench-relation-shapes bench-relation-chains bench-relation-unsat-cores bench-sparse-matching bench-sparse-binary-cores bench-quartet-coverage bench-frontier-obstructions bench-strict-algorithm52 bench-strict-positive-coverage bench-permutation-like bench-permutation-composition bench-relation-components unit acceptance
 
 unit:
 	$(PYTEST) -q
@@ -206,6 +206,17 @@ bench-strict-algorithm52:
 	  --max-candidates 20000 \
 	  --seed 20260600 \
 	  --output reports/strict_algorithm52_audit.json
+
+bench-strict-positive-coverage:
+	mkdir -p reports && \
+	$(PYTHON) tools/pc_strict_positive_coverage_probe.py \
+	  --sizes 5,6,8,9,10,12,16,20 \
+	  --pc-trees none,star,balanced,mixed \
+	  --instance-kinds fig22,strict_t024,cycle,permuted_cycle,random,equal \
+	  --repeats 10 \
+	  --max-candidates 20000 \
+	  --seed 20260610 \
+	  --output reports/strict_positive_coverage.json
 
 bench-permutation-like:
 	mkdir -p reports && \

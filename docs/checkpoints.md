@@ -633,9 +633,19 @@ Dernier commit green avant T009 : `07120e4`.
   (`1 passed`), `make bench-strict-algorithm52` (`360` lignes complètes,
   `0` ligne incomplète, `0` mismatch, `0` ordre strict quasi/pre-circular/cR
   manqué, `138` lignes positives strict circular exactes,
-  `0` limite candidate atteinte), tests stricts complets à vérifier,
-  `make quick` et `make bench-quick` à exécuter avant commit. `candidate.py`
-  n'a pas été modifié.
+  `0` limite candidate atteinte), tests stricts complets (`23 passed`),
+  `make quick` (`279 passed`, puis `JUSTE`) et `make bench-quick` (`40/40`
+  runs, `0` timeout, `0` incomplet). `candidate.py` n'a pas été modifié.
+
+- Checkpoint T077 courant : commit contenant le probe de couverture
+  positive-only stricte large-n. Validation observée : test ciblé coverage
+  (`1 passed`), `make bench-strict-positive-coverage` (`708` lignes,
+  `204` témoins stricts validés, `0` nouveau positif vs candidate,
+  `40` lignes candidate incomplètes, `0` limite strict candidate,
+  `0` échec de validation de témoin, `152` lignes avec stricts non représentés,
+  `max_strict_seconds ~= 2.14s`), tests stricts complets (`24 passed`),
+  `make quick` (`280 passed`, puis `JUSTE`) et `make bench-quick` (`40/40`
+  runs, `0` timeout, `0` incomplet). `candidate.py` n'a pas été modifié.
 
 ## Rollback
 

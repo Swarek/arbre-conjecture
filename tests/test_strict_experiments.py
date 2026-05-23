@@ -25,6 +25,7 @@ from pc_circular.solvers.strict_experiments import (
     strict_order_report,
 )
 from tools.pc_strict_algorithm52_audit import run_strict_algorithm52_audit
+from tools.pc_strict_positive_coverage_probe import run_strict_positive_coverage_probe
 
 
 def test_strict_linear_robinson_rejects_equalities():
@@ -323,6 +324,25 @@ def test_strict_algorithm52_audit_matches_exact_on_bounded_sweep():
     assert summary["strict_circular_missing_total"] == 0
     assert summary["strict_circular_exact_positive_rows"] > 0
     assert summary["algorithm_limit_hit_rows"] == 0
+
+
+def test_strict_positive_coverage_probe_counts_only_valid_new_witnesses():
+    report = run_strict_positive_coverage_probe(
+        sizes=[5, 9],
+        pc_trees=["star", "mixed"],
+        instance_kinds=["strict_t024", "cycle", "random", "equal"],
+        repeats=2,
+    )
+
+    summary = report["summary"]
+    assert summary["rows"] == 18
+    assert summary["skipped_rows"] == 2
+    assert summary["strict_positive_rows"] == 5
+    assert summary["strict_new_positive_rows"] == 0
+    assert summary["strict_limit_hit_rows"] == 0
+    assert summary["strict_witness_failure_rows"] == 0
+    assert summary["integration_status_histogram"]["already_found_by_candidate"] == 5
+    assert not summary["new_positive_examples"]
 
 
 def test_ball_circular_ones_report_matches_quasi_definition_n4_values():

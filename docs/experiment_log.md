@@ -3788,3 +3788,48 @@
 - Next action : soit écrire une preuve structurée du sous-cas strict dans
   `proof_obligations`, soit mesurer une couverture positive-only large-n avant
   toute intégration candidate.
+
+## 2026-05-23 strict positive-only coverage probe
+
+- Date/heure : 2026-05-23 17:53:26 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : même si l'audit T076 est propre, une intégration stricte
+  positive-only ne vaut la peine que si `strict_algorithm52_report` apporte des
+  témoins `exists=True` que `candidate.py` ne trouve pas déjà en grande taille.
+- Changement fait : ajout de `tools/pc_strict_positive_coverage_probe.py`, de la
+  cible `make bench-strict-positive-coverage`, d'un test de régression et de la
+  documentation T077. `candidate.py` n'a pas été modifié.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `279 passed`, puis `JUSTE`.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_strict_experiments.py::test_strict_positive_coverage_probe_counts_only_valid_new_witnesses`.
+- Résultat correction ciblée : `1 passed`.
+- Commande exécutée : `rtk make bench-strict-positive-coverage`.
+- Résultat benchmark T077 :
+  `reports/strict_positive_coverage.json` écrit ; `708` lignes, `60` lignes
+  sautées par taille non applicable, `256` lignes positives candidate,
+  `40` lignes candidate incomplètes, `204` lignes avec témoin strict validé,
+  `0` nouveau positif par rapport à candidate, `0` limite
+  `strict_algorithm52_report`, `152` lignes avec stricts non représentés par le
+  PC-tree, `0` échec de validation de témoin, `max_strict_candidate_count=3418`,
+  `max_candidate_seconds=2.0412`, `max_strict_seconds=2.1429`.
+- Détail : les `204` témoins stricts validés sont tous déjà trouvés par la
+  candidate ; `new_positive_examples=[]`.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_strict_experiments.py`.
+- Résultat correction ciblée élargie : `24 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction finale : `280 passed`, puis `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `8` tailles, `40/40` runs réussis, `0` timeout et `0` incomplet.
+- Conclusion : T077 retire l'urgence d'une intégration stricte positive-only.
+  La piste stricte reste intéressante comme sous-cas à prouver, mais elle
+  n'améliore pas la couverture candidate sur ce sweep et aurait un coût non
+  négligeable.
+- Next action : changer de piste vers une preuve structurée d'un sous-cas strict
+  ou vers une famille où la candidate est réellement incomplète, par exemple
+  les lignes candidate placeholder vues dans ce probe.

@@ -122,6 +122,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T074 | 2026-05-23 | C/F | Couverture positive-only 2-SAT/treewidth : crash 2-SAT réparé, aucun témoin positif nouveau sur le sweep `p3_block_tree` | `make bench-quartet-coverage` |
 | T075 | 2026-05-23 | A/D/E | Frontiers non-cR profilées : projections locales silencieuses mais premier quartet à support multi-niveau | `make bench-frontier-obstructions` |
 | T076 | 2026-05-23 | F | Audit strict Algorithm 5.2 : aucun mismatch contre les ordres stricts exacts sur 360 lignes bornées | `make bench-strict-algorithm52` |
+| T077 | 2026-05-23 | F | Couverture positive-only stricte large-n : 204 témoins stricts validés, 0 nouveau positif vs candidate | `make bench-strict-positive-coverage` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

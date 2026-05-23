@@ -52,6 +52,7 @@ make bench-sparse-binary-cores
 make bench-quartet-coverage
 make bench-frontier-obstructions
 make bench-strict-algorithm52
+make bench-strict-positive-coverage
 make bench-permutation-like
 make bench-permutation-composition
 make bench-relation-components
@@ -137,6 +138,12 @@ C'est un diagnostic des corrélations multi-niveaux, pas un solver.
 Il compare les candidats stricts issus de `strict_algorithm52_report` aux
 ordres stricts exacts énumérés sur petites instances et PC-trees bornés. C'est
 un audit de complétude borné pour le sous-cas strict, pas une preuve générale.
+
+`make bench-strict-positive-coverage` écrit
+`reports/strict_positive_coverage.json`. Il mesure si les témoins stricts
+validés par Algorithm 5.2 ajouteraient des `exists=True` par rapport à
+`candidate.py` sur des tailles au-delà du brute force. Les échecs restent
+incomplets ; le rapport ne justifie jamais un `False`.
 
 `make bench-permutation-like` écrit `reports/permutation_like_probe.json`. Il
 teste les profils locaux `permutation_like` observés sur `paired_farthest`

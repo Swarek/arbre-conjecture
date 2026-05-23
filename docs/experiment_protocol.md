@@ -238,6 +238,20 @@ contre-exemple de complétude de l'artefact strict et doit être régressé. Une
 absence de mismatch reste une preuve expérimentale bornée ; elle ne suffit pas à
 intégrer un rejet `False`, ni à traiter les cas non stricts.
 
+Couverture positive-only stricte Piste F :
+
+```bash
+make bench-strict-positive-coverage
+```
+
+Cette commande écrit `reports/strict_positive_coverage.json`. Elle compare
+`candidate.py` à `strict_algorithm52_report` sur des tailles incluant `n > 8`.
+Un témoin strict est compté seulement s'il est strict circular, passe aussi le
+prédicat bad-side cR, et est représenté par le PC-tree quand il y en a un.
+Les lignes où Algorithm 5.2 ne trouve rien, atteint sa limite, ou trouve un
+témoin non représenté restent des diagnostics ; elles ne produisent jamais un
+rejet.
+
 Contrôle promise-aware des permutations locales Piste F/C :
 
 ```bash

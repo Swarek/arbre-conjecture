@@ -269,6 +269,12 @@ La piste stricte devient un bon candidat de sous-cas à formaliser, mais pas
 encore une intégration candidate : pas de preuve de complétude générale, pas de
 gain large-n mesuré, et aucun rejet `False` ne serait justifié.
 
+Mise à jour T077 : le probe large-n positive-only strict trouve `204` témoins
+stricts validés mais `0` nouveau positif par rapport à `candidate.py` sur
+`708` lignes. La piste stricte ne doit donc pas être intégrée maintenant ; elle
+doit soit recevoir une preuve de sous-cas, soit être relancée avec une famille
+où la candidate est réellement incomplète.
+
 État 2026-05-22 : deux familles explicites ont été ajoutées sans modifier
 `mixed` :
 

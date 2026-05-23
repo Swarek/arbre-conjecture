@@ -4964,3 +4964,68 @@ Algorithm 5.2 comme générateur de témoins stricts et comme sous-cas à formal
 mais l'audit reste borné, ne traite pas les cas non stricts et ne ferme pas la
 preuve de complétude dans un PC-tree compact. Prochaine étape : preuve
 structurée du sous-cas strict ou probe de couverture positive-only large-n.
+
+## ExecPlan 2026-05-23 - Strict Algorithm 5.2 positive-only coverage
+
+But : mesurer si la piste stricte apporte une couverture `exists=True` nouvelle
+sur des tailles `n > 8`, où le brute force de `candidate.py` ne masque plus le
+gain. Cette étape décide s'il vaut la peine d'intégrer plus tard un certificat
+strict positive-only.
+
+Hypothèse : `strict_algorithm52_report` peut produire des témoins strict
+circular représentés et revérifiés que `candidate.py` ne trouve pas encore sur
+certaines familles large-n ou certains PC-trees non-star. Si aucun nouveau
+témoin n'apparaît, l'intégration stricte n'est pas prioritaire.
+
+Fichiers visés : `tools/pc_strict_positive_coverage_probe.py`,
+`tests/test_strict_experiments.py`, `Makefile`, `README.md`,
+`docs/experiment_protocol.md`, `docs/hypothesis_portfolio.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/proof_obligations.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `docs/tracks/README.md`,
+`PLANS.md`.
+
+Algorithme pressenti : pour chaque `(D,T)`, lancer `candidate.solve`, puis
+`strict_algorithm52_report(D,T)` sous `max_candidates`. Compter seulement les
+ordres strict circular qui sont aussi `passes_bad_side_precircular_cR` et, si
+`T` est fourni, `represents_order(T, order)`. Un `True` strict validé peut être
+marqué `new_positive` seulement si la candidate ne renvoie pas déjà
+`exists=True`. Tous les échecs ou limites restent incomplets/diagnostiques,
+jamais `False`.
+
+Plan de contre-exemples : inclure `cycle`, `permuted_cycle`, `random`,
+`equal`, `fig22` et `strict_t024`; couvrir `star`, `balanced`, `mixed`; scanner
+des tailles au-delà de 8. Les familles `equal` et random sans strict servent à
+vérifier que le probe ne fabrique pas de positif non strict.
+
+Plan subagents : les sidecars T076 ont déjà recommandé ce probe et les
+garde-fous. Pas de nouveau fanout nécessaire ; intégrer leur retour dans la
+documentation et garder `candidate.py` inchangé.
+
+Tests à exécuter : test ciblé du probe, `make bench-strict-positive-coverage`,
+`tests/test_strict_experiments.py`, `make quick`, `make bench-quick`. Comme
+`candidate.py` ne change pas, `make hunt-counterexamples` n'est pas requis pour
+ce checkpoint.
+
+Risques : si le générateur strict atteint `max_candidates`, la ligne est
+incomplète. Une absence de nouveau positif dans ce sweep n'est pas une preuve
+d'inutilité de la piste stricte. Un positif strict non représenté par `T` doit
+être compté séparément et jamais comme couverture.
+
+Résultats observés : ajout de
+`tools/pc_strict_positive_coverage_probe.py`, cible
+`make bench-strict-positive-coverage`, test ciblé et documentation T077. Le
+benchmark contient `708` lignes, `60` lignes sautées par taille non applicable,
+`256` lignes positives candidate, `40` lignes candidate incomplètes, `204`
+lignes avec témoin strict validé, `0` nouveau positif par rapport à candidate,
+`0` limite `strict_algorithm52_report`, `152` lignes avec stricts non
+représentés par le PC-tree, `0` échec de validation de témoin,
+`max_strict_candidate_count=3418`, `max_candidate_seconds=2.0412`,
+`max_strict_seconds=2.1429`. Tests observés : test ciblé coverage `1 passed`,
+tests stricts complets `24 passed`, `make quick` passe avec `280 passed`, puis
+`JUSTE`, et `make bench-quick` garde `40/40` runs, `0` timeout,
+`0` incomplet.
+
+Décision : ne pas intégrer la piste stricte dans `candidate.py` maintenant. Le
+mode positive-only n'ajoute aucune couverture sur ce sweep large-n, et son coût
+max observé serait trop élevé sans gain. Changer de piste vers une preuve
+strict structurée ou vers une famille où `candidate.py` reste incomplète.

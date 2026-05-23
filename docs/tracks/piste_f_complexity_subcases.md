@@ -255,6 +255,27 @@ stricts, mais elle reste expérimentale. Ne pas intégrer dans `candidate.py`
 tant qu'aucun gain large-n n'est mesuré et tant que la preuve de complétude du
 sous-cas strict dans un PC-tree compact n'est pas écrite.
 
+Résultat T077 :
+
+- `tools/pc_strict_positive_coverage_probe.py` mesure l'intégration
+  positive-only potentielle de `strict_algorithm52_report` sans modifier
+  `candidate.py` ;
+- le sweep `make bench-strict-positive-coverage` couvre `n=5,6,8,9,10,12,16,20`,
+  PC-trees `none/star/balanced/mixed`, familles `fig22`, `strict_t024`,
+  `cycle`, `permuted_cycle`, `random`, `equal`, avec `10` repeats pour les
+  familles aléatoires/permutées ;
+- résultat observé : `708` lignes, `204` lignes avec témoin strict validé,
+  `0` nouveau positif par rapport à `candidate.py`, `0` limite
+  `max_candidates`, `0` échec de validation de témoin, `152` lignes où des
+  stricts existent dans les candidats mais ne sont pas représentés par le
+  PC-tree fourni ;
+- coût observé : `max_strict_seconds ~= 2.14s`, ce qui serait trop cher à
+  intégrer sans gain mesuré.
+
+Décision T077 : ne pas intégrer la piste stricte dans `candidate.py` maintenant.
+Elle reste utile comme sous-cas à prouver, mais le mode positive-only n'ajoute
+aucune couverture sur ce sweep large-n.
+
 ## PC-tree exact à nombre de frontiers borné
 
 Statut : sous-cas exact intégré à `candidate.py`, énumératif mais complet quand

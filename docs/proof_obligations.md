@@ -346,6 +346,14 @@ Limites restantes :
   mesuré, et elle ne devrait de toute façon être que positive-only avec témoin
   revérifié.
 
+T077 mesure précisément ce dernier point. Le probe positive-only large-n trouve
+`204` témoins strict circular validés, tous déjà couverts par `candidate.py`,
+`0` nouveau positif, `0` limite candidate et `0` échec de validation de témoin.
+Il observe aussi `152` lignes avec témoins stricts non représentés par le
+PC-tree, qui doivent rester exclus. Conséquence : aucune obligation nouvelle
+n'est fermée pour un solver général, et aucune intégration stricte dans
+`candidate.py` n'est justifiée par la couverture empirique actuelle.
+
 ### Caractérisation bad-side d'un ordre fixé
 
 Statut : conséquence directe pour ordre fixé + prédicat central exact depuis
