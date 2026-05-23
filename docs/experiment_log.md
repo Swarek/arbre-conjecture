@@ -3958,3 +3958,47 @@
   `8` tailles, `40/40` runs réussis, `0` timeout et `0` incomplet.
 - Next action : chercher une structure plus riche qu'un PC-tree unique pour les
   ordres cR, ou lancer SAT chirotope / high-girth obstructions.
+
+## 2026-05-23 local obstruction depth probe
+
+- Date/heure : 2026-05-23 22:16:36 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les rejets par petites sous-matrices ne peuvent pas être
+  considérés comme complets ; il faut mesurer la taille minimale visible des
+  obstructions cR induites.
+- Changement fait : ajout de `src/pc_circular/local_obstructions.py`,
+  `tools/pc_local_obstruction_depth_probe.py`, des tests unitaires, de la cible
+  `make bench-local-obstruction-depth` et de la documentation T081.
+  `candidate.py` n'a pas été modifié.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre au démarrage T081 ; gate initiale pré-compaction `296 passed`, puis
+  `JUSTE`.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_local_obstructions.py`.
+- Résultat correction ciblée : `7 passed`.
+- Commande exécutée :
+  `rtk .venv/bin/python -m py_compile src/pc_circular/local_obstructions.py tools/pc_local_obstruction_depth_probe.py`.
+- Résultat compilation : succès.
+- Commande exécutée : `rtk make bench-local-obstruction-depth`.
+- Résultat benchmark T081 :
+  `reports/local_obstruction_depth_probe.json` écrit ; `71` lignes,
+  `64` complètes, `9` ignorées car non applicables, `34` négatives,
+  `11` négatives de profondeur au moins `5`, `0` négative invisible sous cap
+  mais décidée seulement par oracle global, `max_min_negative_subset_size=6`,
+  `max_all_subsets_positive_up_to=6`, `max_seconds ~= 0.0221`.
+- Commande exécutée : `make quick`.
+- Résultat correction finale : `303 passed`, puis `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `8` tailles, `40/40` runs réussis, `0` timeout, `0` incomplet,
+  `max_seconds ~= 0.0083`.
+- Conclusion provisoire : les noyaux `four_local_non_cr` et
+  `five_local_non_cr` verrouillent des obstructions minimales de tailles `5` et
+  `6`. Les certificats 4/5 restent utiles comme rejets rapides, mais ne doivent
+  pas être présentés comme une théorie complète.
+- Next action : chercher des obstructions high-girth au-delà de `6` via SAT
+  chirotope/ordres cycliques, ou basculer vers compression active des gros
+  nœuds `P`.

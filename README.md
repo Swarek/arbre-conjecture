@@ -56,6 +56,7 @@ make bench-strict-positive-coverage
 make bench-threshold-roundness
 make bench-cr-pc-representability
 make bench-unrooted-pc-representability
+make bench-local-obstruction-depth
 make bench-permutation-like
 make bench-permutation-composition
 make bench-relation-components
@@ -164,6 +165,12 @@ contre-exemples au scaffold, pas encore au modèle Hsu/McConnell complet.
 `reports/unrooted_pc_representability_probe.json`. Il audite le premier
 contre-exemple T079 avec une énumération brute-force de petits PC-trees non
 enracinés à 5 feuilles. C'est un contrôle borné, pas un solveur scalable.
+
+`make bench-local-obstruction-depth` écrit
+`reports/local_obstruction_depth_probe.json`. Il scanne les sous-matrices
+induites par taille croissante et mesure la plus petite obstruction cR visible,
+quand elle existe. C'est un diagnostic local-to-global contre les certificats
+par petites sous-matrices, pas une intégration dans `candidate.py`.
 
 `make bench-permutation-like` écrit `reports/permutation_like_probe.json`. Il
 teste les profils locaux `permutation_like` observés sur `paired_farthest`

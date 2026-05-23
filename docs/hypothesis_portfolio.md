@@ -202,6 +202,13 @@ un cas égal-distance circular Robinson où la condition brute échoue, et un ca
 farthest unique où la condition brute passe mais cR échoue. La piste reste utile
 comme source d’obstructions, pas comme solver suffisant.
 
+Mise à jour T081 : le probe local-to-global mesure la taille minimale des
+sous-matrices induites non-cR. Les noyaux `four_local_non_cr` et
+`five_local_non_cr` donnent des obstructions minimales de tailles `5` et `6`,
+respectivement, avec toutes les restrictions plus petites positives dans le
+scan exact. La piste doit donc chercher des familles high-girth/globales, pas
+seulement accumuler des certificats 4/5.
+
 ## Piste F : complexité / NP-difficulté / contre-exemples à la tractabilité
 
 Intuition : l’existence dans un PC-tree compact peut être plus dure que le test

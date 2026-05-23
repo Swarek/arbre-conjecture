@@ -394,3 +394,26 @@ reconnaissance strong-ordering générale ou un diagnostic d'intersection PC-tre
 plus compact. Prochaine option raisonnable : intersecter le PC-tree avec les
 ordres matching/component-Ferrers/strong-ordering, en commençant par les hubs
 séparés et les frontiers tardives révélés par T043/T044/T045.
+
+## T081 - profondeur locale des obstructions induites
+
+Statut : diagnostic négatif borné contre les caractérisations par petites
+sous-matrices, pas solveur.
+
+Le module `local_obstructions.py` scanne les sous-matrices induites par taille
+croissante et appelle l'oracle exact sur chacune. Une ligne avec
+`min_negative_subset_size = k` prouve, sous ce scan, que toutes les restrictions
+de taille `< k` sont cR-positives alors que l'instance complète est négative par
+héritage.
+
+Résultat clé : les familles `four_local_non_cr` et `five_local_non_cr` servent
+de noyaux de profondeur locale. Elles montrent déjà que les quartets seuls et
+les obstructions de taille `5` ne suffisent pas comme théorie complète. Les
+versions paddées gardent le même noyau minimal sous cap `6`.
+
+Limites :
+
+- le scan est exponentiel et borné par `max_subset_size` ;
+- une absence d'obstruction sous cap ne prouve pas la positivité globale, sauf
+  quand l'oracle global exact est explicitement appelé ;
+- les résultats ne sont pas intégrés dans `candidate.py`.

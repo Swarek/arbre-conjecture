@@ -5191,3 +5191,60 @@ Décision : T079 n'est pas seulement un artefact de racinage du scaffold. La
 route "PC-tree unique des ordres cR" doit être remplacée par une structure plus
 riche ou par un argument de non-représentabilité ; prochaine piste raisonnable :
 SAT chirotope ou obstructions high-girth.
+
+## ExecPlan T081 - profondeur des obstructions locales cR
+
+But : mesurer jusqu'à quelle taille minimale une obstruction cR induite peut
+être invisible, et vérifier que les certificats par petites sous-matrices ne
+sont pas confondus avec une caractérisation complète.
+
+Hypothèse : les familles `four_local_non_cr` et `five_local_non_cr` donnent des
+instances négatives dont toutes les restrictions plus petites sont positives ;
+elles doivent être utilisées comme garde-fou contre une stratégie qui ne
+cherche que des témoins 4/5.
+
+Fichiers visés : `src/pc_circular/local_obstructions.py`,
+`tools/pc_local_obstruction_depth_probe.py`,
+`tests/test_local_obstructions.py`, `Makefile`, `README.md`,
+`docs/experiment_protocol.md`, `docs/hypothesis_portfolio.md`,
+`docs/tracks/piste_e_farthest_quartets.md`, `docs/proof_obligations.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `docs/tracks/README.md` et
+`PLANS.md`.
+
+Algorithme pressenti : pour une matrice `D`, énumérer les sous-ensembles
+induits par taille croissante et appeler `exact_oracle_all_orders` sur la
+sous-matrice. Le premier sous-ensemble négatif donne une obstruction minimale
+visible sous le cap ; si aucun sous-ensemble n'est vu et que `n` est petit,
+l'oracle global exact indique si l'obstruction est au-delà du cap.
+
+Plan de contre-exemples : scanner `cycle`, `equal`, `random`,
+`paired_farthest`, les noyaux `four_local_non_cr`/`five_local_non_cr` et leurs
+versions paddées. Un `min_negative_subset_size >= 5` réfute toute conclusion
+fondée seulement sur les quartets ; un cas négatif exact sans sous-ensemble
+négatif sous cap deviendrait une cible high-girth prioritaire.
+
+Plan subagents : pas de fanout pour cette étape bornée. Le prochain fanout utile
+serait une recherche high-girth au-delà de `6`, un encodage SAT chirotope, une
+analyse ordinale des rangs de distances et une compression active des nœuds `P`.
+
+Tests à exécuter : `tests/test_local_obstructions.py`,
+`make bench-local-obstruction-depth`, `make quick`, puis `make bench-quick`.
+
+Risques : le scan de sous-ensembles est exponentiel et volontairement borné par
+`max_subset_size`. L'absence d'obstruction au-delà de `6` dans ce sweep n'est
+pas une preuve d'obstruction bornée. Le rapport ne doit pas modifier
+`candidate.py`.
+
+Résultats observés : tests ciblés `tests/test_local_obstructions.py`
+(`7 passed`) et compilation Python réussie. `make bench-local-obstruction-depth`
+écrit `reports/local_obstruction_depth_probe.json` avec `71` lignes, `64`
+complètes, `34` négatives, `11` négatives de profondeur au moins `5`,
+`max_min_negative_subset_size=6`, `cap_invisible_negative_rows=0` et
+`max_seconds ~= 0.0221`. Gates finales : `make quick` passe avec
+`303 passed`, puis `JUSTE`; `make bench-quick` garde `40/40` runs,
+`0` timeout, `0` incomplet.
+
+Décision : garder T081 comme garde-fou de recherche, sans intégration
+candidate. Les obstructions minimales de tailles `5` et `6` justifient une
+future recherche high-girth/SAT chirotope au-delà du cap `6`, mais elles ne
+donnent pas de règle de rejet générale.

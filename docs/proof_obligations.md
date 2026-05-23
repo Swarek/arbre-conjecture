@@ -2037,3 +2037,31 @@ Limites :
   Hsu/McConnell générale ;
 - les mismatchs des variantes `B(a,b)` arc et `B(a,b) union {a,b}` rappellent
   qu'elles ne doivent pas être promues en prédicats de décision.
+
+### Diagnostic T081 : profondeur locale des obstructions induites
+
+Statut : preuve expérimentale bornée d'insuffisance des petits certificats,
+pas obligation positive de solveur.
+
+`local_obstruction_profile` utilise l'hérédité suivante : si une sous-matrice
+induite `D[S]` n'a aucun ordre cR, alors `D` n'a aucun ordre cR global dont la
+restriction à `S` serait cR. Dans le cas `T=star`, cette obstruction induite
+donne donc un certificat négatif pour l'existence globale.
+
+Ce que T081 couvre :
+
+- les familles `four_local_non_cr` et `five_local_non_cr` vérifient
+  expérimentalement des obstructions minimales de taille `5` et `6` ;
+- toutes les restrictions plus petites de ces noyaux sont positives selon
+  l'oracle exact ;
+- le rapport distingue une obstruction visible sous cap d'une ligne seulement
+  décidée par oracle global exact.
+
+Limites :
+
+- pour un PC-tree restreint, une sous-matrice positive en star ne dit pas que le
+  PC-tree global peut relever un ordre positif ;
+- le scan n'est complet que jusqu'au cap demandé, sauf appel explicite à
+  l'oracle global exact ;
+- aucune borne universelle sur la taille des obstructions n'est prouvée ;
+- ce diagnostic ne justifie aucun nouveau `False` dans `candidate.py`.

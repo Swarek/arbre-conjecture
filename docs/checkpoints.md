@@ -673,6 +673,16 @@ Dernier commit green avant T009 : `07120e4`.
   distinctes, `max_seconds ~= 1.0228`), `make quick` (`296 passed`, puis `JUSTE`) et `make bench-quick` (`40/40`
   runs, `0` timeout, `0` incomplet). `candidate.py` n'a pas été modifié.
 
+- Checkpoint T081 courant : commit contenant le probe de profondeur locale des
+  obstructions cR induites. Validation observée :
+  `tests/test_local_obstructions.py` (`7 passed`),
+  `make bench-local-obstruction-depth` (`71` lignes, `64` complètes,
+  `34` négatives, `11` négatives de profondeur au moins `5`,
+  `max_min_negative_subset_size=6`, `0` négative invisible sous cap décidée
+  seulement par oracle global), `make quick` (`303 passed`, puis `JUSTE`) et
+  `make bench-quick` (`40/40` runs, `0` timeout, `0` incomplet).
+  `candidate.py` n'a pas été modifié.
+
 ## Rollback
 
 Si une modification régresse et que la cause n’est pas claire :

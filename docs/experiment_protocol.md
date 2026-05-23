@@ -293,6 +293,22 @@ frontiers induites par les embeddings autorisés. Elle sert à auditer le premie
 contre-exemple T079 hors du scaffold enraciné. Une ligne complète négative est
 un signal plus fort, mais encore borné à `n=5` et à ce modèle expérimental.
 
+Profondeur d'obstructions locales Piste E :
+
+```bash
+make bench-local-obstruction-depth
+```
+
+Cette commande écrit `reports/local_obstruction_depth_probe.json`. Elle scanne
+les sous-matrices induites par taille croissante et reporte
+`min_negative_subset_size` quand une obstruction cR est visible sous le cap. Une
+ligne négative de taille minimale `k` prouve que tous les sous-ensembles plus
+petits sont cR-positifs dans ce scan, tandis que l'instance complète est
+négative par héritage. Si aucun sous-ensemble négatif n'est vu et que l'oracle
+global exact est appelé, la ligne peut aussi signaler une obstruction au-delà
+du cap. Ce rapport est un diagnostic local-to-global, pas une règle de rejet
+pour `candidate.py`.
+
 Contrôle promise-aware des permutations locales Piste F/C :
 
 ```bash
