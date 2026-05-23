@@ -2789,3 +2789,92 @@ car elle enlève le facteur des hubs sans affaiblir la correction. Ne pas marque
 le sous-cas comme polynomial : la prochaine piste doit remplacer l'énumération
 des projections par une DP/CSP support-local ou produire un contre-exemple à
 cette compression.
+
+## ExecPlan 2026-05-23 - support-local bad-side nogood compilation
+
+But : réduire le coût dominant de la Piste C en compilant les nogoods bad-side
+par produit des domaines du support local d'un atom, au lieu d'énumérer toutes
+les affectations complètes du PC-tree pour découvrir les mêmes signatures.
+
+Hypothèse : `quartet_support_paths(T, atom)` contient exactement les variables
+dont les choix déterminent l'ordre cyclique relatif des quatre labels de
+`atom`. Pour un PC-tree supporté, on peut donc énumérer seulement
+`prod(|domain(v)| : v in support)` pour chaque atom bad-side et produire les
+mêmes nogoods que `compile_bad_side_nogoods`, qui parcourt l'espace complet.
+Si cette équivalence tient sur petits arbres, cela donne une brique CSP plus
+compacte et falsifiable, sans l'intégrer encore comme solver général.
+
+Fichiers à modifier : `src/pc_circular/solvers/sat_like_experiments.py`,
+`tests/test_sat_like_experiments.py`, `tools/pc_csp_internal_benchmark.py` si
+la métrique doit être exposée, `docs/tracks/piste_c_sat_csp.md`,
+`docs/tracks/piste_b_dp_pc_tree.md`, `docs/proof_obligations.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `docs/tracks/README.md`,
+`PLANS.md`.
+
+Algorithme pressenti : ajouter un reconstructeur de l'ordre projeté des labels
+d'un atom depuis une affectation partielle sur son support. Compiler les nogoods
+bad-side en itérant, pour chaque atom, le produit des domaines des chemins de
+support ; si l'atom apparaît dans l'ordre projeté, enregistrer la signature
+support comme nogood. Réutiliser ensuite `solve_pruned_nogood_csp_from_compilation`
+pour valider que les frontiers acceptées coïncident avec le CSP direct exact.
+La compilation garde un statut incomplet si une limite de produits de support
+est atteinte ou si un nœud `P` est unsupported.
+
+Plan de contre-exemples : comparer les nogoods support-local aux nogoods
+énumérés complets sur arbres nested, wrapping, balanced/mixed et familles
+random/cycle/equal/matching low-hub ; chercher faux positifs/faux négatifs via
+`solve_pruned_nogood_csp_from_compilation(validate_against_direct=True)` ; tester
+spécifiquement les cas où le support omet un nœud nested et ceux où la
+canonicalisation circulaire pourrait inverser l'orientation.
+
+Plan subagents : sidecars lecture seule. Piste C audite l'équivalence support
+local vs compilation complète ; Piste B cherche une collision de signature de
+support ; Piste A/E génère des contre-exemples de quartet/nœud nested ; Piste F
+mesure si la métrique est un vrai progrès ou seulement un déplacement de coût.
+
+Tests à exécuter : tests ciblés `tests/test_sat_like_experiments.py`, probes
+bornées contre `accepted_frontiers_by_csp`, `make quick`,
+`make hunt-counterexamples` si le solveur public change ou si un nouveau
+certificat est intégré, `make bench-csp-quick` pour la métrique interne.
+
+Risques : l'ordre projeté d'un atom peut dépendre d'une rotation/reversal
+globale non capturée ; un support calculé trop petit peut produire un faux
+nogood ; un produit de supports par atom peut être plus cher que l'espace
+complet quand il y a beaucoup d'atomes ; ce travail reste expérimental et ne
+doit pas devenir un rejet dans `candidate.py`.
+
+Résultats observés : ajout de
+`compile_bad_side_nogoods_support_local`,
+`compile_cr_nogoods_support_local` et
+`solve_support_local_bad_side_nogood_csp`. Les nogoods support-local sont
+dédupliqués par signature effective de pruning, pas par identité orientée
+d'atom. Tests ciblés `tests/test_sat_like_experiments.py` : `26 passed`.
+Probe borné : `577` couples famille/tree sans mismatch de signatures ni de
+solveur contre le CSP direct. `make bench-csp-quick` : `192` lignes, `0`
+mismatch, `0` mismatch de signatures, médiane compile complète `0.00104s`,
+médiane compile support-local `0.00276s`, médiane solve support-local
+`0.000120s`, ratio médian `support_product_total / (full_assignment_space *
+atoms) = 0.25`, `2904` signatures support-local contre `31616` nogoods
+atom-labellisés complets. `make quick` final donne `209 passed`, puis `JUSTE`.
+`make check` donne `JUSTE`. `make bench-quick` garde `0` timeout et `0`
+incomplet ; à `n=20`, médiane `0.001340s`, p95 `0.001529s`, fit polynomial
+empirique `p ~= 1.90`. `make bench` garde `0` timeout et `0` incomplet jusqu'à
+`n=100` ; à `n=100`, médiane `0.03458s`, p95 `0.03771s`, fit polynomial
+empirique `p ~= 1.81`.
+
+Résultats subagents : Piste C valide l'approche seulement au niveau signatures
+et recommande explicitement de ne pas comparer `(atom, signature)`. Piste B
+trouve une collision canonique où un label hors atom change l'orientation de
+`canonical_circular_order(frontier_complet)` ; ce cas est ajouté en test. Piste
+contre-exemples exécute `1491` cas `n=4..7` sans mismatch de signatures seules
+ni mismatch solveur, tout en confirmant `1271` mismatches stricts
+`(atom, signature)`. Piste complexité montre que T047 est asymptotiquement
+meilleur quand l'ancien coût pertinent est `full_assignment_space * atoms`, mais
+pas toujours plus rapide sur petits arbres.
+
+Décision : conserver T047 comme artefact Piste C hors `candidate.py`. Il réduit
+fortement le nombre de signatures de pruning et donne une métrique plus honnête
+du coût de compilation, mais il ne prouve pas encore un solveur compact général :
+si le nombre d'atoms domine, la somme des produits de support peut rester
+élevée. Prochaine étape : compiler les supports par classes/signatures
+d'atom ou chercher une borne structurelle sur `support_product_total`.

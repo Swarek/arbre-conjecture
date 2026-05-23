@@ -26,6 +26,7 @@ from pc_circular.generators import instance_by_kind  # noqa: E402
 from pc_circular.pc_tree import balanced_pc_tree  # noqa: E402
 from pc_circular.solvers.sat_like_experiments import (  # noqa: E402
     accepted_frontiers_by_csp,
+    compile_bad_side_nogoods_support_local,
     compile_cr_nogoods,
     solve_pruned_nogood_csp_from_compilation,
 )
@@ -49,6 +50,13 @@ def _pc_tree(kind: str, n: int):
 
 def _median(values: Sequence[float]) -> float | None:
     return statistics.median(values) if values else None
+
+
+def _signature_set(compilation: dict) -> set[tuple]:
+    return {
+        tuple((path, tuple(choice)) for path, choice in nogood["signature"])
+        for nogood in compilation["nogoods"]
+    }
 
 
 def run_benchmark(
@@ -85,8 +93,27 @@ def run_benchmark(
                     )
                     solve_seconds = time.perf_counter() - solve_start
 
+                    support_compile_start = time.perf_counter()
+                    support_compilation = compile_bad_side_nogoods_support_local(
+                        D,
+                        T,
+                        max_p_degree=max_p_degree,
+                    )
+                    support_compile_seconds = time.perf_counter() - support_compile_start
+
+                    support_solve_start = time.perf_counter()
+                    support_solve_result = solve_pruned_nogood_csp_from_compilation(
+                        D,
+                        T,
+                        support_compilation,
+                        max_p_degree=max_p_degree,
+                        validate_against_direct=False,
+                    )
+                    support_solve_seconds = time.perf_counter() - support_solve_start
+
                     direct_seconds = None
                     mismatch = False
+                    support_mismatch = False
                     if validate and not solve_result["unsupported"]:
                         direct_start = time.perf_counter()
                         direct = accepted_frontiers_by_csp(
@@ -97,10 +124,24 @@ def run_benchmark(
                         )
                         direct_seconds = time.perf_counter() - direct_start
                         actual = {tuple(order) for order in solve_result["accepted_frontiers"]}
+                        support_actual = {
+                            tuple(order) for order in support_solve_result["accepted_frontiers"]
+                        }
                         mismatch = actual != direct
+                        support_mismatch = support_actual != direct
 
                     counts = solve_result["counts"]
                     compile_counts = compilation["counts"]
+                    support_counts = support_solve_result["counts"]
+                    support_compile_counts = support_compilation["counts"]
+                    signatures = _signature_set(compilation)
+                    support_signatures = _signature_set(support_compilation)
+                    old_scan_work = counts["full_assignment_space"] * max(1, len(support_compilation["atoms"]))
+                    support_vs_old_scan_ratio = (
+                        support_compile_counts["support_product_total"] / old_scan_work
+                        if old_scan_work
+                        else 0.0
+                    )
                     rows.append(
                         {
                             "n": n,
@@ -110,11 +151,23 @@ def run_benchmark(
                             "supported": not solve_result["unsupported"],
                             "complete": solve_result["complete"],
                             "mismatch": mismatch,
+                            "support_mismatch": support_mismatch,
                             "compile_seconds": compile_seconds,
                             "solve_seconds": solve_seconds,
+                            "support_compile_seconds": support_compile_seconds,
+                            "support_solve_seconds": support_solve_seconds,
                             "direct_seconds": direct_seconds,
                             "atoms": len(compilation["atoms"]),
                             "unique_nogoods": compile_counts["unique_nogoods"],
+                            "support_atoms": len(support_compilation["atoms"]),
+                            "support_unique_nogoods": support_compile_counts["unique_nogoods"],
+                            "effective_nogood_signatures": len(signatures),
+                            "support_effective_nogood_signatures": len(support_signatures),
+                            "same_effective_signatures": signatures == support_signatures,
+                            "support_assignments_seen": support_compile_counts["support_assignments_seen"],
+                            "support_product_total": support_compile_counts["support_product_total"],
+                            "support_max_product": support_compile_counts["max_support_product"],
+                            "support_vs_old_scan_ratio": support_vs_old_scan_ratio,
                             "atoms_with_nogoods": compile_counts["atoms_with_nogoods"],
                             "max_support_size": compile_counts["max_support_size"],
                             "support_size_histogram": compile_counts["support_size_histogram"],
@@ -124,6 +177,9 @@ def run_benchmark(
                             "branches_pruned": counts["branches_pruned"],
                             "pruning_rate": counts.get("pruning_rate", 0.0),
                             "accepted_frontiers": counts["accepted_frontiers"],
+                            "support_leaf_assignments_seen": support_counts["leaf_assignments_seen"],
+                            "support_branches_pruned": support_counts["branches_pruned"],
+                            "support_accepted_frontiers": support_counts["accepted_frontiers"],
                         }
                     )
 
@@ -142,12 +198,30 @@ def run_benchmark(
             "rows": len(rows),
             "supported_rows": len(supported_rows),
             "mismatches": sum(1 for row in rows if row["mismatch"]),
+            "support_mismatches": sum(1 for row in rows if row["support_mismatch"]),
+            "signature_mismatches": sum(
+                1 for row in rows if row["supported"] and not row["same_effective_signatures"]
+            ),
             "median_compile_seconds": _median([row["compile_seconds"] for row in supported_rows]),
+            "median_support_compile_seconds": _median(
+                [row["support_compile_seconds"] for row in supported_rows]
+            ),
             "median_solve_seconds": _median([row["solve_seconds"] for row in supported_rows]),
+            "median_support_solve_seconds": _median(
+                [row["support_solve_seconds"] for row in supported_rows]
+            ),
             "median_direct_seconds": _median(
                 [row["direct_seconds"] for row in supported_rows if row["direct_seconds"] is not None]
             ),
             "total_unique_nogoods": sum(row["unique_nogoods"] for row in supported_rows),
+            "total_support_unique_nogoods": sum(row["support_unique_nogoods"] for row in supported_rows),
+            "total_support_assignments_seen": sum(
+                row["support_assignments_seen"] for row in supported_rows
+            ),
+            "total_support_product": sum(row["support_product_total"] for row in supported_rows),
+            "median_support_vs_old_scan_ratio": _median(
+                [row["support_vs_old_scan_ratio"] for row in supported_rows]
+            ),
             "total_branches_pruned": sum(row["branches_pruned"] for row in supported_rows),
             "total_leaf_assignments_seen": sum(row["leaf_assignments_seen"] for row in supported_rows),
             "total_full_assignment_space": sum(row["full_assignment_space"] for row in supported_rows),
@@ -191,7 +265,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             sort_keys=True,
         )
     )
-    return 2 if report["summary"]["mismatches"] else 0
+    return (
+        2
+        if report["summary"]["mismatches"]
+        or report["summary"]["support_mismatches"]
+        or report["summary"]["signature_mismatches"]
+        else 0
+    )
 
 
 if __name__ == "__main__":

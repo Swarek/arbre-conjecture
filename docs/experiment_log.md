@@ -2155,3 +2155,70 @@
 - Next action : remplacer l'énumération `2^m * m!` par une DP/CSP
   support-local qui transporte l'ordre des paires ouvertes, ou documenter un
   contre-exemple montrant que cette compression explose.
+
+## 2026-05-23 support-local bad-side nogood compilation
+
+- Date/heure : 2026-05-23 08:07:33 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les variables de `quartet_support_paths(T, atom)`
+  déterminent l'ordre relatif des quatre labels d'un atom bad-side. On peut
+  donc compiler les signatures de pruning en énumérant seulement le produit des
+  domaines de ce support, au lieu de parcourir toutes les affectations complètes
+  du PC-tree pour chaque atom.
+- Changement fait : ajout de
+  `compile_bad_side_nogoods_support_local`,
+  `compile_cr_nogoods_support_local`,
+  `_project_atom_order_from_support_assignment` et
+  `solve_support_local_bad_side_nogood_csp`; extension de
+  `tools/pc_csp_internal_benchmark.py` avec métriques support-local,
+  `same_effective_signatures`, `signature_mismatches` et
+  `support_vs_old_scan_ratio`; tests de reconstructeur, wrapping,
+  equal-distance, limite de compilation, collision de canonicalisation et solve
+  pruné support-local.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `202 passed`, puis `JUSTE`.
+- Plan subagents : quatre sidecars lecture seule. Résultats : audit Piste C
+  valide l'approche au niveau signatures et recommande de ne pas comparer
+  `(atom, signature)` ; Piste B trouve une collision de canonicalisation globale
+  ajoutée en test ; contre-exemples exécute `1491` cas sans mismatch de
+  signatures seules ni mismatch solveur ; complexité montre que le coût passe de
+  `full_assignment_space * atoms` à `sum_support_products`, avec gains nets sur
+  probes plus grandes mais pas toujours sur petits arbres.
+- Commande exécutée : `pytest -q tests/test_sat_like_experiments.py`.
+- Résultat correction : `26 passed`.
+- Commande exécutée : probe support-local bad-side sur familles
+  `random/cycle/block/ultrametric/equal/non_strict/paired_farthest/permuted_cycle`,
+  arbres balanced/mixed et cas matching low-hub.
+- Résultat probe : `577` couples famille/tree sans mismatch de signatures ni
+  mismatch solveur contre le CSP cR direct.
+- Commande exécutée : `make bench-csp-quick`.
+- Résultat benchmark interne : `reports/csp_internal_benchmark_quick.json`
+  écrit ; `192` lignes, `0` mismatch, `0` support mismatch,
+  `0` signature mismatch ; médiane compilation complète `0.00104s`, médiane
+  compilation support-local `0.00276s`, médiane solve support-local
+  `0.000120s`, ratio médian `support_vs_old_scan_ratio=0.25`,
+  `total_support_unique_nogoods=2904` contre
+  `total_unique_nogoods=31616`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `209 passed`, puis `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark rapide : `reports/complexity_report_quick.json` écrit ;
+  `0` timeout, `0` incomplet ; à `n=20`, médiane `0.001340s`,
+  p95 `0.001529s`, fit polynomial empirique `p ~= 1.90`.
+- Commande exécutée : `make bench`.
+- Résultat benchmark fort : `reports/complexity_report.json` écrit ; `0`
+  timeout, `0` incomplet jusqu'à `n=100`, médiane `0.03458s`,
+  p95 `0.03771s`, fit polynomial empirique `p ~= 1.81`.
+- Conclusion : T047 est un progrès de représentation CSP et de métrique :
+  les signatures de pruning sont obtenues sans scan complet par atom et sont
+  beaucoup moins nombreuses que les nogoods atom-labellisés. Sur les petites
+  tailles du benchmark, la compilation support-local n'est pas encore plus
+  rapide, donc ce n'est pas une solution algorithmique générale.
+- Next action : regrouper les atoms par support/signature partielle ou chercher
+  une borne structurelle sur `sum_support_products`; garder T047 hors
+  `candidate.py` tant que cette borne n'existe pas.

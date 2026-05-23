@@ -1197,7 +1197,8 @@ Obligations ouvertes :
 
 ### Compilation bad-side par paire
 
-Statut : diagnostic CSP exact après énumération / pas solveur compact.
+Statut : diagnostic CSP exact après énumération, puis compilation support-local
+expérimentale / pas solveur compact général.
 
 `forbidden_bad_side_atoms(D)` transforme la caractérisation précédente en
 atomes interdits : pour chaque paire `{a,b}` et chaque couple de mauvais
@@ -1217,14 +1218,33 @@ Ce que cela couvre :
 
 Limites :
 
-- la compilation énumère encore les affectations complètes pour découvrir les
-  signatures de nogoods ;
+- la compilation T027 énumère encore les affectations complètes pour découvrir
+  les signatures de nogoods ;
 - diviser les atomes/nogoods par deux sur les probes ne prouve aucune borne
   polynomiale ;
 - les obligations 3, 4 et 5 de la candidate générale restent ouvertes tant
   qu'il n'existe pas de construction compacte des nogoods ou d'état DP
   suffisant ;
 - les gros nœuds `P` non supportés restent `unsupported`, jamais des rejets.
+
+T047 ajoute `compile_bad_side_nogoods_support_local`, qui parcourt seulement le
+produit des domaines de `quartet_support_paths(T, atom)` pour chaque atom, puis
+déduplique les nogoods par signature effective de pruning. Cela couvre une
+obligation expérimentale plus forte : sur les probes `n=4..7`, les signatures
+support-local coïncident avec les signatures de la compilation complète et le
+solveur pruné accepte exactement les mêmes frontiers que le CSP cR direct.
+
+Limites T047 :
+
+- l'identité orientée de l'`atom` n'est pas stable sous canonicalisation
+  circulaire globale ; seule la signature de pruning est utilisée comme objet
+  sémantique ;
+- le coût pertinent devient `sum_support_products`, qui peut rester supérieur à
+  l'espace complet sur de très petits arbres ou quand le nombre d'atoms domine ;
+- aucune branche T047 n'est intégrée à `candidate.py`, donc cela reste un
+  artefact Piste C ;
+- il faut encore une borne structurelle ou un regroupement d'atoms pour obtenir
+  une preuve de complexité utile.
 
 ### Prédicats stricts d'ordre fixé
 

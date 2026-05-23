@@ -261,3 +261,21 @@ Contre-exemple de signature trop faible : deux blocs peuvent exposer les mêmes
 ensembles de paires mais des ordres opposés. Le cas rigide
 `C(0,1,2,3,4,6,5,7)` splitte chaque paire côté A/B mais désynchronise les mates,
 donc une signature par ensembles ou booléens de côté accepte à tort.
+
+## Résultats T047
+
+Statut : clarification d'une collision de canonicalisation, pas nouvelle DP.
+
+Le sidecar Piste B trouve une collision si l'on demande que la signature de
+support prédise l'identité exacte de l'atom orienté après
+`canonical_circular_order(frontier_complet)`. Dans
+`balanced_pc_tree(5, kind="mixed")`, deux affectations qui ne diffèrent que par
+un choix hors support de l'atom `(0,2,3,4)` ont la même projection brute sur les
+quatre labels, mais la canonicalisation globale change l'orientation visible
+parce que le label hors atom `1` détermine le renversement canonique.
+
+Conclusion : pour Piste B/C, l'objet stable n'est pas `(atom, signature)` mais
+la signature de pruning. Cette collision est verrouillée par
+`test_support_local_atom_identity_is_not_stable_under_global_canonicalization`.
+Toute future DP doit éviter de baser son état sur une orientation canonique
+globale influencée par des labels déjà supprimés.

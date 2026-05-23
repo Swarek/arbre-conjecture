@@ -323,6 +323,21 @@ Dernier commit green avant T009 : `07120e4`.
   `make check`, `make bench-quick`, `make bench`. Résultat observé :
   `mixed/star` reste `0` timeout et `0` incomplet jusqu'à `n=100`, médiane
   `0.03504s` à `n=100`.
+- Checkpoint T047 courant : commit contenant la compilation bad-side
+  support-local hors candidate. `compile_bad_side_nogoods_support_local`
+  énumère le produit des domaines de `quartet_support_paths` par atom, puis
+  déduplique par signature effective de pruning. Régressions ajoutées :
+  reconstructeur de projection d'atom, wrapping, égal-distance, limite de
+  support, collision de canonicalisation globale, solveur pruné support-local.
+  Validation observée : `tests/test_sat_like_experiments.py`, probe
+  support-local `577` couples sans mismatch, `make bench-csp-quick`
+  (`0` mismatch, `0` support mismatch, `0` signature mismatch), `make quick`,
+  `make check`, `make bench-quick`, `make bench`. Résultat observé : le
+  benchmark interne passe de `31616` nogoods atom-labellisés à `2904`
+  signatures support-local, avec ratio médian `support_vs_old_scan_ratio=0.25`,
+  mais la compilation support-local reste plus lente sur les très petits arbres
+  du quick benchmark ; `mixed/star` reste `0` timeout et `0` incomplet jusqu'à
+  `n=100`, médiane `0.03458s` à `n=100`.
 
 ## Rollback
 

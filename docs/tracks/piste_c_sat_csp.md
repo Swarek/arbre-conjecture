@@ -271,6 +271,48 @@ compilation par produit des domaines du support seulement.
 Limite : T046 est un meilleur exact borné, pas une preuve de CSP polynomial.
 Tout dépassement de `max_projection_orders` reste incomplet.
 
+## Tentative T047 - Compilation bad-side par produits de supports
+
+Statut : artefact Piste C, non intégré à `candidate.py`.
+
+Changement : `compile_bad_side_nogoods_support_local` compile les atomes
+bad-side en parcourant seulement les domaines des variables retournées par
+`quartet_support_paths`. Le reconstructeur
+`_project_atom_order_from_support_assignment` projette les quatre labels d'un
+atom depuis une affectation partielle du support. Les nogoods sont ensuite
+dédupliqués par signature effective de pruning.
+
+Invariant testé : les signatures support-local doivent être les mêmes que les
+signatures de pruning découvertes par `compile_bad_side_nogoods`, même si
+l'identité orientée de l'atom diffère. Cette nuance est nécessaire : une
+canonicalisation globale peut inverser l'orientation visible d'un quartet à
+cause d'un label hors atom, alors que la signature de rejet reste la même.
+
+Résultats :
+
+- tests ciblés `tests/test_sat_like_experiments.py` : `26 passed` ;
+- probe local `577` couples famille/tree sans mismatch de signatures ni de
+  solveur contre `accepted_frontiers_by_csp(source="cr")` ;
+- sidecar contre-exemples : `1491` cas `n=4..7`, `0` mismatch de signatures
+  seules et `0` mismatch solveur, mais `1271` mismatches stricts
+  `(atom, signature)`, ce qui confirme que l'atom est seulement diagnostique ;
+- `make bench-csp-quick` : `192` lignes, `0` mismatch, `0` mismatch de
+  signatures, `total_support_unique_nogoods=2904` contre
+  `total_unique_nogoods=31616`.
+
+Interprétation complexité : T047 déplace le coût de
+`full_assignment_space * atoms` vers `sum_support_products`. Le ratio médian
+observé dans `make bench-csp-quick` est `0.25`, mais la médiane de compilation
+support-local reste plus lente sur les petits arbres du benchmark
+(`0.00276s` contre `0.00104s`) car l'espace complet y est minuscule. Sur des
+probes plus larges `n=9..12`, le sidecar complexité observe des gains nets
+quand `full_assignment_space * atoms` devient dominant.
+
+Prochaine action : regrouper les atomes par support/signature partielle ou
+chercher une borne sur `sum_support_products`. Ne pas convertir ce diagnostic
+en rejet candidate tant que les gros `P` restent unsupported et que la borne
+globale n'est pas prouvée.
+
 ## Tentative T021 - Repair positive-only pour paired-farthest
 
 Statut : idée saine comme générateur expérimental vérifié, mais non intégrée à

@@ -8,17 +8,26 @@ from pc_circular.generators import (
     random_dissimilarity,
 )
 from pc_circular.pc_tree import balanced_pc_tree, c_node, enumerate_frontiers, leaf, p_node, star_pc_tree
-from pc_circular.predicates import all_circular_orders, is_precircular_order_cR, is_quasi_circular_order
+from pc_circular.predicates import (
+    all_circular_orders,
+    canonical_circular_order,
+    is_precircular_order_cR,
+    is_quasi_circular_order,
+)
 from pc_circular.solvers.sat_like_experiments import (
     _cyclic_atom_occurs,
+    _project_atom_order_from_support_assignment,
     accepted_frontiers_by_csp,
     assignment_frontier_report,
     build_local_domains,
     compile_bad_side_nogoods,
+    compile_bad_side_nogoods_support_local,
     compile_cr_nogoods,
+    compile_cr_nogoods_support_local,
     forbidden_cr_atoms,
     forbidden_bad_side_atoms,
     frontier_from_assignment,
+    iter_local_assignments,
     prop45_nogood_frontier_report,
     prop45_nogood_frontier_search,
     quartet_support_paths,
@@ -27,7 +36,26 @@ from pc_circular.solvers.sat_like_experiments import (
     solve_pruned_bad_side_nogood_csp,
     solve_nogood_csp,
     solve_pruned_nogood_csp,
+    solve_pruned_nogood_csp_from_compilation,
+    solve_support_local_bad_side_nogood_csp,
 )
+
+
+def _nogood_keys(compilation):
+    return {
+        (
+            tuple(nogood["atom"]),
+            tuple((path, tuple(choice)) for path, choice in nogood["signature"]),
+        )
+        for nogood in compilation["nogoods"]
+    }
+
+
+def _nogood_signatures(compilation):
+    return {
+        tuple((path, tuple(choice)) for path, choice in nogood["signature"])
+        for nogood in compilation["nogoods"]
+    }
 
 
 def test_prop45_nogood_report_rejects_single_bad_quasi_order():
@@ -158,6 +186,20 @@ def test_omitting_nested_support_can_change_quartet_projection():
     assert not _cyclic_atom_occurs(frontier_from_assignment(T, assignment_b), atom)
 
 
+def test_project_atom_order_from_support_assignment_matches_full_assignment_projection():
+    T = c_node([p_node([leaf(0), leaf(1)]), p_node([leaf(2), leaf(3)]), leaf(4)])
+    atom = (0, 1, 2, 3)
+    support = quartet_support_paths(T, atom)
+    encoding = build_local_domains(T, max_p_degree=3)
+
+    for assignment in iter_local_assignments(encoding):
+        support_assignment = {path: assignment[path] for path in support}
+        projected = _project_atom_order_from_support_assignment(T, atom, support_assignment)
+        full_projection = tuple(label for label in frontier_from_assignment(T, assignment) if label in atom)
+
+        assert projected == full_projection
+
+
 def test_compiled_cr_nogoods_reject_wrapping_violation():
     D = quasi_circular_not_circular_four_point()
     T = c_node([leaf(3), leaf(0), leaf(1), leaf(2)])
@@ -240,6 +282,103 @@ def test_compiled_bad_side_nogoods_match_direct_cr_csp_on_small_tree():
     assert actual == expected
     assert result["counts"]["false_positive_frontiers"] == 0
     assert result["counts"]["false_negative_frontiers"] == 0
+
+
+def test_support_local_bad_side_nogoods_match_complete_compilation_on_small_tree():
+    T = balanced_pc_tree(6, kind="mixed")
+    D = random_dissimilarity(6, values=(1, 2, 3), rng=random.Random(20260524))
+    complete = compile_bad_side_nogoods(D, T, max_p_degree=3)
+    support_local = compile_bad_side_nogoods_support_local(D, T, max_p_degree=3)
+
+    assert support_local["complete"] is True
+    assert _nogood_signatures(support_local) == _nogood_signatures(complete)
+    assert support_local["counts"]["unique_nogoods"] == len(_nogood_signatures(complete))
+    assert support_local["counts"]["unique_nogoods"] <= complete["counts"]["unique_nogoods"]
+    assert support_local["counts"]["support_assignments_seen"] == support_local["counts"]["support_product_total"]
+
+
+def test_support_local_atom_identity_is_not_stable_under_global_canonicalization():
+    D = [
+        [0, 1, 2, 1, 2],
+        [1, 0, 1, 1, 1],
+        [2, 1, 0, 2, 1],
+        [1, 1, 2, 0, 2],
+        [2, 1, 1, 2, 0],
+    ]
+    T = balanced_pc_tree(5, kind="mixed")
+    atom = (0, 2, 3, 4)
+    support = quartet_support_paths(T, atom)
+    shared_support = {
+        (): (0, 1),
+        (0,): (0, 1),
+        (1,): (0, 1),
+    }
+    assignment_a = {**shared_support, (0, 0): (0, 1)}
+    assignment_b = {**shared_support, (0, 0): (1, 0)}
+
+    assert any(tuple(atom_info["atom"]) == atom for atom_info in forbidden_cr_atoms(D))
+    assert support == ((), (0,), (1,))
+    assert _project_atom_order_from_support_assignment(T, atom, shared_support) == (0, 2, 3, 4)
+
+    canonical_projection_a = tuple(
+        label for label in canonical_circular_order(frontier_from_assignment(T, assignment_a)) if label in atom
+    )
+    canonical_projection_b = tuple(
+        label for label in canonical_circular_order(frontier_from_assignment(T, assignment_b)) if label in atom
+    )
+
+    assert canonical_projection_a == (0, 2, 3, 4)
+    assert canonical_projection_b == (0, 4, 3, 2)
+    assert _cyclic_atom_occurs(canonical_projection_a, atom)
+    assert not _cyclic_atom_occurs(canonical_projection_b, atom)
+
+
+def test_support_local_cr_nogoods_match_complete_compilation_on_wrapping_tree():
+    D = quasi_circular_not_circular_four_point()
+    T = c_node([leaf(3), leaf(0), leaf(1), leaf(2)])
+    complete = compile_cr_nogoods(D, T)
+    support_local = compile_cr_nogoods_support_local(D, T)
+
+    assert support_local["complete"] is True
+    assert _nogood_signatures(support_local) == _nogood_signatures(complete)
+    assert support_local["counts"]["unique_nogoods"] == len(_nogood_signatures(complete))
+
+
+def test_support_local_bad_side_solver_matches_direct_and_prunes_cycle_metric():
+    T = balanced_pc_tree(6, kind="mixed")
+    D = cycle_metric(6)
+    direct = accepted_frontiers_by_csp(D, T, source="cr", max_p_degree=3)
+    result = solve_support_local_bad_side_nogood_csp(D, T, max_p_degree=3)
+
+    assert {tuple(order) for order in result["accepted_frontiers"]} == direct
+    assert result["counts"]["branches_pruned"] > 0
+    assert result["counts"]["validation_false_positive_frontiers"] == 0
+    assert result["counts"]["validation_false_negative_frontiers"] == 0
+
+
+def test_support_local_compilation_can_avoid_full_assignment_scan_per_atom():
+    T = c_node(
+        [
+            p_node([leaf(0), leaf(1), leaf(2)]),
+            p_node([leaf(3), leaf(4), leaf(5)]),
+            p_node([leaf(6), leaf(7), leaf(8)]),
+        ]
+    )
+    D = cycle_metric(9)
+    support_local = compile_bad_side_nogoods_support_local(D, T, max_p_degree=3)
+
+    assert support_local["complete"] is True
+    assert support_local["counts"]["full_assignment_space"] == 2 * 6 * 6 * 6
+    assert support_local["counts"]["max_support_product"] < support_local["counts"]["full_assignment_space"]
+
+
+def test_support_local_compilation_reports_limit_without_false_completion():
+    T = balanced_pc_tree(6, kind="mixed")
+    D = random_dissimilarity(6, values=(1, 2, 3), rng=random.Random(20260524))
+    support_local = compile_bad_side_nogoods_support_local(D, T, max_p_degree=3, limit=1)
+
+    assert support_local["complete"] is False
+    assert support_local["counts"]["support_assignments_seen"] == 1
 
 
 def test_bad_side_nogoods_are_no_larger_than_ordered_cr_nogoods_on_probe():
