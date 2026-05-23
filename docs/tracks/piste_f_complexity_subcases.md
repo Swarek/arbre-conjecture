@@ -322,6 +322,35 @@ Limites :
   `n=10,12` par énumération PC-tree bornée, et reste incomplète à `n=16,20` ;
 - elle dépend du seed et doit rester visible dans le rapport JSON.
 
+## Petite sous-matrice interdite
+
+Statut : certificat négatif intégré à `candidate.py`.
+
+T031 utilise l'hérédité de la propriété cR : tout ordre cR complet induit un
+ordre cR sur chaque sous-ensemble de labels. La candidate inspecte donc des
+sous-matrices induites de 4 points. Si l'une d'elles n'a aucun ordre cR exact,
+la matrice complète est rejetée, indépendamment du PC-tree fourni.
+
+Résultat T031 :
+
+- `make check` et `make hunt-counterexamples` restent verts ;
+- `make bench` sur `mixed/star`, seed `20260521`, passe à `0` timeout et
+  `0` incomplet jusqu'à `n=100` ;
+- les `42` anciens placeholders `random` sont désormais tous classés par
+  `candidate_small_forbidden_submatrix_obstruction` ;
+- probe subagent : sur les `42` cas ciblés, le premier témoin 4-points apparaît
+  toujours avant 256 sous-ensembles, et sur `400/400` randoms purs testés pour
+  `n in {10,20,60,100}`, la limite `4096` trouve une obstruction.
+
+Limites :
+
+- la limite de `4096` sous-ensembles est un budget de recherche, pas une preuve
+  d'absence d'obstruction ;
+- si aucune obstruction n'est trouvée, la candidate doit rester incomplète en
+  négatif ;
+- ce certificat ne prouve pas une caractérisation des matrices random et ne
+  remplace pas une preuve générale.
+
 ## Témoin cycle par distances minimales
 
 Statut : certificat positif intégré pour tout PC-tree du scaffold où le témoin

@@ -150,6 +150,14 @@ Dernier commit green avant T009 : `07120e4`.
   Résultat observé : les `42` incomplets du benchmark fort `mixed/star` sont
   tous `random`, avec `0` timeout. `make bench-piste-f` passe aussi avec `0`
   timeout ; `paired_farthest/mixed` reste incomplet seulement pour `n=16,20`.
+- Checkpoint T031 courant : commit contenant le certificat négatif héréditaire
+  `candidate_small_forbidden_submatrix_obstruction` par sous-matrice 4 points,
+  plus la validation cR directe du témoin paired-farthest. Validation observée :
+  `tests/test_candidate.py`, `make unit`, `make quick`,
+  `make hunt-counterexamples`, `make check`, `make bench-quick`, `make bench`,
+  `make bench-piste-f`. Résultat observé : `make bench` a `0` timeout et `0`
+  incomplet jusqu'à `n=100`; les `42` anciens placeholders random sont rejetés
+  par obstruction 4-points.
 
 ## Rollback
 

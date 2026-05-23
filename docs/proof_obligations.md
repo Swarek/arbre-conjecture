@@ -394,6 +394,49 @@ Limites :
 - la branche est ignorée quand `quasi_orders` explicite est fourni, pour ne pas
   décider sur un espace différent de celui demandé.
 
+### Petite sous-matrice interdite
+
+Statut : certificat négatif prouvé quand une obstruction est trouvée.
+
+`candidate_small_forbidden_submatrix_obstruction` cherche des sous-ensembles de
+taille `SMALL_FORBIDDEN_SUBMATRIX_ORDER = 4`, jusqu'à
+`SMALL_FORBIDDEN_SUBMATRIX_LIMIT = 4096` sous-ensembles. Pour chaque
+sous-ensemble inspecté, la sous-matrice induite est renumérotée et testée
+exactement par la baseline brute-force de petite taille. Si aucun ordre cR
+n'existe sur cette sous-matrice, la candidate retourne `exists=False` et
+`complete=True` pour l'instance complète.
+
+Preuve :
+
+- restriction héréditaire : si un ordre circulaire complet est cR pour `D`,
+  alors sa restriction à n'importe quel sous-ensemble est cR pour la
+  sous-matrice induite, car les quadruplets du sous-ordre gardent le même ordre
+  cyclique et les mêmes distances ;
+- contraposée : si une sous-matrice induite n'a aucun ordre cR, aucun ordre
+  complet ne peut être cR ;
+- le PC-tree ne peut pas réparer cette obstruction, puisqu'il ne fait que
+  restreindre la famille des ordres complets admissibles.
+
+Ce que cela couvre :
+
+- obligation 1 : le certificat négatif repose sur le prédicat fixed-order exact
+  appliqué exhaustivement à la sous-matrice ;
+- obligation 2 négative : l'obstruction induite est suffisante pour rejeter
+  l'existence globale ;
+- obligation 3 : aucun ordre représenté n'est manqué dans ce sous-cas, car
+  aucun ordre complet sur `X` ne peut être cR ;
+- obligation 5 dans ce sous-cas : le temps est borné par
+  `O(SMALL_FORBIDDEN_SUBMATRIX_LIMIT * c_4)`, où `c_4` est le coût constant de
+  l'oracle brute-force sur 4 labels.
+
+Limites :
+
+- absence d'obstruction dans la fenêtre de recherche ne prouve rien ;
+- le certificat est négatif seulement, il ne fournit aucun témoin positif ;
+- ce n'est pas une caractérisation des randoms ni du problème général ;
+- si le PC-tree fourni est invalide, ce certificat ne doit pas être interprété
+  comme une validation de l'entrée PC-tree.
+
 ### Membership PC-tree d'un ordre fixé
 
 Statut : théorème prouvé pour le scaffold P/C/leaf enraciné, pas pour une

@@ -22,7 +22,7 @@ the large-n placeholder with a proved algorithm or a clearly scoped sub-case.
 from __future__ import annotations
 
 from collections.abc import Sized
-from itertools import islice
+from itertools import combinations, islice
 from typing import Iterable, Optional, Sequence
 
 from pc_circular.pc_tree import PCNode, enumerate_frontiers, labels, represents_order, sample_frontier
@@ -37,6 +37,8 @@ from pc_circular.solvers import brute_force
 EXACT_BRUTE_FORCE_LIMIT = 8
 EXACT_PC_TREE_FRONTIER_LIMIT = 4096
 EXACT_QUASI_ORDER_LIMIT = 4096
+SMALL_FORBIDDEN_SUBMATRIX_ORDER = 4
+SMALL_FORBIDDEN_SUBMATRIX_LIMIT = 4096
 
 
 def _large_n_budget(n: int) -> int:
@@ -176,6 +178,32 @@ def _bounded_quasi_orders_exact_result(D, n: int, quasi_orders):
     }
 
 
+def _induced_submatrix(D, subset: tuple[int, ...]):
+    return [[D[i][j] for j in subset] for i in subset]
+
+
+def _small_forbidden_submatrix_result(D, n: int):
+    checked = 0
+    for subset in combinations(range(n), SMALL_FORBIDDEN_SUBMATRIX_ORDER):
+        checked += 1
+        submatrix = _induced_submatrix(D, subset)
+        if not brute_force.solve(submatrix)["exists"]:
+            return {
+                "exists": False,
+                "order": None,
+                "complete": True,
+                "solver": "candidate_small_forbidden_submatrix_obstruction",
+                "obstruction_labels": list(subset),
+                "obstruction_order": SMALL_FORBIDDEN_SUBMATRIX_ORDER,
+                "checked_subsets": checked,
+                "subset_limit": SMALL_FORBIDDEN_SUBMATRIX_LIMIT,
+                "note": "an induced submatrix has no circular-Robinson order, so no full order can be circular Robinson",
+            }
+        if checked >= SMALL_FORBIDDEN_SUBMATRIX_LIMIT:
+            return None
+    return None
+
+
 def _minimum_distance_cycle_order(D, n: int) -> tuple[int, ...] | None:
     if n < 4:
         return None
@@ -313,6 +341,8 @@ def _paired_farthest_witness_result(D, n: int, pc_tree: Optional[PCNode]):
         return None
     if pc_tree is not None and not represents_order(pc_tree, order):
         return None
+    if not is_precircular_order_cR(D, order):
+        return None
     return {
         "exists": True,
         "order": list(order),
@@ -386,6 +416,10 @@ def solve(D, quasi_orders=None, pc_tree=None):
         exact_pc_tree_result = _bounded_pc_tree_exact_result(D, n, pc_tree)
         if exact_pc_tree_result is not None:
             return exact_pc_tree_result
+
+    obstruction_result = _small_forbidden_submatrix_result(D, n)
+    if obstruction_result is not None:
+        return obstruction_result
 
     tried = 0
     for order in _sample_orders(n, quasi_orders, pc_tree):

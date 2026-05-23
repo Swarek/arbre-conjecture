@@ -15,9 +15,10 @@ minimum-cycle quand l'ordre reconstruit est représenté et vérifié cR, puis
 un sous-cas three-level à matching farthest unique, puis un sous-cas exact où
 une famille explicite `quasi_orders` finie est sous une limite explicite, puis
 un sous-cas exact où le PC-tree fourni a un nombre de frontiers certifié sous
-une limite explicite, puis échantillonnage incomplet documenté au-delà. Un
-témoin positif échantillonné est certifié par vérification directe de l'ordre ;
-un échec d'échantillonnage reste incomplet.
+une limite explicite, puis un certificat négatif par petite sous-matrice
+interdite, puis échantillonnage incomplet documenté au-delà. Un témoin positif
+échantillonné est certifié par vérification directe de l'ordre ; un échec
+d'échantillonnage reste incomplet.
 Les tests servent à protéger les expériences, pas à remplacer une preuve.
 
 Commandes principales :

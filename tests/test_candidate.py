@@ -6,6 +6,7 @@ from pc_circular.generators import (
     paired_farthest_matching,
     permuted_cycle_metric,
     quasi_circular_not_circular_four_point,
+    random_dissimilarity,
 )
 from pc_circular.pc_tree import (
     balanced_pc_tree,
@@ -21,11 +22,13 @@ from pc_circular.predicates import all_circular_orders, canonical_circular_order
 from pc_circular.solvers.candidate import (
     EXACT_PC_TREE_FRONTIER_LIMIT,
     EXACT_QUASI_ORDER_LIMIT,
+    SMALL_FORBIDDEN_SUBMATRIX_ORDER,
     _minimum_distance_cycle_order,
     _paired_farthest_order,
     _pc_tree_frontier_upper_bound,
     solve,
 )
+from pc_circular.solvers import brute_force
 
 
 def _one_high_edge_instance(n):
@@ -160,6 +163,51 @@ def test_candidate_large_finite_quasi_order_family_remains_incomplete_without_fa
     assert result["complete"] is False
     assert result["solver"] == "candidate_large_n_placeholder"
     assert result["tried_orders"] == 64
+
+
+def test_candidate_small_forbidden_submatrix_proves_large_random_negative():
+    D = random_dissimilarity(10, rng=random.Random(0), values=(1, 2, 3))
+    result = solve(D, pc_tree=star_pc_tree(10))
+
+    assert result["exists"] is False
+    assert result["complete"] is True
+    assert result["solver"] == "candidate_small_forbidden_submatrix_obstruction"
+    assert result["obstruction_order"] == SMALL_FORBIDDEN_SUBMATRIX_ORDER
+    subset = tuple(result["obstruction_labels"])
+    submatrix = [[D[i][j] for j in subset] for i in subset]
+    assert not brute_force.solve(submatrix)["exists"]
+
+
+def test_candidate_small_forbidden_submatrix_reports_explicit_obstruction():
+    obstruction = [
+        [0, 2, 1, 2],
+        [2, 0, 3, 3],
+        [1, 3, 0, 3],
+        [2, 3, 3, 0],
+    ]
+    D = equal_distance_instance(9)
+    for i in range(4):
+        for j in range(4):
+            D[i][j] = obstruction[i][j]
+
+    assert not brute_force.solve(obstruction)["exists"]
+    result = solve(D, pc_tree=star_pc_tree(9))
+
+    assert result["exists"] is False
+    assert result["complete"] is True
+    assert result["solver"] == "candidate_small_forbidden_submatrix_obstruction"
+    assert result["obstruction_labels"] == [0, 1, 2, 3]
+    assert result["checked_subsets"] == 1
+
+
+def test_candidate_small_forbidden_submatrix_does_not_block_cycle_witness():
+    D = cycle_metric(10)
+    result = solve(D, pc_tree=star_pc_tree(10))
+
+    assert result["exists"] is True
+    assert result["complete"] is True
+    assert result["solver"] == "candidate_minimum_distance_cycle_witness"
+    assert is_precircular_order_cR(D, result["order"])
 
 
 def test_candidate_non_sized_quasi_orders_remain_incomplete_when_sample_misses_witness():

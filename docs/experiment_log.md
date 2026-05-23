@@ -1209,3 +1209,57 @@
   contre-exemples/oracle et classification positive/négative, soit continuer la
   famille ciblée `paired_farthest/mixed` avec un certificat positif miroir
   guidé par la structure du PC-tree.
+
+## 2026-05-23 hereditary small obstruction certificate
+
+- Date/heure : 2026-05-23 03:44:35 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les `random/star` incomplets du benchmark fort contiennent
+  une obstruction induite de 4 points. Comme cR est héréditaire par restriction,
+  une telle sous-matrice sans ordre cR prouve la non-existence globale.
+- Changement fait : ajout de `SMALL_FORBIDDEN_SUBMATRIX_ORDER`,
+  `SMALL_FORBIDDEN_SUBMATRIX_LIMIT`,
+  `candidate_small_forbidden_submatrix_obstruction` et helper de sous-matrice
+  induite dans `candidate.py`; ajout d'une validation cR directe avant
+  acceptation du témoin paired-farthest ; ajout de tests pour random négatif,
+  obstruction explicite et garde cycle positif.
+- Commande exécutée avant modification : `make quick`.
+- Résultat correction avant modification : `119 passed in 1.93s`, puis
+  `JUSTE`.
+- Plan subagents : deux explorateurs lecture seule. Résultats : preuve de
+  soundness par restriction héréditaire confirmée ; le scan ne doit jamais
+  conclure si la limite est atteinte sans témoin ; sur les `42` randoms du
+  benchmark fort T030, `42/42` ont une obstruction 4-points avant la limite
+  `4096`, avec rang max `154`; sur `400/400` randoms purs testés pour
+  `n in {10,20,60,100}`, la limite `4096` trouve une obstruction.
+- Commande exécutée : `pytest -q tests/test_candidate.py`.
+- Résultat correction : `27 passed`.
+- Commande exécutée : `make unit`.
+- Résultat correction : `122 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `122 passed in 1.99s`, puis `JUSTE`.
+- Commande exécutée : `make hunt-counterexamples`.
+- Résultat correction : `JUSTE` sur exhaustif `n=4`, `5000` random,
+  `max-n=8`, seed `314159`, shrink actif.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark rapide : `reports/complexity_report_quick.json` écrit ;
+  `0` timeout, `0` incomplet.
+- Commande exécutée : `make bench`.
+- Résultat benchmark fort : `reports/complexity_report.json` écrit ; `0`
+  timeout, `0` incomplet jusqu'à `n=100`. Agrégat solver :
+  `candidate_small_forbidden_submatrix_obstruction` sur `42` runs, les anciens
+  placeholders random ; fit polynomial empirique `p ~= 3.22`.
+- Commande exécutée : `make bench-piste-f`.
+- Résultat benchmark ciblé : rapports Piste F écrits ; `0` timeout.
+  `paired_farthest/star` reste complet ; `paired_farthest/mixed` garde `20`
+  incomplets ciblés à `n=16,20`.
+- Conclusion : progrès de candidate sound pour les négatifs random avec petite
+  obstruction. Le benchmark principal demandé passe maintenant sans timeout ni
+  incomplet, mais cela ne prouve pas le problème général : la recherche
+  d'obstruction est bornée et son échec ne donne aucune décision négative.
+- Next action : chercher une famille sans obstruction 4-points où le statut
+  reste difficile, ou poursuivre le certificat positif représenté pour
+  `paired_farthest/mixed` à `n=16,20`.

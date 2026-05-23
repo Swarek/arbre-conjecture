@@ -1503,3 +1503,75 @@ Décision : conserver comme instrumentation de complexité. T030 ne résout pas 
 problème d'existence, mais transforme les placeholders `mixed/star` en signal
 exploitable : le prochain effort benchmark général doit viser `random`, tandis
 que `paired_farthest/mixed` reste une famille ciblée séparée pour T031.
+
+## ExecPlan 2026-05-23 - hereditary small obstruction certificate
+
+But : réduire les incomplets `random/star` du benchmark principal par un
+certificat négatif héréditaire sound, sans prétendre résoudre le cas général.
+
+Hypothèse : si une sous-matrice induite de petite taille, en pratique 4 points,
+n'admet aucun ordre circular Robinson, alors la matrice complète n'admet aucun
+ordre circular Robinson. Les randoms du benchmark fort devraient contenir très
+vite une telle obstruction.
+
+Fichiers à modifier : `src/pc_circular/solvers/candidate.py`,
+`tests/test_candidate.py`, éventuellement `tests/test_regression_counterexamples.py`
+si un contre-exemple minimal utile est isolé, `docs/proof_obligations.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/tracks/README.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `PLANS.md`.
+
+Algorithme pressenti : ajouter une recherche bornée de sous-ensembles de taille
+4. Pour chaque sous-ensemble, construire la sous-matrice induite et la tester
+exactement par la baseline brute-force sur 4 labels. Si aucune ordre cR n'existe
+sur cette sous-matrice, retourner `exists=False`, `complete=True`, avec les
+labels du certificat. Si aucune obstruction n'est trouvée avant la limite de
+recherche, ne conclure rien et continuer vers le sampling incomplet.
+
+Plan de contre-exemples : vérifier que `cycle_metric` et les sous-cas positifs
+ne déclenchent pas le certificat ; vérifier qu'une matrice random `n=10`
+certifiée négative contient bien une sous-matrice 4 points sans ordre cR ;
+comparer contre oracle exact sur petits `n` via `make check` ; lancer
+`make hunt-counterexamples` car `candidate.py` change ; mesurer `make bench`
+pour vérifier que les placeholders `random` deviennent des rejets complets.
+
+Plan subagents : deux explorateurs lecture seule : preuve de soundness/API et
+probe random/star pour estimer la limite de sous-ensembles nécessaire.
+
+Tests à exécuter : `tests/test_candidate.py`, `make unit`, `make quick`,
+`make hunt-counterexamples`, `make check`, `make bench-quick`, `make bench`.
+
+Risques : confondre absence d'obstruction trouvée avec absence globale ; rendre
+un rejet complet après une recherche tronquée ; coût trop élevé si on parcourt
+tous les 4-subsets à grand `n` ; oublier que le certificat est indépendant du
+PC-tree mais ne prouve rien si aucune obstruction n'est trouvée ; présenter un
+benchmark random comme preuve de correction globale.
+
+Résultats observés : ajout de `SMALL_FORBIDDEN_SUBMATRIX_ORDER = 4`,
+`SMALL_FORBIDDEN_SUBMATRIX_LIMIT = 4096`, et
+`candidate_small_forbidden_submatrix_obstruction` dans `candidate.py`. Le
+certificat retourne `False complete=True` seulement après avoir trouvé une
+sous-matrice induite sans ordre cR exact ; sinon il ne conclut rien. Le témoin
+paired-farthest est aussi revérifié directement par
+`is_precircular_order_cR` avant acceptation positive.
+
+Tests ajoutés : random `n=10` seed `0` rejeté par obstruction 4-points,
+obstruction explicite
+`[[0,2,1,2],[2,0,3,3],[1,3,0,3],[2,3,3,0]]` étendue à `n=9`, et garde positif
+`cycle_metric(10)` toujours accepté par le témoin minimum-cycle.
+
+Validation : `tests/test_candidate.py` `27 passed`, `make unit` `122 passed`,
+`make quick` `122 passed` puis `JUSTE`, `make hunt-counterexamples` `JUSTE`,
+`make check` `JUSTE`, `make bench-quick` `0` timeout et `0` incomplet,
+`make bench` `0` timeout et `0` incomplet jusqu'à `n=100`,
+`make bench-piste-f` `0` timeout.
+
+Résultat benchmark fort T031 : les `42` anciens placeholders `random` sont tous
+classés par `candidate_small_forbidden_submatrix_obstruction`; le rapport
+`reports/complexity_report.json` garde `0` incomplet et un fit polynomial
+empirique `p ~= 3.22`.
+
+Décision : intégrer comme certificat négatif héréditaire. Ce n'est pas une
+preuve générale : la recherche est bornée et l'absence d'obstruction trouvée ne
+prouve rien. Le prochain effort peut soit chercher des familles sans petites
+obstructions où l'existence reste ouverte, soit reprendre `paired_farthest/mixed`
+pour réduire les incomplets ciblés `n=16,20`.
