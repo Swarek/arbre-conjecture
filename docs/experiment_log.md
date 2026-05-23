@@ -1263,3 +1263,63 @@
 - Next action : chercher une famille sans obstruction 4-points où le statut
   reste difficile, ou poursuivre le certificat positif représenté pour
   `paired_farthest/mixed` à `n=16,20`.
+
+## 2026-05-23 five-point four-local obstruction stress
+
+- Date/heure : 2026-05-23 04:04:26 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les obstructions 4-points ne caractérisent pas la
+  non-existence cR globale. Un noyau 5-points globalement non-cR mais 4-local
+  positif permettrait d'attaquer T031 et de justifier un certificat héréditaire
+  taille 5.
+- Changement fait : ajout de `four_local_non_cr_core` et
+  `padded_four_local_non_cr`; ajout de tests générateurs/régressions montrant
+  que le noyau 5-points est globalement non-cR mais que toutes ses restrictions
+  4-points sont cR ; extension de
+  `candidate_small_forbidden_submatrix_obstruction` à
+  `SMALL_FORBIDDEN_SUBMATRIX_ORDERS = (4, 5)`.
+- Détail d'implémentation : les scans d'obstructions sont placés après les
+  témoins positifs échantillonnés, car un ordre représenté et vérifié cR suffit
+  déjà à prouver l'existence et évite de payer les scans sur ces cas faciles.
+- Commande exécutée avant modification : `make quick`.
+- Résultat correction avant modification : `122 passed in 1.96s`, puis
+  `JUSTE`.
+- Plan subagents : trois explorateurs lecture seule. Résultats : deux probes
+  indépendantes ont trouvé le même noyau 5-points ; la direction héréditaire est
+  un théorème mais la caractérisation 4-locale est fausse ; `paired_farthest`
+  `mixed` reste incomplet à `n=16,20` faute de certificat négatif ou de preuve
+  de complétude d'un diagnostic structurel.
+- Contre-exemple minimal :
+  `[[0,1,1,2,2],[1,0,2,1,2],[1,2,0,1,2],[2,1,1,0,2],[2,2,2,2,0]]`.
+  Exhaustif `n=5`, valeurs `{1,2}` : trouvé après `236` matrices ; les `5`
+  sous-matrices induites de taille `4` sont positives, mais le noyau complet est
+  négatif.
+- Commande exécutée : `pytest -q tests/test_candidate.py tests/test_generators.py tests/test_regression_counterexamples.py`.
+- Résultat correction : `39 passed`.
+- Commande exécutée : benchmark ciblé
+  `tools/pc_circular_complexity_benchmark.py --sizes 5,6,8,9,10,12,20,40 --repeats 3 --instance-kind four_local_non_cr --pc-tree star`.
+- Résultat benchmark ciblé : `reports/complexity_four_local_non_cr.json` écrit ;
+  `0` timeout, `0` incomplet ; `candidate_small_forbidden_submatrix_obstruction`
+  sur tous les runs `n > 8`.
+- Commande exécutée : `make unit`.
+- Résultat correction : `127 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `127 passed in 2.09s`, puis `JUSTE`.
+- Commande exécutée : `make hunt-counterexamples`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark rapide : `reports/complexity_report_quick.json` écrit ;
+  `0` timeout, `0` incomplet.
+- Commande exécutée : `make bench`.
+- Résultat benchmark fort : `reports/complexity_report.json` écrit ; `0`
+  timeout, `0` incomplet jusqu'à `n=100`. Agrégat solver inchangé :
+  `candidate_small_forbidden_submatrix_obstruction` sur `42` runs ; fit
+  polynomial empirique `p ~= 3.25`.
+- Conclusion : T032 casse la conjecture 4-locale et ajoute un certificat
+  héréditaire 5-points sound. Ce n'est toujours pas une caractérisation globale
+  ni une preuve d'algorithme général.
+- Next action : chercher une famille 5-locale positive mais globalement
+  négative, ou formaliser un certificat négatif pour `paired_farthest/mixed`.

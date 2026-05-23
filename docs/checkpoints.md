@@ -158,6 +158,14 @@ Dernier commit green avant T009 : `07120e4`.
   `make bench-piste-f`. Résultat observé : `make bench` a `0` timeout et `0`
   incomplet jusqu'à `n=100`; les `42` anciens placeholders random sont rejetés
   par obstruction 4-points.
+- Checkpoint T032 courant : commit contenant le contre-exemple minimal
+  `four_local_non_cr_core`, son padding large `padded_four_local_non_cr`, et
+  l'extension du certificat héréditaire aux tailles `(4,5)`. Validation
+  observée : tests candidats/générateurs/régressions ciblés, `make unit`,
+  `make quick`, `make hunt-counterexamples`, `make check`, `make bench-quick`,
+  `make bench`, benchmark ciblé `four_local_non_cr/star`. Résultat observé : le
+  4-local seul est réfuté, mais les rejets 5-points restent sound quand le noyau
+  induit est trouvé.
 
 ## Rollback
 

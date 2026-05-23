@@ -106,6 +106,17 @@ coûteuse en grande taille ; une version bornée trouve peu de hits au-delà de
 `n=10`. Cette idée reste donc hors `candidate.py` tant qu'elle n'a pas de preuve
 de complétude ou de borne utile.
 
+Complément T032 :
+
+- dans `reports/complexity_paired_farthest_mixed.json`, les incomplets restants
+  sont exactement `n=16` et `n=20`, `10/10` chacun, sans timeout ;
+- la raison mécanique est que le nombre de frontiers du scaffold `mixed` dépasse
+  `EXACT_PC_TREE_FRONTIER_LIMIT` : `8192` à `n=16`, `131072` à `n=20` ;
+- sur les repeats benchmark `n=16,20`, un diagnostic side-by-side représenté
+  n'a trouvé aucun témoin cR. Un certificat positif ne devrait donc pas résoudre
+  ces lignes ; il faudrait soit un certificat négatif, soit une preuve de
+  complétude du diagnostic structurel.
+
 ## Sous-cas universel par témoins mauvais
 
 Statut : sous-cas prouvé intégré à `candidate.py`.
@@ -327,7 +338,7 @@ Limites :
 Statut : certificat négatif intégré à `candidate.py`.
 
 T031 utilise l'hérédité de la propriété cR : tout ordre cR complet induit un
-ordre cR sur chaque sous-ensemble de labels. La candidate inspecte donc des
+ordre cR sur chaque sous-ensemble de labels. La candidate inspectait d'abord des
 sous-matrices induites de 4 points. Si l'une d'elles n'a aucun ordre cR exact,
 la matrice complète est rejetée, indépendamment du PC-tree fourni.
 
@@ -350,6 +361,28 @@ Limites :
   négatif ;
 - ce certificat ne prouve pas une caractérisation des matrices random et ne
   remplace pas une preuve générale.
+
+Résultat T032 :
+
+- un contre-exemple minimal `n=5`, valeurs `{1,2}`, montre que toutes les
+  sous-matrices 4-points peuvent être cR alors que la matrice complète ne l'est
+  pas ;
+- le générateur `four_local_non_cr_core` conserve ce noyau, et
+  `padded_four_local_non_cr(n)` l'étend à de grandes tailles sans créer
+  d'obstruction 4-points dans les probes ;
+- la candidate inspecte maintenant les tailles
+  `SMALL_FORBIDDEN_SUBMATRIX_ORDERS = (4, 5)`, toujours avec la même règle :
+  seul un témoin induit trouvé donne un rejet complet ;
+- benchmark ciblé `four_local_non_cr/star`, tailles
+  `5,6,8,9,10,12,20,40`, répétitions `3` : `0` timeout, `0` incomplet ; pour
+  `n > 8`, les rejets passent par
+  `candidate_small_forbidden_submatrix_obstruction` avec obstruction d'ordre 5.
+
+Limite ajoutée :
+
+- les obstructions 4-points ne sont pas une caractérisation ; les obstructions
+  `(4,5)` ne doivent pas non plus être présentées comme une caractérisation
+  sans preuve séparée.
 
 ## Témoin cycle par distances minimales
 

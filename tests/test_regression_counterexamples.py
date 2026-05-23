@@ -4,6 +4,9 @@ Do not remove entries to make tests pass.  Add minimal matrices and expected
 results when the conjecture tester finds a disagreement.
 """
 
+from itertools import combinations
+
+from pc_circular.generators import four_local_non_cr_core, padded_four_local_non_cr
 from pc_circular.predicates import (
     find_farthest_crossing_violation,
     find_precircular_cR_violation,
@@ -173,3 +176,21 @@ def test_recorded_counterexamples_match_predicates():
                 assert represents_order(T, canonical_witness) is example["canonical_witness_represented"]
             assert represents_order(T, order) is example["witness_represented"]
             assert exact_oracle_pc_tree(D, T)["exists"] is example["pc_tree_oracle_exists"]
+
+
+def test_five_point_four_local_positive_global_negative_counterexample():
+    D = four_local_non_cr_core()
+
+    assert exact_oracle_pc_tree(D, None)["exists"] is False
+    for subset in combinations(range(5), 4):
+        submatrix = [[D[i][j] for j in subset] for i in subset]
+        assert exact_oracle_pc_tree(submatrix, None)["exists"] is True
+
+
+def test_padded_four_local_counterexample_has_no_four_point_obstruction():
+    D = padded_four_local_non_cr(9)
+
+    assert exact_oracle_pc_tree([[D[i][j] for j in range(5)] for i in range(5)], None)["exists"] is False
+    for subset in combinations(range(9), 4):
+        submatrix = [[D[i][j] for j in subset] for i in subset]
+        assert exact_oracle_pc_tree(submatrix, None)["exists"] is True

@@ -110,6 +110,31 @@ T027 compile cette même obstruction comme atomes CSP : pour chaque paire
 quartets cR : elle reste une contrainte de séparation de deux témoins, pas une
 contrainte d'arc sur tout `B(a,b)`.
 
+## Obstruction 4-locale réfutée
+
+Statut : contre-exemple minimal enregistré.
+
+T032 a trouvé une matrice binaire à 5 points telle que chaque sous-matrice
+induite de taille 4 admet un ordre cR, mais la matrice complète n'en admet
+aucun :
+
+```text
+[[0,1,1,2,2],
+ [1,0,2,1,2],
+ [1,2,0,1,2],
+ [2,1,1,0,2],
+ [2,2,2,2,0]]
+```
+
+Conséquence : les quartets cR restent l'obstruction exacte d'un ordre fixé, mais
+la non-existence d'un ordre global n'est pas caractérisée par les seules
+restrictions 4-points de la matrice. Les certificats héréditaires de petite
+taille sont donc des rejets sound quand ils sont trouvés, pas une base
+d'obstructions prouvée complète.
+
+Artefacts : `four_local_non_cr_core`, `padded_four_local_non_cr`,
+tests de régression `four_local_positive_global_negative`.
+
 ## Prochaine action
 
 Utiliser les témoins `find_precircular_cR_violation` comme source principale

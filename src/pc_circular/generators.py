@@ -158,12 +158,49 @@ def quasi_circular_not_circular_four_point() -> list[list[int]]:
     ]
 
 
+def four_local_non_cr_core() -> list[list[int]]:
+    """Five-point obstruction whose every four-point induced submatrix is cR."""
+
+    return [
+        [0, 1, 1, 2, 2],
+        [1, 0, 2, 1, 2],
+        [1, 2, 0, 1, 2],
+        [2, 1, 1, 0, 2],
+        [2, 2, 2, 2, 0],
+    ]
+
+
+def padded_four_local_non_cr(n: int) -> list[list[int]]:
+    """Pad the five-point four-local obstruction to larger sizes.
+
+    Added labels are at distance 2 from the core and distance 1 from each
+    other.  The core remains an induced non-cR obstruction, while all four-point
+    restrictions stay cR in the tested scaffold.
+    """
+
+    if n < 5:
+        raise ValueError("padded_four_local_non_cr requires n >= 5")
+    D = _zero_matrix(n)
+    core = four_local_non_cr_core()
+    for i in range(5):
+        for j in range(5):
+            D[i][j] = core[i][j]
+    for i in range(n):
+        for j in range(i + 1, n):
+            if i < 5 and j < 5:
+                continue
+            value = 1 if i >= 5 and j >= 5 else 2
+            D[i][j] = D[j][i] = value
+    return D
+
+
 def small_paper_like_instances() -> list[list[list[int]]]:
     """Small named examples; extend with paper-derived cases when available."""
 
     return [
         cycle_metric(4),
         quasi_circular_not_circular_four_point(),
+        four_local_non_cr_core(),
         non_strict_large_farthest_instance(5),
     ]
 
@@ -224,6 +261,8 @@ def instance_by_kind(
         return non_strict_large_farthest_instance(n)
     if kind == "paired_farthest":
         return paired_farthest_matching(n, rng=rng)
+    if kind in {"four_local_non_cr", "padded_four_local_non_cr"}:
+        return padded_four_local_non_cr(n)
     if kind == "mixed":
         return mixed_instance(n, rng=rng, values=values)
     raise ValueError(f"unknown instance kind: {kind}")

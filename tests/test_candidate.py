@@ -1,9 +1,11 @@
+from itertools import combinations
 import random
 
 from pc_circular.generators import (
     cycle_metric,
     equal_distance_instance,
     paired_farthest_matching,
+    padded_four_local_non_cr,
     permuted_cycle_metric,
     quasi_circular_not_circular_four_point,
     random_dissimilarity,
@@ -23,6 +25,7 @@ from pc_circular.solvers.candidate import (
     EXACT_PC_TREE_FRONTIER_LIMIT,
     EXACT_QUASI_ORDER_LIMIT,
     SMALL_FORBIDDEN_SUBMATRIX_ORDER,
+    SMALL_FORBIDDEN_SUBMATRIX_ORDERS,
     _minimum_distance_cycle_order,
     _paired_farthest_order,
     _pc_tree_frontier_upper_bound,
@@ -59,6 +62,10 @@ def _plateau_cycle_metric(n):
 
 def _rigid_c_tree(n):
     return c_node([leaf(i) for i in range(n)])
+
+
+def _induced_submatrix(D, subset):
+    return [[D[i][j] for j in subset] for i in subset]
 
 
 def _extended_non_cr_four_point_instance(n):
@@ -198,6 +205,25 @@ def test_candidate_small_forbidden_submatrix_reports_explicit_obstruction():
     assert result["solver"] == "candidate_small_forbidden_submatrix_obstruction"
     assert result["obstruction_labels"] == [0, 1, 2, 3]
     assert result["checked_subsets"] == 1
+
+
+def test_candidate_small_forbidden_submatrix_finds_five_point_obstruction_after_four_local_passes():
+    D = padded_four_local_non_cr(9)
+    assert 5 in SMALL_FORBIDDEN_SUBMATRIX_ORDERS
+    assert all(
+        brute_force.solve(_induced_submatrix(D, subset))["exists"]
+        for subset in combinations(range(9), 4)
+    )
+
+    result = solve(D, pc_tree=star_pc_tree(9))
+
+    assert result["exists"] is False
+    assert result["complete"] is True
+    assert result["solver"] == "candidate_small_forbidden_submatrix_obstruction"
+    assert result["obstruction_order"] == 5
+    assert result["obstruction_labels"] == [0, 1, 2, 3, 4]
+    assert result["checked_subsets_for_order"] == 1
+    assert not brute_force.solve(_induced_submatrix(D, result["obstruction_labels"]))["exists"]
 
 
 def test_candidate_small_forbidden_submatrix_does_not_block_cycle_witness():

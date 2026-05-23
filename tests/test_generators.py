@@ -1,13 +1,17 @@
+from itertools import combinations
 import random
 
 from pc_circular.generators import (
     MIXED_INSTANCE_KINDS,
+    four_local_non_cr_core,
     instance_by_kind,
     instance_by_kind_with_metadata,
     paired_farthest_matching,
+    padded_four_local_non_cr,
     permuted_cycle_metric,
 )
 from pc_circular.predicates import farthest_sets, validate_dissimilarity
+from pc_circular.solvers import brute_force
 
 
 def test_permuted_cycle_metric_is_valid_dissimilarity():
@@ -27,6 +31,25 @@ def test_paired_farthest_matching_has_unique_pairs_for_even_n():
 def test_instance_by_kind_accepts_explicit_piste_f_families():
     assert validate_dissimilarity(instance_by_kind(5, kind="permuted_cycle", rng=random.Random(3))) == 5
     assert validate_dissimilarity(instance_by_kind(5, kind="paired_farthest", rng=random.Random(4))) == 5
+    assert validate_dissimilarity(instance_by_kind(5, kind="four_local_non_cr")) == 5
+
+
+def test_four_local_non_cr_core_is_global_negative_but_four_local_positive():
+    D = four_local_non_cr_core()
+
+    assert not brute_force.solve(D)["exists"]
+    for subset in combinations(range(5), 4):
+        submatrix = [[D[i][j] for j in subset] for i in subset]
+        assert brute_force.solve(submatrix)["exists"]
+
+
+def test_padded_four_local_non_cr_preserves_four_local_positive_core_obstruction():
+    D = padded_four_local_non_cr(9)
+
+    assert not brute_force.solve([[D[i][j] for j in range(5)] for i in range(5)])["exists"]
+    for subset in combinations(range(9), 4):
+        submatrix = [[D[i][j] for j in subset] for i in subset]
+        assert brute_force.solve(submatrix)["exists"]
 
 
 def test_instance_metadata_preserves_mixed_rng_sequence():

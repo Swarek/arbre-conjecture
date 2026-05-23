@@ -38,6 +38,7 @@ EXACT_BRUTE_FORCE_LIMIT = 8
 EXACT_PC_TREE_FRONTIER_LIMIT = 4096
 EXACT_QUASI_ORDER_LIMIT = 4096
 SMALL_FORBIDDEN_SUBMATRIX_ORDER = 4
+SMALL_FORBIDDEN_SUBMATRIX_ORDERS = (4, 5)
 SMALL_FORBIDDEN_SUBMATRIX_LIMIT = 4096
 
 
@@ -182,25 +183,34 @@ def _induced_submatrix(D, subset: tuple[int, ...]):
     return [[D[i][j] for j in subset] for i in subset]
 
 
-def _small_forbidden_submatrix_result(D, n: int):
-    checked = 0
-    for subset in combinations(range(n), SMALL_FORBIDDEN_SUBMATRIX_ORDER):
-        checked += 1
-        submatrix = _induced_submatrix(D, subset)
-        if not brute_force.solve(submatrix)["exists"]:
-            return {
-                "exists": False,
-                "order": None,
-                "complete": True,
-                "solver": "candidate_small_forbidden_submatrix_obstruction",
-                "obstruction_labels": list(subset),
-                "obstruction_order": SMALL_FORBIDDEN_SUBMATRIX_ORDER,
-                "checked_subsets": checked,
-                "subset_limit": SMALL_FORBIDDEN_SUBMATRIX_LIMIT,
-                "note": "an induced submatrix has no circular-Robinson order, so no full order can be circular Robinson",
-            }
-        if checked >= SMALL_FORBIDDEN_SUBMATRIX_LIMIT:
-            return None
+def _small_forbidden_submatrix_result(
+    D,
+    n: int,
+    order_sizes: Sequence[int] = SMALL_FORBIDDEN_SUBMATRIX_ORDERS,
+):
+    checked_total = 0
+    for order_size in order_sizes:
+        checked_for_size = 0
+        for subset in combinations(range(n), order_size):
+            checked_total += 1
+            checked_for_size += 1
+            submatrix = _induced_submatrix(D, subset)
+            if not brute_force.solve(submatrix)["exists"]:
+                return {
+                    "exists": False,
+                    "order": None,
+                    "complete": True,
+                    "solver": "candidate_small_forbidden_submatrix_obstruction",
+                    "obstruction_labels": list(subset),
+                    "obstruction_order": order_size,
+                    "checked_subsets": checked_total,
+                    "checked_subsets_for_order": checked_for_size,
+                    "subset_limit": SMALL_FORBIDDEN_SUBMATRIX_LIMIT,
+                    "obstruction_orders": list(order_sizes),
+                    "note": "an induced submatrix has no circular-Robinson order, so no full order can be circular Robinson",
+                }
+            if checked_for_size >= SMALL_FORBIDDEN_SUBMATRIX_LIMIT:
+                break
     return None
 
 
@@ -417,10 +427,6 @@ def solve(D, quasi_orders=None, pc_tree=None):
         if exact_pc_tree_result is not None:
             return exact_pc_tree_result
 
-    obstruction_result = _small_forbidden_submatrix_result(D, n)
-    if obstruction_result is not None:
-        return obstruction_result
-
     tried = 0
     for order in _sample_orders(n, quasi_orders, pc_tree):
         tried += 1
@@ -433,6 +439,10 @@ def solve(D, quasi_orders=None, pc_tree=None):
                 "tried_orders": tried,
                 "note": "sampled represented order is a valid circular-Robinson witness",
             }
+
+    obstruction_result = _small_forbidden_submatrix_result(D, n)
+    if obstruction_result is not None:
+        return obstruction_result
 
     return {
         "exists": False,

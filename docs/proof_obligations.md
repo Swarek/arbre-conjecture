@@ -399,11 +399,11 @@ Limites :
 Statut : certificat négatif prouvé quand une obstruction est trouvée.
 
 `candidate_small_forbidden_submatrix_obstruction` cherche des sous-ensembles de
-taille `SMALL_FORBIDDEN_SUBMATRIX_ORDER = 4`, jusqu'à
-`SMALL_FORBIDDEN_SUBMATRIX_LIMIT = 4096` sous-ensembles. Pour chaque
-sous-ensemble inspecté, la sous-matrice induite est renumérotée et testée
-exactement par la baseline brute-force de petite taille. Si aucun ordre cR
-n'existe sur cette sous-matrice, la candidate retourne `exists=False` et
+tailles listées dans `SMALL_FORBIDDEN_SUBMATRIX_ORDERS`, actuellement `(4, 5)`,
+jusqu'à `SMALL_FORBIDDEN_SUBMATRIX_LIMIT = 4096` sous-ensembles par taille.
+Pour chaque sous-ensemble inspecté, la sous-matrice induite est renumérotée et
+testée exactement par la baseline brute-force de petite taille. Si aucun ordre
+cR n'existe sur cette sous-matrice, la candidate retourne `exists=False` et
 `complete=True` pour l'instance complète.
 
 Preuve :
@@ -426,8 +426,9 @@ Ce que cela couvre :
 - obligation 3 : aucun ordre représenté n'est manqué dans ce sous-cas, car
   aucun ordre complet sur `X` ne peut être cR ;
 - obligation 5 dans ce sous-cas : le temps est borné par
-  `O(SMALL_FORBIDDEN_SUBMATRIX_LIMIT * c_4)`, où `c_4` est le coût constant de
-  l'oracle brute-force sur 4 labels.
+  `O(SMALL_FORBIDDEN_SUBMATRIX_LIMIT * sum_k c_k)`, où `k` parcourt les tailles
+  configurées et `c_k` est le coût constant de l'oracle brute-force sur `k`
+  labels.
 
 Limites :
 
@@ -436,6 +437,22 @@ Limites :
 - ce n'est pas une caractérisation des randoms ni du problème général ;
 - si le PC-tree fourni est invalide, ce certificat ne doit pas être interprété
   comme une validation de l'entrée PC-tree.
+
+Contre-exemple T032 à la caractérisation 4-locale :
+
+```text
+[[0,1,1,2,2],
+ [1,0,2,1,2],
+ [1,2,0,1,2],
+ [2,1,1,0,2],
+ [2,2,2,2,0]]
+```
+
+Cette matrice n'admet aucun ordre cR global, mais chacune de ses sous-matrices
+induites de taille 4 en admet un. Elle prouve que les obstructions 4-points ne
+caractérisent pas la non-existence globale. L'ajout de la taille 5 est donc un
+certificat héréditaire supplémentaire, pas une preuve de base finie
+d'obstructions.
 
 ### Membership PC-tree d'un ordre fixé
 

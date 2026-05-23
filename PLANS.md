@@ -1575,3 +1575,78 @@ preuve générale : la recherche est bornée et l'absence d'obstruction trouvée
 prouve rien. Le prochain effort peut soit chercher des familles sans petites
 obstructions où l'existence reste ouverte, soit reprendre `paired_farthest/mixed`
 pour réduire les incomplets ciblés `n=16,20`.
+
+## ExecPlan 2026-05-23 - five-point hereditary obstruction stress
+
+But : attaquer le certificat 4-points T031 en cherchant une famille où toutes
+les sous-matrices 4-points sont cR mais où la matrice complète ne l'est pas,
+puis intégrer seulement un progrès sound si cette famille donne un certificat
+héréditaire plus fort.
+
+Hypothèse : la non-existence cR n'est pas caractérisée par les seules
+obstructions induites de taille 4. Si un contre-exemple 5-points existe, la
+même preuve d'hérédité permet d'ajouter un certificat négatif induit de taille 5
+sans prétendre à une caractérisation globale.
+
+Fichiers à modifier : `src/pc_circular/solvers/candidate.py`,
+`src/pc_circular/generators.py`, `tests/test_candidate.py`,
+`tests/test_regression_counterexamples.py`, `docs/proof_obligations.md`,
+`docs/tracks/piste_e_farthest_quartets.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/tracks/README.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `PLANS.md`.
+
+Algorithme pressenti : remplacer le scan 4-points unique par un scan borné de
+tailles `(4, 5)`. Pour chaque taille, tester les sous-matrices induites par la
+baseline exacte de petite taille. Retourner `False complete=True` uniquement si
+une sous-matrice inspectée est prouvée sans ordre cR. Si la limite est atteinte
+sans obstruction, continuer vers les branches incomplètes.
+
+Plan de contre-exemples : exhaustif `n=5`, valeurs `{1,2}`, pour trouver une
+matrice globalement non-cR dont toutes les restrictions 4-points sont cR ;
+étendre cette matrice à `n=9` par des points à distance constante et vérifier
+que le scan 4-points ne voit rien ; verrouiller que le scan 5-points rejette la
+famille par certificat héréditaire ; vérifier que les positifs cycle restent
+acceptés et que les gates oracle ne régressent pas.
+
+Plan subagents : trois explorateurs lecture seule : recherche indépendante de
+contre-exemples 4-local/global, analyse des incomplets `paired_farthest/mixed`,
+et statut théorique/artefact recommandé pour les obstructions héréditaires.
+
+Tests à exécuter : tests candidats/régressions ciblés, `make unit`,
+`make quick`, `make hunt-counterexamples`, `make check`, `make bench-quick`,
+et un benchmark ciblé sur la nouvelle famille si elle est ajoutée aux
+générateurs.
+
+Risques : croire que le scan `(4,5)` est une caractérisation ; ralentir les cas
+où aucune obstruction petite n'existe ; masquer une incomplétude candidate par
+un benchmark qui ne contient que des obstructions induites ; ajouter une famille
+de générateur qui échoue pour `n < 5` sans le documenter.
+
+Résultats observés : probe exhaustive `n=5`, valeurs `{1,2}`, a trouvé après
+236 matrices un noyau binaire globalement non-cR dont toutes les restrictions
+4-points sont cR :
+`[[0,1,1,2,2],[1,0,2,1,2],[1,2,0,1,2],[2,1,1,0,2],[2,2,2,2,0]]`.
+Le même noyau apparaît dans l'exhaustif `{1,2,3}`. Le padding avec distance `2`
+du noyau vers les nouveaux points et distance `1` entre nouveaux points préserve
+les restrictions 4-points positives dans les tests `n=6,7,8,9,10,12,20`.
+
+Changements intégrés : ajout de `four_local_non_cr_core` et
+`padded_four_local_non_cr` dans `generators.py`; ajout de régressions montrant
+que le noyau est globalement négatif mais 4-local positif ; extension de
+`candidate_small_forbidden_submatrix_obstruction` aux tailles configurées
+`(4,5)`. Les scans d'obstructions sont placés après l'échantillonnage, car un
+témoin positif directement vérifié suffit déjà à prouver l'existence.
+
+Validation : tests candidats/générateurs/régressions ciblés `39 passed`,
+`make unit` `127 passed`, `make quick` `127 passed` puis `JUSTE`,
+`make hunt-counterexamples` `JUSTE`, `make check` `JUSTE`, `make bench-quick`
+`0` timeout et `0` incomplet, `make bench` `0` timeout et `0` incomplet,
+benchmark ciblé `four_local_non_cr/star` `0` timeout et `0` incomplet.
+
+Résultat benchmark ciblé : pour tailles `5,6,8,9,10,12,20,40`, répétitions `3`,
+les cas `n <= 8` sont exacts par brute force et les cas `n > 8` sont rejetés par
+`candidate_small_forbidden_submatrix_obstruction` avec obstruction d'ordre 5.
+
+Décision : conserver comme progrès sound et comme contre-exemple durable à la
+caractérisation 4-locale. Ne pas conclure à une base finie d'obstructions :
+les tailles `(4,5)` sont seulement deux certificats héréditaires bornés.
