@@ -507,3 +507,38 @@ Limites :
   ne relie encore ce signal à une décision d'existence globale ;
 - les égalités et cas non stricts imposent de garder les clauses dégénérées
   séparées.
+
+### Prédicats stricts d'ordre fixé
+
+Statut : définitions directes implémentées / base expérimentale Piste F.
+
+Les prédicats stricts ajoutés vérifient uniquement un ordre fixé :
+
+- `is_strict_robinson_linear` utilise
+  `d(x,z) > max(d(x,y), d(y,z))` ;
+- `is_strict_quasi_circular_order` utilise `sqcR` :
+  `d(x,z) > min(d(y,z), d(t,z))` pour chaque quadruplet cyclique ;
+- `is_strict_precircular_order_cR` utilise `scR` :
+  `d(x,z) > min(max(d(x,y),d(y,z)), max(d(x,t),d(t,z)))` ;
+- `is_strict_circular_robinson_order` vérifie la définition par arcs strictement
+  Robinson.
+
+Ce que cela couvre :
+
+- obligation fixed-order : les égalités sont rejetées par `<=` dans les
+  fonctions de violation ;
+- obligation de séparation : `strict_order_report` est exact seulement par
+  énumération pour `n <= max_n`, et marque explicitement les grandes tailles
+  incomplètes ;
+- obligation expérimentale : sur `n=4`, valeurs `{1,2,3}`, la définition par
+  arcs strictement circular coïncide avec `scR` sur `2187` couples
+  matrice-ordre.
+
+Limites :
+
+- aucune génération polynomiale des ordres stricts n'est encore implémentée ;
+- aucune décision d'existence grande taille n'est ajoutée à `candidate.py` ;
+- la Fig. 2.2 montre que strict quasi ne suffit pas à strict circular pour un
+  ordre donné ;
+- un témoin strict cR peut ne pas être représenté par le PC-tree, donc toute
+  future intégration doit garder le garde `represents_order`.

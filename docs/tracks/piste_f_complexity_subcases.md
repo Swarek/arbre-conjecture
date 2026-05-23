@@ -176,6 +176,28 @@ Tests requis avant `candidate.py` :
 - cas non applicables : equal-distance, non strict, random hors strict ;
 - régression témoin strict cR mais non représenté par `T`.
 
+Résultat T023 :
+
+- prédicats d'ordre fixé ajoutés :
+  `is_strict_robinson_linear`, `is_strict_quasi_circular_order`,
+  `is_strict_precircular_order_cR`, `is_strict_circular_robinson_order` ;
+- `strict_order_report(D, pc_tree=None, max_n=8)` énumère les ordres stricts
+  seulement pour petites tailles et marque `complete=False` au-delà ;
+- Fig. 2.2 est régressée : ordre `(0,1,2,3)` strict quasi mais non strict
+  pre-circular, ordre `(0,1,3,2)` strict circular ;
+- `equal_distance_instance(4)` verrouille le rejet strict des égalités ;
+- `cycle_metric(6)` verrouille l'ordre strict positif unique modulo
+  rotation/renversement ;
+- un témoin strict cR non représenté par un PC-tree `C` de 4 feuilles est
+  régressé pour empêcher toute future intégration qui accepterait un ordre hors
+  arbre ;
+- probe exhaustive `n=4`, valeurs `{1,2,3}` : `2187` couples matrice-ordre
+  sans désaccord entre strict pre-circular et définition stricte par arcs.
+
+Décision : garder ces fonctions comme base expérimentale. La prochaine étape
+strict doit être la génération exhaustive des un ou deux ordres compatibles
+stricts annoncés par Prop. 5.9 ou une reproduction validée d'Algorithm 5.2.
+
 ## Témoin cycle par distances minimales
 
 Statut : certificat positif intégré pour tout PC-tree du scaffold où le témoin

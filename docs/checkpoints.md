@@ -97,6 +97,11 @@ Dernier commit green avant T009 : `07120e4`.
   égal-distance et nœud `C`, et documentation de non-décision. Validation
   observée : `tests/test_local_constraints.py`, `make unit`, `make quick`,
   `make bench-quick` (`0` timeout, `0` incomplet).
+- Checkpoint T023 courant : commit contenant les prédicats stricts d'ordre fixé,
+  `strict_order_report`, les régressions Fig. 2.2 / égal-distance / cycle /
+  témoin strict non représenté, et la documentation de non-intégration
+  candidate. Validation observée : `tests/test_strict_experiments.py`,
+  `make unit`, `make quick`, `make bench-quick` (`0` timeout, `0` incomplet).
 
 ## Rollback
 

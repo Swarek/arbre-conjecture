@@ -80,6 +80,14 @@ def _validate_order_for_D(D: Matrix, order: Order) -> int:
     return n
 
 
+def _validate_sequence_for_D(D: Matrix, seq: Order) -> int:
+    n = validate_dissimilarity(D)
+    values = set(seq)
+    if len(values) != len(seq) or not values.issubset(set(range(n))):
+        raise ValueError("seq must contain distinct labels from 0..n-1")
+    return len(seq)
+
+
 def all_circular_orders(n: int) -> Iterable[tuple[int, ...]]:
     """Yield circular orders on ``0..n-1`` modulo rotation and reversal."""
 
@@ -136,7 +144,7 @@ def is_arc(order: Order, S: Iterable[int]) -> bool:
 def is_robinson_linear(D: Matrix, seq: Order) -> bool:
     """Test the linear Robinson dissimilarity inequalities for one order."""
 
-    n = _validate_order_for_D(D, seq)
+    n = _validate_sequence_for_D(D, seq)
     for i in range(n):
         x = seq[i]
         for j in range(i + 1, n):
@@ -144,6 +152,21 @@ def is_robinson_linear(D: Matrix, seq: Order) -> bool:
             for k in range(j + 1, n):
                 z = seq[k]
                 if D[x][z] < max(D[x][y], D[y][z]):
+                    return False
+    return True
+
+
+def is_strict_robinson_linear(D: Matrix, seq: Order) -> bool:
+    """Test the strict linear Robinson inequalities for one order."""
+
+    n = _validate_sequence_for_D(D, seq)
+    for i in range(n):
+        x = seq[i]
+        for j in range(i + 1, n):
+            y = seq[j]
+            for k in range(j + 1, n):
+                z = seq[k]
+                if D[x][z] <= max(D[x][y], D[y][z]):
                     return False
     return True
 
@@ -170,6 +193,39 @@ def is_precircular_order_cR(D: Matrix, order: Order) -> bool:
     """
 
     return find_precircular_cR_violation(D, order) is None
+
+
+def is_strict_precircular_order_cR(D: Matrix, order: Order) -> bool:
+    """Test the strict one-side Robinson condition ``scR`` for one order."""
+
+    return find_strict_precircular_cR_violation(D, order) is None
+
+
+def is_strict_quasi_circular_order(D: Matrix, order: Order) -> bool:
+    """Test the strict quasi one-side Robinson condition ``sqcR``."""
+
+    return find_strict_quasi_circular_violation(D, order) is None
+
+
+def is_strict_circular_robinson_order(D: Matrix, order: Order) -> bool:
+    """Test the strict circular Robinson arc definition for a fixed order.
+
+    For every pair ``x,y``, at least one of the two circular arcs from ``x`` to
+    ``y`` must be strict Robinson in its induced linear order.
+    """
+
+    n = _validate_order_for_D(D, order)
+    if n <= 2:
+        return True
+
+    seq = tuple(order)
+    for i in range(n):
+        for j in range(i + 1, n):
+            forward = _clockwise_arc(seq, i, j)
+            backward = _clockwise_arc(seq, j, i)
+            if not is_strict_robinson_linear(D, forward) and not is_strict_robinson_linear(D, backward):
+                return False
+    return True
 
 
 def find_precircular_cR_violation(D: Matrix, order: Order) -> dict | None:
@@ -206,6 +262,79 @@ def find_precircular_cR_violation(D: Matrix, order: Order) -> dict | None:
                             "d_tz": D[t][z],
                         }
     return None
+
+
+def find_strict_precircular_cR_violation(D: Matrix, order: Order) -> dict | None:
+    """Return the first cyclic quadruple violating strict ``scR``."""
+
+    n = _validate_order_for_D(D, order)
+    if n < 4:
+        return None
+
+    seq = tuple(order)
+    for i in range(n):
+        x = seq[i]
+        for off_y in range(1, n - 2):
+            y = seq[(i + off_y) % n]
+            for off_z in range(off_y + 1, n - 1):
+                z = seq[(i + off_z) % n]
+                lhs = D[x][z]
+                for off_t in range(off_z + 1, n):
+                    t = seq[(i + off_t) % n]
+                    rhs = min(
+                        max(D[x][y], D[y][z]),
+                        max(D[x][t], D[t][z]),
+                    )
+                    if lhs <= rhs:
+                        return {
+                            "quadruple": (x, y, z, t),
+                            "positions": (i, (i + off_y) % n, (i + off_z) % n, (i + off_t) % n),
+                            "lhs_pair": (x, z),
+                            "lhs": lhs,
+                            "rhs": rhs,
+                            "d_xy": D[x][y],
+                            "d_yz": D[y][z],
+                            "d_xt": D[x][t],
+                            "d_tz": D[t][z],
+                        }
+    return None
+
+
+def find_strict_quasi_circular_violation(D: Matrix, order: Order) -> dict | None:
+    """Return the first cyclic quadruple violating strict ``sqcR``."""
+
+    n = _validate_order_for_D(D, order)
+    if n < 4:
+        return None
+
+    seq = tuple(order)
+    for i in range(n):
+        x = seq[i]
+        for off_y in range(1, n - 2):
+            y = seq[(i + off_y) % n]
+            for off_z in range(off_y + 1, n - 1):
+                z = seq[(i + off_z) % n]
+                lhs = D[x][z]
+                for off_t in range(off_z + 1, n):
+                    t = seq[(i + off_t) % n]
+                    rhs = min(D[y][z], D[t][z])
+                    if lhs <= rhs:
+                        return {
+                            "quadruple": (x, y, z, t),
+                            "positions": (i, (i + off_y) % n, (i + off_z) % n, (i + off_t) % n),
+                            "lhs_pair": (x, z),
+                            "lhs": lhs,
+                            "rhs": rhs,
+                            "d_yz": D[y][z],
+                            "d_tz": D[t][z],
+                        }
+    return None
+
+
+def _clockwise_arc(seq: tuple[int, ...], start: int, end: int) -> tuple[int, ...]:
+    if start <= end:
+        return seq[start : end + 1]
+    return seq[start:] + seq[: end + 1]
 
 
 def farthest_sets(D: Matrix) -> dict[int, set[int]]:

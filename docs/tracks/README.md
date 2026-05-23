@@ -19,7 +19,7 @@ ensembles `I_x(v)` sur les branches d'un gros nœud `P`.
 | C - SAT/CSP | `piste_c_sat_csp.md` | Benchmark interne ajouté ; compilation encore dominante |
 | D - Circular-ones / intersection | `piste_d_circular_ones.md` | Non testée expérimentalement |
 | E - Obstructions farthest/quartets | `piste_e_farthest_quartets.md` | Farthest seul réfuté ; cR quartets restent centraux |
-| F - Complexité / sous-cas | `piste_f_complexity_subcases.md` | Sous-cas universel + témoins minimum-cycle/paired-farthest intégrés ; familles stress conservées |
+| F - Complexité / sous-cas | `piste_f_complexity_subcases.md` | Sous-cas universel + témoins positifs intégrés ; base stricte expérimentale ajoutée |
 
 ## Règle d’édition
 
@@ -60,6 +60,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T020 | 2026-05-23 | F/E | Témoin paired-farthest structurel ajouté ; garde représentation PC-tree régressé | `candidate_paired_farthest_matching_witness` |
 | T021 | 2026-05-23 | A/B/F | Paired-farthest non-star : canonique incomplet, high-cross insuffisant, diagnostics locaux/DP non décisifs | régressions `paired_farthest` `n=6` |
 | T022 | 2026-05-23 | A/D/F | Projection des farthest sets ajoutée ; sous-cas strict préparé mais non intégré | `project_farthest_sets_to_pc_nodes` |
+| T023 | 2026-05-23 | F | Prédicats stricts d'ordre fixé et rapport strict borné ajoutés ; pas d'intégration candidate | `strict_order_report` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

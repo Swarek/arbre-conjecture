@@ -830,3 +830,46 @@
 - Next action : soit tester le sous-cas strict à partir des sources, soit
   formaliser un rapport circular-ones/intersection qui relie ces projections à
   des contraintes prouvées plutôt qu'à de simples signaux.
+
+## 2026-05-23 strict fixed-order predicates
+
+- Date/heure : 2026-05-23, Europe/Paris.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : avant toute intégration de l'Algorithm 5.2, on peut
+  sécuriser le sous-cas strict avec des prédicats directs d'ordre fixé :
+  strict Robinson linéaire, `sqcR`, `scR`, et définition stricte par arcs.
+- Changement fait : ajout de `is_strict_robinson_linear`,
+  `is_strict_quasi_circular_order`, `is_strict_precircular_order_cR`,
+  `is_strict_circular_robinson_order` et fonctions de violation associées dans
+  `predicates.py`; ajout de `src/pc_circular/solvers/strict_experiments.py`
+  avec `strict_order_report`; ajout de `tests/test_strict_experiments.py`.
+- Commande exécutée avant modification : `make quick`.
+- Résultat correction : `77 passed in 0.53s`, puis `JUSTE`.
+- Plan subagents : deux explorateurs lecture seule. Résultats : les définitions
+  directes strictes sont confirmées ; Fig. 2.2, equal-distance, cycle metric et
+  témoin strict non représenté sont les régressions prioritaires.
+- Commande exécutée : extraction `pdftotext` de Fig. 2.2.
+- Résultat source : matrice Fig. 2.2 extraite :
+  `[[0,1,2,3],[1,0,3,2],[2,3,0,1],[3,2,1,0]]`. L'ordre `(0,1,2,3)` est
+  strict quasi mais viole `scR`; l'ordre `(0,1,3,2)` est strict circular.
+- Probe exécutée : exhaustif `n=4`, valeurs `{1,2,3}`, tous ordres circulaires.
+- Résultat probe : `2187` couples matrice-ordre ; aucun désaccord entre
+  `is_strict_precircular_order_cR` et `is_strict_circular_robinson_order`.
+  Counts par ordre : strict circular `261`, strict pre `261`, strict quasi
+  `357`.
+- Commande exécutée : `pytest -q tests/test_strict_experiments.py`.
+- Résultat correction : `8 passed`.
+- Commande exécutée : `make unit`.
+- Résultat correction : `85 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `85 passed in 0.66s`, puis `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark : `0` timeout, `0` incomplet ; dernier `n=20` via
+  `candidate_universal_bad_witness_bound_all_orders` et
+  `candidate_validated_sampled_witness`, fit polynomial rapide `p ~= 2.70`.
+- Conclusion : base strict fixed-order utile et verrouillée par régressions,
+  mais toujours aucun solveur strict polynomial. `candidate.py` reste inchangé.
+- Next action : implémenter un module expérimental de génération des candidats
+  stricts, ou reproduire Algorithm 5.2 avec comparaison exhaustive contre
+  `strict_order_report` avant toute promotion en candidate.

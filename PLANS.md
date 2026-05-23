@@ -998,3 +998,62 @@ module expérimental avant toute intégration candidate, car une probe naïve ra
 Décision : conserver comme diagnostic Piste A/D. Ne pas modifier `candidate.py`.
 La prochaine itération peut basculer vers le sous-cas strict ou vers une famille
 de contraintes circular-ones avec preuve locale plus forte.
+
+## ExecPlan 2026-05-23 - strict fixed-order predicates
+
+But : préparer le sous-cas strict avec des définitions directes testables avant
+de tenter Algorithm 5.2 ou une intégration dans `candidate.py`.
+
+Hypothèse : les conditions strictes d'ordre fixé du papier peuvent être ajoutées
+comme prédicats expérimentaux sûrs : `scR` remplace `>=` par `>` dans la
+formule pre-circular, `sqcR` utilise `d(x,z) > min(d(y,z), d(t,z))`, et le
+strict circular Robinson fixed-order se teste par arcs strictement Robinson.
+Ces prédicats ne génèrent pas encore les ordres stricts de façon polynomiale.
+
+Fichiers à modifier : `src/pc_circular/predicates.py`,
+`src/pc_circular/solvers/strict_experiments.py`,
+`tests/test_strict_experiments.py`, `docs/tracks/piste_f_complexity_subcases.md`,
+`docs/tracks/README.md`, `docs/experiment_log.md`, `docs/checkpoints.md`,
+`docs/proof_obligations.md`.
+
+Algorithme pressenti : implémenter les prédicats directs pour ordre fixé et un
+rapport `strict_order_report(D, pc_tree=None, max_n=8)` qui énumère exactement
+les ordres seulement pour petites tailles. Ne pas modifier `candidate.py`.
+
+Tests à exécuter : tests stricts ciblés, probe exhaustive `n=4` valeurs
+`{1,2,3}` pour vérifier strict circular => strict pre-circular => strict quasi,
+régression d'un témoin strict non représenté par PC-tree, `make unit`,
+`make quick`, puis `make bench-quick` si la candidate est inchangée.
+
+Risques : confondre les prédicats fixed-order avec un algorithme de génération
+d'ordres stricts ; nommer "strict quasi" une condition autre que `sqcR` ;
+laisser les égalités passer par erreur ; intégrer trop tôt une transcription
+naïve de l'Algorithm 5.2.
+
+Plan de contre-exemples : tests sur égal-distance pour rejeter les égalités ;
+cycle metric pour vérifier un positif strict ; exhaustif `n=4` pour les
+implications ; `max_n` pour empêcher une énumération cachée grande taille.
+
+Plan subagents : deux explorateurs lecture seule. L'un vérifie les définitions
+strictes fixed-order et les pièges d'égalités. L'autre cherche des familles et
+matrices utiles pour les tests/régressions strictes.
+
+Résultats observés : ajout de `is_strict_robinson_linear`,
+`is_strict_precircular_order_cR`, `is_strict_quasi_circular_order`,
+`is_strict_circular_robinson_order` et des fonctions de violation associées
+dans `predicates.py`. Ajout de `strict_order_report` dans
+`solvers/strict_experiments.py`, exact seulement pour `n <= max_n` et incomplet
+au-delà. Tests ajoutés : égal-distance rejeté en strict, `cycle_metric(6)`
+unique strict modulo renversement, Fig. 2.2 strict quasi mais non strict
+pre-circular dans l'ordre `(0,1,2,3)`, ordre corrigé `(0,1,3,2)` strict
+circular, témoin strict cR non représenté par PC-tree avec oracle PC-tree
+`False`, et équivalence exhaustive `n=4` entre strict pre-circular et définition
+stricte par arcs sur `2187` couples matrice-ordre. Subagents : définitions
+strictes directes confirmées, Fig. 2.2 et témoin strict non représenté
+recommandés comme régressions prioritaires. `make unit` : `85 passed`;
+`make quick` : `85 passed`, `JUSTE`; `make bench-quick` : `0` timeout, `0`
+incomplet.
+
+Décision : conserver comme base expérimentale Piste F. Ne pas intégrer dans
+`candidate.py` tant que la génération des ordres stricts (Algorithm 5.2 ou
+équivalent) n'est pas prouvée exhaustive et testée contre l'oracle PC-tree.
