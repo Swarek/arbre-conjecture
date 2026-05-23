@@ -155,3 +155,21 @@ Prochaine décision expérimentale utile :
 - Ne pas prétendre que le risque cyclic-ordering prouve la NP-difficulté.
 - Ne pas supposer que le scaffold `PCNode` enraciné couvre toutes les subtilités
   des vrais PC-trees Hsu/McConnell non enracinés.
+
+## Revue externe globale post-T057
+
+Une seconde analyse GPT 5.5 Pro fournie par l'utilisateur le 2026-05-23 est
+conservée dans
+`docs/external_reviews/gpt55_global_strategy_2026-05-23.md`.
+
+Important : cette analyse était partiellement ancrée par le prompt sur T056/T057.
+Elle ne doit donc pas bloquer la recherche sur la seule collision de second
+ordre. Les idées retenues sont re-routées vers un portefeuille large :
+
+- caractérisation bad-side exacte par les ensembles `B_ac` ;
+- CSP exact par quartets et test de portée `<= 2` ;
+- sous-cas booléen / C-only par 2-SAT ;
+- DP par treewidth du CSP de quartets ;
+- catalogue de relations binaires entre petits nœuds `P` pour évaluer la piste
+  NP-hardness ;
+- collision de second ordre contre les signatures ouvertes T057.

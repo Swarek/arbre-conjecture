@@ -2748,3 +2748,108 @@
 - Next action : soit définir une signature avec obligations ouvertes entre
   supports voisins, soit basculer vers un sous-cas prouvable / une piste de
   complexité plutôt que continuer à quotienter les états fermés.
+
+## 2026-05-23 open boundary response states
+
+- Date/heure : 2026-05-23 10:40:53 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les collisions T056 des états fermés peuvent être réparées
+  en transportant, pour chaque affectation locale d'un support `S`, les
+  réponses hit/no-hit des supports voisins `C` sous tous les choix de
+  `(S union C) \\ S`. Si la signature ouverte est quasi-injective, elle est trop
+  chère ; si elle compresse, elle devient une piste DP à tester récursivement.
+- Changement fait : ajout de `component_mask_open_boundary_profile`, agrégats
+  `open_boundary_*` dans le benchmark CSP interne, tests d'accounting, tests de
+  troncature/unsupported, et métriques de buckets où la réponse de bord ou le
+  hit local reste mélangé. Aucun changement dans `candidate.py`.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `236 passed`, puis `JUSTE`.
+- Plan subagents : trois sidecars lecture seule. Résultats : Piste B formalise
+  `Open(S, alpha)` et signale le risque one-hop ; Piste F propose les agrégats
+  `boundary_mixed_count`, ratios d'états et coûts ; le troisième sidecar n'a
+  pas répondu avant intégration, donc la clôture s'appuie sur les deux retours
+  reçus et les probes locales.
+- Commande exécutée :
+  `pytest -q tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`.
+- Résultat correction ciblée : `54 passed`.
+- Cas minimal : `cycle_metric(5)` avec
+  `balanced_pc_tree(5, kind="mixed")`. Résultats :
+  `support_group_count=3`, `context_pair_count=6`,
+  `local_assignments_seen=24`, `boundary_response_checks=96`,
+  `assignment_signature=24`, `mask_multiset=9`,
+  `boundary_response=12`, `mask_multiset_plus_boundary=12`,
+  `full_plus_boundary=12`.
+- Commande exécutée : `make bench-csp-quick`.
+- Résultat benchmark interne : `reports/csp_internal_benchmark_quick.json`
+  écrit ; `192` lignes, `0` mismatch. Diagnostic ouvert borné :
+  `6224` affectations locales, `35728` checks de réponses ouvertes,
+  `1828` paires profilées, `74` lignes incomplètes visibles,
+  `average_boundary_entries_per_assignment=5.7404`.
+  Ratios : `boundary_response=0.2208`,
+  `local_boundary_response=0.2625`,
+  `mask_multiset_plus_boundary=0.4291`,
+  `full_plus_boundary=0.4770`.
+  Buckets à réponses de bord mélangées : `mask_multiset=203`, `full=49`,
+  `mask_multiset_plus_boundary=0`, `full_plus_boundary=0`,
+  `local_boundary_response=0`.
+- Commande exécutée : probe stress
+  `tools/pc_csp_internal_benchmark.py --sizes 8 --repeats 2 --instance-kinds
+  random,cycle,non_strict,paired_farthest,permuted_cycle --pc-trees
+  balanced,mixed`.
+- Résultat probe stress : `20` lignes, `0` mismatch ;
+  `open_boundary_local_assignments_seen=2088`,
+  `open_boundary_response_checks=9072`, `20` lignes incomplètes.
+  Ratios : `boundary_response=0.1518`,
+  `local_boundary_response=0.2126`,
+  `mask_multiset_plus_boundary=0.4119`,
+  `full_plus_boundary=0.4895`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `238 passed`, puis `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `8` tailles, `40` runs réussis, `0` timeout et `0` incomplet. `candidate.py`
+  n'a pas été modifié par T057.
+- Documents sources : les PDFs et la capture Proposition 4.4 fournis par
+  l'utilisateur sont conservés dans `docs/source_materials/` avec hashes et
+  restent aussi accessibles via `docs/references/`.
+- Conclusion : les réponses ouvertes one-hop réparent les collisions T056
+  mesurées et gardent une compression non triviale, mais ne prouvent pas une DP
+  globale. La signature est encore énumérative, bornée, et non testée sur une
+  composition de deuxième ordre.
+- Next action : chercher activement une collision de second ordre pour
+  `local_boundary_response`, ou prouver que les réponses one-hop se composent
+  sous une hypothèse de support précise.
+
+## 2026-05-23 external global review after T057
+
+- Date/heure : 2026-05-23 10:40:53 CEST, même checkpoint documentaire que T057.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : la revue externe GPT 5.5 Pro ne doit pas verrouiller la
+  recherche sur T057. Elle doit être transformée en portefeuille de pistes
+  falsifiables.
+- Changement fait : ajout de
+  `docs/external_reviews/gpt55_global_strategy_2026-05-23.md`, mise à jour du
+  digest externe, des pistes B/C/D/E/F, de `PLANS.md`, de
+  `docs/proof_obligations.md` et du registre des pistes.
+- Commande exécutée : mêmes gates finales que T057 :
+  `make quick`, `make check`, `make bench-quick`, `make bench-csp-quick`.
+- Résultat correction : `make quick` passe avec `238 passed` puis `JUSTE` ;
+  `make check` affiche `JUSTE`.
+- Résultat benchmark : `make bench-quick` écrit
+  `reports/complexity_report_quick.json` avec `8` tailles ; `make
+  bench-csp-quick` écrit `reports/csp_internal_benchmark_quick.json` avec
+  `192` lignes, `0` mismatch et `74` lignes incomplètes visibles sur le profil
+  ouvert borné.
+- Conclusion : la réponse externe est utile, mais le prompt l'a trop ancrée sur
+  T056/T057. La suite est donc explicitement élargie à cinq axes : bad-side
+  exact, CSP quartets/treewidth, sous-cas booléen 2-SAT, catalogue relations
+  binaires/NP-hardness, et collision second ordre T057.
+- Next action : commencer par le rapport `quartet_pc_scope_report(D, T)`, car il
+  sert de base commune au 2-SAT, à la DP treewidth, au relation catalog et aux
+  stress-tests de signatures ouvertes.

@@ -441,6 +441,18 @@ Dernier commit green avant T009 : `07120e4`.
   `mask_multiset=(1,2)` mais décisions cR différentes est régressé. Les
   collisions de `full` montrent que les états de masques fermés ne suffisent
   pas comme états DP autonomes. Aucun changement dans `candidate.py`.
+- Checkpoint T057 courant : commit contenant le diagnostic de réponses ouvertes
+  one-hop hors candidate. Validation observée :
+  `tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`
+  (`54 passed`), `make bench-csp-quick` (`192` lignes, `0` mismatch,
+  `74` lignes incomplètes visibles sur le profil ouvert borné), probe stress
+  `n=8` (`20` lignes, `0` mismatch), `make quick` (`238 passed`, puis
+  `JUSTE`), `make check` (`JUSTE`), `make bench-quick` (`40/40` runs,
+  `0` timeout, `0` incomplet). Résultat observé :
+  `mask_multiset_plus_boundary` supprime les buckets à réponses de bord
+  mélangées mesurés tout en gardant un ratio `0.4291` sur la gate CSP rapide ;
+  `local_boundary_response` est plus compressé (`0.2625`) mais reste seulement
+  one-hop et non prouvé récursif. Aucun changement dans `candidate.py`.
 
 ## Rollback
 

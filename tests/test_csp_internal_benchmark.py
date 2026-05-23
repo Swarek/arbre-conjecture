@@ -36,6 +36,7 @@ def test_csp_internal_benchmark_reports_separate_compile_and_solve_metrics():
     )
     assert row["support_outcome_profile_seconds"] >= 0
     assert row["context_collision_profile_seconds"] >= 0
+    assert row["open_boundary_profile_seconds"] >= 0
     assert row["profile_complete"]
     assert row["profile_hit_assignments"] == row["first_hit_assignments"]
     assert row["profile_no_hit_assignments"] == row["first_hit_no_hit_assignments"]
@@ -130,6 +131,19 @@ def test_csp_internal_benchmark_reports_separate_compile_and_solve_metrics():
     assert row["context_collision_pair_count"] > 0
     assert context_quotients["assignment_signature"]["mixed_count"] == 0
     assert context_quotients["mask_multiset"]["mixed_count"] > 0
+    open_states = row["open_boundary_states"]
+    assert row["open_boundary_complete"]
+    assert row["open_boundary_context_pair_count"] == row["context_collision_pair_count"]
+    assert row["open_boundary_response_checks"] == row["context_collision_assignments_seen"]
+    assert open_states["assignment_signature"]["state_count"] == row[
+        "open_boundary_local_assignments_seen"
+    ]
+    assert open_states["assignment_signature"]["boundary_mixed_count"] == 0
+    assert open_states["mask_multiset_plus_boundary"]["state_count"] >= open_states[
+        "mask_multiset"
+    ]["state_count"]
+    assert open_states["mask_multiset"]["boundary_mixed_count"] > 0
+    assert open_states["mask_multiset_plus_boundary"]["boundary_mixed_count"] == 0
     assert report["summary"]["total_first_hit_position_sum"] == row["first_hit_position_sum"]
     assert report["summary"]["total_first_hit_atom_checks_if_exhaustive_seen"] == row[
         "first_hit_atom_checks_if_exhaustive_seen"
@@ -186,3 +200,21 @@ def test_csp_internal_benchmark_reports_separate_compile_and_solve_metrics():
     assert summary_context_quotients["mask_multiset"]["mixed_count"] == context_quotients[
         "mask_multiset"
     ]["mixed_count"]
+    summary_open_states = report["summary"]["open_boundary_states"]
+    assert report["summary"]["open_boundary_local_assignments_seen"] == row[
+        "open_boundary_local_assignments_seen"
+    ]
+    assert report["summary"]["open_boundary_response_checks"] == row[
+        "open_boundary_response_checks"
+    ]
+    assert report["summary"]["open_boundary_pairs_profiled"] == row[
+        "open_boundary_pairs_profiled"
+    ]
+    assert report["summary"]["open_boundary_incomplete_rows"] == 0
+    assert summary_open_states["assignment_signature"]["state_count"] == row[
+        "open_boundary_local_assignments_seen"
+    ]
+    assert summary_open_states["assignment_signature"]["boundary_mixed_count"] == 0
+    assert summary_open_states["mask_multiset"]["boundary_mixed_count"] == open_states[
+        "mask_multiset"
+    ]["boundary_mixed_count"]

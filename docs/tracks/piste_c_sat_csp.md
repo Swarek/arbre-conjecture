@@ -736,6 +736,101 @@ ouvertes entre supports voisins. La piste C doit donc passer d'un quotient ferm�
 par support à une représentation d'obligations ouvertes, ou changer d'axe vers
 un sous-cas prouvable.
 
+## Tentative T057 - États de réponse ouverte
+
+Statut : diagnostic Piste C/B, hors `candidate.py`.
+
+Hypothèse testée : les collisions T056 peuvent être réparées si l'état local
+transporte un vecteur de réponses ouvertes vers les supports voisins. Le profil
+`component_mask_open_boundary_profile` énumère, pour chaque affectation locale
+d'un support `S`, les réponses hit/no-hit de chaque support voisin `C` sous tous
+les choix externes de `(S union C) \\ S`.
+
+États comptés :
+
+- `assignment_signature` : contrôle sans compression ;
+- `full` et `mask_multiset` : états fermés T054/T055, avec support de base dans
+  la clé ;
+- `boundary_response` : seulement le vecteur de réponses ouvertes ;
+- `local_boundary_response` : hit local plus réponses ouvertes ;
+- `mask_multiset_plus_boundary`, `full_plus_boundary`,
+  `hit_components_plus_boundary`.
+
+Résultat minimal `cycle_metric(5)` avec `balanced_pc_tree(5, kind="mixed")` :
+
+- `support_group_count=3`, `context_pair_count=6` ;
+- `local_assignments_seen=24` ;
+- `boundary_response_checks=96` ;
+- `assignment_signature=24` états ;
+- `mask_multiset=9` états ;
+- `boundary_response=12` états ;
+- `mask_multiset_plus_boundary=12` états ;
+- `full_plus_boundary=12` états.
+
+Résultat `make bench-csp-quick` :
+
+- `192` lignes supportées, `0` mismatch ;
+- diagnostic ouvert borné à `max_pairs=20`, donc `74` lignes incomplètes
+  visibles ;
+- `open_boundary_local_assignments_seen=6224` ;
+- `open_boundary_response_checks=35728` ;
+- `open_boundary_pairs_profiled=1828` ;
+- `assignment_signature` : ratio `1.0000`, `6224` états ;
+- `full` : ratio `0.4692`, `2920` états ;
+- `mask_multiset` : ratio `0.3959`, `2464` états ;
+- `boundary_response` : ratio `0.2208`, `1374` états ;
+- `local_boundary_response` : ratio `0.2625`, `1634` états ;
+- `mask_multiset_plus_boundary` : ratio `0.4291`, `2671` états ;
+- `full_plus_boundary` : ratio `0.4770`, `2969` états.
+
+Réparation des collisions T056 sur la réponse de bord : `mask_multiset` garde
+`203` états avec plusieurs réponses de bord possibles et `full` en garde `49`.
+Les états enrichis `mask_multiset_plus_boundary`, `full_plus_boundary` et
+`local_boundary_response` ont `0` bucket mélangé sur ce diagnostic one-hop.
+`boundary_response` seul a `0` mélange de bord, mais `260` buckets mélangent le
+hit local ; il ne doit donc pas être utilisé sans le bit local.
+
+Probe stress `n=8`, repeats `2` :
+
+- `open_boundary_local_assignments_seen=2088` ;
+- `open_boundary_response_checks=9072` ;
+- `open_boundary_incomplete_rows=20` ;
+- `boundary_response` : ratio `0.1518`, `317` états ;
+- `local_boundary_response` : ratio `0.2126`, `444` états ;
+- `mask_multiset_plus_boundary` : ratio `0.4119`, `860` états ;
+- `full_plus_boundary` : ratio `0.4895`, `1022` états.
+
+Conclusion : les obligations ouvertes one-hop donnent une compression réelle et
+ne sont pas immédiatement quasi-injectives. Mais le profil est encore
+énumératif, borné, et seulement one-hop. La prochaine question est de chercher
+des collisions de second ordre ou de prouver une règle de composition des
+vecteurs de réponses ouvertes.
+
+## Revue externe post-T057 - CSP exact par quartets
+
+Statut : orientation de piste, non implémentée.
+
+La revue externe GPT 5.5 Pro fournie le 2026-05-23 recommande de ne pas réduire
+la suite à T057. Pour Piste C, l'objet central proposé est un CSP exact par
+quartets :
+
+- calculer, pour chaque quartet `Q`, les types circulaires autorisés par `D` ;
+- calculer les variables locales du PC-tree dont dépend le type induit sur `Q` ;
+- vérifier expérimentalement que la portée effective est `0`, `1` ou `2` ;
+- fusionner les contraintes par scope et résoudre par 2-SAT quand les domaines
+  sont booléens, ou par DP de treewidth quand le graphe primal est petit.
+
+Cette piste est prioritaire parce qu'elle relie plusieurs axes : T057 devient un
+diagnostic de compression d'un CSP exact, le sous-cas C-only devient une
+réduction 2-SAT testable, et le catalogue de relations binaires devient une
+mesure de dureté potentielle.
+
+Prochaine expérience recommandée : ajouter un rapport
+`quartet_pc_scope_report(D, T)` qui, sans résoudre le CSP, liste pour chaque
+quartet le scope PC-tree minimal observé, les types autorisés par `D`, et les
+contraintes locales induites. Le rapport doit être comparé à l'oracle sur petits
+arbres avant tout solveur.
+
 ## Tentative T021 - Repair positive-only pour paired-farthest
 
 Statut : idée saine comme générateur expérimental vérifié, mais non intégrée à

@@ -954,3 +954,64 @@ comme signal de tractabilité. Même l'état de masques complet peut être trop
 pauvre pour composer des supports voisins. Une future DP devra payer soit par
 des états plus riches, soit par des obligations ouvertes, ce qui affaiblit
 l'hypothèse d'une petite table d'états issue des seuls masques fermés.
+
+## Résultat T057 - Coût des obligations ouvertes one-hop
+
+Statut : mesure empirique hors candidate.
+
+T057 teste le prix d'un état enrichi par les réponses ouvertes vers supports
+voisins. Sur `make bench-csp-quick`, le profil est encore borné à
+`max_pairs=20`, avec les incomplétudes visibles :
+
+- `192` lignes supportées, `0` mismatch ;
+- `6224` affectations locales inspectées ;
+- `35728` checks de réponses ouvertes ;
+- `1828` paires de supports profilées ;
+- `74` lignes incomplètes sur le diagnostic ouvert ;
+- moyenne `5.7404` entrées de bord par affectation locale.
+
+Ratios d'états sur la gate CSP rapide :
+
+- `boundary_response` : `1374` états, ratio `0.2208`, bucket moyen `4.5298` ;
+- `local_boundary_response` : `1634` états, ratio `0.2625`, bucket moyen
+  `3.8091` ;
+- `mask_multiset_plus_boundary` : `2671` états, ratio `0.4291`, bucket moyen
+  `2.3302` ;
+- `full_plus_boundary` : `2969` états, ratio `0.4770`, bucket moyen `2.0963`.
+
+La réparation a un coût net : `mask_multiset_plus_boundary` est à peine plus
+gros que `mask_multiset` (`0.4291` contre `0.3959`) et supprime les mélanges de
+réponse de bord mesurés, mais il reste proche des états fermés complets.
+`boundary_response` compresse davantage, mais il mélange le hit local et doit
+être combiné avec celui-ci pour une signature de production.
+
+Probe stress `n=8`, repeats `2` : `20` lignes, `0` mismatch, `2088`
+affectations locales, `9072` checks ouverts, `20` lignes incomplètes.
+Les ratios restent dans la même zone : `local_boundary_response=0.2126`,
+`mask_multiset_plus_boundary=0.4119`, `full_plus_boundary=0.4895`.
+
+Interprétation complexité : les obligations ouvertes one-hop ne sont pas
+immédiatement quasi-injectives, donc la piste DP n'est pas réfutée par T057.
+Mais le coût est déjà énumératif et borné ; il faut maintenant mesurer une
+composition de second ordre. Si celle-ci force des tables de réponses pour des
+chaînes de supports, la signature risque de réencoder l'énumération globale.
+
+## Revue externe post-T057 - largeur et dureté
+
+Statut : orientation de complexité, non preuve.
+
+La revue externe GPT 5.5 Pro propose de séparer trois lectures de complexité :
+
+- sous-cas booléen : contraintes de quartets de portée `<= 2` sur variables
+  booléennes, donc réduction 2-SAT si le lemme de portée est validé ;
+- sous-cas treewidth : CSP exact de quartets résolu par DP en
+  `O(n^4 q^(w+1))` quand le domaine maximal `q` et la treewidth `w` sont bornés ;
+- piste NP-hardness : cataloguer les relations binaires réalisables entre deux
+  petits nœuds `P` pour voir si une relation de disequality domaine 3 ou une
+  autre relation CSP dure peut être simulée.
+
+Action prioritaire Piste F : construire un catalogue expérimental de relations
+binaires induites par deux petits nœuds `P`, en gardant visibles les contraintes
+parasites dues aux distances globales. Si toutes les relations observées restent
+bijunctives ou fortement structurées, cela renforce la piste algorithmique ; si
+une relation dure apparaît, elle nourrit une réduction NP-hard plus sérieuse.

@@ -337,6 +337,28 @@ Les contre-exemples ajoutés montrent qu'une règle locale `I_x(v)`
 laminar/interval/circular-ones et une 2-SAT qui encode seulement le côté de
 chaque endpoint acceptent trop.
 
+## Revue externe post-T057 - centralité de `B_ac`
+
+Statut : obligation de formalisation, pas nouveau résultat.
+
+La revue externe GPT 5.5 Pro remet la caractérisation bad-side au centre. Pour
+chaque paire `{a,c}` :
+
+```text
+B_ac = {u notin {a,c} : max(d(a,u), d(u,c)) > d(a,c)}.
+```
+
+L'énoncé à formaliser dans le dépôt est : un ordre fixé est circular Robinson
+ssi, pour toute paire `{a,c}`, tous les éléments de `B_ac` sont sur un seul des
+deux arcs ouverts entre `a` et `c`. Cette idée est déjà exploitée par
+`passes_bad_side_precircular_cR` et par les nogoods bad-side, mais elle doit
+être écrite comme lemme interne avec preuve complète et tests d'équivalence
+contre la définition directe.
+
+Intérêt pour la suite : cette formulation donne des contraintes exactes de
+quartets `a,y,c,t` à interdire, et devient la source commune du CSP exact, du
+catalogue de relations binaires et des tests de collision DP.
+
 ## Prochaine action
 
 Utiliser les témoins `find_precircular_cR_violation` comme source principale

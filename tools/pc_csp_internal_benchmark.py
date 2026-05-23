@@ -32,6 +32,7 @@ from pc_circular.solvers.sat_like_experiments import (  # noqa: E402
     compile_bad_side_nogoods_support_local,
     compile_cr_nogoods,
     component_mask_quotient_context_collision_profile,
+    component_mask_open_boundary_profile,
     solve_pruned_nogood_csp_from_compilation,
 )
 
@@ -120,6 +121,38 @@ def _aggregate_quotient_context_collisions(rows: Sequence[dict]) -> dict:
         if quotient["state_count"]:
             quotient["average_bucket_size"] = total_assignments / quotient["state_count"]
             quotient["mixed_ratio"] = quotient["mixed_count"] / quotient["state_count"]
+    return dict(sorted(aggregate.items()))
+
+
+def _aggregate_open_boundary_states(rows: Sequence[dict]) -> dict:
+    aggregate: dict[str, dict] = {}
+    total_assignments = sum(row["open_boundary_local_assignments_seen"] for row in rows)
+    for row in rows:
+        for name, state in row["open_boundary_states"].items():
+            target = aggregate.setdefault(
+                name,
+                {
+                    "state_count": 0,
+                    "max_bucket_size": 0,
+                    "ratio": 0.0,
+                    "average_bucket_size": 0.0,
+                    "boundary_mixed_count": 0,
+                    "boundary_mixed_ratio": 0.0,
+                    "local_hit_mixed_count": 0,
+                    "local_hit_mixed_ratio": 0.0,
+                },
+            )
+            target["state_count"] += state["state_count"]
+            target["max_bucket_size"] = max(target["max_bucket_size"], state["max_bucket_size"])
+            target["boundary_mixed_count"] += state.get("boundary_mixed_count", 0)
+            target["local_hit_mixed_count"] += state.get("local_hit_mixed_count", 0)
+    for state in aggregate.values():
+        if total_assignments:
+            state["ratio"] = state["state_count"] / total_assignments
+        if state["state_count"]:
+            state["average_bucket_size"] = total_assignments / state["state_count"]
+            state["boundary_mixed_ratio"] = state["boundary_mixed_count"] / state["state_count"]
+            state["local_hit_mixed_ratio"] = state["local_hit_mixed_count"] / state["state_count"]
     return dict(sorted(aggregate.items()))
 
 
@@ -219,6 +252,15 @@ def run_benchmark(
                     )
                     context_collision_seconds = time.perf_counter() - context_collision_start
 
+                    open_boundary_start = time.perf_counter()
+                    open_boundary_profile = component_mask_open_boundary_profile(
+                        D,
+                        T,
+                        max_p_degree=max_p_degree,
+                        max_pairs=20,
+                    )
+                    open_boundary_seconds = time.perf_counter() - open_boundary_start
+
                     first_hit_solve_start = time.perf_counter()
                     first_hit_solve_result = solve_pruned_nogood_csp_from_compilation(
                         D,
@@ -268,6 +310,7 @@ def run_benchmark(
                     first_hit_compile_counts = first_hit_compilation["counts"]
                     profile_counts = support_outcome_profile["counts"]
                     context_collision_counts = context_collision_profile["counts"]
+                    open_boundary_counts = open_boundary_profile["counts"]
                     signatures = _signature_set(compilation)
                     support_signatures = _signature_set(support_compilation)
                     grouped_signatures = _signature_set(grouped_compilation)
@@ -299,6 +342,7 @@ def run_benchmark(
                             "first_hit_compile_seconds": first_hit_compile_seconds,
                             "support_outcome_profile_seconds": profile_seconds,
                             "context_collision_profile_seconds": context_collision_seconds,
+                            "open_boundary_profile_seconds": open_boundary_seconds,
                             "first_hit_solve_seconds": first_hit_solve_seconds,
                             "direct_seconds": direct_seconds,
                             "atoms": len(compilation["atoms"]),
@@ -533,6 +577,35 @@ def run_benchmark(
                                 context_collision_counts["max_context_support_product"]
                             ),
                             "context_collision_quotients": context_collision_profile["quotients"],
+                            "open_boundary_complete": open_boundary_profile["complete"],
+                            "open_boundary_support_group_count": open_boundary_counts[
+                                "support_group_count"
+                            ],
+                            "open_boundary_context_pair_count": open_boundary_counts[
+                                "context_pair_count"
+                            ],
+                            "open_boundary_pairs_profiled": open_boundary_counts[
+                                "pairs_profiled"
+                            ],
+                            "open_boundary_local_assignments_seen": open_boundary_counts[
+                                "local_assignments_seen"
+                            ],
+                            "open_boundary_response_checks": open_boundary_counts[
+                                "boundary_response_checks"
+                            ],
+                            "open_boundary_entries_total": open_boundary_counts[
+                                "boundary_entries_total"
+                            ],
+                            "open_boundary_max_boundary_entries_per_assignment": (
+                                open_boundary_counts["max_boundary_entries_per_assignment"]
+                            ),
+                            "open_boundary_average_boundary_entries_per_assignment": (
+                                open_boundary_counts["average_boundary_entries_per_assignment"]
+                            ),
+                            "open_boundary_max_context_support_product": open_boundary_counts[
+                                "max_context_support_product"
+                            ],
+                            "open_boundary_states": open_boundary_profile["states"],
                             "profile_ambiguous_no_hit_assignments": profile_counts[
                                 "ambiguous_no_hit_assignments"
                             ],
@@ -623,6 +696,9 @@ def run_benchmark(
             ),
             "median_context_collision_profile_seconds": _median(
                 [row["context_collision_profile_seconds"] for row in supported_rows]
+            ),
+            "median_open_boundary_profile_seconds": _median(
+                [row["open_boundary_profile_seconds"] for row in supported_rows]
             ),
             "median_solve_seconds": _median([row["solve_seconds"] for row in supported_rows]),
             "median_support_solve_seconds": _median(
@@ -808,6 +884,25 @@ def run_benchmark(
             ),
             "context_collision_incomplete_rows": sum(
                 1 for row in supported_rows if not row["context_collision_complete"]
+            ),
+            "open_boundary_states": _aggregate_open_boundary_states(supported_rows),
+            "open_boundary_local_assignments_seen": sum(
+                row["open_boundary_local_assignments_seen"] for row in supported_rows
+            ),
+            "open_boundary_response_checks": sum(
+                row["open_boundary_response_checks"] for row in supported_rows
+            ),
+            "open_boundary_pairs_profiled": sum(
+                row["open_boundary_pairs_profiled"] for row in supported_rows
+            ),
+            "open_boundary_incomplete_rows": sum(
+                1 for row in supported_rows if not row["open_boundary_complete"]
+            ),
+            "open_boundary_average_boundary_entries_per_assignment": (
+                sum(row["open_boundary_entries_total"] for row in supported_rows)
+                / sum(row["open_boundary_local_assignments_seen"] for row in supported_rows)
+                if sum(row["open_boundary_local_assignments_seen"] for row in supported_rows)
+                else 0.0
             ),
             "profile_pair_side_split_work_ratio": (
                 sum(row["profile_pair_side_split_checks"] for row in supported_rows)

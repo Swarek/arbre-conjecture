@@ -492,3 +492,71 @@ Conséquence : une DP viable doit transporter plus qu'un état de masques fermé
 par support. Il faut représenter des obligations ouvertes vers les supports
 voisins ou garder des signatures d'affectation plus fines ; sinon le contexte
 parent peut distinguer deux sous-états fusionnés.
+
+## Résultats T057
+
+Statut : signature ouverte one-hop mesurée, pas DP prouvée.
+
+T057 ajoute `component_mask_open_boundary_profile`. Pour chaque support groupé
+`S` et affectation locale `alpha`, le diagnostic calcule le vecteur des réponses
+hit/no-hit de chaque support voisin `C` qui chevauche `S`, pour chaque choix de
+contexte externe `(S union C) \\ S`. Les clés d'état incluent explicitement le
+support de base afin de ne pas surestimer la compression par pooling entre
+supports différents.
+
+Définition mesurée :
+
+```text
+boundary_response(S, alpha) =
+  ((C, signature(beta), hit_C(alpha union beta)), ...)
+```
+
+où `beta` parcourt les choix des variables de `(S union C) \\ S`. Variantes
+comptées : `boundary_response`, `local_boundary_response`,
+`mask_multiset_plus_boundary`, `full_plus_boundary`, et le contrôle
+`assignment_signature`.
+
+Résultat minimal `cycle_metric(5)` / `balanced_pc_tree(5, kind="mixed")` :
+
+- `24` affectations locales ;
+- `96` checks de réponses ouvertes ;
+- `assignment_signature` : `24` états ;
+- `mask_multiset` : `9` états ;
+- `boundary_response` : `12` états ;
+- `mask_multiset_plus_boundary` : `12` états ;
+- `full_plus_boundary` : `12` états.
+
+Lecture DP :
+
+- la réponse ouverte one-hop répare le type de collision T056 au niveau du
+  support voisin mesuré ;
+- elle reste beaucoup moins fine que l'affectation complète sur les petits cas,
+  donc elle mérite une suite ;
+- elle ne compose pas encore récursivement : rien ne prouve qu'un vecteur de
+  réponses booléennes one-hop suffise pour des chaînes de supports ou pour une
+  combinaison simultanée de plusieurs voisins.
+
+Prochaine obligation : tester une collision de second ordre. Deux affectations
+avec même `local_boundary_response` peuvent-elles encore diverger après
+composition de deux supports voisins, ou pour la décision globale cR ?
+
+## Revue externe post-T057
+
+Statut : garde-fou de piste.
+
+La revue externe GPT 5.5 Pro souligne que T057 ne doit pas devenir l'unique axe.
+Pour Piste B, elle reformule la bonne cible DP comme une relation résiduelle sur
+séparateur :
+
+```text
+R_P = { eta on boundary(P) : eta admet une extension interne compatible }.
+```
+
+Une signature DP est valide seulement si deux patches avec même signature ont la
+même relation résiduelle. La réponse ouverte one-hop est donc un candidat
+compressé, pas la relation exacte.
+
+Prochaine expérience Piste B : comparer `local_boundary_response` à la relation
+résiduelle exacte sur des patches de supports de taille `2` ou `3`. Cette
+expérience doit rester une piste parmi d'autres, en parallèle du CSP exact par
+quartets et du sous-cas booléen.

@@ -3555,3 +3555,143 @@ Décision : T056 réfute `mask_multiset`, `hit_components`, `hit_pairs` et
 montrent aussi que l'état de masques fermé par support ne suffit pas à porter
 les obligations ouvertes vers les supports voisins. La suite de la piste DP/CSP
 doit expliciter des obligations ouvertes ou basculer vers un sous-cas prouvable.
+
+## ExecPlan 2026-05-23 - open boundary response states
+
+But : mesurer la taille d'une signature qui répare T056 en transportant des
+obligations ouvertes vers les supports voisins, au lieu de se limiter à un état
+fermé par support.
+
+Hypothèse : une signature `boundary_response` qui enregistre, pour une
+affectation locale de support `S`, les réponses hit/no-hit de chaque support
+voisin `C` pour chaque choix de `(S union C) \\ S`, élimine les collisions de
+contexte T056. Si cette signature est presque injective, elle réfute la piste
+d'une DP compacte par obligations ouvertes naïves ; si elle compresse nettement,
+elle devient une candidate à formaliser.
+
+Fichiers à modifier :
+`src/pc_circular/solvers/sat_like_experiments.py`,
+`tests/test_sat_like_experiments.py`, `tests/test_csp_internal_benchmark.py`,
+`tools/pc_csp_internal_benchmark.py`, `docs/tracks/piste_b_dp_pc_tree.md`,
+`docs/tracks/piste_c_sat_csp.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/proof_obligations.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `docs/tracks/README.md`,
+`PLANS.md`.
+
+Algorithme pressenti : construire un profil hors candidate
+`component_mask_open_boundary_profile`. Pour chaque support groupé `S`, énumérer
+ses affectations locales ; pour chaque support voisin `C` chevauchant `S`,
+énumérer les choix de contexte externe et enregistrer le bit hit/no-hit de `C`.
+Compter les états distincts pour `boundary_response`,
+`local_boundary_response`, `mask_multiset_plus_boundary`,
+`full_plus_boundary`, et les comparer à `assignment_signature`.
+
+Plan de contre-exemples : vérifier que le contre-exemple global T056 est séparé
+par la réponse ouverte. Chercher ensuite si `boundary_response` collapse des
+affectations qui divergent encore globalement, ou si au contraire il devient
+presque injectif. Les deux résultats sont utiles : collision = état encore
+insuffisant ; quasi-injectif = coût DP probablement élevé.
+
+Plan subagents : Piste B définit la signature ouverte et ses risques ; Piste C
+cherche un petit exemple compact ou presque injectif ; Piste F propose les
+agrégats de complexité. Les sidecars restent lecture seule.
+
+Tests à exécuter : tests ciblés
+`tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`,
+`make bench-csp-quick`, puis `make quick`, `make check`, `make bench-quick`.
+`candidate.py` ne doit pas changer.
+
+Risques : `boundary_response` est par construction localement plus exact, mais
+pas une preuve globale ; le diagnostic peut être coûteux et borné ; un ratio
+faible sur petites tailles peut disparaître dès que les supports voisins se
+multiplient.
+
+Résultats observés : ajout de `component_mask_open_boundary_profile`, de son
+câblage dans `tools/pc_csp_internal_benchmark.py`, et de tests ciblés. Les
+clés d'état incluent le support de base pour éviter de surestimer la compression
+entre supports différents. Tests ciblés
+`tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py` :
+`54 passed`.
+
+Cas minimal `cycle_metric(5)` / `balanced_pc_tree(5, kind="mixed")` :
+`3` groupes de support, `6` paires de contexte, `24` affectations locales,
+`96` réponses ouvertes. Comptes d'états : `assignment_signature=24`,
+`mask_multiset=9`, `boundary_response=12`,
+`mask_multiset_plus_boundary=12`, `full_plus_boundary=12`. Le quotient fermé
+`mask_multiset` garde `3` buckets avec réponses de bord mélangées, tandis que
+`mask_multiset_plus_boundary` et `local_boundary_response` ont
+`0` bucket mélangé sur cette obligation one-hop.
+
+`make bench-csp-quick` : `192` lignes, `0` mismatch. Profil ouvert borné
+`max_pairs=20` : `6224` affectations locales, `35728` checks de réponses
+ouvertes, `1828` paires profilées, `74` lignes incomplètes visibles.
+Ratios d'états : `boundary_response=0.2208`,
+`local_boundary_response=0.2625`, `mask_multiset_plus_boundary=0.4291`,
+`full_plus_boundary=0.4770`. Buckets mélangés sur réponse de bord :
+`mask_multiset=203`, `full=49`, mais `mask_multiset_plus_boundary=0`,
+`full_plus_boundary=0`, `local_boundary_response=0`.
+
+Probe stress bornée `n=8`, repeats `2` : `20` lignes, `0` mismatch,
+`2088` affectations locales, `9072` checks ouverts, `20` lignes incomplètes.
+Ratios : `boundary_response=0.1518`, `local_boundary_response=0.2126`,
+`mask_multiset_plus_boundary=0.4119`, `full_plus_boundary=0.4895`.
+Gates finales : `make quick` (`238 passed`, puis `JUSTE`), `make check`
+(`JUSTE`), `make bench-quick` (`40/40` runs, `0` timeout, `0` incomplet).
+
+Décision : conserver T057 comme diagnostic prometteur mais borné. Les réponses
+ouvertes one-hop réparent les collisions T056 mesurées sans devenir
+quasi-injectives, mais elles restent énumératives et ne prouvent pas de
+composition récursive. Prochaine expérience : chercher des collisions de second
+ordre ou un contre-exemple global où deux affectations partagent
+`local_boundary_response` mais divergent après deux supports voisins.
+
+## Portefeuille post-revue externe 2026-05-23
+
+But : corriger le biais d'ancrage T056/T057 de la revue GPT 5.5 Pro et repartir
+sur plusieurs pistes indépendantes.
+
+Hypothèse : la suite ne doit pas être un unique test de collision. La meilleure
+stratégie est de faire avancer en parallèle une représentation exacte par
+quartets, des sous-cas polynomiaux, une piste dureté, et un stress-test des
+signatures ouvertes.
+
+Fichiers à modifier selon la piste choisie :
+
+- bad-side exact : `src/pc_circular/predicates.py`,
+  `tests/test_predicates.py`, `docs/tracks/piste_e_farthest_quartets.md` ;
+- CSP quartets/treewidth : `src/pc_circular/solvers/sat_like_experiments.py`,
+  futur module dédié si nécessaire, `docs/tracks/piste_c_sat_csp.md` ;
+- booléen/2-SAT : module expérimental dédié, `docs/tracks/piste_c_sat_csp.md`,
+  `docs/tracks/piste_d_circular_ones.md` ;
+- relation catalog / NP-hardness : outil expérimental,
+  `docs/tracks/piste_f_complexity_subcases.md` ;
+- collision second ordre : outil expérimental hors candidate,
+  `docs/tracks/piste_b_dp_pc_tree.md`.
+
+Algorithmes pressentis :
+
+1. formaliser `B_ac = {u : max(d(a,u), d(u,c)) > d(a,c)}` et prouver/tester que
+   tous les `B_ac` doivent être d'un seul côté de `{a,c}` ;
+2. construire un CSP exact par quartets, vérifier que chaque quartet touche au
+   plus deux variables PC-tree effectives dans le scaffold ;
+3. réduire le sous-cas à domaines booléens à 2-SAT ;
+4. cataloguer les relations binaires réalisables entre deux petits nœuds `P` ;
+5. chercher une collision de second ordre de `local_boundary_response`.
+
+Tests à exécuter : chaque piste doit avoir un test ciblé minimal, puis
+`make quick`. Les pistes qui changent des diagnostics de benchmark doivent aussi
+passer `make bench-csp-quick`. `candidate.py` reste inchangé sauf sous-cas prouvé
+ou décision exacte clairement bornée.
+
+Risques : le lemme de portée `<= 2` peut être faux dans le scaffold actuel ; les
+générateurs de dureté peuvent créer des contraintes parasites via les distances
+globales ; la collision T057 peut consommer trop de temps si elle devient le seul
+objectif.
+
+Résultats observés : revue externe conservée dans
+`docs/external_reviews/gpt55_global_strategy_2026-05-23.md`; digest mis à jour
+pour expliciter que T057 reste une piste parmi cinq.
+
+Décision : prochaine itération recommandée hors candidate : commencer par le CSP
+exact de quartets et le test automatique de portée `<= 2`, car il structure à la
+fois le 2-SAT, la treewidth-DP, le relation catalog et les collisions T057.

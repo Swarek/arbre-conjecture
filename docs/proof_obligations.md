@@ -1416,6 +1416,61 @@ Limites et obligations après T056 :
 - aucune modification de `candidate.py`, donc aucune nouvelle obligation de
   décision générale n'est satisfaite.
 
+T057 ajoute une obligation positive/négative pour les états ouverts :
+un état enrichi par réponses de bord one-hop doit être montré composable, pas
+seulement exact localement. Le diagnostic
+`component_mask_open_boundary_profile` mesure, pour chaque support `S`, la table
+des réponses hit/no-hit des supports voisins `C` sous les choix de contexte
+externe `(S union C) \\ S`.
+
+Ce que T057 couvre expérimentalement :
+
+- les collisions de réponse de bord mesurées pour `mask_multiset` et `full` sont
+  supprimées par `mask_multiset_plus_boundary`, `full_plus_boundary` et
+  `local_boundary_response` sur la gate CSP rapide ;
+- les clés incluent le support de base, ce qui évite une fausse compression par
+  pooling de supports différents ;
+- `boundary_response` seul ne couvre pas l'obligation de décision locale, car
+  il peut mélanger plusieurs hits locaux dans un même bucket ;
+- le profil reste hors `candidate.py` et n'implique aucune décision
+  d'existence générale.
+
+Obligations restantes après T057 :
+
+- prouver que la réponse one-hop est nécessaire, ou exhiber un état plus faible
+  qui répare les mêmes collisions ;
+- prouver la suffisance récursive : deux affectations avec même
+  `local_boundary_response` doivent rester indiscernables après composition de
+  deux supports voisins et dans la décision globale ;
+- borner la taille totale des tables de réponses en fonction de `n` et `|T|`,
+  y compris quand plusieurs supports se chevauchent simultanément ;
+- traiter le cas où le diagnostic est tronqué par `max_pairs` ou `limit` :
+  cette troncature ne doit jamais devenir une réponse négative ;
+- formaliser les cas d'égalité/non stricts dans les réponses de bord, pas
+  seulement les hits booléens d'atomes bad-side.
+
+### Obligations issues de la revue externe post-T057
+
+Statut : obligations ouvertes, non satisfaites par T057.
+
+La revue externe GPT 5.5 Pro du 2026-05-23 est conservée dans
+`docs/external_reviews/gpt55_global_strategy_2026-05-23.md`. Elle était
+partiellement ancrée sur T057 ; les obligations suivantes servent à élargir le
+portefeuille plutôt qu'à imposer une seule prochaine expérience :
+
+1. écrire une preuve interne complète de la caractérisation bad-side par les
+   ensembles `B_ac`, et maintenir des tests d'équivalence contre la définition
+   directe cR ;
+2. vérifier dans le scaffold PC-tree que le type induit d'un quartet dépend
+   effectivement d'au plus deux variables locales pertinentes ;
+3. si les domaines effectifs sont booléens, prouver et tester la réduction
+   2-SAT plutôt que continuer un backtracking CSP général ;
+4. si le graphe primal du CSP de quartets a treewidth bornée, définir la DP
+   exacte sur bags et sa complexité ;
+5. pour la piste dureté, produire un catalogue de relations binaires
+   réalisables et documenter les contraintes parasites dues à la globalité de
+   `D`.
+
 ### Prédicats stricts d'ordre fixé
 
 Statut : définitions directes implémentées / base expérimentale Piste F.

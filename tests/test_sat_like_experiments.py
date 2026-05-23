@@ -35,6 +35,7 @@ from pc_circular.solvers.sat_like_experiments import (
     compile_bad_side_nogoods_support_local,
     compile_cr_nogoods,
     compile_cr_nogoods_support_local,
+    component_mask_open_boundary_profile,
     component_mask_quotient_context_collision_profile,
     forbidden_cr_atoms,
     forbidden_bad_side_atoms,
@@ -677,6 +678,61 @@ def test_component_mask_quotient_context_collision_reports_limit_and_unsupported
     assert unsupported["counts"]["context_assignments_seen"] == 0
     assert unsupported["quotients"] == {}
     assert unsupported["first_collisions"] == {}
+    assert "exists" not in unsupported
+    assert "order" not in unsupported
+    assert "accepted_frontiers" not in unsupported
+
+
+def test_component_mask_open_boundary_profile_measures_open_state_size():
+    profile = component_mask_open_boundary_profile(
+        cycle_metric(5),
+        balanced_pc_tree(5, kind="mixed"),
+        max_p_degree=3,
+    )
+    states = profile["states"]
+
+    assert profile["complete"] is True
+    assert profile["counts"]["support_group_count"] == 3
+    assert profile["counts"]["context_pair_count"] == 6
+    assert profile["counts"]["local_assignments_seen"] == 24
+    assert profile["counts"]["boundary_response_checks"] == 96
+    assert profile["counts"]["boundary_response_checks"] == profile["counts"][
+        "boundary_entries_total"
+    ]
+    assert profile["counts"]["average_boundary_entries_per_assignment"] == 4.0
+    assert states["assignment_signature"]["state_count"] == 24
+    assert states["mask_multiset"]["state_count"] == 9
+    assert states["mask_multiset"]["boundary_mixed_count"] == 3
+    assert states["boundary_response"]["state_count"] == 12
+    assert states["boundary_response"]["boundary_mixed_count"] == 0
+    assert states["mask_multiset_plus_boundary"]["state_count"] == 12
+    assert states["mask_multiset_plus_boundary"]["boundary_mixed_count"] == 0
+    assert states["full_plus_boundary"]["state_count"] == 12
+    assert states["full_plus_boundary"]["boundary_mixed_count"] == 0
+
+
+def test_component_mask_open_boundary_profile_reports_limit_and_unsupported():
+    limited = component_mask_open_boundary_profile(
+        cycle_metric(5),
+        balanced_pc_tree(5, kind="mixed"),
+        max_p_degree=3,
+        limit=1,
+    )
+    assert limited["complete"] is False
+    assert limited["counts"]["local_assignments_seen"] == 1
+    assert "exists" not in limited
+    assert "order" not in limited
+    assert "accepted_frontiers" not in limited
+
+    unsupported = component_mask_open_boundary_profile(
+        cycle_metric(5),
+        star_pc_tree(5),
+        max_p_degree=3,
+    )
+    assert unsupported["complete"] is False
+    assert unsupported["encoding"]["unsupported"]
+    assert unsupported["counts"]["local_assignments_seen"] == 0
+    assert unsupported["states"] == {}
     assert "exists" not in unsupported
     assert "order" not in unsupported
     assert "accepted_frontiers" not in unsupported

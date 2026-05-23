@@ -94,3 +94,9 @@ Deux suites raisonnables :
 - exploiter `B(a,b)` arc comme filtre positif suffisant ou obstruction locale,
   sans l'utiliser comme caractérisation, puis chercher les corrélations
   supplémentaires qui restaurent la condition exacte one-side dans un PC-tree.
+
+Complément revue externe post-T057 : si le CSP exact par quartets confirme que
+les contraintes ont portée `<= 2`, alors le sous-cas où tous les choix locaux
+effectifs sont booléens doit être traité comme une piste 2-SAT prioritaire.
+Cette piste est distincte d'une vraie intersection circular-ones : elle passe
+par les types de quartets cR, pas seulement par les boules métriques.

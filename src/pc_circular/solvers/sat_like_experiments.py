@@ -2380,6 +2380,214 @@ def component_mask_quotient_context_collision_profile(
     return report
 
 
+def _component_mask_state_summary(
+    states: dict[str, dict[tuple, int]],
+    assignments_seen: int,
+    *,
+    boundary_mixed: Optional[dict[str, set[tuple]]] = None,
+    local_hit_mixed: Optional[dict[str, set[tuple]]] = None,
+) -> dict:
+    summary = {}
+    for state_name, counts in sorted(states.items()):
+        state_count = len(counts)
+        boundary_mixed_count = len((boundary_mixed or {}).get(state_name, set()))
+        local_hit_mixed_count = len((local_hit_mixed or {}).get(state_name, set()))
+        summary[state_name] = {
+            "state_count": state_count,
+            "max_bucket_size": max(counts.values(), default=0),
+            "ratio": state_count / assignments_seen if assignments_seen else 0.0,
+            "average_bucket_size": assignments_seen / state_count if state_count else 0.0,
+            "boundary_mixed_count": boundary_mixed_count,
+            "boundary_mixed_ratio": (
+                boundary_mixed_count / state_count if state_count else 0.0
+            ),
+            "local_hit_mixed_count": local_hit_mixed_count,
+            "local_hit_mixed_ratio": (
+                local_hit_mixed_count / state_count if state_count else 0.0
+            ),
+        }
+    return summary
+
+
+def component_mask_open_boundary_profile(
+    D,
+    pc_tree: PCNode,
+    *,
+    max_p_degree: int = 3,
+    limit: Optional[int] = None,
+    max_pairs: Optional[int] = None,
+) -> dict:
+    """Count states that carry one-hop open boundary responses.
+
+    This diagnostic repairs the T056 collision test by storing, for every local
+    assignment of a support group, the hit/no-hit responses of neighboring
+    support groups under each external context choice.  It is not a solver: the
+    response vector is built by enumeration and only covers one-hop neighbors.
+    """
+
+    validate_dissimilarity(D)
+    if max_pairs is not None and max_pairs < 0:
+        raise ValueError("max_pairs must be non-negative or None")
+    if limit is not None and limit < 0:
+        raise ValueError("limit must be non-negative or None")
+
+    encoding = build_local_domains(pc_tree, max_p_degree=max_p_degree)
+    report = {
+        "implemented": True,
+        "method": "component_mask_open_boundary_profile",
+        "encoding": encoding,
+        "complete": True,
+        "counts": {
+            "support_group_count": 0,
+            "context_pair_count": 0,
+            "pairs_profiled": 0,
+            "local_assignments_seen": 0,
+            "boundary_response_checks": 0,
+            "boundary_entries_total": 0,
+            "max_boundary_entries_per_assignment": 0,
+            "average_boundary_entries_per_assignment": 0.0,
+            "max_context_support_product": 0,
+        },
+        "states": {},
+    }
+    if encoding["unsupported"]:
+        report["complete"] = False
+        return report
+
+    atoms = forbidden_bad_side_atoms(D)
+    atoms_by_support: dict[tuple[Path, ...], list[dict]] = {}
+    for atom_info in atoms:
+        support = quartet_support_paths(pc_tree, atom_info["atom"])
+        atoms_by_support.setdefault(support, []).append(atom_info)
+    report["counts"]["support_group_count"] = len(atoms_by_support)
+
+    support_items = sorted(atoms_by_support.items(), key=lambda item: (len(item[0]), item[0]))
+    contexts_by_base: dict[
+        tuple[Path, ...],
+        list[tuple[tuple[Path, ...], list[dict], tuple[Path, ...], tuple[Path, ...]]],
+    ] = {support: [] for support, _ in support_items}
+    pair_count = 0
+    for base_support, _base_atoms in support_items:
+        base_set = set(base_support)
+        for context_support, context_atoms in support_items:
+            context_set = set(context_support)
+            if context_support == base_support or not (base_set & context_set):
+                continue
+            pair_count += 1
+            if max_pairs is not None and pair_count > max_pairs:
+                continue
+            union_support = tuple(sorted(base_set | context_set))
+            extra_support = tuple(path for path in union_support if path not in base_set)
+            contexts_by_base[base_support].append(
+                (context_support, context_atoms, union_support, extra_support)
+            )
+    report["counts"]["context_pair_count"] = pair_count
+    report["counts"]["pairs_profiled"] = sum(len(contexts) for contexts in contexts_by_base.values())
+
+    states: dict[str, dict[tuple, int]] = {}
+    state_boundary_values: dict[str, dict[tuple, tuple]] = {}
+    state_boundary_mixed: dict[str, set[tuple]] = {}
+    state_local_hit_values: dict[str, dict[tuple, bool]] = {}
+    state_local_hit_mixed: dict[str, set[tuple]] = {}
+    side_cache: dict[tuple[tuple[int, int], int, NogoodSignature], int] = {}
+    truncated = False
+    for base_support, base_atoms in support_items:
+        if limit is not None and report["counts"]["local_assignments_seen"] >= limit:
+            truncated = True
+            break
+        base_domain_lists = [encoding["domains"][path] for path in base_support]
+        components_by_pair = _bad_witness_components_by_pair(base_atoms)
+        contexts = contexts_by_base[base_support]
+
+        for base_choices in product(*base_domain_lists):
+            if limit is not None and report["counts"]["local_assignments_seen"] >= limit:
+                truncated = True
+                break
+            base_assignment = dict(zip(base_support, base_choices))
+            base_signature = _nogood_signature(base_assignment, base_support)
+            boundary_entries = []
+            for context_support, context_atoms, union_support, extra_support in contexts:
+                report["counts"]["max_context_support_product"] = max(
+                    report["counts"]["max_context_support_product"],
+                    _domain_product_size(encoding, union_support),
+                )
+                extra_domain_lists = [encoding["domains"][path] for path in extra_support]
+                for extra_choices in product(*extra_domain_lists):
+                    union_assignment = dict(base_assignment)
+                    union_assignment.update(dict(zip(extra_support, extra_choices)))
+                    extra_signature = _nogood_signature(union_assignment, extra_support)
+                    context_hit = _support_atom_scan_hit(
+                        pc_tree,
+                        union_assignment,
+                        context_atoms,
+                    )
+                    report["counts"]["boundary_response_checks"] += 1
+                    boundary_entries.append((context_support, extra_signature, context_hit))
+
+            boundary_response = tuple(boundary_entries)
+            mask_state = _component_mask_state(
+                pc_tree,
+                base_assignment,
+                components_by_pair,
+                side_cache,
+            )
+            closed_quotients = _component_mask_state_quotients(mask_state["state"])
+            candidate_states = {
+                "assignment_signature": (base_support, base_signature),
+                "full": (base_support, closed_quotients["full"]),
+                "mask_multiset": (base_support, closed_quotients["mask_multiset"]),
+                "boundary_response": (base_support, boundary_response),
+                "local_boundary_response": (base_support, mask_state["hit"], boundary_response),
+                "full_plus_boundary": (base_support, closed_quotients["full"], boundary_response),
+                "mask_multiset_plus_boundary": (
+                    base_support,
+                    closed_quotients["mask_multiset"],
+                    boundary_response,
+                ),
+                "hit_components_plus_boundary": (
+                    base_support,
+                    closed_quotients["hit_components"],
+                    boundary_response,
+                ),
+            }
+            for state_name, state in candidate_states.items():
+                state_counts = states.setdefault(state_name, {})
+                state_counts[state] = state_counts.get(state, 0) + 1
+                boundary_values = state_boundary_values.setdefault(state_name, {})
+                previous_boundary = boundary_values.setdefault(state, boundary_response)
+                if previous_boundary != boundary_response:
+                    state_boundary_mixed.setdefault(state_name, set()).add(state)
+                local_hit_values = state_local_hit_values.setdefault(state_name, {})
+                previous_local_hit = local_hit_values.setdefault(state, mask_state["hit"])
+                if previous_local_hit != mask_state["hit"]:
+                    state_local_hit_mixed.setdefault(state_name, set()).add(state)
+            report["counts"]["local_assignments_seen"] += 1
+            boundary_entry_count = len(boundary_entries)
+            report["counts"]["boundary_entries_total"] += boundary_entry_count
+            report["counts"]["max_boundary_entries_per_assignment"] = max(
+                report["counts"]["max_boundary_entries_per_assignment"],
+                boundary_entry_count,
+            )
+        if truncated:
+            break
+
+    local_assignments_seen = report["counts"]["local_assignments_seen"]
+    if local_assignments_seen:
+        report["counts"]["average_boundary_entries_per_assignment"] = (
+            report["counts"]["boundary_entries_total"] / local_assignments_seen
+        )
+    report["states"] = _component_mask_state_summary(
+        states,
+        local_assignments_seen,
+        boundary_mixed=state_boundary_mixed,
+        local_hit_mixed=state_local_hit_mixed,
+    )
+    if max_pairs is not None and pair_count > max_pairs:
+        truncated = True
+    report["complete"] = not truncated
+    return report
+
+
 def solve_compiled_nogood_csp(
     D,
     pc_tree: PCNode,
