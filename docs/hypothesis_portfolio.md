@@ -76,9 +76,11 @@ arbres et vérifier si elles sont suffisantes.
 Raisons possibles d’échec : les grands nœuds `P` induisent des contraintes
 d’ordre cyclique non binaires.
 
-Prochain essai concret : à partir de `quartet_effective_relation_report`,
-implémenter le sous-cas booléen/C-only par 2-SAT, puis comparer à l'oracle sur
-petites tailles. Garder séparé le catalogue non booléen des nœuds `P`.
+Prochain essai concret : après T060, décider si `solve_quartet_2sat` peut être
+intégré seulement en témoin positif vérifié dans `candidate.py`, puis attaquer
+les relations non booléennes par DP de treewidth ou catalogue de gadgets. Garder
+séparés les UNSAT 2-SAT tant que la suffisance globale du modèle relationnel
+n'est pas prouvée.
 
 ## Piste D : intersection de contraintes type PC-tree / circular-ones
 

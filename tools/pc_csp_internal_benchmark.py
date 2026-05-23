@@ -35,6 +35,7 @@ from pc_circular.solvers.sat_like_experiments import (  # noqa: E402
     component_mask_open_boundary_profile,
     quartet_effective_relation_report,
     quartet_pc_scope_report,
+    solve_quartet_2sat,
     solve_pruned_nogood_csp_from_compilation,
 )
 
@@ -294,6 +295,15 @@ def run_benchmark(
                     )
                     quartet_relation_seconds = time.perf_counter() - quartet_relation_start
 
+                    quartet_2sat_start = time.perf_counter()
+                    quartet_2sat_result = solve_quartet_2sat(
+                        D,
+                        T,
+                        max_p_degree=max_p_degree,
+                        relation_report=quartet_relation_profile,
+                    )
+                    quartet_2sat_seconds = time.perf_counter() - quartet_2sat_start
+
                     first_hit_solve_start = time.perf_counter()
                     first_hit_solve_result = solve_pruned_nogood_csp_from_compilation(
                         D,
@@ -347,6 +357,7 @@ def run_benchmark(
                     quartet_scope_counts = quartet_scope_profile["counts"]
                     quartet_relation_counts = quartet_relation_profile["counts"]
                     quartet_relation_primal = quartet_relation_profile["primal_graph"]
+                    quartet_2sat_counts = quartet_2sat_result["counts"]
                     signatures = _signature_set(compilation)
                     support_signatures = _signature_set(support_compilation)
                     grouped_signatures = _signature_set(grouped_compilation)
@@ -381,6 +392,7 @@ def run_benchmark(
                             "open_boundary_profile_seconds": open_boundary_seconds,
                             "quartet_scope_report_seconds": quartet_scope_seconds,
                             "quartet_relation_report_seconds": quartet_relation_seconds,
+                            "quartet_2sat_seconds": quartet_2sat_seconds,
                             "first_hit_solve_seconds": first_hit_solve_seconds,
                             "direct_seconds": direct_seconds,
                             "atoms": len(compilation["atoms"]),
@@ -797,6 +809,28 @@ def run_benchmark(
                             "quartet_primal_max_bag_size_upper_bound": quartet_relation_primal[
                                 "max_bag_size_upper_bound"
                             ],
+                            "quartet_2sat_complete": quartet_2sat_result["complete"],
+                            "quartet_2sat_exists": quartet_2sat_result["exists"],
+                            "quartet_2sat_reason": quartet_2sat_result["reason"],
+                            "quartet_2sat_variables": quartet_2sat_counts["variables"],
+                            "quartet_2sat_fixed_variables": quartet_2sat_counts[
+                                "fixed_variables"
+                            ],
+                            "quartet_2sat_clauses": quartet_2sat_counts["clauses"],
+                            "quartet_2sat_unit_clauses": quartet_2sat_counts["unit_clauses"],
+                            "quartet_2sat_binary_clauses": quartet_2sat_counts[
+                                "binary_clauses"
+                            ],
+                            "quartet_2sat_empty_clauses": quartet_2sat_counts["empty_clauses"],
+                            "quartet_2sat_rejected_tuples": quartet_2sat_counts[
+                                "rejected_tuples"
+                            ],
+                            "quartet_2sat_witness_validated": quartet_2sat_counts[
+                                "witness_validated"
+                            ],
+                            "quartet_2sat_witness_is_cr": quartet_2sat_counts[
+                                "witness_is_cr"
+                            ],
                             "profile_ambiguous_no_hit_assignments": profile_counts[
                                 "ambiguous_no_hit_assignments"
                             ],
@@ -896,6 +930,9 @@ def run_benchmark(
             ),
             "median_quartet_relation_report_seconds": _median(
                 [row["quartet_relation_report_seconds"] for row in supported_rows]
+            ),
+            "median_quartet_2sat_seconds": _median(
+                [row["quartet_2sat_seconds"] for row in supported_rows]
             ),
             "median_solve_seconds": _median([row["solve_seconds"] for row in supported_rows]),
             "median_support_solve_seconds": _median(
@@ -1223,6 +1260,44 @@ def run_benchmark(
                 [row["quartet_primal_max_degree"] for row in supported_rows],
                 default=0,
             ),
+            "quartet_2sat_complete_rows": sum(
+                1 for row in supported_rows if row["quartet_2sat_complete"]
+            ),
+            "quartet_2sat_exists_true_rows": sum(
+                1 for row in supported_rows if row["quartet_2sat_exists"] is True
+            ),
+            "quartet_2sat_exists_false_rows": sum(
+                1 for row in supported_rows if row["quartet_2sat_exists"] is False
+            ),
+            "quartet_2sat_incomplete_rows": sum(
+                1 for row in supported_rows if not row["quartet_2sat_complete"]
+            ),
+            "quartet_2sat_reason_histogram": dict(
+                sorted(
+                    {
+                        reason: sum(1 for row in supported_rows if row["quartet_2sat_reason"] == reason)
+                        for reason in {row["quartet_2sat_reason"] for row in supported_rows}
+                    }.items(),
+                    key=lambda item: str(item[0]),
+                )
+            ),
+            "quartet_2sat_total_clauses": sum(
+                row["quartet_2sat_clauses"] for row in supported_rows
+            ),
+            "quartet_2sat_total_unit_clauses": sum(
+                row["quartet_2sat_unit_clauses"] for row in supported_rows
+            ),
+            "quartet_2sat_total_binary_clauses": sum(
+                row["quartet_2sat_binary_clauses"] for row in supported_rows
+            ),
+            "quartet_2sat_total_empty_clauses": sum(
+                row["quartet_2sat_empty_clauses"] for row in supported_rows
+            ),
+            "quartet_2sat_witness_failures": sum(
+                1
+                for row in supported_rows
+                if row["quartet_2sat_exists"] is True and not row["quartet_2sat_witness_is_cr"]
+            ),
             "profile_pair_side_split_work_ratio": (
                 sum(row["profile_pair_side_split_checks"] for row in supported_rows)
                 / sum(row["profile_classification_atom_checks"] for row in supported_rows)
@@ -1367,6 +1442,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         or report["summary"]["profile_pair_side_split_mismatches"]
         or report["summary"]["quartet_scope_projection_mismatches"]
         or report["summary"]["quartet_relation_validation_mismatches"]
+        or report["summary"]["quartet_2sat_witness_failures"]
         else 0
     )
 

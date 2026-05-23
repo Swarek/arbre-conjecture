@@ -473,6 +473,17 @@ Dernier commit green avant T009 : `07120e4`.
   observé : le CSP relationnel fusionné valide exactement le filtre cR sur le
   scaffold supporté, expose un graphe primal/treewidth, distingue le sous-cas
   2-SAT des domaines non booléens `P3`, et ne modifie pas `candidate.py`.
+- Checkpoint T060 courant : commit contenant le solveur 2-SAT des relations
+  effectives booléennes hors candidate. Validation observée :
+  `tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`
+  (`73 passed`), `make bench-csp-quick` (`192` lignes supportées, `0`
+  mismatch, `quartet_relation_validation_mismatches=0`, `192` lignes 2-SAT
+  complètes, `143` SAT, `49` UNSAT par clause vide, `0` échec de témoin),
+  `make quick` (`257 passed`, puis `JUSTE`), `make check` (`JUSTE`) et
+  `make bench-quick` (`40/40` runs, `0` timeout, `0` incomplet). Résultat
+  observé : le sous-cas booléen du CSP relationnel est résolu par 2-SAT dans
+  le scaffold supporté ; les domaines non booléens restent refusés comme
+  `not_two_sat_candidate` et `candidate.py` n'a pas été modifié.
 
 ## Rollback
 

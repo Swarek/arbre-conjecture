@@ -2972,3 +2972,58 @@
 - Next action : implémenter un sous-cas exact à partir de cette base, en
   priorité C-only/2-SAT ou DP par treewidth bornée, puis chercher des familles
   non booléennes qui cassent ou enrichissent le catalogue.
+
+## 2026-05-23 2-SAT from effective quartet relations
+
+- Date/heure : 2026-05-23 13:37:02 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : toute ligne complète
+  `row_class="two_sat_candidate"` du CSP relationnel T059 se réécrit exactement
+  en 2-SAT, en transformant chaque signature rejetée en clause et en vérifiant
+  directement tout témoin SAT reconstruit.
+- Changement fait : ajout de `solve_quartet_2sat` hors `candidate.py`,
+  conversion des relations fusionnées en clauses, résolution par SCC du graphe
+  d'implications, reconstruction/validation de témoin, métriques 2-SAT dans
+  `tools/pc_csp_internal_benchmark.py`, tests adversariaux C-only, mixed
+  booléen, tautologies, UNSAT constants et refus explicite des nœuds `P3`.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop` propre
+  au commit `93b7feb`; `251 passed`, puis `JUSTE`.
+- Plan subagents : trois sidecars lecture seule. Résultats : Piste C précise
+  l'API et la traduction des tuples rejetés ; Piste E/F fournit les tests
+  adversariaux C-only/mixed/P3/non strict ; preuve/limites rappelle que l'UNSAT
+  2-SAT ne doit pas être intégré en rejet général avant preuve du modèle
+  relationnel.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`.
+- Résultat correction ciblée : `73 passed`.
+- Tests ajoutés : cycle C-only positif non tautologique ; equal-distance et
+  non strict à gros farthest comme tautologies ; `quasi_circular_not_circular`
+  et `four_local_non_cr_core` comme UNSAT par clause vide ; arbre mixte booléen
+  SAT ; nœud `P3` refusé comme `not_two_sat_candidate`; chemin par défaut sans
+  validation exhaustive complète.
+- Commande exécutée : `make bench-csp-quick`.
+- Résultat benchmark interne : `reports/csp_internal_benchmark_quick.json`
+  écrit ; `192` lignes supportées, `0` mismatch, `0`
+  `quartet_relation_validation_mismatches`, `192`
+  `quartet_2sat_complete_rows`, `143` SAT, `49` UNSAT par clause vide, `0`
+  incomplet, `0` échec de témoin, `1167` clauses dont `1118` binaires et `49`
+  vides.
+- Commande exécutée : `make quick`.
+- Résultat correction : `257 passed`, puis `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `8` tailles, `40/40` runs réussis, `0` timeout et `0` incomplet.
+  `candidate.py` n'a pas été modifié.
+- Conclusion : T060 valide le sous-cas booléen du CSP relationnel comme
+  solveur 2-SAT expérimental et falsifiable. Il ne résout pas le problème
+  général, ne couvre pas les domaines non booléens des grands `P`, et ne doit
+  pas servir de certificat négatif global avant preuve de suffisance du modèle
+  relationnel.
+- Next action : poursuivre soit une intégration positive-only vérifiée dans
+  `candidate.py`, soit une DP treewidth pour les relations non booléennes, en
+  continuant le catalogue de contre-exemples sur les nœuds `P3+`.

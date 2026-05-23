@@ -926,6 +926,55 @@ relations fusionnées, soit un solveur exact par DP de treewidth bornée, sans
 modifier `candidate.py` tant que les obligations de preuve ne sont pas
 remplies.
 
+## Tentative T060 - Solveur 2-SAT des relations effectives
+
+Statut : sous-cas exact expérimental sur `row_class="two_sat_candidate"`, hors
+`candidate.py`.
+
+Changement : ajout de `solve_quartet_2sat`. La fonction consomme les
+`merged_relations` de `quartet_effective_relation_report`, refuse toute ligne
+incomplète ou non booléenne, transforme chaque signature rejetée en clause
+2-CNF, résout par graphe d'implications/SCC, puis reconstruit un témoin local et
+le vérifie par `is_precircular_order_cR`.
+
+Traduction :
+
+- relation constante acceptante : aucune clause ;
+- relation constante rejetante : clause vide, UNSAT ;
+- rejet unaire `x=a` : clause `x != a` ;
+- rejet binaire `(x=a, y=b)` : clause `(x != a) or (y != b)`.
+
+Tests ajoutés :
+
+- `cycle_metric(6)` C-only : SAT non tautologique, `12` clauses binaires,
+  témoin cR vérifié ;
+- equal-distance et `non_strict_large_farthest_instance(6)` C-only :
+  tautologies sans clauses parasites ;
+- `quasi_circular_not_circular_four_point` et `four_local_non_cr_core` C-only :
+  UNSAT par clause vide, pas `unsupported` ;
+- arbre mixte booléen `P` de deux blocs `C` : SAT par 2 clauses binaires ;
+- nœud `P3` : refusé comme `not_two_sat_candidate`, pas converti en booléen.
+
+Résultat `make bench-csp-quick` :
+
+- `192` lignes supportées, `0` mismatch ;
+- `0` `quartet_relation_validation_mismatches` ;
+- `192` lignes 2-SAT complètes ;
+- `143` SAT et `49` UNSAT par clause vide ;
+- `0` incomplet et `0` échec de témoin SAT ;
+- `1167` clauses, dont `1118` binaires et `49` vides.
+
+Interprétation : T060 prouve l'encodage algorithmique du sous-cas booléen du
+scaffold relationnel. Il ne prouve pas encore que tout vrai PC-tree des ordres
+quasi-circulaires tombe dans ce sous-cas, ni que la portée effective `<=2` vaut
+hors du scaffold testé.
+
+Prochaine action : soit intégrer uniquement un témoin positif 2-SAT dans
+`candidate.py` après garde de coût et vérification directe, soit poursuivre vers
+DP treewidth pour les relations non booléennes. Ne pas utiliser UNSAT 2-SAT en
+candidate avant d'avoir formalisé la suffisance du modèle relationnel et la
+représentation PC-tree.
+
 ## Tentative T021 - Repair positive-only pour paired-farthest
 
 Statut : idée saine comme générateur expérimental vérifié, mais non intégrée à

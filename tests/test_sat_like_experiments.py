@@ -53,6 +53,7 @@ from pc_circular.solvers.sat_like_experiments import (
     quartet_type,
     solve_compiled_bad_side_nogood_csp,
     solve_compiled_nogood_csp,
+    solve_quartet_2sat,
     solve_pruned_bad_side_nogood_csp,
     solve_nogood_csp,
     solve_pruned_nogood_csp,
@@ -478,6 +479,128 @@ def test_quartet_effective_relation_report_catalogs_dense_p3_relations():
     assert paired_report["counts"]["relation_accept_assignments"] == 0
     assert paired_report["counts"]["direct_cr_assignments"] == 0
     assert paired_report["counts"]["validation_mismatch_count"] == 0
+
+
+def test_quartet_2sat_solves_c_only_positive_non_tautological_case():
+    D = cycle_metric(6)
+    T = balanced_pc_tree(6, kind="C")
+    relation_report = quartet_effective_relation_report(D, T, max_p_degree=3)
+    result = solve_quartet_2sat(D, T, max_p_degree=3, relation_report=relation_report)
+
+    assert relation_report["row_class"] == "two_sat_candidate"
+    assert relation_report["counts"]["effective_acceptance_scope_size_histogram"] == {2: 15}
+    assert relation_report["counts"]["quartet_relation_kind_histogram"] == {"binary_boolean_2sat": 15}
+    assert relation_report["counts"]["merged_relation_binary_boolean_count"] == 6
+    assert relation_report["counts"]["relation_accept_assignments"] == relation_report["counts"][
+        "direct_cr_assignments"
+    ] == 4
+    assert result["complete"]
+    assert result["exists"]
+    assert result["reason"] == "sat"
+    assert result["counts"]["clauses"] == 12
+    assert result["counts"]["binary_clauses"] == 12
+    assert result["counts"]["witness_is_cr"]
+    assert is_precircular_order_cR(D, result["order"])
+
+
+def test_quartet_2sat_handles_equal_distance_and_non_strict_tautologies():
+    cases = [
+        equal_distance_instance(6),
+        non_strict_large_farthest_instance(6),
+    ]
+    T = balanced_pc_tree(6, kind="C")
+
+    for D in cases:
+        relation_report = quartet_effective_relation_report(D, T, max_p_degree=3)
+        result = solve_quartet_2sat(D, T, max_p_degree=3, relation_report=relation_report)
+
+        assert relation_report["row_class"] == "two_sat_candidate"
+        assert relation_report["counts"]["effective_acceptance_scope_size_histogram"] == {0: 15}
+        assert relation_report["counts"]["merged_relation_constant_accept_count"] == 1
+        assert relation_report["counts"]["relation_accept_assignments"] == relation_report["counts"][
+            "validation_assignments_seen"
+        ]
+        assert relation_report["counts"]["direct_cr_assignments"] == relation_report["counts"][
+            "validation_assignments_seen"
+        ]
+        assert result["complete"]
+        assert result["exists"]
+        assert result["counts"]["clauses"] == 0
+        assert result["counts"]["witness_is_cr"]
+
+
+def test_quartet_2sat_reports_constant_reject_as_unsat_not_unsupported():
+    cases = [
+        (quasi_circular_not_circular_four_point(), c_node([leaf(3), leaf(0), leaf(1), leaf(2)])),
+        (four_local_non_cr_core(), balanced_pc_tree(5, kind="C")),
+    ]
+
+    for D, T in cases:
+        relation_report = quartet_effective_relation_report(D, T, max_p_degree=3)
+        result = solve_quartet_2sat(D, T, max_p_degree=3, relation_report=relation_report)
+
+        assert relation_report["complete"]
+        assert not relation_report["encoding"]["unsupported"]
+        assert relation_report["row_class"] == "two_sat_candidate"
+        assert relation_report["counts"]["merged_relation_constant_reject_count"] == 1
+        assert result["complete"]
+        assert result["exists"] is False
+        assert result["reason"] == "unsat_empty_clause"
+        assert result["counts"]["empty_clauses"] == 1
+
+
+def test_quartet_2sat_solves_mixed_boolean_tree_without_confusing_it_with_p3():
+    D = cycle_metric(6)
+    T = p_node(
+        [
+            c_node([leaf(0), leaf(1), leaf(2)]),
+            c_node([leaf(3), leaf(4), leaf(5)]),
+        ]
+    )
+    relation_report = quartet_effective_relation_report(D, T, max_p_degree=3)
+    result = solve_quartet_2sat(D, T, max_p_degree=3, relation_report=relation_report)
+
+    assert relation_report["row_class"] == "two_sat_candidate"
+    assert relation_report["counts"]["effective_acceptance_scope_size_histogram"] == {0: 6, 2: 9}
+    assert relation_report["counts"]["merged_relation_kind_histogram"] == {
+        "binary_boolean_2sat": 1,
+        "constant_accept": 1,
+    }
+    assert relation_report["counts"]["relation_accept_assignments"] == relation_report["counts"][
+        "direct_cr_assignments"
+    ] == 4
+    assert result["complete"]
+    assert result["exists"]
+    assert result["counts"]["clauses"] == 2
+    assert result["counts"]["witness_is_cr"]
+
+
+def test_quartet_2sat_refuses_non_boolean_p3_catalog_rows():
+    D = quasi_circular_not_circular_four_point()
+    T = c_node([p_node([leaf(0), leaf(1), leaf(2)]), leaf(3)])
+    relation_report = quartet_effective_relation_report(D, T, max_p_degree=3)
+    result = solve_quartet_2sat(D, T, max_p_degree=3, relation_report=relation_report)
+    relation = relation_report["merged_relations"][0]
+
+    assert relation_report["row_class"] == "non_boolean_relation_catalog"
+    assert not relation_report["two_sat_candidate"]
+    assert relation["relation_kind"] == "unary_non_boolean"
+    assert relation["domain_sizes"] == (6,)
+    assert relation["accepted_signature_count"] == 2
+    assert relation["rejected_signature_count"] == 4
+    assert not result["complete"]
+    assert result["exists"] is None
+    assert result["reason"] == "not_two_sat_candidate:non_boolean_relation_catalog"
+
+
+def test_quartet_2sat_default_path_does_not_require_full_validation_enumeration():
+    D = cycle_metric(6)
+    T = balanced_pc_tree(6, kind="C")
+    result = solve_quartet_2sat(D, T, max_p_degree=3)
+
+    assert result["complete"]
+    assert result["exists"]
+    assert result["counts"]["witness_is_cr"]
 
 
 def test_quartet_allowed_types_match_direct_full_orders_on_seeded_frontiers():

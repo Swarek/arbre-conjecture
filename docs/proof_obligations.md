@@ -1520,12 +1520,46 @@ Obligations partiellement couvertes par T059 :
 - obligation 5, diagnostic : le graphe primal et une borne greedy de treewidth
   sont maintenant mesurés, mais pas encore utilisés comme algorithme prouvé.
 
-Limites après T059 :
+T060 implémente le sous-cas 2-SAT du rapport relationnel, mais uniquement dans
+le scaffold expérimental et hors `candidate.py` :
+
+- `solve_quartet_2sat` exige un rapport complet avec
+  `row_class="two_sat_candidate"` ;
+- chaque tuple rejeté d'une relation fusionnée est réécrit en clause 2-CNF :
+  scope vide rejeté comme contradiction, rejet unaire comme clause unitaire,
+  rejet binaire comme clause `(x != a) or (y != b)` ;
+- les domaines de taille `1` sont simplifiés comme choix fixés et les domaines
+  de taille `2` deviennent les seules variables booléennes ;
+- un témoin SAT est reconstruit en affectation locale, converti en frontier, et
+  vérifié directement par `is_precircular_order_cR`.
+
+Obligations couvertes par T060 dans ce périmètre :
+
+- obligation 1 : les clauses sont nécessaires, car elles ne font que réécrire
+  les signatures explicitement rejetées par les relations T059 ;
+- obligation 2 : la suffisance est héritée expérimentalement de la validation
+  T059 relation-CSP vs cR direct sur les affectations complètes supportées ;
+- obligation 4 : tout témoin SAT retourné est contrôlé par le prédicat cR fixé ;
+- obligation 5 partielle : la résolution 2-SAT elle-même est linéaire dans le
+  nombre de clauses produites, mais la construction actuelle des relations reste
+  énumérative et bornée par le scaffold.
+
+Limites après T060 :
+
+- l'équivalence globale dépend encore du lemme T059 non prouvé hors scaffold :
+  les relations de quartets fusionnées doivent capturer exactement toutes les
+  contraintes cR sur les frontiers représentées ;
+- les résultats UNSAT 2-SAT ne doivent pas être intégrés comme rejets généraux
+  dans `candidate.py` avant une preuve de suffisance du modèle relationnel ;
+- les nœuds `P3` et autres domaines non booléens restent explicitement refusés
+  comme `not_two_sat_candidate` ;
+- les vrais PC-trees Hsu/McConnell non enracinés peuvent avoir des subtilités
+  non capturées par le scaffold `PCNode`.
+
+Limites restantes après T059/T060 :
 
 - la validation reste par énumération complète des affectations locales ; elle
   ne prouve pas une complexité polynomiale ;
-- `row_class="two_sat_candidate"` exige domaines booléens et arité `<=2`, mais
-  aucun solveur 2-SAT séparé n'est encore implémenté ;
 - les nœuds `P3` montrent déjà des relations non booléennes de domaines taille
   `6`; elles ne doivent pas être appelées 2-SAT ;
 - une borne greedy de treewidth n'est pas une décomposition certifiée ni une

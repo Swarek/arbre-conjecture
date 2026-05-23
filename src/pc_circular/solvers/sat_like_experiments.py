@@ -832,7 +832,7 @@ def quartet_pc_scope_report(
         raise ValueError("max_min_scope_search_size must be non-negative")
 
     encoding = build_local_domains(pc_tree, max_p_degree=max_p_degree)
-    all_quartets = list(combinations(range(n), 4))
+    quartet_count = n * (n - 1) * (n - 2) * (n - 3) // 24 if n >= 4 else 0
     report = {
         "implemented": True,
         "method": "quartet_pc_scope_report",
@@ -843,7 +843,7 @@ def quartet_pc_scope_report(
         "first_effective_type_scope_gt_2": None,
         "first_effective_acceptance_scope_gt_2": None,
         "counts": {
-            "quartet_count": len(all_quartets),
+            "quartet_count": quartet_count,
             "quartets_profiled": 0,
             "full_assignments_seen": 0,
             "support_assignments_seen": 0,
@@ -872,6 +872,7 @@ def quartet_pc_scope_report(
         report["complete"] = False
         return report
 
+    all_quartets = list(combinations(range(n), 4))
     full_assignments = list(iter_local_assignments(encoding))
     report["counts"]["full_assignments_seen"] = len(full_assignments)
 
@@ -1029,7 +1030,7 @@ def quartet_effective_relation_report(
         raise ValueError("max_min_scope_search_size must be non-negative")
 
     encoding = build_local_domains(pc_tree, max_p_degree=max_p_degree)
-    all_quartets = list(combinations(range(n), 4))
+    quartet_count = n * (n - 1) * (n - 2) * (n - 3) // 24 if n >= 4 else 0
     report = {
         "implemented": True,
         "method": "quartet_effective_relation_report",
@@ -1042,7 +1043,7 @@ def quartet_effective_relation_report(
         "first_scope_conflict": None,
         "first_validation_mismatch": None,
         "counts": {
-            "quartet_count": len(all_quartets),
+            "quartet_count": quartet_count,
             "quartets_profiled": 0,
             "full_assignments_seen": 0,
             "support_assignments_seen": 0,
@@ -1098,10 +1099,11 @@ def quartet_effective_relation_report(
         return report
 
     domains = encoding["domains"]
-    full_assignments = list(iter_local_assignments(encoding))
+    full_assignments = list(iter_local_assignments(encoding)) if validate else []
     report["counts"]["full_assignments_seen"] = len(full_assignments)
 
     truncated = False
+    all_quartets = list(combinations(range(n), 4))
     quartets_to_profile = all_quartets
     if limit is not None and len(all_quartets) > limit:
         quartets_to_profile = all_quartets[:limit]
@@ -1288,6 +1290,223 @@ def quartet_effective_relation_report(
         report["row_class"] = "mixed_relation_catalog"
 
     return report
+
+
+def _two_sat_literal_id(variable_index: dict[Path, int], literal: tuple[Path, int]) -> int:
+    path, choice_index = literal
+    return 2 * variable_index[path] + choice_index
+
+
+def _two_sat_negated_literal(literal: tuple[Path, int]) -> tuple[Path, int]:
+    path, choice_index = literal
+    return (path, 1 - choice_index)
+
+
+def _two_sat_literal_for_not_choice(
+    domains: dict[Path, tuple[tuple[int, ...], ...]],
+    path: Path,
+    choice: tuple[int, ...],
+) -> tuple[Path, int] | None:
+    domain = domains[path]
+    choice_index = domain.index(choice)
+    if len(domain) == 1:
+        return None
+    if len(domain) != 2:
+        raise ValueError("2-SAT literals require boolean domains")
+    return (path, 1 - choice_index)
+
+
+def _two_sat_solve(
+    variables: Sequence[Path],
+    clauses: Sequence[tuple[tuple[Path, int], ...]],
+) -> tuple[bool, dict[Path, int]]:
+    """Solve a 2-CNF formula over domain-index literals.
+
+    Literals are pairs ``(path, index)`` meaning "variable ``path`` takes its
+    domain value at ``index``".  Clauses have arity 1 or 2.
+    """
+
+    variable_index = {path: idx for idx, path in enumerate(variables)}
+    graph = [[] for _ in range(2 * len(variables))]
+    reverse = [[] for _ in range(2 * len(variables))]
+
+    def add_implication(left: tuple[Path, int], right: tuple[Path, int]) -> None:
+        left_id = _two_sat_literal_id(variable_index, left)
+        right_id = _two_sat_literal_id(variable_index, right)
+        graph[left_id].append(right_id)
+        reverse[right_id].append(left_id)
+
+    for clause in clauses:
+        if len(clause) == 1:
+            literal = clause[0]
+            add_implication(_two_sat_negated_literal(literal), literal)
+        elif len(clause) == 2:
+            left, right = clause
+            add_implication(_two_sat_negated_literal(left), right)
+            add_implication(_two_sat_negated_literal(right), left)
+        else:
+            raise ValueError("2-SAT solver expects unary or binary clauses")
+
+    seen = [False] * len(graph)
+    order = []
+
+    def visit(node: int) -> None:
+        seen[node] = True
+        for neighbor in graph[node]:
+            if not seen[neighbor]:
+                visit(neighbor)
+        order.append(node)
+
+    for node in range(len(graph)):
+        if not seen[node]:
+            visit(node)
+
+    component = [-1] * len(graph)
+
+    def assign_component(node: int, component_id: int) -> None:
+        component[node] = component_id
+        for neighbor in reverse[node]:
+            if component[neighbor] == -1:
+                assign_component(neighbor, component_id)
+
+    component_id = 0
+    for node in reversed(order):
+        if component[node] == -1:
+            assign_component(node, component_id)
+            component_id += 1
+
+    assignment: dict[Path, int] = {}
+    for path, idx in variable_index.items():
+        zero_id = 2 * idx
+        one_id = zero_id + 1
+        if component[zero_id] == component[one_id]:
+            return False, {}
+        assignment[path] = 1 if component[zero_id] < component[one_id] else 0
+    return True, assignment
+
+
+def solve_quartet_2sat(
+    D,
+    pc_tree: PCNode,
+    *,
+    max_p_degree: int = 3,
+    relation_report: Optional[dict] = None,
+    validate_witness: bool = True,
+) -> dict:
+    """Solve the boolean effective-quartet CSP by 2-SAT when applicable.
+
+    This is an exact solver only for the finite scaffold reported as
+    ``two_sat_candidate`` by ``quartet_effective_relation_report``.  Non-boolean,
+    high-arity, unsupported or incomplete rows are reported as incomplete rather
+    than rejected.
+    """
+
+    validate_dissimilarity(D)
+    report = relation_report or quartet_effective_relation_report(
+        D,
+        pc_tree,
+        max_p_degree=max_p_degree,
+        validate=False,
+    )
+    result = {
+        "implemented": True,
+        "solver": "quartet_effective_relation_2sat",
+        "complete": False,
+        "exists": None,
+        "order": None,
+        "assignment": None,
+        "reason": None,
+        "relation_row_class": report["row_class"],
+        "two_sat_candidate": report["two_sat_candidate"],
+        "counts": {
+            "variables": 0,
+            "fixed_variables": 0,
+            "clauses": 0,
+            "unit_clauses": 0,
+            "binary_clauses": 0,
+            "empty_clauses": 0,
+            "rejected_tuples": 0,
+            "relations": len(report["merged_relations"]),
+            "witness_validated": False,
+            "witness_is_cr": False,
+        },
+        "clauses": [],
+        "note": "exact only for complete boolean effective-quartet relation reports",
+    }
+    if not report["complete"]:
+        result["reason"] = "incomplete_relation_report"
+        return result
+    if not report["two_sat_candidate"]:
+        result["reason"] = f"not_two_sat_candidate:{report['row_class']}"
+        return result
+
+    domains = report["encoding"]["domains"]
+    boolean_variables = tuple(sorted(path for path, domain in domains.items() if len(domain) == 2))
+    fixed_variables = tuple(sorted(path for path, domain in domains.items() if len(domain) == 1))
+    result["counts"]["variables"] = len(boolean_variables)
+    result["counts"]["fixed_variables"] = len(fixed_variables)
+
+    clauses: list[tuple[tuple[Path, int], ...]] = []
+    empty_clause = False
+    for relation in report["merged_relations"]:
+        scope = tuple(relation["scope"])
+        accepted = set(relation.get("accepted_signatures", ()))
+        all_signatures = _all_scope_signatures(domains, scope)
+        rejected = sorted(all_signatures - accepted)
+        result["counts"]["rejected_tuples"] += len(rejected)
+        for signature in rejected:
+            clause_literals = []
+            for path, choice in signature:
+                literal = _two_sat_literal_for_not_choice(domains, path, choice)
+                if literal is not None:
+                    clause_literals.append(literal)
+            clause = tuple(clause_literals)
+            if not clause:
+                empty_clause = True
+                result["counts"]["empty_clauses"] += 1
+            elif len(clause) == 1:
+                clauses.append(clause)
+                result["counts"]["unit_clauses"] += 1
+            elif len(clause) == 2:
+                clauses.append(clause)
+                result["counts"]["binary_clauses"] += 1
+            else:
+                raise AssertionError("two_sat_candidate produced a clause of arity > 2")
+
+    result["counts"]["clauses"] = len(clauses) + result["counts"]["empty_clauses"]
+    if len(clauses) <= 64:
+        result["clauses"] = clauses
+    if empty_clause:
+        result["complete"] = True
+        result["exists"] = False
+        result["reason"] = "unsat_empty_clause"
+        return result
+
+    sat, choice_indices = _two_sat_solve(boolean_variables, clauses)
+    result["complete"] = True
+    result["exists"] = sat
+    if not sat:
+        result["reason"] = "unsat_implication_scc"
+        return result
+
+    assignment: Assignment = {}
+    for path, domain in domains.items():
+        if len(domain) == 1:
+            assignment[path] = domain[0]
+        else:
+            assignment[path] = domain[choice_indices[path]]
+    order = canonical_circular_order(frontier_from_assignment(pc_tree, assignment))
+    result["assignment"] = tuple(sorted(assignment.items()))
+    result["order"] = list(order)
+    result["reason"] = "sat"
+    if validate_witness:
+        result["counts"]["witness_validated"] = True
+        result["counts"]["witness_is_cr"] = is_precircular_order_cR(D, order)
+        if not result["counts"]["witness_is_cr"]:
+            result["complete"] = False
+            result["exists"] = None
+            result["reason"] = "witness_failed_direct_cr_validation"
+    return result
 
 
 def _side_of_witness_between_pair(order: Sequence[int], pair: tuple[int, int], witness: int) -> int:

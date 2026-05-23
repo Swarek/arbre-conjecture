@@ -169,6 +169,14 @@ def test_csp_internal_benchmark_reports_separate_compile_and_solve_metrics():
     assert row["quartet_relation_high_arity_count"] == 0
     assert row["quartet_primal_edge_count"] == 3
     assert row["quartet_primal_treewidth_upper_bound"] == 2
+    assert row["quartet_2sat_complete"]
+    assert row["quartet_2sat_exists"] is True
+    assert row["quartet_2sat_reason"] == "sat"
+    assert row["quartet_2sat_variables"] == 4
+    assert row["quartet_2sat_clauses"] == 6
+    assert row["quartet_2sat_binary_clauses"] == 6
+    assert row["quartet_2sat_empty_clauses"] == 0
+    assert row["quartet_2sat_witness_is_cr"]
     assert report["summary"]["total_first_hit_position_sum"] == row["first_hit_position_sum"]
     assert report["summary"]["total_first_hit_atom_checks_if_exhaustive_seen"] == row[
         "first_hit_atom_checks_if_exhaustive_seen"
@@ -271,3 +279,10 @@ def test_csp_internal_benchmark_reports_separate_compile_and_solve_metrics():
     assert report["summary"]["quartet_relation_kind_histogram"] == {"binary_boolean_2sat": 3}
     assert report["summary"]["quartet_primal_max_treewidth_upper_bound"] == 2
     assert report["summary"]["quartet_primal_max_edge_count"] == 3
+    assert report["summary"]["quartet_2sat_complete_rows"] == 1
+    assert report["summary"]["quartet_2sat_exists_true_rows"] == 1
+    assert report["summary"]["quartet_2sat_exists_false_rows"] == 0
+    assert report["summary"]["quartet_2sat_incomplete_rows"] == 0
+    assert report["summary"]["quartet_2sat_reason_histogram"] == {"sat": 1}
+    assert report["summary"]["quartet_2sat_total_clauses"] == 6
+    assert report["summary"]["quartet_2sat_witness_failures"] == 0

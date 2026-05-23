@@ -3882,3 +3882,90 @@ Décision : continuer la Piste C/F sur un sous-cas exact, avec priorité au
 solveur 2-SAT C-only ou à une DP treewidth bornée. T059 devient le socle commun
 pour plusieurs pistes, pas un solver général et pas une preuve de
 compositionalité T057.
+
+## ExecPlan 2026-05-23 - 2-SAT from effective quartet relations
+
+But : transformer le cas `row_class="two_sat_candidate"` de T059 en solveur
+2-SAT exact sur le scaffold supporté, sans le confondre avec le problème
+général.
+
+Hypothèse : quand toutes les relations fusionnées de quartets ont arité `<=2`
+et domaines booléens, chaque tuple rejeté se traduit en clause 2-CNF. La
+satisfiabilité de ces clauses doit coïncider avec l'existence d'une affectation
+locale dont la frontier est cR, dans le périmètre supporté par
+`quartet_effective_relation_report`.
+
+Fichiers visés :
+`src/pc_circular/solvers/sat_like_experiments.py`,
+`tests/test_sat_like_experiments.py`, `tools/pc_csp_internal_benchmark.py`,
+`tests/test_csp_internal_benchmark.py`, `docs/tracks/piste_c_sat_csp.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/proof_obligations.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `docs/tracks/README.md`,
+`PLANS.md`.
+
+Algorithme pressenti : appeler le rapport relationnel T059 avec validation
+optionnelle, refuser toute ligne incomplète, non booléenne ou d'arité `>2`,
+convertir chaque signature rejetée en clause :
+
+- scope `0` rejeté : contradiction immédiate ;
+- scope `1`, rejet de `x=a` : clause unitaire `x != a` ;
+- scope `2`, rejet de `(x=a,y=b)` : clause `(x != a) or (y != b)`.
+
+Résoudre par implication graph/Tarjan, reconstruire une affectation témoin si
+SAT, puis vérifier le témoin par `frontier_from_assignment` et
+`is_precircular_order_cR` dans le rapport, sans intégrer à `candidate.py`.
+
+Plan de contre-exemples : C-only positif cycle, C-only UNSAT
+`four_local_non_cr_core`, tautologie equal-distance, mixed booléen, non strict
+avec égalités, et nœuds `P3` non booléens qui doivent être refusés comme
+`not_two_sat_candidate`, pas convertis en clauses.
+
+Plan subagents : trois sidecars lecture seule : Piste C audit de l'encodage
+2-SAT, Piste E/F tests adversariaux, preuve/limites pour les obligations.
+L'agent principal implémente et intègre.
+
+Tests à exécuter : tests ciblés
+`tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`,
+`make bench-csp-quick`, puis `make quick`, `make check`, `make bench-quick`.
+
+Risques : une variable booléenne peut avoir un seul état effectif ; il faut
+traiter les clauses unitaires et constantes sans inventer de choix. Un témoin
+2-SAT peut être non unique ; il doit être vérifié par le prédicat cR. Les
+relations T059 restent construites par énumération support-local de quartets ;
+la complexité de ce solveur n'est donc pas encore celle d'une solution générale.
+
+Résultats observés : `solve_quartet_2sat` ajouté hors `candidate.py`. Le
+solveur consomme les relations fusionnées T059, refuse les lignes incomplètes ou
+non booléennes, génère les clauses rejetées, résout par SCC sur le graphe
+d'implications, reconstruit un témoin SAT et le vérifie directement avec
+`is_precircular_order_cR`.
+
+Tests ciblés
+`tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py` :
+`73 passed`. Les tests couvrent :
+
+- cycle C-only positif non tautologique avec `12` clauses binaires et témoin
+  vérifié ;
+- equal-distance et non strict à gros ensembles farthest réduits à tautologies ;
+- deux cas UNSAT C-only par clause vide, dont `four_local_non_cr_core` ;
+- arbre mixte booléen SAT sans confondre le `P` de deux blocs `C` avec un `P3` ;
+- nœud `P3` refusé comme `not_two_sat_candidate` ;
+- chemin par défaut rapide sans validation exhaustive complète.
+
+Benchmark interne : `make bench-csp-quick` écrit
+`reports/csp_internal_benchmark_quick.json` avec `192` lignes supportées,
+`0` mismatch, `0` `quartet_relation_validation_mismatches`, `192` lignes
+2-SAT complètes, `143` SAT, `49` UNSAT par clause vide, `0` incomplet et
+`0` échec de témoin. Total clauses : `1167`, dont `1118` binaires et `49`
+vides.
+
+Gates candidate : `make quick` (`257 passed`, puis `JUSTE`), `make check`
+(`JUSTE`), `make bench-quick` (`8` tailles, `40/40` runs, `0` timeout,
+`0` incomplet). `candidate.py` n'a pas été modifié.
+
+Décision : T060 ferme l'expérience 2-SAT comme solveur exact expérimental du
+sous-cas booléen du scaffold T059. Continuer soit par une intégration
+positive-only dans `candidate.py` avec garde de coût et vérification directe,
+soit par une DP treewidth pour les relations non booléennes. Ne pas utiliser
+les UNSAT 2-SAT comme rejets généraux tant que la suffisance du modèle PC-tree
+relationnel n'est pas formalisée.

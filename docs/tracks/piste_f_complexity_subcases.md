@@ -1086,3 +1086,32 @@ relation de type égalité/disequality/permutation sur domaines `3+` qui pourrai
 servir de gadget de dureté. Toute hypothèse NP-hard doit rester marquée
 conjecture tant que les contraintes parasites dues à la globalité de `D` ne
 sont pas contrôlées.
+
+## Résultat T060 - 2-SAT booléen effectif
+
+Statut : sous-cas algorithmique exact dans le scaffold T059, hors candidate.
+
+T060 ajoute `solve_quartet_2sat`, qui résout les lignes
+`row_class="two_sat_candidate"` du rapport relationnel. Le coût de résolution
+après construction des relations est linéaire dans le nombre de clauses 2-CNF ;
+la construction actuelle des relations reste énumérative et ne constitue donc
+pas encore une solution générale en fonction de `n` et `|T|`.
+
+Sur `make bench-csp-quick` :
+
+- `192` lignes supportées ;
+- `0` mismatch et `0` `quartet_relation_validation_mismatches` ;
+- `192` lignes 2-SAT complètes ;
+- `143` lignes SAT ;
+- `49` lignes UNSAT par clause vide ;
+- `0` incomplet 2-SAT ;
+- `1167` clauses générées, dont `1118` binaires et `49` vides ;
+- `0` échec de témoin SAT.
+
+Interprétation complexité : ce résultat valide le sous-cas booléen du CSP de
+quartets comme cible 2-SAT propre. Il ne traite pas les domaines non booléens
+des nœuds `P3+`, et ne doit pas être utilisé pour conclure `False` dans la
+candidate tant que la preuve de suffisance du modèle relationnel n'est pas
+écrite. Le prochain vrai levier de complexité est donc soit une intégration
+positive-only vérifiée, soit une DP par treewidth sur les relations non
+booléennes.
