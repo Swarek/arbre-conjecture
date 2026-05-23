@@ -1244,3 +1244,62 @@ Décision : conserver T026 comme résultat négatif utile Piste D/E. Ne pas
 intégrer dans `candidate.py`. La suite doit utiliser `B(a,b)` arc seulement
 comme filtre/nogood suffisant expérimental, ou construire un état DP/CSP qui
 mémorise le côté des mauvais témoins sans sur-rejeter les ordres cR.
+
+## ExecPlan 2026-05-23 - bad-side pair nogood CSP compilation
+
+But : tester Piste B/C après T026 en compilant des nogoods CSP à partir des
+paires `{a,b}` et des mauvais témoins situés sur deux côtés, plutôt qu'à partir
+de tous les quartets cR ordonnés.
+
+Hypothèse : les atomes bad-side
+`(a, y, b, t)` et `(a, t, b, y)` pour `y,t in B(a,b)` capturent exactement les
+violations cR d'un ordre fixé, mais avec moins d'atomes que
+`forbidden_cr_atoms`. Cela peut réduire la compilation/pruning expérimental sans
+prouver encore un solveur compact.
+
+Fichiers à modifier : `src/pc_circular/solvers/sat_like_experiments.py`,
+`tests/test_sat_like_experiments.py`, `docs/tracks/piste_b_dp_pc_tree.md`,
+`docs/tracks/piste_c_sat_csp.md`, `docs/tracks/piste_e_farthest_quartets.md`,
+`docs/tracks/README.md`, `docs/proof_obligations.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `PLANS.md`.
+
+Algorithme pressenti : ajouter `forbidden_bad_side_atoms(D)` qui génère pour
+chaque paire `{a,b}` les deux orientations de chaque couple de mauvais témoins.
+Ajouter `compile_bad_side_nogoods(D,T)` en réutilisant le support
+`quartet_support_paths`, puis `solve_compiled_bad_side_nogood_csp` et
+`solve_pruned_bad_side_nogood_csp` qui réutilisent le solveur pruné existant.
+Tous les témoins acceptés restent validés par `is_precircular_order_cR`.
+
+Plan de contre-exemples : exhaustif `n=4` valeurs `{1,2,3}` pour vérifier que
+les atomes bad-side détectent exactement les ordres non cR ; comparaison avec
+`forbidden_cr_atoms` sur equal-distance, cycle, random et Fig. 2.2 ; tests sur
+PC-tree balanced/mixed ; vérifier que les égalités ne créent pas d'atomes.
+
+Plan subagents : trois explorateurs lecture seule : API/tests et pièges
+d'égalité, familles de comparaison/pruning, et formulation preuve/limites pour
+les obligations.
+
+Tests à exécuter : `tests/test_sat_like_experiments.py`, probe bornée de counts
+bad-side vs quartets, `make unit`, `make quick`, `make bench-csp-quick` si la
+compilation CSP est touchée, puis `make bench-quick`.
+
+Risques : croire que moins d'atomes implique complexité polynomiale ; compiler
+encore par énumération complète ; oublier des rotations/orientations cycliques ;
+produire un faux négatif sur les cas non stricts en utilisant `>=`.
+
+Résultats observés : `forbidden_bad_side_atoms`,
+`compile_bad_side_nogoods`, `solve_compiled_bad_side_nogood_csp` et
+`solve_pruned_bad_side_nogood_csp` ajoutés dans `sat_like_experiments.py`.
+Tests ajoutés : équivalence exhaustive `n=4` des atomes bad-side avec
+`not cR`, equal-distance sans atomes/nogoods, wrapping non-cR minimal,
+équivalence avec le filtre cR direct sur arbre mixed, comparaison de taille
+avec les quartets ordonnés, et solveur pruné bad-side. Probe T027 :
+`equal6_mixed` donne `0` atome/nogood ; `wrap4_c` donne `6/12` atomes et
+`2/4` nogoods ; `cycle8_mixed_f3` donne `416/832` atomes et `1178/2356`
+nogoods ; `paired8_1008_mixed_f3` donne `168/336` atomes et `796/1592`
+nogoods. Tous les probes ont `validation_fp/fn = 0`.
+
+Décision : conserver comme simplification CSP Piste B/C/E. Le résultat divise
+les objets compilés par deux dans les probes, mais la compilation reste
+énumérative et le pruning observé ne prouve pas de nouvelle borne. Ne pas
+intégrer dans `candidate.py`.

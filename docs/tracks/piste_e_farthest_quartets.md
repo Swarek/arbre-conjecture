@@ -104,6 +104,12 @@ suite utile n'est donc pas d'ajouter ces contraintes comme oracle, mais de les
 utiliser pour produire des nogoods locaux ou des états DP qui mémorisent de
 quel côté d'une paire les mauvais témoins ont déjà été vus.
 
+T027 compile cette même obstruction comme atomes CSP : pour chaque paire
+`{a,b}` et chaque couple `y,t in B(a,b)`, les orientations `(a,y,b,t)` et
+`(a,t,b,y)` sont interdites. C'est une représentation plus canonique des
+quartets cR : elle reste une contrainte de séparation de deux témoins, pas une
+contrainte d'arc sur tout `B(a,b)`.
+
 ## Prochaine action
 
 Utiliser les témoins `find_precircular_cR_violation` comme source principale

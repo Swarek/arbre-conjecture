@@ -15,8 +15,8 @@ ensembles `I_x(v)` sur les branches d'un gros nœud `P`.
 | Piste | Fichier | Statut courant |
 | --- | --- | --- |
 | A - Contraintes locales P/C | `piste_a_local_pc_constraints.md` | Rapport `I_x(v)` implémenté comme diagnostic ; pas solver |
-| B - DP sur PC-tree | `piste_b_dp_pc_tree.md` | Signatures compactées réfutées sur familles stress |
-| C - SAT/CSP | `piste_c_sat_csp.md` | Benchmark interne ajouté ; compilation encore dominante |
+| B - DP sur PC-tree | `piste_b_dp_pc_tree.md` | Bad-side exact ordre fixé ; pas encore de signature compacte |
+| C - SAT/CSP | `piste_c_sat_csp.md` | Nogoods bad-side divisent les atomes ; compilation encore dominante |
 | D - Circular-ones / intersection | `piste_d_circular_ones.md` | Boules validées pour quasi ; arcs bad-witness naïfs réfutés |
 | E - Obstructions farthest/quartets | `piste_e_farthest_quartets.md` | Farthest seul réfuté ; bad-witness one-side exact ordre fixé |
 | F - Complexité / sous-cas | `piste_f_complexity_subcases.md` | Sous-cas universel + témoins positifs intégrés ; Algorithm 5.2 strict en diagnostic |
@@ -64,6 +64,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T024 | 2026-05-23 | F | Générateur Algorithm 5.2 strict filtré ; récupère les ordres stricts exacts sur probes bornées | `strict_algorithm52_report` |
 | T025 | 2026-05-23 | D/F | Diagnostic boules non triviales comme contraintes circular-ones ; ball_arc égale quasi sur probes | `strict_ball_circular_ones_report` |
 | T026 | 2026-05-23 | D/E | Contraintes d'arcs bad-witness testées : one-side exact, `B` arc trop fort, `B union endpoints` invalide | `bad_witness_arc_constraints_report` |
+| T027 | 2026-05-23 | B/C/E | Nogoods bad-side par paire compilés ; mêmes frontiers cR, moitié moins d'atomes/nogoods sur probes | `compile_bad_side_nogoods` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

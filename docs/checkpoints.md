@@ -120,6 +120,14 @@ Dernier commit green avant T009 : `07120e4`.
   `B(a,b) union {a,b}` est ni nécessaire ni suffisant. Validation observée :
   `tests/test_dp_experiments.py`, `make unit`, `make quick`,
   `make bench-quick` (`0` timeout, `0` incomplet).
+- Checkpoint T027 courant : commit contenant la compilation CSP bad-side par
+  paire (`forbidden_bad_side_atoms`, `compile_bad_side_nogoods`,
+  `solve_compiled_bad_side_nogood_csp`, `solve_pruned_bad_side_nogood_csp`).
+  Les tests verrouillent l'exactitude fixed-order exhaustive `n=4`, les
+  égalités, le wrapping non-cR et l'équivalence au filtre cR direct sur arbres
+  supportés. Validation observée : `tests/test_sat_like_experiments.py`, probe
+  fanout 3 bad-side/quartets, `make unit`, `make quick`, `make bench-csp-quick`,
+  `make bench-quick`.
 
 ## Rollback
 

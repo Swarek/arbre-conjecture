@@ -1007,3 +1007,51 @@
 - Next action : tenter un état DP/CSP qui mémorise, pour chaque paire
   concernée, quel côté contient déjà des mauvais témoins, ou prouver/refuter
   formellement la suffisance de `B(a,b)` arc comme filtre positif.
+
+## 2026-05-23 bad-side pair nogood CSP compilation
+
+- Date/heure : 2026-05-23, Europe/Paris.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : compiler les obstructions bad-side par paire `{a,b}` peut
+  représenter les mêmes rejets cR que les quartets ordonnés, avec moins
+  d'atomes et de nogoods, tout en restant un diagnostic énumératif.
+- Changement fait : ajout de `forbidden_bad_side_atoms`,
+  `compile_bad_side_nogoods`, `solve_compiled_bad_side_nogood_csp` et
+  `solve_pruned_bad_side_nogood_csp` dans
+  `src/pc_circular/solvers/sat_like_experiments.py`; ajout de tests CSP ;
+  mise à jour de `PLANS.md`, Pistes B/C/E, obligations et checkpoints.
+- Commande exécutée avant modification : `make quick`.
+- Résultat correction avant modification : `102 passed in 1.68s`, puis
+  `JUSTE`.
+- Plan subagents : trois explorateurs lecture seule. Résultats : garder
+  l'itération comme compilation parallèle, tester égalités/wrapping/fanout 3 et
+  paired-farthest, et documenter que la preuve reste fixed-order tant que la
+  compilation énumère les affectations complètes.
+- Commande exécutée : `pytest -q tests/test_sat_like_experiments.py`.
+- Résultat correction : `19 passed`.
+- Commande exécutée : `make unit`.
+- Résultat correction : `108 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `108 passed in 1.81s`, puis `JUSTE`.
+- Probe exécutée : comparaison bad-side/quartets sur `equal6_mixed`,
+  `wrap4_c`, `cycle8_balC_f3`, `cycle8_mixed_f3`,
+  `paired8_1008_balC_f3`, `paired8_1008_mixed_f3`.
+- Résultat probe : tous les cas ont `validation_fp/fn = 0`. Les cas non
+  triviaux ont exactement deux fois moins d'atomes et de nogoods bad-side que
+  quartets : par exemple `cycle8_mixed_f3` `416/832` atomes et `1178/2356`
+  nogoods ; `paired8_1008_mixed_f3` `168/336` atomes et `796/1592` nogoods.
+  `equal6_mixed` produit `0` atome/nogood.
+- Commande exécutée : `make bench-csp-quick`.
+- Résultat benchmark CSP : `reports/csp_internal_benchmark_quick.json` écrit ;
+  `192` lignes, `192` supportées, `0` mismatch, `31616` nogoods uniques,
+  `1280` branches prunées, `2208/5760` feuilles vues.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `0` timeout, `0` incomplet ; dernier `n=20` via
+  `candidate_validated_sampled_witness` sur 4 runs et
+  `candidate_universal_bad_witness_bound_all_orders` sur 1 run.
+- Conclusion : représentation CSP plus nette et plus petite, mais pas un
+  solveur compact. `candidate.py` reste inchangé.
+- Next action : soit chercher une construction non énumérative de ces nogoods,
+  soit revenir à un sous-cas prouvable où les supports bad-side se factorisent.

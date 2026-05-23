@@ -14,13 +14,17 @@ from pc_circular.solvers.sat_like_experiments import (
     accepted_frontiers_by_csp,
     assignment_frontier_report,
     build_local_domains,
+    compile_bad_side_nogoods,
     compile_cr_nogoods,
     forbidden_cr_atoms,
+    forbidden_bad_side_atoms,
     frontier_from_assignment,
     prop45_nogood_frontier_report,
     prop45_nogood_frontier_search,
     quartet_support_paths,
+    solve_compiled_bad_side_nogood_csp,
     solve_compiled_nogood_csp,
+    solve_pruned_bad_side_nogood_csp,
     solve_nogood_csp,
     solve_pruned_nogood_csp,
 )
@@ -180,6 +184,75 @@ def test_compiled_cr_nogoods_match_direct_cr_csp_on_small_tree():
     assert result["counts"]["false_negative_frontiers"] == 0
 
 
+def test_bad_side_atoms_match_precircular_cr_on_exhaustive_n4():
+    n = 4
+    pair_count = n * (n - 1) // 2
+    for values in itertools.product((1, 2, 3), repeat=pair_count):
+        D = [[0] * n for _ in range(n)]
+        for (i, j), value in zip(itertools.combinations(range(n), 2), values):
+            D[i][j] = D[j][i] = value
+
+        bad_side_atoms = {tuple(atom["atom"]) for atom in forbidden_bad_side_atoms(D)}
+        cr_atoms = {tuple(atom["atom"]) for atom in forbidden_cr_atoms(D)}
+        assert bad_side_atoms <= cr_atoms
+
+        for order in all_circular_orders(n):
+            has_bad_side_atom = any(_cyclic_atom_occurs(order, atom) for atom in bad_side_atoms)
+            assert has_bad_side_atom is (not is_precircular_order_cR(D, order))
+
+
+def test_bad_side_atoms_keep_equal_distance_clean():
+    D = equal_distance_instance(6)
+    T = balanced_pc_tree(6, kind="mixed")
+    compilation = compile_bad_side_nogoods(D, T, max_p_degree=3)
+    pruned = solve_pruned_bad_side_nogood_csp(D, T, max_p_degree=3)
+
+    assert forbidden_bad_side_atoms(D) == []
+    assert compilation["counts"]["nonempty_bad_pair_count"] == 0
+    assert compilation["counts"]["nontrivial_bad_pair_count"] == 0
+    assert compilation["counts"]["unique_nogoods"] == 0
+    assert pruned["counts"]["branches_pruned"] == 0
+    assert pruned["counts"]["validation_false_positive_frontiers"] == 0
+    assert pruned["counts"]["validation_false_negative_frontiers"] == 0
+
+
+def test_compiled_bad_side_nogoods_reject_wrapping_violation():
+    D = quasi_circular_not_circular_four_point()
+    T = c_node([leaf(3), leaf(0), leaf(1), leaf(2)])
+    compilation = compile_bad_side_nogoods(D, T)
+    result = solve_compiled_bad_side_nogood_csp(D, T)
+
+    assert any(atom_info["atom"] == (0, 1, 2, 3) for atom_info in forbidden_bad_side_atoms(D))
+    assert compilation["counts"]["nontrivial_bad_pair_count"] >= 1
+    assert compilation["counts"]["unique_nogoods"] >= 1
+    assert not result["exists"]
+    assert result["counts"]["false_positive_frontiers"] == 0
+    assert result["counts"]["false_negative_frontiers"] == 0
+
+
+def test_compiled_bad_side_nogoods_match_direct_cr_csp_on_small_tree():
+    T = balanced_pc_tree(6, kind="mixed")
+    D = random_dissimilarity(6, values=(1, 2, 3), rng=random.Random(20260524))
+    expected = accepted_frontiers_by_csp(D, T, source="cr", max_p_degree=3)
+    result = solve_compiled_bad_side_nogood_csp(D, T, max_p_degree=3)
+    actual = {tuple(order) for order in result["accepted_frontiers"]}
+
+    assert actual == expected
+    assert result["counts"]["false_positive_frontiers"] == 0
+    assert result["counts"]["false_negative_frontiers"] == 0
+
+
+def test_bad_side_nogoods_are_no_larger_than_ordered_cr_nogoods_on_probe():
+    T = balanced_pc_tree(6, kind="mixed")
+    D = random_dissimilarity(6, values=(1, 2, 3), rng=random.Random(20260525))
+    quartet_compilation = compile_cr_nogoods(D, T, max_p_degree=3)
+    bad_side_compilation = compile_bad_side_nogoods(D, T, max_p_degree=3)
+
+    assert len(bad_side_compilation["atoms"]) <= len(quartet_compilation["atoms"])
+    assert bad_side_compilation["counts"]["unique_nogoods"] <= quartet_compilation["counts"]["unique_nogoods"]
+    assert bad_side_compilation["counts"]["atoms_with_nogoods"] <= quartet_compilation["counts"]["atoms_with_nogoods"]
+
+
 def test_pruned_nogood_csp_matches_compiled_and_prunes_cycle_metric():
     T = balanced_pc_tree(6, kind="mixed")
     D = cycle_metric(6)
@@ -191,6 +264,18 @@ def test_pruned_nogood_csp_matches_compiled_and_prunes_cycle_metric():
     }
     assert pruned["counts"]["branches_pruned"] > 0
     assert pruned["counts"]["leaf_assignments_seen"] < pruned["counts"]["full_assignment_space"]
+    assert pruned["counts"]["validation_false_positive_frontiers"] == 0
+    assert pruned["counts"]["validation_false_negative_frontiers"] == 0
+
+
+def test_pruned_bad_side_nogood_csp_matches_direct_and_prunes_cycle_metric():
+    T = balanced_pc_tree(6, kind="mixed")
+    D = cycle_metric(6)
+    direct = accepted_frontiers_by_csp(D, T, source="cr", max_p_degree=3)
+    pruned = solve_pruned_bad_side_nogood_csp(D, T, max_p_degree=3)
+
+    assert {tuple(order) for order in pruned["accepted_frontiers"]} == direct
+    assert pruned["counts"]["branches_pruned"] > 0
     assert pruned["counts"]["validation_false_positive_frontiers"] == 0
     assert pruned["counts"]["validation_false_negative_frontiers"] == 0
 

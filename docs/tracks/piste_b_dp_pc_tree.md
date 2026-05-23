@@ -154,6 +154,25 @@ Piste F/sous-cas. Une expérience raisonnable restante est de chercher un
 sous-cas où les masques se factorisent, par exemple degré PC-tree borné ou
 familles laminaire/equal-block.
 
+## Résultats T027
+
+Statut : reformulation CSP exacte pour ordre fixé, pas compression DP.
+
+Les nogoods bad-side par paire reprennent directement le diagnostic T014 :
+pour chaque `{a,b}`, deux témoins mauvais `y,t` séparés par les endpoints
+créent les atomes interdits `(a,y,b,t)` et `(a,t,b,y)`. Cette forme évite les
+quartets numériques redondants mais conserve le même support de quatre labels.
+
+Observation : sur les probes bornées, cette forme divise par deux les atomes et
+nogoods par rapport aux quartets ordonnés, mais ne diminue pas le nombre de
+branches prunées dans le backtracking post-compilation. L'information reste
+quartet-like et la compilation est encore découverte par énumération complète.
+
+Conclusion : T027 clarifie l'état exact "mauvais témoins par paire" et fournit
+une meilleure représentation pour Piste C, mais ne débloque pas encore une
+signature DP compacte. Pour Piste B, la prochaine avancée doit réduire le
+support ou prouver une factorisation par structure de PC-tree.
+
 ## Résultats T021
 
 Statut : résultat négatif expérimental sur signatures compactées.

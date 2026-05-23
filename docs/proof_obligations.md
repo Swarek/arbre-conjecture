@@ -585,6 +585,37 @@ Obligations ouvertes :
 - traiter les égalités avec l'inégalité stricte `>` dans la définition de
   mauvais témoin.
 
+### Compilation bad-side par paire
+
+Statut : diagnostic CSP exact après énumération / pas solveur compact.
+
+`forbidden_bad_side_atoms(D)` transforme la caractérisation précédente en
+atomes interdits : pour chaque paire `{a,b}` et chaque couple de mauvais
+témoins `y,t`, les deux orientations cycliques `(a,y,b,t)` et `(a,t,b,y)` sont
+interdites. `compile_bad_side_nogoods` projette ensuite ces atomes sur les
+variables locales du PC-tree scaffold, comme les nogoods de quartets cR.
+
+Ce que cela couvre :
+
+- obligation fixed-order : l'exhaustif `n=4`, valeurs `{1,2,3}`, vérifie que la
+  présence d'un atome bad-side dans un ordre équivaut à `not cR` ;
+- obligation d'égalité : equal-distance ne produit aucun atome bad-side grâce
+  au `>` strict ;
+- obligation expérimentale CSP : sur PC-trees supportés, les frontiers acceptées
+  par `solve_compiled_bad_side_nogood_csp` et
+  `solve_pruned_bad_side_nogood_csp` coïncident avec le filtre cR direct.
+
+Limites :
+
+- la compilation énumère encore les affectations complètes pour découvrir les
+  signatures de nogoods ;
+- diviser les atomes/nogoods par deux sur les probes ne prouve aucune borne
+  polynomiale ;
+- les obligations 3, 4 et 5 de la candidate générale restent ouvertes tant
+  qu'il n'existe pas de construction compacte des nogoods ou d'état DP
+  suffisant ;
+- les gros nœuds `P` non supportés restent `unsupported`, jamais des rejets.
+
 ### Prédicats stricts d'ordre fixé
 
 Statut : définitions directes implémentées / base expérimentale Piste F.

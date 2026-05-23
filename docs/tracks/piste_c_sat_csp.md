@@ -197,6 +197,37 @@ Créer un rapport de décision Piste C vs Piste B/F, puis tester une signature
 DP/collision ou un sous-cas polynomial avant de continuer à raffiner le CSP
 énumératif.
 
+## Tentative T027 - Nogoods bad-side par paire
+
+Statut : amélioration de représentation expérimentale, non intégrée dans
+`candidate.py`.
+
+Changement : `forbidden_bad_side_atoms` génère les deux orientations
+`(a,y,b,t)` et `(a,t,b,y)` pour chaque paire `{a,b}` et chaque couple de
+mauvais témoins `y,t in B(a,b)`. `compile_bad_side_nogoods` projette ces atomes
+sur les mêmes supports de variables que les quartets cR, puis
+`solve_compiled_bad_side_nogood_csp` et
+`solve_pruned_bad_side_nogood_csp` réutilisent les solveurs CSP existants.
+
+Invariant testé : un ordre est rejeté par un atome bad-side ssi il viole cR.
+L'exhaustif `n=4`, valeurs `{1,2,3}`, vérifie aussi que les atomes bad-side sont
+un sous-ensemble des atomes `forbidden_cr_atoms`.
+
+Résultat observé : sur un probe borné `cycle/equal/random/paired_farthest`,
+arbres `mixed`, `n=5..7`, les atomes et nogoods bad-side sont exactement deux
+fois moins nombreux que les quartets ordonnés dans les cas non triviaux, avec
+le même nombre de branches prunées et aucun mismatch de validation. Sur des
+arbres fanout 3 :
+
+- `cycle8_mixed_f3` : `416/832` atomes, `1178/2356` nogoods, validation `0/0` ;
+- `paired8_1008_mixed_f3` : `168/336` atomes, `796/1592` nogoods,
+  validation `0/0` ;
+- `equal6_mixed` : aucun atome/nogood, ce qui verrouille les égalités.
+
+Limite : la compilation découvre toujours les signatures en énumérant les
+affectations complètes. Le gain est donc une simplification de représentation,
+pas une preuve de solveur compact ni de borne polynomiale.
+
 ## Tentative T021 - Repair positive-only pour paired-farthest
 
 Statut : idée saine comme générateur expérimental vérifié, mais non intégrée à

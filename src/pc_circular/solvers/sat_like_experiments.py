@@ -9,7 +9,7 @@ PC-tree encoding is attempted.
 
 from __future__ import annotations
 
-from itertools import islice, permutations, product
+from itertools import combinations, islice, permutations, product
 from typing import Iterable, Optional, Sequence
 
 from pc_circular.pc_tree import PCNode, enumerate_frontiers, labels
@@ -21,6 +21,7 @@ from pc_circular.predicates import (
     is_quasi_circular_order,
     validate_dissimilarity,
 )
+from pc_circular.solvers.dp_experiments import bad_witnesses_by_pair
 
 
 Order = Sequence[int]
@@ -374,6 +375,35 @@ def forbidden_cr_atoms(D) -> list[dict]:
     return atoms
 
 
+def forbidden_bad_side_atoms(D) -> list[dict]:
+    """Return cR-forbidden atoms generated from bad witnesses by endpoint pair.
+
+    For an unordered pair ``{a,b}``, any two bad witnesses ``y,t`` create the
+    two cyclic forbidden orientations ``a,y,b,t`` and ``a,t,b,y``.  This is the
+    bad-side fixed-order characterization in atom form; it avoids generating
+    every ordered quartet whose inequality is numerically bad.
+    """
+
+    validate_dissimilarity(D)
+    atoms: list[dict] = []
+    for pair, witnesses in bad_witnesses_by_pair(D).items():
+        a, b = pair
+        for y, t in combinations(witnesses, 2):
+            for atom in ((a, y, b, t), (a, t, b, y)):
+                violation = _cr_atom_violation(D, *atom)
+                if violation is None:
+                    raise AssertionError("bad-side atom must violate the cR inequality")
+                atoms.append(
+                    {
+                        **violation,
+                        "pair": pair,
+                        "bad_witnesses": (y, t),
+                        "source": "bad_side_pair",
+                    }
+                )
+    return atoms
+
+
 def _cyclic_atom_occurs(order: Order, atom: Sequence[int]) -> bool:
     x, y, z, t = atom
     position = {value: idx for idx, value in enumerate(order)}
@@ -509,6 +539,107 @@ def compile_cr_nogoods(
     return report
 
 
+def compile_bad_side_nogoods(
+    D,
+    pc_tree: PCNode,
+    *,
+    max_p_degree: int = 3,
+    limit: Optional[int] = None,
+) -> dict:
+    """Compile bad-side pair atoms into projected nogoods.
+
+    This is still an enumeration-based experiment.  It uses fewer source atoms
+    than ``compile_cr_nogoods`` when many ordered quartet violations are
+    duplicates of the same endpoint-pair bad-side obstruction.
+    """
+
+    validate_dissimilarity(D)
+    witnesses_by_pair = bad_witnesses_by_pair(D)
+    witness_pair_constraints = sum(
+        len(witnesses) * (len(witnesses) - 1) // 2
+        for witnesses in witnesses_by_pair.values()
+    )
+    encoding = build_local_domains(pc_tree, max_p_degree=max_p_degree)
+    report = {
+        "implemented": True,
+        "method": "compiled_bad_side_pair_nogoods",
+        "encoding": encoding,
+        "complete": True,
+        "atoms": forbidden_bad_side_atoms(D),
+        "bad_pairs": [
+            {"pair": pair, "bad_witnesses": witnesses, "bad_witness_count": len(witnesses)}
+            for pair, witnesses in witnesses_by_pair.items()
+            if witnesses
+        ],
+        "nogoods": [],
+        "counts": {
+            "assignments_seen": 0,
+            "atom_hits": 0,
+            "nonempty_bad_pair_count": sum(1 for witnesses in witnesses_by_pair.values() if witnesses),
+            "nontrivial_bad_pair_count": sum(1 for witnesses in witnesses_by_pair.values() if len(witnesses) >= 2),
+            "bad_witness_total": sum(len(witnesses) for witnesses in witnesses_by_pair.values()),
+            "witness_pair_constraints": witness_pair_constraints,
+            "unique_nogoods": 0,
+            "atoms_with_nogoods": 0,
+            "pairs_with_nogoods": 0,
+            "max_support_size": 0,
+            "support_size_histogram": {},
+        },
+    }
+    if encoding["unsupported"]:
+        report["complete"] = False
+        return report
+
+    atoms = report["atoms"]
+    support_by_atom = {
+        tuple(atom_info["atom"]): quartet_support_paths(pc_tree, atom_info["atom"])
+        for atom_info in atoms
+    }
+    seen: dict[tuple[tuple[int, ...], NogoodSignature], dict] = {}
+    truncated = False
+    for assignment in iter_local_assignments(encoding, limit=None if limit is None else limit + 1):
+        if limit is not None and report["counts"]["assignments_seen"] >= limit:
+            truncated = True
+            break
+        report["counts"]["assignments_seen"] += 1
+        order = canonical_circular_order(frontier_from_assignment(pc_tree, assignment))
+        for atom_info in atoms:
+            atom = tuple(atom_info["atom"])
+            if not _cyclic_atom_occurs(order, atom):
+                continue
+            support = support_by_atom[atom]
+            signature = _nogood_signature(assignment, support)
+            key = (atom, signature)
+            report["counts"]["atom_hits"] += 1
+            if key in seen:
+                continue
+            nogood = {
+                "atom": atom,
+                "pair": atom_info["pair"],
+                "bad_witnesses": atom_info["bad_witnesses"],
+                "support": support,
+                "signature": signature,
+                "violation": atom_info,
+            }
+            seen[key] = nogood
+
+    nogoods = list(seen.values())
+    atoms_with_nogoods = {nogood["atom"] for nogood in nogoods}
+    histogram: dict[int, int] = {}
+    for nogood in nogoods:
+        size = len(nogood["support"])
+        histogram[size] = histogram.get(size, 0) + 1
+
+    report["nogoods"] = nogoods
+    report["complete"] = not truncated
+    report["counts"]["unique_nogoods"] = len(nogoods)
+    report["counts"]["atoms_with_nogoods"] = len(atoms_with_nogoods)
+    report["counts"]["pairs_with_nogoods"] = len({nogood["pair"] for nogood in nogoods})
+    report["counts"]["support_size_histogram"] = dict(sorted(histogram.items()))
+    report["counts"]["max_support_size"] = max(histogram, default=0)
+    return report
+
+
 def solve_compiled_nogood_csp(
     D,
     pc_tree: PCNode,
@@ -549,6 +680,101 @@ def solve_compiled_nogood_csp(
         "first_disagreement": None,
         "compilation": compilation,
         "note": "experimental compiled nogood search; not a proved compact solver",
+    }
+    if result["unsupported"]:
+        result["complete"] = False
+        result["note"] = "unsupported local domain; no negative decision made"
+        return result
+
+    nogoods = compilation["nogoods"]
+    seen_frontiers: set[tuple[int, ...]] = set()
+    accepted: list[tuple[int, ...]] = []
+    truncated = False
+    for assignment in iter_local_assignments(
+        compilation["encoding"],
+        limit=None if limit is None else limit + 1,
+    ):
+        if limit is not None and counts["assignments_seen"] >= limit:
+            truncated = True
+            break
+        counts["assignments_seen"] += 1
+        rejected = any(_nogood_matches(assignment, nogood["signature"]) for nogood in nogoods)
+        order = canonical_circular_order(frontier_from_assignment(pc_tree, assignment))
+        exact = is_precircular_order_cR(D, order)
+        if order in seen_frontiers:
+            counts["duplicate_frontiers"] += 1
+        else:
+            seen_frontiers.add(order)
+            counts["unique_frontiers_seen"] += 1
+
+        if rejected:
+            counts["rejected_assignments"] += 1
+            if exact:
+                counts["false_negative_frontiers"] += 1
+                if result["first_disagreement"] is None:
+                    result["first_disagreement"] = {
+                        "kind": "false_negative",
+                        "order": list(order),
+                    }
+            continue
+
+        if not exact:
+            counts["false_positive_frontiers"] += 1
+            if result["first_disagreement"] is None:
+                result["first_disagreement"] = {
+                    "kind": "false_positive",
+                    "order": list(order),
+                }
+            continue
+
+        if order not in accepted:
+            counts["accepted_frontiers"] += 1
+            accepted.append(order)
+            if result["order"] is None:
+                result["order"] = list(order)
+
+    result["complete"] = result["complete"] and not truncated
+    result["exists"] = bool(accepted)
+    result["accepted_frontiers"] = [list(order) for order in accepted]
+    return result
+
+
+def solve_compiled_bad_side_nogood_csp(
+    D,
+    pc_tree: PCNode,
+    *,
+    max_p_degree: int = 3,
+    limit: Optional[int] = None,
+) -> dict:
+    """Search using compiled bad-side pair nogoods."""
+
+    compilation = compile_bad_side_nogoods(
+        D,
+        pc_tree,
+        max_p_degree=max_p_degree,
+        limit=limit,
+    )
+    counts = {
+        "assignments_seen": 0,
+        "unique_frontiers_seen": 0,
+        "accepted_frontiers": 0,
+        "rejected_assignments": 0,
+        "duplicate_frontiers": 0,
+        "false_positive_frontiers": 0,
+        "false_negative_frontiers": 0,
+    }
+    result = {
+        "implemented": True,
+        "solver": "compiled_bad_side_pair_nogood_experiment",
+        "exists": None,
+        "order": None,
+        "complete": compilation["complete"],
+        "unsupported": compilation["encoding"]["unsupported"],
+        "counts": counts,
+        "accepted_frontiers": [],
+        "first_disagreement": None,
+        "compilation": compilation,
+        "note": "experimental compiled bad-side nogood search; not a proved compact solver",
     }
     if result["unsupported"]:
         result["complete"] = False
@@ -779,6 +1005,28 @@ def solve_pruned_nogood_csp(
         max_p_degree=max_p_degree,
         validate_against_direct=validate_against_direct,
     )
+
+
+def solve_pruned_bad_side_nogood_csp(
+    D,
+    pc_tree: PCNode,
+    *,
+    max_p_degree: int = 3,
+    validate_against_direct: bool = True,
+) -> dict:
+    """Backtrack through local domains with compiled bad-side pair nogoods."""
+
+    compilation = compile_bad_side_nogoods(D, pc_tree, max_p_degree=max_p_degree)
+    result = solve_pruned_nogood_csp_from_compilation(
+        D,
+        pc_tree,
+        compilation,
+        max_p_degree=max_p_degree,
+        validate_against_direct=validate_against_direct,
+    )
+    result["solver"] = "pruned_bad_side_pair_nogood_experiment"
+    result["note"] = "experimental bad-side post-compilation pruning; not a proved compact solver"
+    return result
 
 
 def prop45_nogood_frontier_report(
