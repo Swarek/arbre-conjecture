@@ -1365,3 +1365,65 @@ cycle/equal/paired/random, sans désaccord.
 Décision : intégrer dans `candidate.py` comme sous-cas exact borné. Ce n'est
 pas une solution générale : la limite évite toute énumération explosive et les
 grands espaces restent incomplets.
+
+## ExecPlan 2026-05-23 - finite quasi-orders exact candidate subcase
+
+But : intégrer un sous-cas exact pour les appels où `quasi_orders` est une
+famille finie explicite et assez petite, au lieu de n'en échantillonner que les
+premiers ordres pour `n > 8`.
+
+Hypothèse : si l'utilisateur fournit directement une famille finie d'ordres
+admissibles, la candidate peut décider exactement l'existence cR dans cette
+famille en testant chaque ordre par `is_precircular_order_cR`, tant que la
+taille est sous une limite explicite. Ce sous-cas ne dit rien sur les PC-trees
+compacts ni sur les familles trop grandes/non dimensionnées.
+
+Fichiers à modifier : `src/pc_circular/solvers/candidate.py`,
+`tests/test_candidate.py`, `docs/proof_obligations.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/tracks/README.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `PLANS.md`.
+
+Algorithme pressenti : ajouter `EXACT_QUASI_ORDER_LIMIT`. Si
+`quasi_orders is not None`, expose `len(quasi_orders)`, et que cette taille est
+au plus la limite, itérer sur toute la famille, valider chaque ordre, tester cR,
+et retourner une décision complète positive au premier témoin ou négative après
+avoir tout testé. Si la famille n'a pas de longueur fiable ou dépasse la limite,
+retomber sur l'échantillonnage existant sans conclure négativement.
+
+Plan de contre-exemples : liste `quasi_orders` avec un seul mauvais ordre
+`n=10`, qui doit maintenant être un `False` complet ; liste avec 64 mauvais
+ordres puis un témoin cR, que l'ancien sampling aurait ratée ; liste trop
+grande dont le témoin est hors budget, qui doit rester `complete=False` ; un
+itérateur non dimensionné qui doit rester soumis au placeholder.
+
+Plan subagents : deux explorateurs lecture seule : revue de correction/API du
+sous-cas fini et audit des incomplets benchmark restants.
+
+Tests à exécuter : `tests/test_candidate.py`, `make unit`, `make quick`,
+`make hunt-counterexamples`, `make check`, `make bench-quick`. Lancer
+`make bench` seulement si l'itération touche les benchmarks `pc_tree=star`.
+
+Risques : confondre une famille explicite finie avec un PC-tree compact ;
+consommer un itérateur non réitérable ; retourner `False` complet après une
+énumération tronquée ; bypasser les certificats positifs existants dans les cas
+où `quasi_orders` n'est pas fourni ; faire croire que cela réduit les incomplets
+du benchmark `mixed/star`, alors que celui-ci passe par `pc_tree` et non par
+`quasi_orders`.
+
+Résultats observés : `candidate_exact_bounded_quasi_orders` ajouté. Le sous-cas
+valide toute famille `quasi_orders` `Sized` de taille
+`<= EXACT_QUASI_ORDER_LIMIT`, retourne un témoin complet si trouvé, et retourne
+un négatif complet seulement après avoir inspecté toute la famille. Tests
+verrouillés : famille vide non universelle devient négatif complet ; liste finie
+mauvais seul `n=10` devient négatif complet ; liste avec 64 mauvais ordres puis
+témoin cR trouve le témoin ; liste trop grande et itérateur non dimensionné
+restent `candidate_large_n_placeholder` si le sampling manque le témoin ;
+`quasi_orders` garde la priorité sur `pc_tree`.
+Validation : `tests/test_candidate.py` `24 passed`, `make unit` `115 passed`,
+`make quick` `115 passed` puis `JUSTE`, `make hunt-counterexamples` `JUSTE`,
+`make check` `JUSTE`, `make bench-quick` `0` timeout et `0` incomplet.
+
+Décision : intégrer comme sous-cas exact API. Ne pas le présenter comme progrès
+sur les benchmarks `pc_tree=star` : ceux-ci n'utilisent pas `quasi_orders`.
+Prochaine cible : `paired_farthest/mixed` ou attribution par sous-famille des
+placeholders `mixed/star`.

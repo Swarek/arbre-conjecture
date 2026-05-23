@@ -1102,3 +1102,56 @@
   frontiers du scaffold ont été énumérées.
 - Next action : chercher une construction non énumérative pour les PC-trees
   au-delà de la limite, ou un sous-cas où la borne reste polynomialement petite.
+
+## 2026-05-23 finite quasi-orders exact candidate subcase
+
+- Date/heure : 2026-05-23 03:16:14 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : quand l'entrée fournit explicitement une famille finie
+  `quasi_orders` sous une limite fixe, la candidate peut décider exactement
+  l'existence cR relative à cette famille, même pour `n > 8`.
+- Changement fait : ajout de `EXACT_QUASI_ORDER_LIMIT` et
+  `candidate_exact_bounded_quasi_orders` dans `candidate.py`; ajout de tests
+  pour famille vide non universelle, négatif fini exact, témoin hors budget
+  sampling, famille trop grande, itérateur non dimensionné, et priorité de
+  `quasi_orders` sur `pc_tree`.
+- Commande exécutée avant modification : `make quick`.
+- Résultat correction avant modification : `111 passed in 1.91s`, puis
+  `JUSTE`.
+- Documents source : les six PDF fournis et la capture Proposition 4.4 étaient
+  déjà versionnés sous `docs/source_materials/` avec hashes dans
+  `docs/source_materials/README.md`; aucun recopiage nécessaire.
+- Plan subagents : deux explorateurs lecture seule. Résultats : placer la
+  branche après le sous-cas universel et avant les certificats `pc_tree`,
+  garder la complétude relative à la famille explicite, ne pas consommer les
+  itérateurs non dimensionnés, et noter que l'impact sur `make bench` actuel
+  sera nul parce que le benchmark appelle `candidate(D, pc_tree=T)`.
+- Commande exécutée : `pytest -q tests/test_candidate.py`.
+- Résultat correction : `24 passed`.
+- Commande exécutée : `make unit`.
+- Résultat correction : `115 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `115 passed in 1.93s`, puis `JUSTE`.
+- Commande exécutée : `make hunt-counterexamples`.
+- Résultat correction : `JUSTE` sur exhaustif `n=4`, `5000` random,
+  `max-n=8`, seed `314159`, shrink actif.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `0` timeout, `0` incomplet ; tailles `[4,5,6,8,10,12,16,20]`, dernier
+  `n=20` via `candidate_validated_sampled_witness` sur 4 runs et
+  `candidate_universal_bad_witness_bound_all_orders` sur 1 run ; fit rapide
+  bruité `p ~= 2.70`.
+- Incomplets restants connus : le rapport fort `mixed/star` précédent avait
+  `42` incomplets via `candidate_large_n_placeholder`, et le rapport ciblé
+  `paired_farthest/mixed` restait incomplet sur toutes les tailles testées.
+  T029 ne les résout pas, car il concerne seulement les familles explicites
+  `quasi_orders`.
+- Conclusion : sous-cas API exact utile intégré. Un résultat `False` complet
+  est maintenant permis seulement quand toute la famille explicite bornée a été
+  inspectée. Ce n'est pas une avancée sur les grands PC-trees compacts.
+- Next action : attaquer `paired_farthest/mixed` par synthèse représentée dans
+  le PC-tree, ou instrumenter le benchmark `mixed/star` pour attribuer les
+  placeholders aux sous-familles génératrices avant un nouveau certificat.

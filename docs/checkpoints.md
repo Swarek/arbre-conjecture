@@ -135,6 +135,13 @@ Dernier commit green avant T009 : `07120e4`.
   Validation observée : `tests/test_candidate.py`, probe oracle PC-tree `42`
   décisions, `make unit`, `make quick`, `make hunt-counterexamples`,
   `make check`, `make bench-quick`.
+- Checkpoint T029 courant : commit contenant le sous-cas
+  `candidate_exact_bounded_quasi_orders`. La candidate décide exactement une
+  famille explicite `quasi_orders` seulement si elle expose une longueur fiable
+  et si cette longueur est sous `EXACT_QUASI_ORDER_LIMIT`. Les familles trop
+  grandes et les itérateurs non dimensionnés restent incomplets en négatif.
+  Validation observée : `tests/test_candidate.py`, `make unit`, `make quick`,
+  `make hunt-counterexamples`, `make check`, `make bench-quick`.
 
 ## Rollback
 

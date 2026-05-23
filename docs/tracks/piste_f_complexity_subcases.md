@@ -261,6 +261,35 @@ Limites :
 - le résultat concerne le scaffold PC-tree enraciné du dépôt, pas une
   implémentation complète Hsu/McConnell non enracinée.
 
+## Famille explicite `quasi_orders` bornée
+
+Statut : sous-cas exact intégré à `candidate.py` pour une entrée explicite déjà
+énumérée par l'appelant.
+
+`candidate_exact_bounded_quasi_orders` s'applique quand `quasi_orders` expose
+une longueur et que cette longueur est au plus `EXACT_QUASI_ORDER_LIMIT`. La
+candidate inspecte alors toute la famille fournie, valide chaque ordre, et teste
+directement `is_precircular_order_cR`. Un résultat négatif complet signifie
+seulement qu'aucun ordre de cette famille explicite n'est cR.
+
+Résultat T029 :
+
+- famille vide non universelle : négatif exact complet ;
+- `n=10`, liste d'un seul mauvais ordre : négatif exact complet ;
+- `n=10`, 64 mauvais ordres puis un témoin cR : témoin trouvé alors que
+  l'ancien sampling l'aurait manqué ;
+- liste de taille supérieure à la limite et itérateur non dimensionné : la
+  candidate ne conclut pas négativement et reste `complete=False` si le sampling
+  ne trouve rien.
+
+Limites :
+
+- pas d'intersection `quasi_orders ∩ pc_tree` : l'API actuelle donne priorité à
+  la famille explicite ;
+- pas d'impact direct attendu sur `make bench`, qui appelle la candidate avec
+  `pc_tree=star` et sans `quasi_orders` ;
+- l'appelant supporte le coût de construction de la famille explicite.
+
 ## Témoin cycle par distances minimales
 
 Statut : certificat positif intégré pour tout PC-tree du scaffold où le témoin

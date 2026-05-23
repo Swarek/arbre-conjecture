@@ -325,6 +325,42 @@ Limites :
 - les résultats `False` du placeholder restent incomplets et doivent rester
   visibles dans les rapports.
 
+### Famille explicite `quasi_orders` bornée
+
+Statut : sous-cas exact intégré à la candidate pour une famille fournie
+explicitement, finie et petite.
+
+`candidate_exact_bounded_quasi_orders` s'applique seulement quand
+`quasi_orders` expose une longueur fiable et que cette longueur est au plus
+`EXACT_QUASI_ORDER_LIMIT`. Dans ce cas, la candidate valide chaque ordre fourni
+comme permutation de `0..n-1`, teste toute la famille par
+`is_precircular_order_cR`, puis retourne une décision complète relative à cette
+famille explicite.
+
+Ce que cela couvre :
+
+- obligation 1 : chaque ordre inspecté est testé par le prédicat fixed-order
+  exact ;
+- obligation 2 : un témoin positif vérifié suffit pour prouver l'existence dans
+  la famille explicite ;
+- obligation 3 dans ce sous-cas : si la longueur est sous la limite, toute la
+  famille `quasi_orders` fournie est inspectée ;
+- obligation 4 : le témoin renvoyé appartient à la famille explicite fournie ;
+- obligation 5 dans ce sous-cas : le temps est borné par
+  `O(EXACT_QUASI_ORDER_LIMIT * n^4)` avec le prédicat direct actuel, hors coût
+  de construction de la famille par l'appelant.
+
+Limites :
+
+- la complétude est relative à `quasi_orders`, pas au PC-tree et pas à tous les
+  ordres quasi-circulaires ;
+- si `quasi_orders` et `pc_tree` sont fournis ensemble, la sémantique actuelle
+  garde la priorité à la famille explicite, pas à l'intersection des deux ;
+- les itérateurs non dimensionnés ou les familles au-dessus de la limite restent
+  soumis à l'échantillonnage incomplet ;
+- ce sous-cas ne réduit pas directement les incomplets des benchmarks
+  `pc_tree=star`, qui n'utilisent pas `quasi_orders`.
+
 ### PC-tree exact à frontiers bornées
 
 Statut : sous-cas exact intégré à la candidate pour le scaffold P/C/leaf.

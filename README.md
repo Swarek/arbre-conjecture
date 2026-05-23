@@ -13,10 +13,11 @@ une baseline : brute force exacte pour `n <= 8`, un sous-cas large-n prouvé où
 chaque paire a au plus un témoin mauvais global, un certificat positif
 minimum-cycle quand l'ordre reconstruit est représenté et vérifié cR, puis
 un sous-cas three-level à matching farthest unique, puis un sous-cas exact où
-le PC-tree fourni a un nombre de frontiers certifié sous une limite explicite,
-puis échantillonnage incomplet documenté au-delà. Un témoin positif
-échantillonné est certifié par vérification directe de l'ordre ; un échec
-d'échantillonnage reste incomplet.
+une famille explicite `quasi_orders` finie est sous une limite explicite, puis
+un sous-cas exact où le PC-tree fourni a un nombre de frontiers certifié sous
+une limite explicite, puis échantillonnage incomplet documenté au-delà. Un
+témoin positif échantillonné est certifié par vérification directe de l'ordre ;
+un échec d'échantillonnage reste incomplet.
 Les tests servent à protéger les expériences, pas à remplacer une preuve.
 
 Commandes principales :

@@ -66,6 +66,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T026 | 2026-05-23 | D/E | Contraintes d'arcs bad-witness testées : one-side exact, `B` arc trop fort, `B union endpoints` invalide | `bad_witness_arc_constraints_report` |
 | T027 | 2026-05-23 | B/C/E | Nogoods bad-side par paire compilés ; mêmes frontiers cR, moitié moins d'atomes/nogoods sur probes | `compile_bad_side_nogoods` |
 | T028 | 2026-05-23 | F/C | Sous-cas PC-tree à frontiers bornées intégré à la candidate ; décisions exactes n>8 quand l'espace est petit | `candidate_exact_bounded_pc_tree_frontiers` |
+| T029 | 2026-05-23 | F/API | Sous-cas `quasi_orders` fini borné intégré ; décision exacte relative à la famille explicite | `candidate_exact_bounded_quasi_orders` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

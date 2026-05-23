@@ -20,6 +20,7 @@ from pc_circular.pc_tree import (
 from pc_circular.predicates import all_circular_orders, canonical_circular_order, is_precircular_order_cR
 from pc_circular.solvers.candidate import (
     EXACT_PC_TREE_FRONTIER_LIMIT,
+    EXACT_QUASI_ORDER_LIMIT,
     _minimum_distance_cycle_order,
     _paired_farthest_order,
     _pc_tree_frontier_upper_bound,
@@ -95,6 +96,16 @@ def test_candidate_universal_subcase_respects_empty_quasi_order_family():
     assert result["order"] is None
 
 
+def test_candidate_exact_bounded_quasi_orders_handles_empty_non_universal_family():
+    D = cycle_metric(10)
+    result = solve(D, quasi_orders=[])
+    assert result["exists"] is False
+    assert result["complete"] is True
+    assert result["order"] is None
+    assert result["solver"] == "candidate_exact_bounded_quasi_orders"
+    assert result["quasi_order_count"] == 0
+
+
 def test_candidate_universal_subcase_uses_first_quasi_order():
     D = _one_high_edge_instance(10)
     result = solve(D, quasi_orders=[(9, 8, 7, 6, 5, 4, 3, 2, 1, 0)])
@@ -104,21 +115,62 @@ def test_candidate_universal_subcase_uses_first_quasi_order():
     assert is_precircular_order_cR(D, result["order"])
 
 
-def test_candidate_non_constant_large_instance_remains_incomplete_placeholder():
+def test_candidate_exact_bounded_quasi_orders_proves_large_finite_negative():
     D = cycle_metric(10)
     bad_first_orders = [(0, 2, 4, 6, 8, 1, 3, 5, 7, 9)]
     result = solve(D, quasi_orders=bad_first_orders)
     assert result["exists"] is False
-    assert result["complete"] is False
+    assert result["complete"] is True
+    assert result["solver"] == "candidate_exact_bounded_quasi_orders"
+    assert result["tried_orders"] == 1
+    assert result["quasi_order_count"] == 1
 
 
-def test_candidate_marks_sampled_positive_witness_complete():
+def test_candidate_exact_bounded_quasi_orders_finds_witness_beyond_sample_budget():
     D = cycle_metric(10)
-    result = solve(D, quasi_orders=[tuple(range(10))])
+    bad_order = (0, 2, 4, 6, 8, 1, 3, 5, 7, 9)
+    witness = tuple(range(10))
+    assert not is_precircular_order_cR(D, bad_order)
+    assert is_precircular_order_cR(D, witness)
+
+    result = solve(D, quasi_orders=[bad_order] * 64 + [witness])
+    assert result["exists"] is True
+    assert result["complete"] is True
+    assert result["solver"] == "candidate_exact_bounded_quasi_orders"
+    assert result["tried_orders"] == 65
+    assert is_precircular_order_cR(D, result["order"])
+
+
+def test_candidate_marks_sampled_positive_witness_complete_for_non_sized_iterator():
+    D = cycle_metric(10)
+    result = solve(D, quasi_orders=iter([tuple(range(10))]))
     assert result["exists"] is True
     assert result["complete"] is True
     assert result["solver"] == "candidate_validated_sampled_witness"
     assert is_precircular_order_cR(D, result["order"])
+
+
+def test_candidate_large_finite_quasi_order_family_remains_incomplete_without_false_negative():
+    D = cycle_metric(10)
+    bad_order = (0, 2, 4, 6, 8, 1, 3, 5, 7, 9)
+    witness = tuple(range(10))
+    orders = [bad_order] * (EXACT_QUASI_ORDER_LIMIT + 1) + [witness]
+    result = solve(D, quasi_orders=orders)
+    assert result["exists"] is False
+    assert result["complete"] is False
+    assert result["solver"] == "candidate_large_n_placeholder"
+    assert result["tried_orders"] == 64
+
+
+def test_candidate_non_sized_quasi_orders_remain_incomplete_when_sample_misses_witness():
+    D = cycle_metric(10)
+    bad_order = (0, 2, 4, 6, 8, 1, 3, 5, 7, 9)
+    witness = tuple(range(10))
+    result = solve(D, quasi_orders=iter([bad_order] * 64 + [witness]))
+    assert result["exists"] is False
+    assert result["complete"] is False
+    assert result["solver"] == "candidate_large_n_placeholder"
+    assert result["tried_orders"] == 64
 
 
 def test_candidate_exact_bounded_pc_tree_finds_large_rigid_c_tree_witness_without_shortcut():
@@ -223,8 +275,8 @@ def test_candidate_does_not_bypass_explicit_quasi_orders_with_pc_tree():
     bad_first_orders = [(0, 2, 4, 6, 8, 1, 3, 5, 7, 9)]
     result = solve(D, quasi_orders=bad_first_orders, pc_tree=T)
     assert result["exists"] is False
-    assert result["complete"] is False
-    assert result["solver"] == "candidate_large_n_placeholder"
+    assert result["complete"] is True
+    assert result["solver"] == "candidate_exact_bounded_quasi_orders"
 
 
 def test_candidate_finds_large_paired_farthest_witness_in_star_tree():
@@ -273,8 +325,8 @@ def test_candidate_does_not_bypass_explicit_quasi_orders_for_paired_farthest():
     assert not is_precircular_order_cR(D, bad_order)
     result = solve(D, quasi_orders=[bad_order], pc_tree=star_pc_tree(10))
     assert result["exists"] is False
-    assert result["complete"] is False
-    assert result["solver"] == "candidate_large_n_placeholder"
+    assert result["complete"] is True
+    assert result["solver"] == "candidate_exact_bounded_quasi_orders"
 
 
 def test_minimum_cycle_candidate_is_only_a_verified_witness():

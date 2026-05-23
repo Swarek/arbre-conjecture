@@ -8,6 +8,8 @@ The current implementation is deliberately conservative:
 * for larger instances it tries a small deterministic set of represented
   orders; a found witness proves ``exists=True``, but failure remains
   ``complete=False``.
+* for an explicit finite ``quasi_orders`` family under a small bound, it tests
+  the whole provided family exactly.
 * when the minimum-distance graph exposes a cycle, it accepts the reconstructed
   order only after direct cR and PC-tree representation verification.
 * for a three-level unique-farthest matching sub-case it reconstructs a
@@ -19,6 +21,7 @@ the large-n placeholder with a proved algorithm or a clearly scoped sub-case.
 
 from __future__ import annotations
 
+from collections.abc import Sized
 from itertools import islice
 from typing import Iterable, Optional, Sequence
 
@@ -33,6 +36,7 @@ from pc_circular.solvers import brute_force
 
 EXACT_BRUTE_FORCE_LIMIT = 8
 EXACT_PC_TREE_FRONTIER_LIMIT = 4096
+EXACT_QUASI_ORDER_LIMIT = 4096
 
 
 def _large_n_budget(n: int) -> int:
@@ -130,6 +134,45 @@ def _bounded_pc_tree_exact_result(D, n: int, pc_tree: Optional[PCNode]):
         "frontier_upper_bound": upper_bound,
         "frontier_limit": EXACT_PC_TREE_FRONTIER_LIMIT,
         "note": "all represented PC-tree frontiers were enumerated under a certified upper bound and none is circular Robinson",
+    }
+
+
+def _bounded_quasi_orders_exact_result(D, n: int, quasi_orders):
+    if quasi_orders is None or not isinstance(quasi_orders, Sized):
+        return None
+
+    try:
+        order_count = len(quasi_orders)
+    except TypeError:
+        return None
+    if order_count > EXACT_QUASI_ORDER_LIMIT:
+        return None
+
+    tried = 0
+    for raw_order in quasi_orders:
+        tried += 1
+        order = _validate_order_shape(raw_order, n)
+        if is_precircular_order_cR(D, order):
+            return {
+                "exists": True,
+                "order": list(order),
+                "complete": True,
+                "solver": "candidate_exact_bounded_quasi_orders",
+                "tried_orders": tried,
+                "quasi_order_count": order_count,
+                "quasi_order_limit": EXACT_QUASI_ORDER_LIMIT,
+                "note": "the explicit finite quasi_orders family is under the exact limit and contains a verified cR witness",
+            }
+
+    return {
+        "exists": False,
+        "order": None,
+        "complete": True,
+        "solver": "candidate_exact_bounded_quasi_orders",
+        "tried_orders": tried,
+        "quasi_order_count": order_count,
+        "quasi_order_limit": EXACT_QUASI_ORDER_LIMIT,
+        "note": "the explicit finite quasi_orders family is under the exact limit and no provided order is circular Robinson",
     }
 
 
@@ -328,6 +371,10 @@ def solve(D, quasi_orders=None, pc_tree=None):
 
     if has_at_most_one_bad_witness_per_pair(D):
         return _universal_order_result(n, quasi_orders, pc_tree)
+
+    exact_quasi_orders_result = _bounded_quasi_orders_exact_result(D, n, quasi_orders)
+    if exact_quasi_orders_result is not None:
+        return exact_quasi_orders_result
 
     if quasi_orders is None:
         cycle_result = _minimum_cycle_witness_result(D, n, pc_tree)
