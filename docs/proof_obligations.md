@@ -2065,3 +2065,32 @@ Limites :
   l'oracle global exact ;
 - aucune borne universelle sur la taille des obstructions n'est prouvée ;
 - ce diagnostic ne justifie aucun nouveau `False` dans `candidate.py`.
+
+### Diagnostic T082 : système same-side et obstructions high-girth
+
+Statut : reformulation expérimentale exacte pour `T=star` sous énumération
+complète ; pas solveur général.
+
+Pour un ordre fixé, la contrainte bad-side pour `{a,c}` équivaut à exiger que
+toutes les paires de témoins `b,d in B_ac` satisfassent
+`same_side(a,c;b,d)`. `solve_bad_side_chirotope` résout exactement ce système
+en énumérant des ordres circulaires réels, ce qui évite d'avoir à prouver des
+axiomes de chirotope abstrait.
+
+Ce que T082 couvre :
+
+- équivalence expérimentale avec `exact_oracle_all_orders` sur les petites
+  tailles testées ;
+- extraction de candidats high-girth où tous les sous-ensembles jusqu'à `6`
+  sont positifs mais l'instance globale est négative ;
+- séparation explicite entre résultat complet et limite d'énumération.
+
+Limites :
+
+- l'énumération est factorielle et seulement utilisée jusqu'à de petites
+  tailles ;
+- les lignes high-girth sont pour `T=star`; un PC-tree restreint demande un
+  contrôle de frontiers représentées ;
+- ce module ne prouve pas que la profondeur d'obstruction est non bornée ;
+- aucun rejet supplémentaire dans `candidate.py` n'est justifié sans lemme de
+  sous-cas.

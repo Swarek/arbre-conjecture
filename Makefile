@@ -1,7 +1,7 @@
 PYTHON ?= $(shell if [ -x .venv/bin/python ]; then echo .venv/bin/python; elif command -v python3 >/dev/null 2>&1; then echo python3; else echo python; fi)
 PYTEST ?= $(PYTHON) -m pytest
 
-.PHONY: quick check hunt-counterexamples bench-quick bench bench-piste-f bench-csp-quick bench-width-stress bench-single-p-stress bench-relation-catalog bench-relation-shapes bench-relation-chains bench-relation-unsat-cores bench-sparse-matching bench-sparse-binary-cores bench-quartet-coverage bench-frontier-obstructions bench-strict-algorithm52 bench-strict-positive-coverage bench-threshold-roundness bench-cr-pc-representability bench-unrooted-pc-representability bench-local-obstruction-depth bench-permutation-like bench-permutation-composition bench-relation-components unit acceptance
+.PHONY: quick check hunt-counterexamples bench-quick bench bench-piste-f bench-csp-quick bench-width-stress bench-single-p-stress bench-relation-catalog bench-relation-shapes bench-relation-chains bench-relation-unsat-cores bench-sparse-matching bench-sparse-binary-cores bench-quartet-coverage bench-frontier-obstructions bench-strict-algorithm52 bench-strict-positive-coverage bench-threshold-roundness bench-cr-pc-representability bench-unrooted-pc-representability bench-local-obstruction-depth bench-chirotope-high-girth bench-permutation-like bench-permutation-composition bench-relation-components unit acceptance
 
 unit:
 	$(PYTEST) -q
@@ -254,6 +254,19 @@ bench-local-obstruction-depth:
 	  --max-global-n 8 \
 	  --seed 20260640 \
 	  --output reports/local_obstruction_depth_probe.json
+
+bench-chirotope-high-girth:
+	mkdir -p reports && \
+	$(PYTHON) tools/pc_chirotope_high_girth_probe.py \
+	  --sizes 6,7,8,9 \
+	  --instance-kinds cycle,equal,random,random4,paired_farthest,even_high_cycle_low_hub,odd_high_cycle_low_hub,padded_four_local_non_cr,padded_five_local_non_cr \
+	  --repeats 10 \
+	  --max-subset-size 6 \
+	  --max-global-n 9 \
+	  --max-orders 250000 \
+	  --oracle-crosscheck-n 8 \
+	  --seed 20260650 \
+	  --output reports/chirotope_high_girth_probe.json
 
 bench-permutation-like:
 	mkdir -p reports && \

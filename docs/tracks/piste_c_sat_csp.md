@@ -1442,3 +1442,27 @@ Conclusion : la fonction pourrait servir d'outil de recherche positive, mais
 elle n'apporte pas de gain mesurable à la candidate actuelle et reste
 échantillonnée. Ne pas l'intégrer avant d'avoir soit une borne, soit une preuve
 de couverture d'un sous-cas non-star.
+
+## Tentative T082 - Chirotope same-side borné
+
+Statut : oracle expérimental star/all-orders, hors `candidate.py`.
+
+`cyclic_order_sat.py` matérialise les contraintes bad-side sous la forme :
+pour endpoints `{a,c}` et deux mauvais témoins `b,d in B_ac`, `b` et `d`
+doivent être du même côté de la corde `ac`. Le solveur énumère ensuite les
+ordres circulaires canoniques ; il est exact seulement sous la borne
+`max_orders` et n'ajoute aucune dépendance SAT externe.
+
+Invariants verrouillés :
+
+- les contraintes same-side rejettent le quartet alternant isolé ;
+- `solve_bad_side_chirotope(D)` coïncide avec `exact_oracle_all_orders(D)` sur
+  les tests random `n<=6` ;
+- les témoins positifs sont des ordres circulaires réels, pas des affectations
+  chirotopes abstraites ;
+- une limite d'ordres donne `exists=None`, jamais un faux `False`.
+
+Résultat : `make bench-chirotope-high-girth` trouve des candidats high-girth
+dans les familles low-hub high-cycle, sans mismatch oracle sous `n<=8`. Ce
+module doit servir à chercher et minimiser des obstructions globales, pas à
+remplacer les solveurs CSP existants.

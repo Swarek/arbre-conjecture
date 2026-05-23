@@ -4002,3 +4002,52 @@
 - Next action : chercher des obstructions high-girth au-delà de `6` via SAT
   chirotope/ordres cycliques, ou basculer vers compression active des gros
   nœuds `P`.
+
+## 2026-05-23 chirotope same-side high-girth probe
+
+- Date/heure : 2026-05-23 22:30:38 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les contraintes bad-side peuvent être matérialisées comme
+  contraintes de même côté de corde et utilisées pour chercher des instances
+  globalement non-cR mais localement positives jusqu'à un cap.
+- Changement fait : ajout de `src/pc_circular/cyclic_order_sat.py`,
+  `tools/pc_chirotope_high_girth_probe.py`, des tests unitaires, de la cible
+  `make bench-chirotope-high-girth` et de la documentation T082.
+  Ajout aussi du document de transmission
+  `docs/research_handoff_2026-05-23.md` pour partager l'état de recherche avec
+  le chercheur pendant la pause. `candidate.py` n'a pas été modifié.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `303 passed`, puis `JUSTE`.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_cyclic_order_sat.py`.
+- Résultat correction ciblée : `7 passed`.
+- Commande exécutée :
+  `rtk .venv/bin/python -m py_compile src/pc_circular/cyclic_order_sat.py tools/pc_chirotope_high_girth_probe.py`.
+- Résultat compilation : succès.
+- Commande exécutée : `rtk make bench-chirotope-high-girth`.
+- Résultat benchmark T082 :
+  `reports/chirotope_high_girth_probe.json` écrit ; `140` lignes,
+  `140` complètes, `90` négatives, `2` candidates high-girth,
+  `0` mismatch oracle, `max_min_negative_subset_size=6`,
+  `max_checked_orders=20160`, `max_constraint_count=378`,
+  `max_seconds ~= 0.4223`.
+- Candidats high-girth : `odd_high_cycle_low_hub`, `n=8`, globalement non-cR
+  après `2520` ordres inspectés avec toutes les restrictions `<=6` positives ;
+  `even_high_cycle_low_hub`, `n=9`, globalement non-cR après `20160` ordres
+  inspectés avec toutes les restrictions `<=6` positives.
+- Commande exécutée : `make quick`.
+- Résultat correction finale : `310 passed`, puis `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `8` tailles, `40/40` runs réussis, `0` timeout, `0` incomplet,
+  `max_seconds ~= 0.0083`.
+- Conclusion provisoire : les caps locaux jusqu'à `6` ne peuvent pas être une
+  théorie complète des rejets, même dans des familles low-hub très structurées.
+  T082 est un outil red-team star/all-orders, pas un solveur scalable ni une
+  règle candidate.
+- Next action : prouver ou généraliser la famille low-hub high-cycle comme
+  obstruction locale de profondeur croissante ; en parallèle, tester la
+  conjecture sur les P-nœuds résiduels/modules proposée par le chercheur.

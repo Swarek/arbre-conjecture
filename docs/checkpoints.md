@@ -683,6 +683,17 @@ Dernier commit green avant T009 : `07120e4`.
   `make bench-quick` (`40/40` runs, `0` timeout, `0` incomplet).
   `candidate.py` n'a pas été modifié.
 
+- Checkpoint T082 courant : commit contenant le probe chirotope same-side
+  high-girth et le document de transmission chercheur
+  `docs/research_handoff_2026-05-23.md`. Validation observée :
+  `tests/test_cyclic_order_sat.py`
+  (`7 passed`), `make bench-chirotope-high-girth` (`140` lignes,
+  `140` complètes, `90` négatives, `2` candidates high-girth,
+  `0` mismatch oracle, `max_min_negative_subset_size=6`,
+  `max_checked_orders=20160`), `make quick` (`310 passed`, puis `JUSTE`) et
+  `make bench-quick` (`40/40` runs, `0` timeout, `0` incomplet).
+  `candidate.py` n'a pas été modifié.
+
 ## Rollback
 
 Si une modification régresse et que la cause n’est pas claire :

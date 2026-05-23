@@ -309,6 +309,21 @@ global exact est appelé, la ligne peut aussi signaler une obstruction au-delà
 du cap. Ce rapport est un diagnostic local-to-global, pas une règle de rejet
 pour `candidate.py`.
 
+Probe chirotope high-girth Piste C/E :
+
+```bash
+make bench-chirotope-high-girth
+```
+
+Cette commande écrit `reports/chirotope_high_girth_probe.json`. Elle remplace
+chaque contrainte bad-side de `D` par une contrainte de même côté de corde
+`same_side(a,c;b,d)`, puis résout exactement ce système par énumération
+d'ordres circulaires jusqu'à une borne. Les petites tailles sont recroisées
+avec `exact_oracle_all_orders`. Une ligne `high_girth_candidate` est une cible
+red-team : globalement négative, mais sans sous-matrice négative visible sous le
+cap local. L'absence de candidate dans le sweep ne prouve pas de borne
+universelle sur les obstructions.
+
 Contrôle promise-aware des permutations locales Piste F/C :
 
 ```bash

@@ -417,3 +417,27 @@ Limites :
 - une absence d'obstruction sous cap ne prouve pas la positivité globale, sauf
   quand l'oracle global exact est explicitement appelé ;
 - les résultats ne sont pas intégrés dans `candidate.py`.
+
+## T082 - candidats high-girth par contraintes same-side
+
+Statut : contre-exemples red-team bornés contre les caps locaux, pas nouvelle
+règle candidate.
+
+Le probe `pc_chirotope_high_girth_probe.py` transforme les contraintes
+bad-side en contraintes de côté : pour chaque paire `{a,c}`, tous les témoins
+de `B_ac` doivent avoir le même signe de côté par rapport à la corde `ac`.
+L'énumération des ordres circulaires rend le système réalisable par
+construction, contrairement à un SAT chirotope abstrait qui demanderait des
+axiomes supplémentaires.
+
+Résultat clé : le benchmark trouve deux lignes `high_girth_candidate` :
+
+- `odd_high_cycle_low_hub`, `n=8`, globalement non-cR après `2520` ordres
+  inspectés, mais toutes les restrictions de taille `<=6` sont positives ;
+- `even_high_cycle_low_hub`, `n=9`, globalement non-cR après `20160` ordres
+  inspectés, mais toutes les restrictions de taille `<=6` sont positives.
+
+Conséquence : les certificats par sous-matrices jusqu'à `6` ne peuvent pas être
+complets, même dans des familles très structurées. La prochaine recherche doit
+soit produire des familles paramétrées de profondeur arbitraire, soit isoler la
+structure low-hub high-cycle comme sous-cas négatif prouvé.

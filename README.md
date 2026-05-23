@@ -57,6 +57,7 @@ make bench-threshold-roundness
 make bench-cr-pc-representability
 make bench-unrooted-pc-representability
 make bench-local-obstruction-depth
+make bench-chirotope-high-girth
 make bench-permutation-like
 make bench-permutation-composition
 make bench-relation-components
@@ -171,6 +172,13 @@ enracinés à 5 feuilles. C'est un contrôle borné, pas un solveur scalable.
 induites par taille croissante et mesure la plus petite obstruction cR visible,
 quand elle existe. C'est un diagnostic local-to-global contre les certificats
 par petites sous-matrices, pas une intégration dans `candidate.py`.
+
+`make bench-chirotope-high-girth` écrit
+`reports/chirotope_high_girth_probe.json`. Il transforme les contraintes
+bad-side en contraintes de même côté de corde et les résout par énumération
+exacte des ordres circulaires jusqu'à une taille bornée. Il cherche des
+obstructions globales invisibles sous un cap local ; ce n'est pas un solveur
+SAT scalable.
 
 `make bench-permutation-like` écrit `reports/permutation_like_probe.json`. Il
 teste les profils locaux `permutation_like` observés sur `paired_farthest`

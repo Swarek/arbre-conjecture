@@ -5248,3 +5248,66 @@ Décision : garder T081 comme garde-fou de recherche, sans intégration
 candidate. Les obstructions minimales de tailles `5` et `6` justifient une
 future recherche high-girth/SAT chirotope au-delà du cap `6`, mais elles ne
 donnent pas de règle de rejet générale.
+
+## ExecPlan T082 - chirotope same-side et candidats high-girth
+
+But : construire un oracle expérimental star/all-orders plus explicite pour les
+contraintes bad-side, afin de chercher des instances globalement non-cR dont
+toutes les restrictions jusqu'à un cap local restent cR-positives.
+
+Hypothèse : les contraintes bad-side peuvent être vues comme un système
+chirotope de contraintes `same_side(a,c;b,d)`. Même sans solveur SAT externe,
+une énumération exacte des ordres circulaires jusqu'à `n=9` peut produire des
+candidats high-girth utiles et contrôler T081.
+
+Fichiers visés : `src/pc_circular/cyclic_order_sat.py`,
+`tools/pc_chirotope_high_girth_probe.py`,
+`tests/test_cyclic_order_sat.py`, `Makefile`, `README.md`,
+`docs/experiment_protocol.md`, `docs/hypothesis_portfolio.md`,
+`docs/tracks/piste_c_sat_csp.md`,
+`docs/tracks/piste_e_farthest_quartets.md`, `docs/proof_obligations.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `docs/tracks/README.md` et
+`PLANS.md`.
+
+Algorithme pressenti : pour chaque paire `{a,c}`, calculer les mauvais témoins
+`B_ac`; pour chaque paire `b,d in B_ac`, imposer que `b` et `d` soient sur le
+même arc ouvert entre `a` et `c`. Résoudre le système en énumérant les ordres
+circulaires canoniques. Scanner ensuite les sous-matrices induites jusqu'au cap
+local et comparer les petites tailles à `exact_oracle_all_orders`.
+
+Plan de contre-exemples : inclure `random`, `random4`, `paired_farthest`, les
+noyaux paddés T081 et surtout `odd/even_high_cycle_low_hub`, qui sont les
+calibrations high-girth naturelles. Une ligne `high_girth_candidate` doit être
+régressée si elle n'est pas déjà couverte par une famille génératrice stable.
+
+Plan subagents : trois explorations read-only ont été lancées. Une a confirmé
+qu'il ne faut pas ajouter de dépendance SAT externe et qu'il vaut mieux garder
+une énumération bornée. Une autre a recommandé d'ajouter les familles
+`odd/even_high_cycle_low_hub`, ce qui a produit les premiers candidats
+high-girth. Les résultats restants seront utilisés seulement s'ils ajoutent une
+famille ou une métrique distincte.
+
+Tests à exécuter : `tests/test_cyclic_order_sat.py`,
+`make bench-chirotope-high-girth`, `make quick`, puis `make bench-quick`.
+
+Risques : ce n'est pas un solveur SAT scalable ; la réalisabilité des signes
+vient de l'énumération des ordres, pas d'axiomes chirotopes abstraits. Une ligne
+où `complete=False` ne prouve rien. Les résultats sont star/all-orders et ne
+décident pas l'existence dans un PC-tree restreint.
+
+Résultats observés : tests ciblés `tests/test_cyclic_order_sat.py`
+(`7 passed`) et compilation Python réussie. `make bench-chirotope-high-girth`
+écrit `reports/chirotope_high_girth_probe.json` avec `140` lignes,
+`140` complètes, `90` négatives, `2` candidates high-girth,
+`0` mismatch oracle, `max_min_negative_subset_size=6`,
+`max_checked_orders=20160`, `max_constraint_count=378` et
+`max_seconds ~= 0.4223`. Les deux candidates sont
+`odd_high_cycle_low_hub` en `n=8` et `even_high_cycle_low_hub` en `n=9`.
+Gates finales : `make quick` passe avec `310 passed`, puis `JUSTE`;
+`make bench-quick` garde `40/40` runs, `0` timeout, `0` incomplet.
+
+Décision : conserver T082 comme outil red-team pour chercher des obstructions
+globales star/all-orders. Ne pas intégrer dans `candidate.py`. La suite
+mathématique prioritaire est de prouver une famille paramétrée low-hub
+high-cycle de profondeur locale croissante ou de relier cette obstruction aux
+contraintes PC-tree restreintes.

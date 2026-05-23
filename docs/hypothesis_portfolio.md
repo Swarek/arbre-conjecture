@@ -209,6 +209,13 @@ respectivement, avec toutes les restrictions plus petites positives dans le
 scan exact. La piste doit donc chercher des familles high-girth/globales, pas
 seulement accumuler des certificats 4/5.
 
+Mise à jour T082 : le probe chirotope same-side réexprime bad-side comme un
+système de contraintes de côté et trouve des candidats high-girth calibrés :
+`odd_high_cycle_low_hub` en `n=8` et `even_high_cycle_low_hub` en `n=9` sont
+globalement négatifs alors que tous les sous-ensembles de taille au plus `6`
+sont positifs. Cela réfute plus nettement toute stratégie fondée sur un cap
+local `<=6` seul.
+
 ## Piste F : complexité / NP-difficulté / contre-exemples à la tractabilité
 
 Intuition : l’existence dans un PC-tree compact peut être plus dure que le test
