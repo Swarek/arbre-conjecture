@@ -55,6 +55,7 @@ make bench-strict-algorithm52
 make bench-strict-positive-coverage
 make bench-threshold-roundness
 make bench-cr-pc-representability
+make bench-unrooted-pc-representability
 make bench-permutation-like
 make bench-permutation-composition
 make bench-relation-components
@@ -158,6 +159,11 @@ d'existence dans le PC-tree.
 `PCNode` bornée du dépôt, si l'ensemble des ordres cR d'une matrice est
 exactement une famille de frontiers PC-tree. Les résultats négatifs sont des
 contre-exemples au scaffold, pas encore au modèle Hsu/McConnell complet.
+
+`make bench-unrooted-pc-representability` écrit
+`reports/unrooted_pc_representability_probe.json`. Il audite le premier
+contre-exemple T079 avec une énumération brute-force de petits PC-trees non
+enracinés à 5 feuilles. C'est un contrôle borné, pas un solveur scalable.
 
 `make bench-permutation-like` écrit `reports/permutation_like_probe.json`. Il
 teste les profils locaux `permutation_like` observés sur `paired_farthest`

@@ -5138,3 +5138,56 @@ Décision : ne pas poursuivre la route naïve "les ordres cR forment toujours un
 PCNode du dépôt" sans modèle PC-tree plus fidèle. Continuer T079 seulement pour
 comparer ce contre-exemple au modèle Hsu/McConnell non enraciné ; sinon changer
 vers SAT chirotope, high-girth obstructions ou compression active des nœuds `P`.
+
+## ExecPlan T080 - audit non enraciné du contre-exemple T079
+
+But : vérifier si le contre-exemple T079 est seulement dû au scaffold enraciné
+`PCNode`, ou s'il survit à un modèle PC-tree non enraciné explicite sur `5`
+feuilles.
+
+Hypothèse : si l'ensemble à deux ordres du contre-exemple T079 est
+représentable par un PC-tree non enraciné, alors le learner T079 était trop
+pauvre ; sinon, la piste "un PC-tree unique des ordres cR" devient beaucoup
+moins plausible.
+
+Fichiers visés : `src/pc_circular/unrooted_pc_tree.py`,
+`tools/pc_unrooted_representability_probe.py`,
+`tests/test_unrooted_pc_tree.py`, `Makefile`, `README.md`,
+`docs/experiment_protocol.md`, `docs/hypothesis_portfolio.md`,
+`docs/tracks/piste_d_circular_ones.md`,
+`docs/proof_obligations.md`, `docs/experiment_log.md`,
+`docs/checkpoints.md`, `docs/tracks/README.md`, `PLANS.md`.
+
+Algorithme pressenti : énumérer les topologies d'arbres non enracinés par
+séquences de Prüfer, filtrer feuilles/internes, assigner les types `P/C`,
+énumérer les ordres cycliques fixes des nœuds `C`, puis les embeddings
+autorisés. Pour chaque embedding, calculer l'ordre circulaire des feuilles par
+tour de face combinatoire et comparer les familles obtenues à la cible.
+
+Plan de contre-exemples : vérifier trois lignes : `cycle_n5`, `equal_n5` comme
+contrôles positifs, et `t079_paired_farthest_n5` comme cible négative. Si la
+cible devient représentable, documenter le témoin et réviser T079. Si elle ne
+l'est pas sous énumération complète, garder la matrice comme contre-exemple
+renforcé.
+
+Plan subagents : pas de fanout pour cette étape courte ; l'objectif est un audit
+indépendant borné du résultat précédent.
+
+Tests à exécuter : `tests/test_unrooted_pc_tree.py`,
+`make bench-unrooted-pc-representability`, `make quick`, `make bench-quick`.
+
+Risques : l'énumération ne scale pas et reste limitée à `n=5`. Le modèle est
+plus fidèle que `PCNode` mais pas une implémentation complète certifiée de
+Hsu/McConnell.
+
+Résultats observés : `tests/test_unrooted_pc_tree.py` passe (`4 passed`).
+`make bench-unrooted-pc-representability` produit `3` lignes complètes,
+`0` incomplète, `2` représentables. La cible T079 a `893` candidats inspectés,
+`93` familles distinctes, `t079_complete=True` et `t079_representable=False`.
+Gates finales : `make quick` passe avec `296 passed`, puis `JUSTE`;
+`make bench-quick` garde `40/40` runs, `0` timeout, `0` incomplet.
+
+Décision : T079 n'est pas seulement un artefact de racinage du scaffold. La
+route "PC-tree unique des ordres cR" doit être remplacée par une structure plus
+riche ou par un argument de non-représentabilité ; prochaine piste raisonnable :
+SAT chirotope ou obstructions high-girth.

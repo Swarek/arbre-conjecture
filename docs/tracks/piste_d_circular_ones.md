@@ -114,6 +114,19 @@ est réfutée pour le scaffold du dépôt. Il reste possible qu'un PC-tree
 Hsu/McConnell non enraciné plus fidèle représente cette famille ; T079 ne doit
 donc pas être vendu comme théorème externe.
 
+Complément T080 : `make bench-unrooted-pc-representability` audite le premier
+contre-exemple T079 dans un modèle non enraciné explicite à `5` feuilles. Le
+probe énumère les topologies par Prüfer, les types `P/C`, les ordres cycliques
+des nœuds `C` et les frontiers de tous les embeddings autorisés. Résultat :
+`3` lignes complètes, `0` incomplète ; `cycle_n5` et `equal_n5` sont
+représentables, mais `t079_paired_farthest_n5` ne l'est pas. Pour cette ligne :
+`893` candidats inspectés, `93` familles distinctes, cible à `2` ordres,
+`0` témoin.
+
+Interprétation : le contre-exemple n'est pas seulement un artefact du scaffold
+enraciné. Il reste borné à `n=5`, mais il affaiblit fortement la route
+"PC-tree unique des ordres cR" comme stratégie générale.
+
 ## Risques
 
 - Les contraintes cR peuvent ne pas être exprimables comme contraintes d’arcs
@@ -129,8 +142,8 @@ Deux suites raisonnables :
   avec le PC-tree donné, au lieu d'énumérer les frontiers ;
 - tester si les familles de contraintes `C_ab` par seuil sont représentables
   par une structure round-order ou simultaneous PC/PQ-ordering imbriquée ;
-- comparer le contre-exemple T079 à un modèle PC-tree non enraciné plus fidèle
-  avant de conclure sur la PC-représentabilité générale ;
+- transformer T079/T080 en argument structurel de non-représentabilité, ou
+  chercher une structure plus riche qu'un seul PC-tree ;
 - exploiter `B(a,b)` arc comme filtre positif suffisant ou obstruction locale,
   sans l'utiliser comme caractérisation, puis chercher les corrélations
   supplémentaires qui restaurent la condition exacte one-side dans un PC-tree.

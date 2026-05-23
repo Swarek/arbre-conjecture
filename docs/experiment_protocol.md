@@ -280,6 +280,19 @@ Une ligne complète non représentable est un contre-exemple au scaffold enracin
 du dépôt ; elle doit être minimisée et comparée à un modèle Hsu/McConnell plus
 fidèle avant toute conclusion externe.
 
+Audit non enraciné du contre-exemple T079 Piste D :
+
+```bash
+make bench-unrooted-pc-representability
+```
+
+Cette commande écrit `reports/unrooted_pc_representability_probe.json`. Elle
+énumère explicitement de petits PC-trees non enracinés à `5` feuilles, avec
+topologies par Prüfer, types `P/C`, ordres cycliques des nœuds `C`, et
+frontiers induites par les embeddings autorisés. Elle sert à auditer le premier
+contre-exemple T079 hors du scaffold enraciné. Une ligne complète négative est
+un signal plus fort, mais encore borné à `n=5` et à ce modèle expérimental.
+
 Contrôle promise-aware des permutations locales Piste F/C :
 
 ```bash

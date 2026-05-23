@@ -3918,3 +3918,43 @@
   réfutation des PC-trees Hsu/McConnell complets.
 - Next action : comparer le contre-exemple T079 à un modèle PC-tree non enraciné
   plus fidèle, ou basculer vers SAT chirotope / high-girth obstructions.
+
+## 2026-05-23 unrooted PC-tree audit of T079
+
+- Date/heure : 2026-05-23 22:06:21 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : le contre-exemple T079 pourrait être un artefact du
+  scaffold enraciné `PCNode`; un modèle PC-tree non enraciné explicite à `5`
+  feuilles pourrait représenter la famille à deux ordres.
+- Changement fait : ajout de `src/pc_circular/unrooted_pc_tree.py`, du probe
+  `tools/pc_unrooted_representability_probe.py`, de la cible
+  `make bench-unrooted-pc-representability`, de tests unitaires et de la
+  documentation T080. `candidate.py` n'a pas été modifié.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `292 passed`, puis `JUSTE`.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_unrooted_pc_tree.py`.
+- Résultat correction ciblée : `4 passed`.
+- Commande exécutée :
+  `rtk .venv/bin/python -m py_compile src/pc_circular/unrooted_pc_tree.py tools/pc_unrooted_representability_probe.py`.
+- Résultat compilation : succès.
+- Commande exécutée : `rtk make bench-unrooted-pc-representability`.
+- Résultat benchmark T080 :
+  `reports/unrooted_pc_representability_probe.json` écrit ; `3` lignes,
+  `3` complètes, `0` incomplète, `2` représentables,
+  `t079_complete=True`, `t079_representable=False`,
+  `t079_candidate_count=893`, `t079_family_count=93`,
+  `max_seconds=1.0228`.
+- Conclusion provisoire : le contre-exemple T079 survit au modèle non enraciné
+  borné ; il n'est pas seulement dû à la racine du scaffold `PCNode`. Cela reste
+  borné à `n=5` et ne donne pas de solveur.
+- Commande exécutée : `make quick`.
+- Résultat correction finale : `296 passed`, puis `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `8` tailles, `40/40` runs réussis, `0` timeout et `0` incomplet.
+- Next action : chercher une structure plus riche qu'un PC-tree unique pour les
+  ordres cR, ou lancer SAT chirotope / high-girth obstructions.

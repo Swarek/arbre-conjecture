@@ -476,6 +476,44 @@ Limites :
 - cette expérience ne donne pas encore de solveur d'existence dans le PC-tree
   quasi-circulaire fourni.
 
+### Audit non enraciné du contre-exemple T079
+
+Statut : renforcement expérimental borné, pas preuve générale.
+
+T080 ajoute un modèle PC-tree non enraciné explicite pour `n <= 5`. Il énumère
+les topologies d'arbres par séquences de Prüfer, filtre les feuilles de degré
+`1` et les nœuds internes de degré au moins `3`, assigne les types `P/C`,
+énumère les ordres cycliques des nœuds `C`, puis calcule les frontiers induites
+par les embeddings autorisés.
+
+Résultat observé : le contre-exemple T079 survit. Pour la matrice T079 à
+`5` points, le modèle inspecte `893` candidats topologie/type/ordre C et
+obtient `93` familles distinctes ; aucune ne représente exactement les deux
+ordres cR
+
+```text
+(0, 1, 3, 2, 4)
+(0, 1, 4, 3, 2)
+```
+
+Les contrôles positifs `cycle_n5` et `equal_n5` restent représentables.
+
+Ce que cela couvre :
+
+- la non-représentabilité T079 n'est pas seulement due au choix d'une racine
+  dans `PCNode` ;
+- le modèle non enraciné a un témoin positif sur familles simples, donc il ne
+  rejette pas tout ;
+- l'artefact reste un audit borné et indépendant de `candidate.py`.
+
+Limites :
+
+- l'énumération non enracinée n'est faite qu'à `5` feuilles ;
+- l'implémentation reste un modèle expérimental minimal, pas une bibliothèque
+  Hsu/McConnell validée ;
+- ce résultat ne dit pas quelle structure alternative représenterait les
+  ordres cR, seulement qu'un PC-tree unique paraît insuffisant sur ce cas.
+
 ### Signature bad-side de bloc
 
 Statut : outil expérimental / limite de compacité observée.

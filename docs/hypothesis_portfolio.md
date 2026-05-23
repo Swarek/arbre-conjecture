@@ -169,6 +169,13 @@ des contre-exemples complets dans le scaffold `PCNode` dès `n=5` sur la famille
 "calculer un PCNode des ordres cR" dans le scaffold, mais pas encore la
 PC-représentabilité Hsu/McConnell complète.
 
+Mise à jour T080 : le premier contre-exemple T079 survit à un modèle PC-tree
+non enraciné explicite à `5` feuilles : `893` candidats topologie/type/ordre C,
+`93` familles distinctes, `0` représentation exacte de la cible à deux ordres.
+La route "les ordres cR forment toujours un PC-tree" devient nettement moins
+plausible ; la prochaine étape doit chercher soit un argument général de
+non-représentabilité, soit une structure plus riche qu'un seul PC-tree.
+
 ## Piste E : obstructions interdites par quartets farthest-neighbor
 
 Intuition : les mauvais ordres pourraient être caractérisés par une famille

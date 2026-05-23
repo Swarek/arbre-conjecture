@@ -665,6 +665,14 @@ Dernier commit green avant T009 : `07120e4`.
   runs, `0` timeout, `0` incomplet).
   `candidate.py` n'a pas été modifié.
 
+- Checkpoint T080 courant : commit contenant l'audit non enraciné du
+  contre-exemple T079. Validation observée : `tests/test_unrooted_pc_tree.py`
+  (`4 passed`), `make bench-unrooted-pc-representability` (`3` lignes
+  complètes, `0` incomplète, `2` représentables, `t079_complete=True`,
+  `t079_representable=False`, `893` candidats inspectés, `93` familles
+  distinctes, `max_seconds ~= 1.0228`), `make quick` (`296 passed`, puis `JUSTE`) et `make bench-quick` (`40/40`
+  runs, `0` timeout, `0` incomplet). `candidate.py` n'a pas été modifié.
+
 ## Rollback
 
 Si une modification régresse et que la cause n’est pas claire :
