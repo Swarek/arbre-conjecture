@@ -16,11 +16,13 @@ from pc_circular.predicates import (
 )
 from pc_circular.solvers.sat_like_experiments import (
     _cyclic_atom_occurs,
+    _nogood_matches,
     _project_atom_order_from_support_assignment,
     accepted_frontiers_by_csp,
     assignment_frontier_report,
     build_local_domains,
     compile_bad_side_nogoods,
+    compile_bad_side_nogoods_grouped_support_local,
     compile_bad_side_nogoods_support_local,
     compile_cr_nogoods,
     compile_cr_nogoods_support_local,
@@ -37,6 +39,7 @@ from pc_circular.solvers.sat_like_experiments import (
     solve_nogood_csp,
     solve_pruned_nogood_csp,
     solve_pruned_nogood_csp_from_compilation,
+    solve_grouped_support_local_bad_side_nogood_csp,
     solve_support_local_bad_side_nogood_csp,
 )
 
@@ -295,6 +298,72 @@ def test_support_local_bad_side_nogoods_match_complete_compilation_on_small_tree
     assert support_local["counts"]["unique_nogoods"] == len(_nogood_signatures(complete))
     assert support_local["counts"]["unique_nogoods"] <= complete["counts"]["unique_nogoods"]
     assert support_local["counts"]["support_assignments_seen"] == support_local["counts"]["support_product_total"]
+
+
+def test_grouped_support_bad_side_nogoods_match_support_local_on_small_tree():
+    T = balanced_pc_tree(6, kind="mixed")
+    D = random_dissimilarity(6, values=(1, 2, 3), rng=random.Random(20260524))
+    support_local = compile_bad_side_nogoods_support_local(D, T, max_p_degree=3)
+    grouped = compile_bad_side_nogoods_grouped_support_local(D, T, max_p_degree=3)
+
+    assert grouped["complete"] is True
+    assert _nogood_signatures(grouped) == _nogood_signatures(support_local)
+    assert grouped["counts"]["unique_nogoods"] == support_local["counts"]["unique_nogoods"]
+    assert grouped["counts"]["effective_signature_count"] == grouped["counts"]["unique_nogoods"]
+    assert grouped["counts"]["grouped_support_product_total"] < support_local["counts"]["support_product_total"]
+    assert grouped["counts"]["support_product_total_if_ungrouped"] == support_local["counts"]["support_product_total"]
+    assert grouped["counts"]["grouped_support_assignments_seen"] == grouped["counts"]["grouped_support_product_total"]
+    assert grouped["counts"]["atom_checks"] == support_local["counts"]["support_product_total"]
+    assert grouped["counts"]["max_atoms_per_support"] > 1
+
+
+def test_grouped_support_bad_side_solver_matches_direct_and_prunes_cycle_metric():
+    T = balanced_pc_tree(6, kind="mixed")
+    D = cycle_metric(6)
+    direct = accepted_frontiers_by_csp(D, T, source="cr", max_p_degree=3)
+    result = solve_grouped_support_local_bad_side_nogood_csp(D, T, max_p_degree=3)
+
+    assert {tuple(order) for order in result["accepted_frontiers"]} == direct
+    assert result["counts"]["branches_pruned"] > 0
+    assert result["counts"]["validation_false_positive_frontiers"] == 0
+    assert result["counts"]["validation_false_negative_frontiers"] == 0
+
+
+def test_grouped_support_compilation_reports_limit_without_false_completion():
+    T = balanced_pc_tree(6, kind="mixed")
+    D = random_dissimilarity(6, values=(1, 2, 3), rng=random.Random(20260524))
+    grouped = compile_bad_side_nogoods_grouped_support_local(D, T, max_p_degree=3, limit=1)
+
+    assert grouped["complete"] is False
+    assert grouped["counts"]["grouped_support_assignments_seen"] == 1
+
+
+def test_grouped_support_reports_unsupported_large_p_without_false_decision():
+    T = star_pc_tree(5)
+    D = cycle_metric(5)
+    grouped = compile_bad_side_nogoods_grouped_support_local(D, T, max_p_degree=3)
+    result = solve_grouped_support_local_bad_side_nogood_csp(D, T, max_p_degree=3)
+
+    assert grouped["complete"] is False
+    assert grouped["encoding"]["unsupported"]
+    assert grouped["counts"]["unique_nogoods"] == 0
+    assert result["unsupported"]
+    assert result["exists"] is None
+    assert result["order"] is None
+
+
+def test_grouped_support_signatures_do_not_prune_exact_cr_frontiers_on_small_tree():
+    T = balanced_pc_tree(6, kind="mixed")
+    D = cycle_metric(6)
+    grouped = compile_bad_side_nogoods_grouped_support_local(D, T, max_p_degree=3)
+    encoding = grouped["encoding"]
+
+    assert grouped["complete"] is True
+    for assignment in iter_local_assignments(encoding):
+        pruned = any(_nogood_matches(assignment, nogood["signature"]) for nogood in grouped["nogoods"])
+        order = canonical_circular_order(frontier_from_assignment(T, assignment))
+        if pruned:
+            assert not is_precircular_order_cR(D, order)
 
 
 def test_support_local_atom_identity_is_not_stable_under_global_canonicalization():

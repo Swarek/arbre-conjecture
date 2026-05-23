@@ -85,6 +85,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T045 | 2026-05-23 | E/F/C | Recherche exacte bornée des projections matching low-hub ; négatifs complets seulement sous limite explicite | `exact_low_hub_matching_projection_search_report` |
 | T046 | 2026-05-23 | B/C/E/F/A | Relèvement PC-tree des projections matching low-hub sans énumérer les placements de hubs ; contre-exemples aux règles locales/2-SAT naïves | `exact_low_hub_matching_projected_pc_tree_search_report` |
 | T047 | 2026-05-23 | C/B/F | Compilation bad-side support-local ; mêmes signatures de pruning que la compilation complète sur probes, coût déplacé vers `sum_support_products` | `compile_bad_side_nogoods_support_local` |
+| T048 | 2026-05-23 | C/B/F | Compilation bad-side groupée par support ; même signatures que T047, produit support rapide réduit mais `atom_checks` inchangé | `compile_bad_side_nogoods_grouped_support_local` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

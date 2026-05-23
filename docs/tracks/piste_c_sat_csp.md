@@ -313,6 +313,47 @@ chercher une borne sur `sum_support_products`. Ne pas convertir ce diagnostic
 en rejet candidate tant que les gros `P` restent unsupported et que la borne
 globale n'est pas prouvée.
 
+## Tentative T048 - Compilation bad-side groupée par support
+
+Statut : compression de métrique Piste C, non intégrée à `candidate.py`.
+
+Changement : `compile_bad_side_nogoods_grouped_support_local` groupe les atoms
+bad-side par `quartet_support_paths`, énumère le produit de domaines une seule
+fois par support distinct, puis teste tous les atoms du groupe et déduplique les
+nogoods par signature effective. Le rapport expose maintenant
+`support_group_count`, `grouped_support_product_total`,
+`support_product_total_if_ungrouped`, `grouped_vs_ungrouped_support_ratio`,
+`atom_checks`, `max_atoms_per_support` et `effective_signature_count`.
+
+Invariant testé : les signatures groupées doivent coïncider avec T047
+support-local et le solveur pruné groupé doit accepter exactement les frontiers
+du CSP cR direct. Comme en T047, l'identité `atom` ou `pair` stockée dans un
+nogood est diagnostique seulement.
+
+Résultats :
+
+- tests ciblés `tests/test_sat_like_experiments.py` : `31 passed` ;
+- probe indépendant `n=4..7`, arbres balanced/mixed, familles
+  `random/cycle/block/ultrametric/equal/non_strict/paired_farthest/
+  permuted_cycle/matching_high_graph_plus_low_hub` : `130` cas,
+  `0` mismatch de signatures, `0` mismatch solveur et `0` mismatch direct ;
+- `make bench-csp-quick` : `192` lignes, `0` mismatch, `0` grouped mismatch,
+  `0` mismatch de signatures, `total_grouped_unique_nogoods=2904`, identique à
+  T047 ;
+- produit support T047 `72256` contre produit groupé `6224`, ratio médian
+  `0.11111` ;
+- `total_grouped_atom_checks=72256`, donc le coût atom-par-atom n'est pas
+  encore réduit.
+
+Interprétation complexité : le regroupement prouve expérimentalement que les
+supports sont très partagés sur les familles testées. Il réduit
+`sum_support_products` vers `sum_unique_support_products`, mais le compilateur
+naïf paie encore `sum_support_products` en reconstructions/tests d'atoms.
+
+Prochaine action : factoriser les atoms d'un même support pour éviter de tester
+chaque atom séparément, ou chercher une preuve que les groupes de supports ont
+une taille bornée dans les PC-trees issus de la quasi-circularité.
+
 ## Tentative T021 - Repair positive-only pour paired-farthest
 
 Statut : idée saine comme générateur expérimental vérifié, mais non intégrée à

@@ -615,6 +615,141 @@ def _compile_nogoods_by_support_products(
     return report
 
 
+def _compile_nogoods_by_grouped_supports(
+    D,
+    pc_tree: PCNode,
+    *,
+    atoms: list[dict],
+    method: str,
+    max_p_degree: int,
+    limit: Optional[int],
+) -> dict:
+    """Compile nogoods by enumerating each distinct support product once."""
+
+    validate_dissimilarity(D)
+    encoding = build_local_domains(pc_tree, max_p_degree=max_p_degree)
+    report = {
+        "implemented": True,
+        "method": method,
+        "encoding": encoding,
+        "complete": True,
+        "atoms": atoms,
+        "nogoods": [],
+        "counts": {
+            "grouped_support_assignments_seen": 0,
+            "atom_checks": 0,
+            "atom_hits": 0,
+            "unique_nogoods": 0,
+            "atoms_with_nogoods": 0,
+            "support_group_count": 0,
+            "max_support_size": 0,
+            "support_size_histogram": {},
+            "grouped_support_product_total": 0,
+            "support_product_total_if_ungrouped": 0,
+            "grouped_vs_ungrouped_support_ratio": 0.0,
+            "max_support_product": 0,
+            "max_atoms_per_support": 0,
+            "support_group_size_histogram": {},
+            "full_assignment_space": 0,
+            "effective_signature_count": 0,
+        },
+    }
+    if encoding["unsupported"]:
+        report["complete"] = False
+        return report
+
+    full_assignment_space = 1
+    for variable in encoding["variables"]:
+        full_assignment_space *= len(encoding["domains"][variable["path"]])
+    report["counts"]["full_assignment_space"] = full_assignment_space
+
+    atoms_by_support: dict[tuple[Path, ...], list[dict]] = {}
+    for atom_info in atoms:
+        support = quartet_support_paths(pc_tree, atom_info["atom"])
+        atoms_by_support.setdefault(support, []).append(atom_info)
+    report["counts"]["support_group_count"] = len(atoms_by_support)
+    group_size_histogram: dict[int, int] = {}
+    for support_atoms in atoms_by_support.values():
+        group_size = len(support_atoms)
+        group_size_histogram[group_size] = group_size_histogram.get(group_size, 0) + 1
+        report["counts"]["max_atoms_per_support"] = max(
+            report["counts"]["max_atoms_per_support"],
+            group_size,
+        )
+    report["counts"]["support_group_size_histogram"] = dict(sorted(group_size_histogram.items()))
+
+    seen: dict[NogoodSignature, dict] = {}
+    atoms_with_hits: set[tuple[int, ...]] = set()
+    pairs_with_hits: set[tuple[int, int]] = set()
+    truncated = False
+    for support, support_atoms in atoms_by_support.items():
+        support_product = _domain_product_size(encoding, support)
+        report["counts"]["grouped_support_product_total"] += support_product
+        report["counts"]["support_product_total_if_ungrouped"] += support_product * len(support_atoms)
+        report["counts"]["max_support_product"] = max(
+            report["counts"]["max_support_product"],
+            support_product,
+        )
+        domain_lists = [encoding["domains"][path] for path in support]
+        for choices in product(*domain_lists):
+            if limit is not None and report["counts"]["grouped_support_assignments_seen"] >= limit:
+                truncated = True
+                break
+            report["counts"]["grouped_support_assignments_seen"] += 1
+            support_assignment = dict(zip(support, choices))
+            signature = _nogood_signature(support_assignment, support)
+            for atom_info in support_atoms:
+                atom = tuple(atom_info["atom"])
+                report["counts"]["atom_checks"] += 1
+                order = canonical_circular_order(
+                    _project_atom_order_from_support_assignment(pc_tree, atom, support_assignment)
+                )
+                if not _cyclic_atom_occurs(order, atom):
+                    continue
+                report["counts"]["atom_hits"] += 1
+                atoms_with_hits.add(atom)
+                if "pair" in atom_info:
+                    pairs_with_hits.add(atom_info["pair"])
+                if signature in seen:
+                    continue
+                nogood = {
+                    "atom": atom,
+                    "support": support,
+                    "signature": signature,
+                    "violation": atom_info,
+                }
+                if "pair" in atom_info:
+                    nogood["pair"] = atom_info["pair"]
+                if "bad_witnesses" in atom_info:
+                    nogood["bad_witnesses"] = atom_info["bad_witnesses"]
+                seen[signature] = nogood
+        if truncated:
+            break
+
+    nogoods = list(seen.values())
+    histogram: dict[int, int] = {}
+    for nogood in nogoods:
+        size = len(nogood["support"])
+        histogram[size] = histogram.get(size, 0) + 1
+
+    report["nogoods"] = nogoods
+    report["complete"] = not truncated
+    report["counts"]["unique_nogoods"] = len(nogoods)
+    report["counts"]["effective_signature_count"] = len(nogoods)
+    report["counts"]["atoms_with_nogoods"] = len(atoms_with_hits)
+    report["counts"]["support_size_histogram"] = dict(sorted(histogram.items()))
+    report["counts"]["max_support_size"] = max(histogram, default=0)
+    ungrouped_total = report["counts"]["support_product_total_if_ungrouped"]
+    report["counts"]["grouped_vs_ungrouped_support_ratio"] = (
+        report["counts"]["grouped_support_product_total"] / ungrouped_total
+        if ungrouped_total
+        else 0.0
+    )
+    if any("pair" in nogood for nogood in nogoods):
+        report["counts"]["pairs_with_nogoods"] = len(pairs_with_hits)
+    return report
+
+
 def compile_cr_nogoods(
     D,
     pc_tree: PCNode,
@@ -838,6 +973,47 @@ def compile_bad_side_nogoods_support_local(
         pc_tree,
         atoms=forbidden_bad_side_atoms(D),
         method="support_local_bad_side_pair_nogoods",
+        max_p_degree=max_p_degree,
+        limit=limit,
+    )
+    report["bad_pairs"] = [
+        {"pair": pair, "bad_witnesses": witnesses, "bad_witness_count": len(witnesses)}
+        for pair, witnesses in witnesses_by_pair.items()
+        if witnesses
+    ]
+    report["counts"]["nonempty_bad_pair_count"] = sum(
+        1 for witnesses in witnesses_by_pair.values() if witnesses
+    )
+    report["counts"]["nontrivial_bad_pair_count"] = sum(
+        1 for witnesses in witnesses_by_pair.values() if len(witnesses) >= 2
+    )
+    report["counts"]["bad_witness_total"] = sum(len(witnesses) for witnesses in witnesses_by_pair.values())
+    report["counts"]["witness_pair_constraints"] = witness_pair_constraints
+    if "pairs_with_nogoods" not in report["counts"]:
+        report["counts"]["pairs_with_nogoods"] = 0
+    return report
+
+
+def compile_bad_side_nogoods_grouped_support_local(
+    D,
+    pc_tree: PCNode,
+    *,
+    max_p_degree: int = 3,
+    limit: Optional[int] = None,
+) -> dict:
+    """Compile bad-side nogoods while grouping atoms by identical support."""
+
+    validate_dissimilarity(D)
+    witnesses_by_pair = bad_witnesses_by_pair(D)
+    witness_pair_constraints = sum(
+        len(witnesses) * (len(witnesses) - 1) // 2
+        for witnesses in witnesses_by_pair.values()
+    )
+    report = _compile_nogoods_by_grouped_supports(
+        D,
+        pc_tree,
+        atoms=forbidden_bad_side_atoms(D),
+        method="grouped_support_local_bad_side_pair_nogoods",
         max_p_degree=max_p_degree,
         limit=limit,
     )
@@ -1267,6 +1443,32 @@ def solve_support_local_bad_side_nogood_csp(
     )
     result["solver"] = "support_local_bad_side_pair_nogood_experiment"
     result["note"] = "experimental support-local bad-side compilation; not a proved compact solver"
+    return result
+
+
+def solve_grouped_support_local_bad_side_nogood_csp(
+    D,
+    pc_tree: PCNode,
+    *,
+    max_p_degree: int = 3,
+    validate_against_direct: bool = True,
+) -> dict:
+    """Backtrack with bad-side nogoods compiled by grouped supports."""
+
+    compilation = compile_bad_side_nogoods_grouped_support_local(
+        D,
+        pc_tree,
+        max_p_degree=max_p_degree,
+    )
+    result = solve_pruned_nogood_csp_from_compilation(
+        D,
+        pc_tree,
+        compilation,
+        max_p_degree=max_p_degree,
+        validate_against_direct=validate_against_direct,
+    )
+    result["solver"] = "grouped_support_local_bad_side_pair_nogood_experiment"
+    result["note"] = "experimental grouped-support bad-side compilation; not a proved compact solver"
     return result
 
 

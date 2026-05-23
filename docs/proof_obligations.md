@@ -1246,6 +1246,28 @@ Limites T047 :
 - il faut encore une borne structurelle ou un regroupement d'atoms pour obtenir
   une preuve de complexité utile.
 
+T048 ajoute `compile_bad_side_nogoods_grouped_support_local`, qui regroupe les
+atoms par support identique et énumère chaque produit de domaines de support une
+seule fois. Les obligations expérimentales renforcées sont :
+
+- les signatures groupées coïncident avec T047 support-local sur les probes et
+  tests ciblés ;
+- le solveur pruné groupé accepte exactement les mêmes frontiers que le CSP cR
+  direct sur les PC-trees supportés testés ;
+- un dépassement de limite ou un gros nœud `P` unsupported reste incomplet et
+  ne produit aucune décision négative.
+
+Limites T048 :
+
+- le regroupement réduit `sum_support_products` vers
+  `sum_unique_support_products`, mais l'implémentation paie encore un
+  `atom_checks` égal au coût T047 support-local sur la gate rapide ;
+- aucune preuve ne borne encore la taille des groupes d'atoms partageant un
+  support ;
+- le champ `atom`/`pair` d'un nogood groupé reste diagnostique, pas sémantique ;
+- rien n'est intégré à `candidate.py`, donc les obligations 2, 3 et 5 du
+  problème général restent ouvertes.
+
 ### Prédicats stricts d'ordre fixé
 
 Statut : définitions directes implémentées / base expérimentale Piste F.

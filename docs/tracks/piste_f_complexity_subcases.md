@@ -762,3 +762,17 @@ Chercher ensuite un sous-cas plus structuré que le critère universel, par
 exemple paired-farthest représenté par PC-tree non-star avec choix de témoin
 prouvé, matching low-hub avec hubs séparés, planted-cycle représenté par un
 vrai PC-tree Hsu/McConnell, ou degré interne borné.
+
+## Résultat T048 - Support sharing comme signal de complexité
+
+Statut : preuve expérimentale de partage de supports, pas borne asymptotique.
+
+Le regroupement des atoms bad-side par support donne de grands gains sur les
+produits de domaines : sidecar Piste F observe des ratios de produit groupé
+entre `8x` et `43x` sur `n=6..10` pour `cycle/random/paired_farthest`, et le
+benchmark interne rapide mesure `72256 -> 6224`.
+
+Limite : le coût de test des atoms reste inchangé dans l'implémentation naïve
+(`atom_checks=72256`). Pour transformer ce signal en résultat de complexité, il
+faut soit borner la taille des groupes de support, soit compiler chaque groupe
+en une contrainte plus compacte que la liste de ses atoms.

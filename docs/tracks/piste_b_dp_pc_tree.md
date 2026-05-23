@@ -279,3 +279,18 @@ la signature de pruning. Cette collision est verrouillée par
 `test_support_local_atom_identity_is_not_stable_under_global_canonicalization`.
 Toute future DP doit éviter de baser son état sur une orientation canonique
 globale influencée par des labels déjà supprimés.
+
+## Résultats T048
+
+Statut : signal pour une future DP, pas encore une signature suffisante.
+
+Le regroupement par support montre que de nombreux atoms bad-side partagent les
+mêmes variables locales du PC-tree. Sur le benchmark CSP rapide, le produit de
+supports passe de `72256` à `6224` quand on compte chaque support distinct une
+seule fois.
+
+Limite DP : l'implémentation groupée teste encore chaque atom du groupe pour
+chaque affectation de support, donc `atom_checks=72256`. Une vraie signature DP
+devrait factoriser ces atoms en contraintes plus compactes sur un même support
+ou prouver que la taille des groupes reste bornée dans les instances
+quasi-circulaires.

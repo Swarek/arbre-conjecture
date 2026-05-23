@@ -338,6 +338,18 @@ Dernier commit green avant T009 : `07120e4`.
   mais la compilation support-local reste plus lente sur les très petits arbres
   du quick benchmark ; `mixed/star` reste `0` timeout et `0` incomplet jusqu'à
   `n=100`, médiane `0.03458s` à `n=100`.
+- Checkpoint T048 courant : commit contenant la compilation bad-side groupée
+  par support hors candidate. `compile_bad_side_nogoods_grouped_support_local`
+  énumère chaque produit de domaines de support une seule fois, teste les atoms
+  du groupe et déduplique par signature effective. Validation observée :
+  `tests/test_sat_like_experiments.py` (`31 passed`), probe indépendant
+  `130` cas sans mismatch, `make bench-csp-quick` (`192` lignes,
+  `0` mismatch, `0` support mismatch, `0` grouped mismatch,
+  `0` signature mismatch), `make quick`, `make check`. Résultat observé :
+  produit support T047 `72256` contre produit groupé `6224`, ratio médian
+  `0.11111`, mêmes `2904` signatures que T047, mais
+  `total_grouped_atom_checks=72256`; le prochain progrès doit donc réduire les
+  tests atom-par-atom ou prouver une borne sur la taille des groupes.
 
 ## Rollback
 

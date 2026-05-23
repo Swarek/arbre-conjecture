@@ -2222,3 +2222,60 @@
 - Next action : regrouper les atoms par support/signature partielle ou chercher
   une borne structurelle sur `sum_support_products`; garder T047 hors
   `candidate.py` tant que cette borne n'existe pas.
+
+## 2026-05-23 grouped support-local bad-side compilation
+
+- Date/heure : 2026-05-23 08:24:11 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les atoms bad-side partagent massivement leur
+  `quartet_support_paths`. En groupant les atoms par support, on peut énumérer
+  chaque produit de domaines une seule fois et conserver les mêmes signatures de
+  pruning que T047, tout en mesurant séparément le coût restant `atom_checks`.
+- Changement fait : ajout de
+  `compile_bad_side_nogoods_grouped_support_local` et
+  `solve_grouped_support_local_bad_side_nogood_csp`; métriques
+  `grouped_support_product_total`, `support_product_total_if_ungrouped`,
+  `grouped_vs_ungrouped_support_ratio`, `atom_checks`,
+  `support_group_count`, `max_atoms_per_support` et
+  `effective_signature_count`; extension de
+  `tools/pc_csp_internal_benchmark.py` avec métriques et mismatch groupés ;
+  tests ciblés de signatures seules, solveur pruné, limite, unsupported et
+  absence de faux pruning cR.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : worktree déjà dirty T048
+  (`PLANS.md`, `sat_like_experiments.py`) ; `209 passed`, puis `JUSTE`.
+- Plan subagents : trois sidecars lecture seule. Résultats : audit Piste C sans
+  faux positif/faux négatif évident et recommandation de tests ajoutés ; Piste F
+  mesure des collisions massives de support avec gains de produit `8x..43x`
+  jusqu'à `n=10`, mais signale que `atom_checks` reste le coût critique ; Piste
+  contre-exemples trouve `0` mismatch sur `84` cas généraux et `18` cas
+  low-hub matching.
+- Commande exécutée : `pytest -q tests/test_sat_like_experiments.py`.
+- Résultat correction : `31 passed`.
+- Commande exécutée : probe indépendant multi-familles `n=4..7` sur arbres
+  balanced/mixed.
+- Résultat probe : `130` cas, `0` mismatch de signatures, `0` mismatch solveur
+  support-local/groupé, `0` mismatch contre le CSP cR direct ; produit support
+  T047 `50048`, produit groupé `4128`, ratio `0.08248`.
+- Commande exécutée : `make bench-csp-quick`.
+- Résultat benchmark interne : `reports/csp_internal_benchmark_quick.json`
+  écrit ; `192` lignes, `0` mismatch, `0` support mismatch,
+  `0` grouped mismatch, `0` signature mismatch,
+  `0` grouped signature mismatch ; produit support T047 `72256`, produit
+  groupé `6224`, ratio médian `0.11111`,
+  `total_grouped_atom_checks=72256`, mêmes `2904` signatures que T047.
+- Commande exécutée : `make quick`.
+- Résultat correction : `214 passed`, puis `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Résultat benchmark candidate : non relancé à ce stade ; `candidate.py` n'a
+  pas été modifié par T048.
+- Conclusion : T048 réduit clairement l'énumération des produits de supports
+  distincts et confirme que les supports sont très partagés, mais le coût
+  atom-par-atom reste inchangé dans l'implémentation naïve. Cela reste une
+  brique Piste C hors candidate, pas une preuve de solveur compact.
+- Next action : factoriser les atoms au sein d'un même support ou prouver une
+  borne structurelle sur la taille des groupes de support ; sinon basculer vers
+  une piste DP qui transporte directement les contraintes par support.

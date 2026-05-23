@@ -2878,3 +2878,82 @@ du coût de compilation, mais il ne prouve pas encore un solveur compact génér
 si le nombre d'atoms domine, la somme des produits de support peut rester
 élevée. Prochaine étape : compiler les supports par classes/signatures
 d'atom ou chercher une borne structurelle sur `support_product_total`.
+
+## ExecPlan 2026-05-23 - grouped support-local bad-side compilation
+
+But : tester si l'étape T047 peut être renforcée en énumérant chaque support
+local une seule fois, au lieu de répéter le même produit de domaines pour tous
+les atoms qui partagent ce support.
+
+Hypothèse : pour les nogoods bad-side, beaucoup d'atoms partagent le même
+`quartet_support_paths`. Si l'on groupe ces atoms par support, une affectation
+du support peut être projetée une seule fois par atom du groupe et produire les
+mêmes signatures de pruning que T047. Le coût de produit devient
+`sum_unique_support_products`, plus lisible que `sum_support_products`, même si
+le coût de test des atoms dans chaque groupe reste à mesurer.
+
+Fichiers à modifier : `src/pc_circular/solvers/sat_like_experiments.py`,
+`tests/test_sat_like_experiments.py`, `tools/pc_csp_internal_benchmark.py`,
+`docs/tracks/piste_c_sat_csp.md`, `docs/proof_obligations.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `docs/tracks/README.md`,
+`PLANS.md`.
+
+Algorithme pressenti : ajouter
+`compile_bad_side_nogoods_grouped_by_support`. Construire les atoms bad-side,
+calculer leur support, grouper par tuple de chemins. Pour chaque groupe,
+énumérer le produit des domaines une seule fois ; pour chaque affectation de ce
+support, tester les atoms du groupe avec
+`_project_atom_order_from_support_assignment`, puis enregistrer la signature
+quand au moins un atom apparaît. Le rapport doit exposer
+`support_group_count`, `grouped_support_product_total`,
+`atom_checks`, `effective_signature_count` et comparer ces métriques à T047
+dans le benchmark interne. Aucune intégration dans `candidate.py`.
+
+Plan de contre-exemples : comparer les signatures du compilateur groupé avec
+`compile_bad_side_nogoods_support_local` et `compile_bad_side_nogoods` sur
+wrapping, nested, equal-distance, random, cycle, paired-farthest et matching
+low-hub ; valider le solveur pruné contre `accepted_frontiers_by_csp`; tester
+une limite basse pour vérifier que le statut incomplet ne produit pas de rejet.
+
+Plan subagents : sidecars lecture seule si besoin. Piste C vérifie la
+soundness de la déduplication par groupe ; Piste F mesure si le ratio
+`grouped_support_product_total / support_product_total` est réellement utile ;
+Piste B cherche une collision due à un support groupé trop large ou trop petit.
+
+Tests à exécuter : tests ciblés `tests/test_sat_like_experiments.py`, probe
+borné de signatures groupées, `make bench-csp-quick`, puis `make quick` et
+`make check` si le code expérimental reste isolé.
+
+Risques : le groupement peut réduire les produits énumérés sans réduire le
+coût total si `atom_checks` domine ; une limite sur groupes doit rester
+incomplète, jamais négative ; l'atom stocké dans un nogood reste seulement
+diagnostique comme en T047.
+
+Résultats observés : le compilateur groupé a été ajouté sous le nom
+`compile_bad_side_nogoods_grouped_support_local`, avec le solveur expérimental
+`solve_grouped_support_local_bad_side_nogood_csp`. Les tests ciblés
+`tests/test_sat_like_experiments.py` donnent `31 passed`. Le probe indépendant
+multi-familles `n=4..7` donne `130` cas, `0` mismatch de signatures,
+`0` mismatch solveur groupé vs support-local, `0` mismatch contre le CSP cR
+direct ; produit support T047 `50048` contre produit groupé `4128`, ratio
+`0.08248`. `make bench-csp-quick` donne `192` lignes, `0` mismatch,
+`0` support mismatch, `0` grouped mismatch, `0` signature mismatch, produit
+support total `72256`, produit groupé total `6224`, ratio médian
+`0.11111`, `total_grouped_atom_checks=72256`, et mêmes `2904` signatures que
+T047. Le gain mesuré est donc sur l'énumération des produits de support, pas
+encore sur les tests atom-par-atom. `make quick` donne `214 passed`, puis
+`JUSTE`; `make check` donne `JUSTE`.
+
+Résultats subagents : audit Piste C sans faux positif/faux négatif évident,
+avec recommandation d'ajouter des tests de signatures seules, limite et
+unsupported ; Piste F mesure des collisions massives de support avec gains de
+produit `8x..43x` jusqu'à `n=10`, mais signale que `atom_checks` reste égal au
+coût support-local T047 ; Piste contre-exemples exécute `84` cas généraux et
+`18` cas low-hub matching sans mismatch, avec ratio produit groupé de
+`0.007706` sur la première série et `0.046384` sur low-hub.
+
+Décision : conserver T048 comme compression structurelle Piste C hors
+`candidate.py`. C'est un progrès métrique net sur `sum_unique_support_products`,
+mais pas encore un solveur compact : la prochaine tentative doit factoriser les
+tests d'atom dans un même groupe de support ou prouver une borne sur la taille
+des groupes.
