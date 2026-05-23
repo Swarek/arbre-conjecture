@@ -568,6 +568,35 @@ def test_bad_side_support_outcome_profile_matches_first_hit_accounting():
     assert profile["counts"]["pair_side_split_bitset_projection_checks"] <= profile["counts"][
         "pair_side_split_bitset_cached_checks"
     ]
+    assert profile["counts"]["component_mask_state_count"] <= profile["counts"][
+        "grouped_support_assignments_seen"
+    ]
+    assert profile["counts"]["component_mask_state_count"] < profile["counts"][
+        "grouped_support_assignments_seen"
+    ]
+    assert profile["counts"]["component_mask_state_hit_count"] + profile["counts"][
+        "component_mask_state_no_hit_count"
+    ] == profile["counts"]["component_mask_state_count"]
+    assert profile["counts"]["component_mask_state_mixed_count"] == 0
+    assert profile["counts"]["component_mask_state_mismatches"] == 0
+    assert profile["counts"]["first_component_mask_state_mismatch"] is None
+    assert profile["counts"]["component_mask_state_side_cache_hits"] + profile["counts"][
+        "component_mask_state_side_cache_misses"
+    ] == profile["counts"]["component_mask_state_witness_visits"]
+    assert profile["counts"]["component_mask_state_work_ratio"] == (
+        (
+            profile["counts"]["component_mask_state_component_masks"]
+            + profile["counts"]["component_mask_state_witness_visits"]
+        )
+        / profile["counts"]["classification_atom_checks"]
+    )
+    assert profile["counts"]["component_mask_state_projection_work_ratio"] == (
+        (
+            profile["counts"]["component_mask_state_component_masks"]
+            + profile["counts"]["component_mask_state_side_cache_misses"]
+        )
+        / profile["counts"]["classification_atom_checks"]
+    )
     assert profile["counts"]["unary_no_hit_certified_assignments"] == 0
     assert profile["counts"]["ambiguous_no_hit_assignments"] == profile["counts"]["no_hit_assignments"]
     assert profile["counts"]["ambiguous_no_hit_ratio"] == 1.0
@@ -677,6 +706,9 @@ def test_bad_side_support_outcome_profile_reports_limit_and_unsupported():
         == 1
     )
     assert limited["counts"]["pair_side_split_bitset_mismatches"] == 0
+    assert limited["counts"]["component_mask_state_count"] == 1
+    assert limited["counts"]["component_mask_state_mixed_count"] == 0
+    assert limited["counts"]["component_mask_state_mismatches"] == 0
 
     unsupported = bad_side_grouped_support_outcome_profile(cycle_metric(5), star_pc_tree(5), max_p_degree=3)
     assert unsupported["complete"] is False
@@ -689,6 +721,9 @@ def test_bad_side_support_outcome_profile_reports_limit_and_unsupported():
     assert unsupported["counts"]["pair_side_split_side_cache_misses"] == 0
     assert unsupported["counts"]["pair_side_split_bitset_component_cache_hits"] == 0
     assert unsupported["counts"]["pair_side_split_bitset_component_cache_misses"] == 0
+    assert unsupported["counts"]["component_mask_state_count"] == 0
+    assert unsupported["counts"]["component_mask_state_side_cache_hits"] == 0
+    assert unsupported["counts"]["component_mask_state_side_cache_misses"] == 0
     assert unsupported["groups"] == []
 
 
@@ -711,6 +746,9 @@ def test_bad_side_support_outcome_profile_equal_distance_has_no_groups():
     assert profile["counts"]["pair_side_split_bitset_component_cache_misses"] == 0
     assert profile["counts"]["pair_side_split_bitset_witness_visits"] == 0
     assert profile["counts"]["pair_side_split_bitset_mismatches"] == 0
+    assert profile["counts"]["component_mask_state_count"] == 0
+    assert profile["counts"]["component_mask_state_mismatches"] == 0
+    assert profile["counts"]["component_mask_state_witness_visits"] == 0
     assert "exists" not in profile
     assert "order" not in profile
     assert "accepted_frontiers" not in profile

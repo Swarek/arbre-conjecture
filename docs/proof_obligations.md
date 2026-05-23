@@ -1358,6 +1358,24 @@ Limites T053 :
 - aucune borne asymptotique sur le nombre d'états de masques distincts n'est
   encore établie.
 
+T054 mesure cette dernière limite : les états distincts de masques par support
+groupé sont comptés et comparés aux affectations locales. Sur la gate CSP
+rapide, le profil a `0` état mixte et `0` mismatch, donc l'état est bien un
+classifieur local exact.
+
+Limites T054 :
+
+- le nombre d'états est une somme par support groupé, pas un ensemble global
+  composable ;
+- le quotient observé est faible (`2920/6224`, ratio `0.4692`, bucket max `4`)
+  et ne constitue pas une borne asymptotique ;
+- construire l'état complet coûte encore plus que first-hit (`1.9412x`) et la
+  projection coûte `0.9038x`, donc ce n'est pas un algorithme plus rapide ;
+- aucune preuve ne montre que ces états peuvent être composés de bas en haut
+  dans le PC-tree sans revisiter les témoins ;
+- aucune intégration dans `candidate.py`, donc aucune obligation de décision
+  générale n'est satisfaite par T054.
+
 ### Prédicats stricts d'ordre fixé
 
 Statut : définitions directes implémentées / base expérimentale Piste F.

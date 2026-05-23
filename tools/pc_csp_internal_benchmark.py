@@ -399,6 +399,48 @@ def run_benchmark(
                             "profile_pair_side_split_bitset_projection_work_ratio": profile_counts[
                                 "pair_side_split_bitset_projection_work_ratio"
                             ],
+                            "profile_component_mask_state_count": profile_counts[
+                                "component_mask_state_count"
+                            ],
+                            "profile_component_mask_state_hit_count": profile_counts[
+                                "component_mask_state_hit_count"
+                            ],
+                            "profile_component_mask_state_no_hit_count": profile_counts[
+                                "component_mask_state_no_hit_count"
+                            ],
+                            "profile_component_mask_state_mixed_count": profile_counts[
+                                "component_mask_state_mixed_count"
+                            ],
+                            "profile_component_mask_state_mismatches": profile_counts[
+                                "component_mask_state_mismatches"
+                            ],
+                            "profile_component_mask_state_max_bucket_size": profile_counts[
+                                "component_mask_state_max_bucket_size"
+                            ],
+                            "profile_component_mask_state_ratio": profile_counts[
+                                "component_mask_state_ratio"
+                            ],
+                            "profile_component_mask_state_average_bucket_size": profile_counts[
+                                "component_mask_state_average_bucket_size"
+                            ],
+                            "profile_component_mask_state_component_masks": profile_counts[
+                                "component_mask_state_component_masks"
+                            ],
+                            "profile_component_mask_state_witness_visits": profile_counts[
+                                "component_mask_state_witness_visits"
+                            ],
+                            "profile_component_mask_state_side_cache_hits": profile_counts[
+                                "component_mask_state_side_cache_hits"
+                            ],
+                            "profile_component_mask_state_side_cache_misses": profile_counts[
+                                "component_mask_state_side_cache_misses"
+                            ],
+                            "profile_component_mask_state_work_ratio": profile_counts[
+                                "component_mask_state_work_ratio"
+                            ],
+                            "profile_component_mask_state_projection_work_ratio": profile_counts[
+                                "component_mask_state_projection_work_ratio"
+                            ],
                             "profile_ambiguous_no_hit_assignments": profile_counts[
                                 "ambiguous_no_hit_assignments"
                             ],
@@ -593,6 +635,69 @@ def run_benchmark(
             ),
             "profile_pair_side_split_bitset_mismatches": sum(
                 row["profile_pair_side_split_bitset_mismatches"] for row in supported_rows
+            ),
+            "total_profile_component_mask_state_count": sum(
+                row["profile_component_mask_state_count"] for row in supported_rows
+            ),
+            "total_profile_component_mask_state_hit_count": sum(
+                row["profile_component_mask_state_hit_count"] for row in supported_rows
+            ),
+            "total_profile_component_mask_state_no_hit_count": sum(
+                row["profile_component_mask_state_no_hit_count"] for row in supported_rows
+            ),
+            "profile_component_mask_state_mixed_count": sum(
+                row["profile_component_mask_state_mixed_count"] for row in supported_rows
+            ),
+            "profile_component_mask_state_mismatches": sum(
+                row["profile_component_mask_state_mismatches"] for row in supported_rows
+            ),
+            "max_profile_component_mask_state_max_bucket_size": max(
+                [row["profile_component_mask_state_max_bucket_size"] for row in supported_rows],
+                default=0,
+            ),
+            "total_profile_component_mask_state_component_masks": sum(
+                row["profile_component_mask_state_component_masks"] for row in supported_rows
+            ),
+            "total_profile_component_mask_state_witness_visits": sum(
+                row["profile_component_mask_state_witness_visits"] for row in supported_rows
+            ),
+            "total_profile_component_mask_state_side_cache_hits": sum(
+                row["profile_component_mask_state_side_cache_hits"] for row in supported_rows
+            ),
+            "total_profile_component_mask_state_side_cache_misses": sum(
+                row["profile_component_mask_state_side_cache_misses"] for row in supported_rows
+            ),
+            "profile_component_mask_state_ratio": (
+                sum(row["profile_component_mask_state_count"] for row in supported_rows)
+                / sum(row["profile_hit_assignments"] + row["profile_no_hit_assignments"] for row in supported_rows)
+                if sum(row["profile_hit_assignments"] + row["profile_no_hit_assignments"] for row in supported_rows)
+                else 0.0
+            ),
+            "profile_component_mask_state_average_bucket_size": (
+                sum(row["profile_hit_assignments"] + row["profile_no_hit_assignments"] for row in supported_rows)
+                / sum(row["profile_component_mask_state_count"] for row in supported_rows)
+                if sum(row["profile_component_mask_state_count"] for row in supported_rows)
+                else 0.0
+            ),
+            "profile_component_mask_state_work_ratio": (
+                sum(
+                    row["profile_component_mask_state_component_masks"]
+                    + row["profile_component_mask_state_witness_visits"]
+                    for row in supported_rows
+                )
+                / sum(row["profile_classification_atom_checks"] for row in supported_rows)
+                if sum(row["profile_classification_atom_checks"] for row in supported_rows)
+                else 0.0
+            ),
+            "profile_component_mask_state_projection_work_ratio": (
+                sum(
+                    row["profile_component_mask_state_component_masks"]
+                    + row["profile_component_mask_state_side_cache_misses"]
+                    for row in supported_rows
+                )
+                / sum(row["profile_classification_atom_checks"] for row in supported_rows)
+                if sum(row["profile_classification_atom_checks"] for row in supported_rows)
+                else 0.0
             ),
             "profile_pair_side_split_work_ratio": (
                 sum(row["profile_pair_side_split_checks"] for row in supported_rows)

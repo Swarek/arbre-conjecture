@@ -392,3 +392,26 @@ d'identité sur paired-farthest `n=6` : deux blocs proches changent la validité
 cR même si une signature trop grossière ne garderait que les mêmes types de
 masques. Toute DP doit donc garder les labels/paires et non seulement des
 profils de couleurs anonymes.
+
+## Résultats T054
+
+Statut : test de compression d'état, pas DP.
+
+T054 compte les états distincts
+`((pair, component, side_mask), ...)` par support groupé. Les résultats sont
+cohérents avec l'interprétation T053 : l'état local est exact (`0` état mixte,
+`0` mismatch contre le scan atomique), mais il ne compresse qu'environ par deux.
+
+Sur la gate CSP rapide :
+
+- `2920` états pour `6224` affectations, ratio `0.4692` ;
+- bucket moyen `2.1315`, bucket max `4` ;
+- les stress `random`, `permuted_cycle` et `paired_farthest` restent dans la
+  bande `0.45..0.50`.
+
+Conséquence DP : ce quotient est trop faible pour annoncer une DP compacte. Il
+reste utile comme métrique de falsification : si un futur état plus abstrait
+descend nettement sous ce ratio sans créer d'états mixtes, il pourra devenir
+intéressant. Mais une preuve devra encore montrer que les états se composent à
+travers les frontières du PC-tree sans reconstruire les frontiers ni revisiter
+tous les témoins.

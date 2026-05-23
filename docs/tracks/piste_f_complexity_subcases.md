@@ -873,3 +873,29 @@ implémentation directe ne donne pas encore de gain. La prochaine mesure de
 complexité doit compter les états distincts de masques par rapport aux
 affectations de support, surtout sur `random`, `permuted_cycle` et
 `paired_farthest`.
+
+## Résultat T054 - Cardinalité des états de masques
+
+Statut : mesure de complexité empirique hors candidate.
+
+Le profil T054 compte les états distincts de masques par support groupé. Sur
+`make bench-csp-quick`, les compteurs principaux sont :
+
+- `6224` affectations de support vues ;
+- `2920` états distincts, ratio `0.4692` ;
+- bucket moyen `2.1315`, bucket max `4` ;
+- `0` état mixte, `0` mismatch ;
+- coût complet de construction de l'état `1.9412x` first-hit ;
+- coût de projection `0.9038x` first-hit.
+
+Le probe stress `n=8` garde la même forme : ratio global `0.4921`, bucket moyen
+`2.032`, bucket max `4`. Par famille, `cycle`, `non_strict`,
+`permuted_cycle`, `random` et `paired_farthest` restent tous autour de
+`0.45..0.50`.
+
+Conclusion complexité : la compression par état de masque existe, mais elle est
+faible et ne croît pas clairement avec `n` dans les probes bornées. Cela réfute
+une version optimiste de la DP bitset où les états locaux seraient massivement
+moins nombreux que les affectations. La prochaine piste doit soit trouver un
+état plus quotienté mais encore sound, soit changer d'axe vers un sous-cas
+prouvable ou une obstruction de complexité.

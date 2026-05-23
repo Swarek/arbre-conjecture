@@ -2564,3 +2564,58 @@
 - Next action : mesurer la cardinalité des états de masques par support et
   famille, puis chercher une DP qui transporte ces masques sans rescanner les
   témoins, avec `paired_farthest` comme stress prioritaire.
+
+## 2026-05-23 component-mask state cardinality
+
+- Date/heure : 2026-05-23 09:49:29 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les états locaux
+  `((pair, component, side_mask), ...)` pourraient être beaucoup moins nombreux
+  que les affectations de support. Si c'est vrai, ils peuvent être une brique
+  de DP ; sinon, ils servent à réfuter la compression bitset directe.
+- Changement fait : ajout des compteurs `component_mask_state_*` au profil
+  support-level et au benchmark CSP interne : nombre d'états, états hit/no-hit,
+  états mixtes, mismatches, bucket max/moyen, ratio état/affectation, visites de
+  témoins, hits/misses du cache de côtés, et ratios de coût. Aucun changement
+  dans `candidate.py`.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `232 passed`, puis `JUSTE`.
+- Plan subagents : trois sidecars lecture seule. Résultats : Piste C valide
+  l'état support-group-local et recommande de trier les paires et de documenter
+  les agrégats comme somme par support ; Piste B classe la métrique comme
+  filtre de falsification DP, pas preuve ; Piste F confirme que
+  `random/permuted_cycle/paired_farthest` restent les familles stress.
+- Commande exécutée :
+  `pytest -q tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`.
+- Résultat correction ciblée : `49 passed`.
+- Commande exécutée : `make bench-csp-quick`.
+- Résultat benchmark interne : `reports/csp_internal_benchmark_quick.json`
+  écrit ; `192` lignes, `0` mismatch,
+  `component_mask_state_mixed_count=0`,
+  `component_mask_state_mismatches=0`. Totaux principaux : `2920` états pour
+  `6224` affectations, ratio `0.4692`, bucket moyen `2.1315`, bucket max `4`,
+  coût complet d'état `1.9412x` first-hit, coût de projection `0.9038x`.
+- Commande exécutée : probe stress
+  `tools/pc_csp_internal_benchmark.py --sizes 8 --repeats 3 --instance-kinds
+  random,cycle,non_strict,paired_farthest,permuted_cycle --pc-trees
+  balanced,mixed`.
+- Résultat probe stress : `30` lignes, `0` mismatch, ratio états/affectations
+  `0.4921`, bucket moyen `2.032`, bucket max `4`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `232 passed`, puis `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `40/40` runs réussis, `0` timeout et `0` incomplet sur les tailles
+  `4,5,6,8,10,12,16,20`. `candidate.py` n'a pas été modifié par T054.
+- Conclusion : T054 donne un classifieur local exact et un quotient réel, mais
+  la compression reste faible et stable autour d'un facteur `2`. Cela ne suffit
+  pas comme piste DP compacte.
+- Next action : chercher un état plus abstrait mais encore sound, ou basculer
+  vers un sous-cas prouvable / une obstruction de complexité. Toute suite DP
+  doit prouver la composition parent-enfant des états, pas seulement leur
+  cardinalité locale.

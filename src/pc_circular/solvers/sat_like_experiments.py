@@ -724,6 +724,54 @@ def _pair_side_bitset_outcome(
     }
 
 
+def _component_mask_state(
+    pc_tree: PCNode,
+    support_assignment: Assignment,
+    components_by_pair: dict[tuple[int, int], tuple[tuple[int, ...], ...]],
+    side_cache: dict[tuple[tuple[int, int], int, NogoodSignature], int],
+) -> dict:
+    """Return the full component-mask state for one support assignment."""
+
+    entries = []
+    side_cache_hits = 0
+    side_cache_misses = 0
+    witness_visits = 0
+    component_masks = 0
+    hit = False
+    for pair in sorted(components_by_pair):
+        for component in components_by_pair[pair]:
+            mask = 0
+            component_masks += 1
+            for witness in component:
+                witness_visits += 1
+                side_key = _witness_side_cache_key(pc_tree, support_assignment, pair, witness)
+                if side_key in side_cache:
+                    side = side_cache[side_key]
+                    side_cache_hits += 1
+                else:
+                    order = _project_labels_order_from_support_assignment(
+                        pc_tree,
+                        (pair[0], pair[1], witness),
+                        support_assignment,
+                    )
+                    side = _side_of_witness_between_pair(order, pair, witness)
+                    side_cache[side_key] = side
+                    side_cache_misses += 1
+                mask |= 1 << side
+            if mask == 0b11:
+                hit = True
+            entries.append((pair, component, mask))
+
+    return {
+        "state": tuple(entries),
+        "hit": hit,
+        "component_masks": component_masks,
+        "witness_visits": witness_visits,
+        "side_cache_hits": side_cache_hits,
+        "side_cache_misses": side_cache_misses,
+    }
+
+
 def _domain_product_size(encoding: dict, support: Sequence[Path]) -> int:
     result = 1
     for path in support:
@@ -1042,6 +1090,7 @@ def _profile_single_support_group(
     side_cache: dict[tuple[tuple[int, int], int, NogoodSignature], int],
     bitset_side_cache: dict[tuple[tuple[int, int], int, NogoodSignature], int],
     component_side_cache: dict[tuple[tuple[int, int], tuple[int, ...], NogoodSignature], int],
+    mask_state_side_cache: dict[tuple[tuple[int, int], int, NogoodSignature], int],
 ) -> dict:
     """Profile hit/no-hit outcomes for one support group.
 
@@ -1085,6 +1134,15 @@ def _profile_single_support_group(
     pair_side_split_bitset_projection_checks = 0
     pair_side_split_bitset_mismatches = 0
     first_pair_side_split_bitset_mismatch = None
+    component_mask_state_counts: dict[tuple, int] = {}
+    component_mask_state_hit_values: dict[tuple, bool] = {}
+    component_mask_state_mixed_states: set[tuple] = set()
+    component_mask_state_mismatches = 0
+    first_component_mask_state_mismatch = None
+    component_mask_state_component_masks = 0
+    component_mask_state_witness_visits = 0
+    component_mask_state_side_cache_hits = 0
+    component_mask_state_side_cache_misses = 0
     truncated = False
 
     for choices in product(*domain_lists):
@@ -1176,6 +1234,30 @@ def _profile_single_support_group(
                     "component": pair_side_bitset["component"],
                 }
 
+        mask_state = _component_mask_state(
+            pc_tree,
+            support_assignment,
+            components_by_pair,
+            mask_state_side_cache,
+        )
+        state = mask_state["state"]
+        component_mask_state_counts[state] = component_mask_state_counts.get(state, 0) + 1
+        component_mask_state_component_masks += mask_state["component_masks"]
+        component_mask_state_witness_visits += mask_state["witness_visits"]
+        component_mask_state_side_cache_hits += mask_state["side_cache_hits"]
+        component_mask_state_side_cache_misses += mask_state["side_cache_misses"]
+        previous_hit = component_mask_state_hit_values.setdefault(state, mask_state["hit"])
+        if previous_hit != mask_state["hit"]:
+            component_mask_state_mixed_states.add(state)
+        if mask_state["hit"] != hit:
+            component_mask_state_mismatches += 1
+            if first_component_mask_state_mismatch is None:
+                first_component_mask_state_mismatch = {
+                    "signature": signature,
+                    "atom_scan_hit": hit,
+                    "component_mask_state_hit": mask_state["hit"],
+                }
+
         for path, choice in signature:
             key = (path, choice)
             stats = slice_stats.setdefault(
@@ -1224,6 +1306,10 @@ def _profile_single_support_group(
     assignments_seen = len(outcomes)
     no_hit_exhaustive_atom_checks = no_hit_count * group_size
     exhaustive_atom_checks_seen = assignments_seen * group_size
+    component_mask_state_count = len(component_mask_state_counts)
+    component_mask_state_hit_count = sum(component_mask_state_hit_values.values())
+    component_mask_state_no_hit_count = component_mask_state_count - component_mask_state_hit_count
+    component_mask_state_max_bucket = max(component_mask_state_counts.values(), default=0)
 
     return {
         "support": support,
@@ -1285,6 +1371,35 @@ def _profile_single_support_group(
         ),
         "pair_side_split_bitset_mismatches": pair_side_split_bitset_mismatches,
         "first_pair_side_split_bitset_mismatch": first_pair_side_split_bitset_mismatch,
+        "component_mask_state_count": component_mask_state_count,
+        "component_mask_state_hit_count": component_mask_state_hit_count,
+        "component_mask_state_no_hit_count": component_mask_state_no_hit_count,
+        "component_mask_state_mixed_count": len(component_mask_state_mixed_states),
+        "component_mask_state_mismatches": component_mask_state_mismatches,
+        "first_component_mask_state_mismatch": first_component_mask_state_mismatch,
+        "component_mask_state_max_bucket_size": component_mask_state_max_bucket,
+        "component_mask_state_ratio": (
+            component_mask_state_count / assignments_seen if assignments_seen else 0.0
+        ),
+        "component_mask_state_average_bucket_size": (
+            assignments_seen / component_mask_state_count if component_mask_state_count else 0.0
+        ),
+        "component_mask_state_component_masks": component_mask_state_component_masks,
+        "component_mask_state_witness_visits": component_mask_state_witness_visits,
+        "component_mask_state_side_cache_hits": component_mask_state_side_cache_hits,
+        "component_mask_state_side_cache_misses": component_mask_state_side_cache_misses,
+        "component_mask_state_work_ratio": (
+            (component_mask_state_component_masks + component_mask_state_witness_visits)
+            / classification_atom_checks
+            if classification_atom_checks
+            else 0.0
+        ),
+        "component_mask_state_projection_work_ratio": (
+            (component_mask_state_component_masks + component_mask_state_side_cache_misses)
+            / classification_atom_checks
+            if classification_atom_checks
+            else 0.0
+        ),
         "pair_side_split_work_ratio": (
             pair_side_split_checks / classification_atom_checks
             if classification_atom_checks
@@ -1375,6 +1490,21 @@ def _grouped_support_outcome_profile(
             "pair_side_split_bitset_projection_work_ratio": 0.0,
             "pair_side_split_bitset_mismatches": 0,
             "first_pair_side_split_bitset_mismatch": None,
+            "component_mask_state_count": 0,
+            "component_mask_state_hit_count": 0,
+            "component_mask_state_no_hit_count": 0,
+            "component_mask_state_mixed_count": 0,
+            "component_mask_state_mismatches": 0,
+            "first_component_mask_state_mismatch": None,
+            "component_mask_state_max_bucket_size": 0,
+            "component_mask_state_ratio": 0.0,
+            "component_mask_state_average_bucket_size": 0.0,
+            "component_mask_state_component_masks": 0,
+            "component_mask_state_witness_visits": 0,
+            "component_mask_state_side_cache_hits": 0,
+            "component_mask_state_side_cache_misses": 0,
+            "component_mask_state_work_ratio": 0.0,
+            "component_mask_state_projection_work_ratio": 0.0,
             "pure_hit_slice_count": 0,
             "pure_no_hit_slice_count": 0,
             "unary_hit_certified_assignments": 0,
@@ -1405,6 +1535,7 @@ def _grouped_support_outcome_profile(
     side_cache: dict[tuple[tuple[int, int], int, NogoodSignature], int] = {}
     bitset_side_cache: dict[tuple[tuple[int, int], int, NogoodSignature], int] = {}
     component_side_cache: dict[tuple[tuple[int, int], tuple[int, ...], NogoodSignature], int] = {}
+    mask_state_side_cache: dict[tuple[tuple[int, int], int, NogoodSignature], int] = {}
     truncated = False
     for support, support_atoms in atoms_by_support.items():
         if limit is None:
@@ -1423,6 +1554,7 @@ def _grouped_support_outcome_profile(
             side_cache=side_cache,
             bitset_side_cache=bitset_side_cache,
             component_side_cache=component_side_cache,
+            mask_state_side_cache=mask_state_side_cache,
         )
         group_profiles.append(group)
         counts = report["counts"]
@@ -1492,6 +1624,36 @@ def _grouped_support_outcome_profile(
             counts["first_pair_side_split_bitset_mismatch"] = group[
                 "first_pair_side_split_bitset_mismatch"
             ]
+        counts["component_mask_state_count"] += group["component_mask_state_count"]
+        counts["component_mask_state_hit_count"] += group["component_mask_state_hit_count"]
+        counts["component_mask_state_no_hit_count"] += group[
+            "component_mask_state_no_hit_count"
+        ]
+        counts["component_mask_state_mixed_count"] += group["component_mask_state_mixed_count"]
+        counts["component_mask_state_mismatches"] += group["component_mask_state_mismatches"]
+        if (
+            counts["first_component_mask_state_mismatch"] is None
+            and group["first_component_mask_state_mismatch"] is not None
+        ):
+            counts["first_component_mask_state_mismatch"] = group[
+                "first_component_mask_state_mismatch"
+            ]
+        counts["component_mask_state_max_bucket_size"] = max(
+            counts["component_mask_state_max_bucket_size"],
+            group["component_mask_state_max_bucket_size"],
+        )
+        counts["component_mask_state_component_masks"] += group[
+            "component_mask_state_component_masks"
+        ]
+        counts["component_mask_state_witness_visits"] += group[
+            "component_mask_state_witness_visits"
+        ]
+        counts["component_mask_state_side_cache_hits"] += group[
+            "component_mask_state_side_cache_hits"
+        ]
+        counts["component_mask_state_side_cache_misses"] += group[
+            "component_mask_state_side_cache_misses"
+        ]
         counts["pure_hit_slice_count"] += group["pure_hit_slice_count"]
         counts["pure_no_hit_slice_count"] += group["pure_no_hit_slice_count"]
         counts["unary_hit_certified_assignments"] += group["unary_hit_certified_assignments"]
@@ -1531,7 +1693,28 @@ def _grouped_support_outcome_profile(
         counts["no_hit_assignment_ratio"] = (
             counts["no_hit_assignments"] / counts["grouped_support_assignments_seen"]
         )
+        counts["component_mask_state_ratio"] = (
+            counts["component_mask_state_count"] / counts["grouped_support_assignments_seen"]
+        )
+    if counts["component_mask_state_count"]:
+        counts["component_mask_state_average_bucket_size"] = (
+            counts["grouped_support_assignments_seen"] / counts["component_mask_state_count"]
+        )
     if counts["classification_atom_checks"]:
+        counts["component_mask_state_work_ratio"] = (
+            (
+                counts["component_mask_state_component_masks"]
+                + counts["component_mask_state_witness_visits"]
+            )
+            / counts["classification_atom_checks"]
+        )
+        counts["component_mask_state_projection_work_ratio"] = (
+            (
+                counts["component_mask_state_component_masks"]
+                + counts["component_mask_state_side_cache_misses"]
+            )
+            / counts["classification_atom_checks"]
+        )
         counts["pair_side_split_work_ratio"] = (
             counts["pair_side_split_checks"] / counts["classification_atom_checks"]
         )

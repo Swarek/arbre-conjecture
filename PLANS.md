@@ -3324,3 +3324,76 @@ compression directe. Le modèle de projection reste prometteur, mais le coût
 réel montre que la prochaine piste doit mesurer/compresser la cardinalité des
 états de masques ou éviter les visites de témoins, avec `paired_farthest` comme
 stress prioritaire.
+
+## ExecPlan 2026-05-23 - component-mask state cardinality
+
+But : mesurer si les états de masques de composantes T053 compressent réellement
+les affectations de support, ou s'ils sont presque aussi nombreux que les
+affectations elles-mêmes.
+
+Hypothèse : pour un support groupé, l'état
+`((pair, component, side_mask), ...)` détermine le hit/no-hit local. Si le
+nombre d'états distincts est nettement plus petit que le nombre d'affectations,
+une DP pourrait transporter ces états plutôt que rescanner les témoins. Si le
+ratio reste proche de `1`, la piste bitset directe est surtout une reformulation
+locale sans compression.
+
+Fichiers à modifier :
+`src/pc_circular/solvers/sat_like_experiments.py`,
+`tests/test_sat_like_experiments.py`, `tests/test_csp_internal_benchmark.py`,
+`tools/pc_csp_internal_benchmark.py`, `docs/tracks/piste_c_sat_csp.md`,
+`docs/tracks/piste_b_dp_pc_tree.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/proof_obligations.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `docs/tracks/README.md`,
+`PLANS.md`.
+
+Algorithme pressenti : dans le profil support-level, calculer pour chaque
+affectation un état canonique de masques par paire et composante, compter les
+états distincts, les buckets maximaux, les états hit/no-hit, et vérifier qu'aucun
+état n'est mixte. Plomber les agrégats dans `make bench-csp-quick` et comparer
+les ratios par famille.
+
+Plan de contre-exemples : un état mixte serait un bug de définition et doit être
+régressé. Tester equal-distance, unsupported, limit, composantes séparées,
+choix imbriqués et familles stress `paired_farthest`, `random`,
+`permuted_cycle`, `cycle`, `non_strict`.
+
+Plan subagents : Piste C audite la définition de l'état ; Piste B évalue si le
+ratio est un indicateur DP pertinent ou trompeur ; Piste F mesure les familles
+stress en lecture seule.
+
+Tests à exécuter : tests ciblés
+`tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`,
+`make bench-csp-quick`, `make quick`, `make check`, `make bench-quick`.
+`make hunt-counterexamples` n'est pas requis tant que `candidate.py` reste
+inchangé.
+
+Risques : un faible nombre d'états local ne prouve pas la compatibilité globale
+ni la représentabilité ; un état trop riche peut être exact mais inutile en DP ;
+un état trop pauvre peut mélanger hit et no-hit. Le profil doit rester hors
+`candidate.py`.
+
+Résultats observés : ajout des compteurs `component_mask_state_*` au profil
+support-level et au benchmark CSP interne. Tests ciblés
+`tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py` :
+`49 passed`. `make bench-csp-quick` : `192` lignes, `0` mismatch,
+`component_mask_state_mixed_count=0`, `component_mask_state_mismatches=0`.
+Résultat principal : `2920` états pour `6224` affectations, ratio `0.4692`,
+bucket moyen `2.1315`, bucket max `4`. Coût complet de construction de l'état
+`1.9412x` first-hit ; coût de projection `0.9038x`. Par familles rapides :
+`ultrametric` `0.419`, `block` `0.438`, `paired_farthest` `0.450..0.465`,
+`random` `0.479..0.487`, `cycle/permuted_cycle` `0.500`. Probe stress `n=8`
+sur `random/cycle/non_strict/paired_farthest/permuted_cycle` : ratio global
+`0.4921`, bucket moyen `2.032`, bucket max `4`, toujours `0` état mixte.
+Subagents : Piste C valide la définition support-group-local et recommande de
+documenter les agrégats comme somme par support ; Piste B classe le ratio comme
+filtre de falsification DP, pas preuve ; Piste F confirme que les familles
+stress restent autour de `0.45..0.50`. Gates candidate finales : `make quick`
+(`232 passed`, puis `JUSTE`), `make check` (`JUSTE`), `make bench-quick`
+(`40/40` runs réussis, `0` timeout, `0` incomplet).
+
+Décision : conserver T054 comme métrique négative utile. Les états de masques
+classifient exactement le hit/no-hit local, mais la compression observée n'est
+qu'un facteur `~2` et ne donne pas de DP compacte. La prochaine piste doit soit
+chercher un quotient plus abstrait mais sound, soit changer d'axe vers un
+sous-cas prouvable ou une obstruction de complexité.

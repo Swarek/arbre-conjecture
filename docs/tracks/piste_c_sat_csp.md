@@ -564,6 +564,51 @@ suffise. La prochaine compression doit éviter les visites de témoins par
 composante, par exemple via tables de masques par support de composante, DP
 transportant les masques ouverts, ou règle spéciale pour `paired_farthest`.
 
+## Tentative T054 - Cardinalité des états de masques
+
+Statut : diagnostic Piste C exact localement, hors `candidate.py`.
+
+Hypothèse testée : si les états
+`((pair, component, side_mask), ...)` sont beaucoup moins nombreux que les
+affectations de support, une future DP pourrait transporter ces états plutôt
+que les affectations locales complètes. Le hit/no-hit local est dérivé de l'état
+par `any(mask == 0b11)`.
+
+Changement : le profil support-level compte maintenant
+`component_mask_state_count`, les états hit/no-hit, les états mixtes, les
+mismatches contre le scan atomique, les tailles de buckets et les coûts de
+construction/projection de l'état. Les états incluent la paire endpoint, la
+composante group-local et le masque ; les paires sont triées pour stabiliser la
+signature.
+
+Résultats `make bench-csp-quick` :
+
+- `192` lignes supportées, `0` mismatch ;
+- `component_mask_state_mismatches=0` et `component_mask_state_mixed_count=0` ;
+- `2920` états pour `6224` affectations de support, ratio `0.4692` ;
+- bucket moyen `2.1315`, bucket max `4` ;
+- coût de construction complet de l'état `1.9412x` first-hit ;
+- coût de projection de l'état `0.9038x` first-hit.
+
+Par famille rapide :
+
+- `ultrametric` : ratio `0.419`, meilleur quotient observé ;
+- `block` : `0.438` ;
+- `paired_farthest` : `0.450..0.465` ;
+- `random` : `0.479..0.487` ;
+- `cycle` et `permuted_cycle` : `0.500`.
+
+Probe stress `n=8` sur `random/cycle/non_strict/paired_farthest/permuted_cycle`
+balanced/mixed : ratio global `0.4921`, bucket moyen `2.032`, bucket max `4`,
+toujours `0` état mixte. Les familles stress restent donc proches du facteur 2.
+
+Interprétation : T054 donne un quotient local exact, mais la compression est
+faible et stable autour de deux affectations par état. C'est insuffisant comme
+argument DP compact. Pour continuer cette piste, il faudrait montrer une
+composition parent-enfant des états qui évite les visites de témoins, ou
+trouver un état plus abstrait qui reste sound sans perdre labels, paires,
+composantes et choix imbriqués.
+
 ## Tentative T021 - Repair positive-only pour paired-farthest
 
 Statut : idée saine comme générateur expérimental vérifié, mais non intégrée à

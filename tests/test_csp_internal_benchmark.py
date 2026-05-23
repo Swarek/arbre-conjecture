@@ -94,6 +94,31 @@ def test_csp_internal_benchmark_reports_separate_compile_and_solve_metrics():
         row["profile_pair_side_split_bitset_component_checks"]
         + row["profile_pair_side_split_bitset_side_cache_misses"]
     )
+    assert row["profile_component_mask_state_count"] <= (
+        row["profile_hit_assignments"] + row["profile_no_hit_assignments"]
+    )
+    assert row["profile_component_mask_state_hit_count"] + row[
+        "profile_component_mask_state_no_hit_count"
+    ] == row["profile_component_mask_state_count"]
+    assert row["profile_component_mask_state_mixed_count"] == 0
+    assert row["profile_component_mask_state_mismatches"] == 0
+    assert row["profile_component_mask_state_side_cache_hits"] + row[
+        "profile_component_mask_state_side_cache_misses"
+    ] == row["profile_component_mask_state_witness_visits"]
+    assert row["profile_component_mask_state_work_ratio"] == (
+        (
+            row["profile_component_mask_state_component_masks"]
+            + row["profile_component_mask_state_witness_visits"]
+        )
+        / row["profile_classification_atom_checks"]
+    )
+    assert row["profile_component_mask_state_projection_work_ratio"] == (
+        (
+            row["profile_component_mask_state_component_masks"]
+            + row["profile_component_mask_state_side_cache_misses"]
+        )
+        / row["profile_classification_atom_checks"]
+    )
     assert report["summary"]["total_first_hit_position_sum"] == row["first_hit_position_sum"]
     assert report["summary"]["total_first_hit_atom_checks_if_exhaustive_seen"] == row[
         "first_hit_atom_checks_if_exhaustive_seen"
@@ -120,4 +145,18 @@ def test_csp_internal_benchmark_reports_separate_compile_and_solve_metrics():
     ]
     assert report["summary"]["total_profile_pair_side_split_bitset_projection_checks"] == row[
         "profile_pair_side_split_bitset_projection_checks"
+    ]
+    assert report["summary"]["profile_component_mask_state_mismatches"] == 0
+    assert report["summary"]["profile_component_mask_state_mixed_count"] == 0
+    assert report["summary"]["total_profile_component_mask_state_count"] == row[
+        "profile_component_mask_state_count"
+    ]
+    assert report["summary"]["total_profile_component_mask_state_witness_visits"] == row[
+        "profile_component_mask_state_witness_visits"
+    ]
+    assert report["summary"]["profile_component_mask_state_work_ratio"] == row[
+        "profile_component_mask_state_work_ratio"
+    ]
+    assert report["summary"]["profile_component_mask_state_projection_work_ratio"] == row[
+        "profile_component_mask_state_projection_work_ratio"
     ]
