@@ -9,6 +9,7 @@ from itertools import combinations
 from pc_circular.generators import (
     five_local_non_cr_core,
     four_local_non_cr_core,
+    non_bipartite_high_graph_plus_low_hub,
     padded_five_local_non_cr,
     padded_four_local_non_cr,
 )
@@ -217,3 +218,9 @@ def test_padded_five_local_counterexample_has_no_five_point_obstruction():
     for subset in combinations(range(9), 5):
         submatrix = [[D[i][j] for j in subset] for i in subset]
         assert exact_oracle_pc_tree(submatrix, None)["exists"] is True
+
+
+def test_non_bipartite_high_graph_low_hub_subcase_regression():
+    D = non_bipartite_high_graph_plus_low_hub(9)
+
+    assert exact_oracle_pc_tree([[D[i][j] for j in range(6)] for i in range(6)], None)["exists"] is False

@@ -14,6 +14,8 @@ The current implementation is deliberately conservative:
   order only after direct cR and PC-tree representation verification.
 * for a three-level unique-farthest matching sub-case it reconstructs a
   side-by-side paired witness and accepts it only after the same verification.
+* for small forbidden induced submatrices and for binary non-bipartite high
+  graphs with a low-universal hub, it can return proved negative certificates.
 
 This is not a solution to the general problem.  Future goals should replace
 the large-n placeholder with a proved algorithm or a clearly scoped sub-case.
@@ -214,7 +216,25 @@ def _small_forbidden_submatrix_result(
     return None
 
 
-def _odd_high_cycle_low_hub_result(D, n: int):
+def _is_bipartite(vertices: Sequence[int], neighbors: dict[int, list[int]]) -> bool:
+    color: dict[int, int] = {}
+    for start in vertices:
+        if start in color:
+            continue
+        color[start] = 0
+        stack = [start]
+        while stack:
+            current = stack.pop()
+            for neighbor in neighbors[current]:
+                if neighbor not in color:
+                    color[neighbor] = 1 - color[current]
+                    stack.append(neighbor)
+                elif color[neighbor] == color[current]:
+                    return False
+    return True
+
+
+def _non_bipartite_high_graph_low_hub_result(D, n: int):
     positive_values = sorted({D[i][j] for i in range(n) for j in range(i + 1, n) if D[i][j] > 0})
     if len(positive_values) != 2:
         return None
@@ -225,36 +245,20 @@ def _odd_high_cycle_low_hub_result(D, n: int):
         for i in range(n)
     }
     hubs = [i for i, neighbors in high_neighbors.items() if not neighbors]
-    cycle_vertices = [i for i, neighbors in high_neighbors.items() if neighbors]
-    if not hubs or len(cycle_vertices) < 5 or len(cycle_vertices) % 2 == 0:
+    high_vertices = [i for i, neighbors in high_neighbors.items() if neighbors]
+    if not hubs or len(high_vertices) < 3:
         return None
-    if any(len(high_neighbors[i]) != 2 for i in cycle_vertices):
-        return None
-
-    cycle_set = set(cycle_vertices)
-    if any(neighbor not in cycle_set for i in cycle_vertices for neighbor in high_neighbors[i]):
-        return None
-
-    start = cycle_vertices[0]
-    seen = {start}
-    stack = [start]
-    while stack:
-        current = stack.pop()
-        for neighbor in high_neighbors[current]:
-            if neighbor not in seen:
-                seen.add(neighbor)
-                stack.append(neighbor)
-    if seen != cycle_set:
+    if _is_bipartite(high_vertices, high_neighbors):
         return None
 
     return {
         "exists": False,
         "order": None,
         "complete": True,
-        "solver": "candidate_odd_high_cycle_low_hub_obstruction",
+        "solver": "candidate_non_bipartite_high_graph_low_hub_obstruction",
         "hub_labels": hubs,
-        "cycle_labels": cycle_vertices,
-        "note": "the high-distance graph is an odd cycle plus low-universal hubs, which would force an impossible source/sink alternation",
+        "high_graph_labels": high_vertices,
+        "note": "the high-distance graph is non-bipartite with a low-universal hub, which would force an impossible source/sink 2-coloring",
     }
 
 
@@ -456,9 +460,9 @@ def solve(D, quasi_orders=None, pc_tree=None):
     if has_at_most_one_bad_witness_per_pair(D):
         return _universal_order_result(n, quasi_orders, pc_tree)
 
-    odd_high_cycle_result = _odd_high_cycle_low_hub_result(D, n)
-    if odd_high_cycle_result is not None:
-        return odd_high_cycle_result
+    non_bipartite_high_graph_result = _non_bipartite_high_graph_low_hub_result(D, n)
+    if non_bipartite_high_graph_result is not None:
+        return non_bipartite_high_graph_result
 
     exact_quasi_orders_result = _bounded_quasi_orders_exact_result(D, n, quasi_orders)
     if exact_quasi_orders_result is not None:

@@ -177,6 +177,17 @@ Dernier commit green avant T009 : `07120e4`.
   `odd_high_cycle_plus_low_hub/star`. Résultat observé : le 5-local seul est
   réfuté ; la famille cycle haut impair plus hub bas est désormais rejetée par
   un certificat polynomial.
+- Checkpoint T034 courant : commit contenant la généralisation du certificat
+  cycle haut impair vers
+  `candidate_non_bipartite_high_graph_low_hub_obstruction`, le générateur
+  `non_bipartite_high_graph_plus_low_hub`, et les régressions associées.
+  Validation observée : tests candidats/générateurs/régressions ciblés,
+  `make unit`, `make quick`, `make hunt-counterexamples`, `make check`,
+  `make bench-quick`, `make bench-piste-f`, `make bench`, benchmarks ciblés
+  `odd_high_cycle_plus_low_hub/star` et
+  `non_bipartite_high_graph_plus_low_hub/star`. Résultat observé :
+  `mixed/star` garde `0` timeout et `0` incomplet jusqu'à `n=100` ; la famille
+  non-cycle non-bipartie est rejetée en temps polynomial.
 
 ## Rollback
 

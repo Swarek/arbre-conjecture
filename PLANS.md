@@ -1730,3 +1730,72 @@ Décision : intégrer. Contrairement au scan 6-points seul, le certificat
 odd-cycle donne une famille paramétrique négative avec preuve simple et coût
 faible. Garder le scan 6-points comme certificat héréditaire borné, mais ne pas
 présenter `(4,5,6)` comme caractérisation.
+
+## ExecPlan 2026-05-23 - non-bipartite high graph with low hub
+
+But : généraliser le certificat T033 du cycle haut impair vers tout graphe haut
+non biparti avec hub bas universel, sans affaiblir les oracles ni masquer les
+cas incomplets restants.
+
+Hypothèse : dans une matrice binaire `low/high`, un hub bas universel et un
+graphe des arêtes hautes non biparti suffisent à interdire tout ordre cR. Le
+cycle impair n'était que le premier cas non biparti trouvé par la recherche
+d'obstructions 5-locales.
+
+Fichiers à modifier : `src/pc_circular/solvers/candidate.py`,
+`src/pc_circular/generators.py`, `tests/test_candidate.py`,
+`tests/test_generators.py`, `tests/test_regression_counterexamples.py`,
+`docs/proof_obligations.md`, `docs/tracks/piste_e_farthest_quartets.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/tracks/README.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `README.md`, `PLANS.md`.
+
+Algorithme pressenti : scanner les deux valeurs positives `low < high`,
+construire le graphe haut, vérifier qu'il existe au moins un sommet isolé
+servant de hub bas, puis tester la bipartition du sous-graphe haut non isolé.
+Si ce graphe n'est pas biparti, retourner `False complete=True` par certificat
+négatif. Ne pas énumérer les cycles impairs.
+
+Plan de contre-exemples : tester exhaustivement tous les graphes hauts binaires
+avec un hub bas et jusqu'à 5 sommets non-hub ; verrouiller des contrôles
+bipartis qui ne doivent pas déclencher ; ajouter une famille non-cycle
+`non_bipartite_high_graph_plus_low_hub` avec triangle haut et branches.
+
+Plan subagents : deux sidecars lecture seule. Le premier vérifie la preuve et
+les préconditions exactes ; le second propose les familles de stress et
+interprète l'impact benchmark attendu.
+
+Tests à exécuter : tests candidats/générateurs/régressions ciblés, `make unit`,
+`make quick`, `make hunt-counterexamples`, `make check`, `make bench-quick`,
+`make bench-piste-f`, `make bench`, benchmarks ciblés sur
+`odd_high_cycle_plus_low_hub/star` et
+`non_bipartite_high_graph_plus_low_hub/star`.
+
+Risques : appliquer le certificat à plus de deux niveaux de distance sans
+preuve ; rejeter des graphes hauts bipartis ; croire que ce sous-cas négatif
+résout les cas `paired_farthest/mixed` ou le problème PC-tree général.
+
+Résultats observés : les subagents valident la preuve source/puits. En coupant
+au hub `h`, chaque arête haute `{v,u}` fait de `u` un mauvais témoin pour la
+paire basse `{h,v}` ; tous les voisins hauts de `v` doivent donc être du même
+côté de `v`. Orienter les arêtes hautes selon l'ordre linéaire force chaque
+sommet à être source ou puits, donc force une bipartition. Un graphe haut non
+biparti contredit cette condition.
+
+Validation observée : exhaustif local des graphes hauts avec un hub bas jusqu'à
+5 sommets non-hub, aucun désaccord oracle ; `pytest -q
+tests/test_candidate.py tests/test_generators.py
+tests/test_regression_counterexamples.py` `49 passed`; `make unit`
+`137 passed`; `make quick` `137 passed` puis `JUSTE`;
+`make hunt-counterexamples` `JUSTE`; `make check` `JUSTE`;
+`make bench-quick` `0` timeout et `0` incomplet ; `make bench-piste-f` `0`
+timeout ; `make bench` `0` timeout et `0` incomplet jusqu'à `n=100`.
+
+Résultats benchmark ciblés : `odd_high_cycle_plus_low_hub/star` et
+`non_bipartite_high_graph_plus_low_hub/star`, tailles `6,8,10,12,20,40`,
+répétitions `3`, tous `0` timeout et `0` incomplet ; à `n=40`, médianes
+respectives environ `0.00053s` et `0.00052s` via
+`candidate_non_bipartite_high_graph_low_hub_obstruction`.
+
+Décision : intégrer comme sous-cas négatif polynomial prouvé. Continuer ensuite
+vers les limites du binaire hub : graphes hauts bipartis, plus de deux niveaux
+de distance, ou liens avec les choix locaux d'un gros nœud `P`.

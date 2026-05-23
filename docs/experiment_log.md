@@ -1390,3 +1390,69 @@
 - Next action : chercher des modules/blow-ups de cycle impair avec hub bas, ou
   transformer le certificat odd-cycle en contrainte locale utilisable dans un
   PC-tree non-star.
+
+## 2026-05-23 non-bipartite high graph low-hub certificate
+
+- Date/heure : 2026-05-23 04:34:00 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : le certificat cycle haut impair avec hub bas se généralise
+  à toute matrice binaire `low/high` possédant un hub bas universel et un
+  graphe haut non biparti.
+- Changement fait : remplacement de
+  `candidate_odd_high_cycle_low_hub_obstruction` par
+  `candidate_non_bipartite_high_graph_low_hub_obstruction`; ajout de
+  `non_bipartite_high_graph_plus_low_hub`; tests de régression pour une
+  famille non-cycle ; documentation de la preuve et des limites.
+- Commande exécutée avant modification : `make quick`.
+- Résultat correction avant modification : `134 passed in 2.62s`, puis
+  `JUSTE`.
+- Plan subagents : deux sidecars. Résultat preuve : sound sous les préconditions
+  binaires `low < high`, au moins un hub bas, graphe haut non biparti. Résultat
+  benchmark : impact attendu ciblé, pas de correction pour
+  `paired_farthest/mixed`.
+- Preuve : couper l'ordre supposé cR au hub bas `h`. Pour toute arête haute
+  `{v,u}`, `u` est un mauvais témoin pour la paire basse `{h,v}`. Tous les
+  voisins hauts de `v` doivent donc être du même côté de `v`. En orientant les
+  arêtes hautes selon l'ordre linéaire, chaque sommet est source ou puits ; le
+  graphe haut devrait être biparti. Contradiction si le graphe haut est non
+  biparti.
+- Probe exhaustive : tous les graphes hauts binaires avec un hub bas et `m=1..5`
+  sommets non-hub. Résultat : `m=3` donne `1` non-biparti négatif, `m=4` donne
+  `23`, `m=5` donne `648`, aucun désaccord avec l'oracle exact ; les graphes
+  hauts bipartis restent positifs dans cette probe.
+- Commande exécutée : `pytest -q tests/test_candidate.py tests/test_generators.py tests/test_regression_counterexamples.py`.
+- Résultat correction : `49 passed`.
+- Commande exécutée : benchmark ciblé
+  `tools/pc_circular_complexity_benchmark.py --sizes 6,8,10,12,20,40 --repeats 3 --instance-kind non_bipartite_high_graph_plus_low_hub --pc-tree star`.
+- Résultat benchmark ciblé : `reports/complexity_non_bipartite_high_graph_low_hub.json`
+  écrit ; `0` timeout, `0` incomplet ; à `n=40`, médiane `0.00052s` et branche
+  `candidate_non_bipartite_high_graph_low_hub_obstruction`.
+- Commande exécutée : benchmark ciblé
+  `tools/pc_circular_complexity_benchmark.py --sizes 6,8,10,12,20,40 --repeats 3 --instance-kind odd_high_cycle_plus_low_hub --pc-tree star`.
+- Résultat benchmark ciblé : `reports/complexity_odd_high_cycle_plus_low_hub.json`
+  écrit ; `0` timeout, `0` incomplet ; les tailles `n >= 10` passent maintenant
+  par `candidate_non_bipartite_high_graph_low_hub_obstruction`.
+- Commande exécutée : `make unit`.
+- Résultat correction : `137 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `137 passed`, puis `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark rapide : `reports/complexity_report_quick.json` écrit ;
+  `0` timeout, `0` incomplet.
+- Commande exécutée : `make hunt-counterexamples`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-piste-f`.
+- Résultat benchmark ciblé Piste F : rapports écrits ; `0` timeout.
+  `paired_farthest/mixed` garde `20` incomplets à `n=16,20`.
+- Commande exécutée : `make bench`.
+- Résultat benchmark fort : `reports/complexity_report.json` écrit ; `0`
+  timeout, `0` incomplet jusqu'à `n=100`, médiane `2.0747s` à `n=100`, fit
+  polynomial empirique `p ~= 3.25`.
+- Conclusion : T034 transforme le certificat odd-cycle en certificat non-biparti
+  plus général et toujours polynomial. Cela reste un sous-cas négatif binaire,
+  pas une résolution du problème général ni des cas `paired_farthest/mixed`.
+- Next action : attaquer les graphes hauts bipartis avec hub bas, ou relier le
+  certificat bad-side source/puits aux contraintes locales d'un nœud `P`.

@@ -7,6 +7,7 @@ from pc_circular.generators import (
     four_local_non_cr_core,
     instance_by_kind,
     instance_by_kind_with_metadata,
+    non_bipartite_high_graph_plus_low_hub,
     odd_high_cycle_plus_low_hub,
     paired_farthest_matching,
     padded_five_local_non_cr,
@@ -37,6 +38,7 @@ def test_instance_by_kind_accepts_explicit_piste_f_families():
     assert validate_dissimilarity(instance_by_kind(5, kind="four_local_non_cr")) == 5
     assert validate_dissimilarity(instance_by_kind(6, kind="five_local_non_cr")) == 6
     assert validate_dissimilarity(instance_by_kind(6, kind="odd_high_cycle_plus_low_hub")) == 6
+    assert validate_dissimilarity(instance_by_kind(6, kind="non_bipartite_high_graph_plus_low_hub")) == 6
 
 
 def test_four_local_non_cr_core_is_global_negative_but_four_local_positive():
@@ -83,6 +85,17 @@ def test_odd_high_cycle_plus_low_hub_is_vertex_critical_for_small_odd_cycles():
         for subset in combinations(range(n), n - 1):
             submatrix = [[D[i][j] for j in subset] for i in subset]
             assert brute_force.solve(submatrix)["exists"]
+
+
+def test_non_bipartite_high_graph_plus_low_hub_is_large_negative_family():
+    D = non_bipartite_high_graph_plus_low_hub(9)
+
+    assert not brute_force.solve([[D[i][j] for j in range(6)] for i in range(6)])["exists"]
+    high_degree = [
+        sum(1 for j in range(9) if D[i][j] == 2)
+        for i in range(9)
+    ]
+    assert max(high_degree) > 2
 
 
 def test_instance_metadata_preserves_mixed_rng_sequence():

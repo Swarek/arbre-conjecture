@@ -4,6 +4,7 @@ import random
 from pc_circular.generators import (
     cycle_metric,
     equal_distance_instance,
+    non_bipartite_high_graph_plus_low_hub,
     odd_high_cycle_plus_low_hub,
     paired_farthest_matching,
     padded_five_local_non_cr,
@@ -258,15 +259,26 @@ def test_candidate_small_forbidden_submatrix_does_not_block_cycle_witness():
     assert is_precircular_order_cR(D, result["order"])
 
 
-def test_candidate_odd_high_cycle_low_hub_obstruction_proves_large_negative():
+def test_candidate_non_bipartite_high_graph_low_hub_obstruction_covers_odd_cycle():
     D = odd_high_cycle_plus_low_hub(10)
     result = solve(D, pc_tree=star_pc_tree(10))
 
     assert result["exists"] is False
     assert result["complete"] is True
-    assert result["solver"] == "candidate_odd_high_cycle_low_hub_obstruction"
+    assert result["solver"] == "candidate_non_bipartite_high_graph_low_hub_obstruction"
     assert result["hub_labels"] == [0]
-    assert set(result["cycle_labels"]) == set(range(1, 10))
+    assert set(result["high_graph_labels"]) == set(range(1, 10))
+
+
+def test_candidate_non_bipartite_high_graph_low_hub_obstruction_handles_branches():
+    D = non_bipartite_high_graph_plus_low_hub(12)
+    result = solve(D, pc_tree=star_pc_tree(12))
+
+    assert result["exists"] is False
+    assert result["complete"] is True
+    assert result["solver"] == "candidate_non_bipartite_high_graph_low_hub_obstruction"
+    assert result["hub_labels"] == [0]
+    assert set(result["high_graph_labels"]) == set(range(1, 12))
 
 
 def test_candidate_non_sized_quasi_orders_remain_incomplete_when_sample_misses_witness():

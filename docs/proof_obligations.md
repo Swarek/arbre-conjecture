@@ -301,29 +301,30 @@ Preuve expérimentale T016 : tests unitaires, probe `n=9..30` sur
 star/balanced/mixed avec `33` checks, et faux ami à arête basse vérifié hors
 sous-cas.
 
-### Cycle haut impair avec hub bas
+### Graphe haut non biparti avec hub bas
 
 Statut : certificat négatif prouvé pour ce sous-cas + intégré à la candidate.
 
-`candidate_odd_high_cycle_low_hub_obstruction` traite les matrices à deux
-distances positives `low < high` dont le graphe des arêtes `high` est formé
-d'un cycle impair connecté sur au moins 5 sommets et d'au moins un sommet isolé
-dans ce graphe. Un sommet isolé est donc à distance `low` de tous les sommets du
-cycle ; on l'appelle hub bas.
+`candidate_non_bipartite_high_graph_low_hub_obstruction` traite les matrices à
+deux distances positives `low < high` dont le graphe des arêtes `high` contient
+au moins une composante non bipartie et au moins un sommet isolé. Un sommet
+isolé dans le graphe haut est à distance `low` de tous les autres sommets ; on
+l'appelle hub bas.
 
 Preuve :
 
-- fixer un hub bas `h` et un sommet `v` du cycle haut ;
+- fixer un hub bas `h` et couper tout ordre circulaire supposé cR en `h` ;
+- fixer une arête haute `{v,u}` du graphe haut ;
 - la paire `{h,v}` a distance `low` ;
-- les deux voisins de `v` dans le cycle haut sont des témoins mauvais pour
-  `{h,v}`, car `max(d(h,u), d(u,v)) = high > low` ;
-- dans tout ordre cR, ces deux voisins doivent être du même côté de la corde
-  `{h,v}` ;
-- en retirant `h` de l'ordre circulaire, cela signifie que chaque sommet du
-  cycle n'est pas situé entre ses deux voisins de cycle dans l'ordre linéaire ;
-- en orientant chaque arête du cycle selon cet ordre linéaire, chaque sommet du
-  cycle doit être source ou puits ;
-- une alternance source/puits est impossible sur un cycle impair.
+- `u` est un témoin mauvais pour `{h,v}`, car
+  `max(d(h,u), d(u,v)) = high > low` ;
+- dans tout ordre cR, tous les voisins hauts de `v` doivent donc être du même
+  côté de `v` dans l'ordre linéaire obtenu après la coupure en `h` ;
+- orienter chaque arête haute selon cet ordre linéaire force chaque sommet du
+  graphe haut à être source ou puits ;
+- chaque arête va d'une source vers un puits, donc le graphe haut devrait être
+  biparti ;
+- si le graphe haut est non biparti, contradiction.
 
 Ce que cela couvre :
 
@@ -338,10 +339,12 @@ Ce que cela couvre :
 
 Limites :
 
-- le certificat exige exactement deux niveaux de distance positive et un graphe
-  `high` composé d'un cycle impair connecté plus hubs isolés ;
-- il ne traite pas encore les cycles impairs avec modules, perturbations, ou
-  plusieurs composantes non triviales ;
+- le certificat exige exactement deux niveaux de distance positive dans
+  l'implémentation courante ;
+- il ne traite pas les matrices à plus de deux niveaux, ni les encodages où le
+  niveau bas hors diagonale vaut `0` ;
+- il ne conclut rien quand le graphe haut est biparti, même si l'instance peut
+  être négative pour une autre raison ;
 - il est négatif seulement et ne fournit aucun témoin positif.
 
 ### Témoins positifs échantillonnés

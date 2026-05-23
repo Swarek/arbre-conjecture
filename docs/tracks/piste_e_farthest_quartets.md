@@ -160,19 +160,29 @@ une caractérisation globale.
 Artefacts : `five_local_non_cr_core`, `padded_five_local_non_cr`, tests de
 régression `five_local_positive_global_negative`.
 
-## Cycle haut impair plus hub bas
+## Graphe haut non biparti plus hub bas
 
-Statut : sous-cas négatif structurel extrait de l'obstruction 5-locale.
+Statut : sous-cas négatif structurel prouvé, généralisant le cycle impair de
+T033.
 
-Dans une matrice binaire `low/high`, si le graphe des arêtes `high` est un cycle
-impair et qu'il existe un hub à distance `low` de tout le cycle, alors aucun
-ordre cR n'existe. Pour chaque sommet `v` du cycle, les deux voisins de `v`
-sont deux mauvais témoins pour la paire `{hub,v}` ; ils doivent donc être du
-même côté de `v` dans l'ordre linéaire obtenu en coupant au hub. Cela force une
-alternance source/puits sur le cycle, impossible quand le cycle est impair.
+Dans une matrice binaire `low/high`, si le graphe des arêtes `high` est non
+biparti et qu'il existe un hub à distance `low` de tous les autres sommets,
+alors aucun ordre cR n'existe. En coupant l'ordre circulaire au hub, chaque
+arête haute `{v,u}` fait de `u` un mauvais témoin pour la paire basse
+`{hub,v}`. Donc tous les voisins hauts de chaque sommet `v` doivent être du
+même côté de `v` dans l'ordre linéaire. En orientant chaque arête haute selon
+cet ordre linéaire, chaque sommet devient source ou puits ; cela impose une
+2-coloration source/puits du graphe haut. Un graphe haut non biparti contredit
+cette contrainte.
+
+Preuve expérimentale : énumération exhaustive de tous les graphes hauts
+binaires avec un hub bas et `1..5` sommets non-hub ; aucun désaccord avec
+l'oracle exact. Les graphes hauts bipartis testés servent de contrôles négatifs
+pour le certificat.
 
 Artefacts : `odd_high_cycle_plus_low_hub`,
-`candidate_odd_high_cycle_low_hub_obstruction`.
+`non_bipartite_high_graph_plus_low_hub`,
+`candidate_non_bipartite_high_graph_low_hub_obstruction`.
 
 ## Prochaine action
 

@@ -395,20 +395,27 @@ Résultat T033 :
   `n > 8`, les rejets passent par
   `candidate_small_forbidden_submatrix_obstruction` avec obstruction d'ordre 6.
 
-Résultat structurel T033 :
+Résultat structurel T033/T034 :
 
 - le noyau 6-points est une relabellisation d'un cycle haut impair `C5` plus un
   hub bas universel ;
 - le générateur `odd_high_cycle_plus_low_hub(n)` encode cette famille pour
   `n-1` impair ;
-- la candidate ajoute
-  `candidate_odd_high_cycle_low_hub_obstruction`, qui rejette en temps
-  polynomial les matrices binaires dont le graphe des arêtes hautes est un cycle
-  impair connecté plus au moins un hub isolé ;
+- T034 généralise ce certificat à tout graphe haut non biparti avec au moins un
+  hub bas universel ;
+- la candidate utilise désormais
+  `candidate_non_bipartite_high_graph_low_hub_obstruction`, qui rejette en temps
+  polynomial les matrices binaires dont le graphe des arêtes hautes est non
+  biparti et possède au moins un hub isolé ;
+- le générateur `non_bipartite_high_graph_plus_low_hub(n)` ajoute un triangle
+  haut avec branches hautes comme famille non-cycle ;
 - benchmark ciblé `odd_high_cycle_plus_low_hub/star`, tailles
   `6,8,10,12,20,40`, répétitions `3` : `0` timeout, `0` incomplet ; les tailles
-  `n >= 10` passent maintenant par le certificat structurel au lieu du
-  placeholder.
+  `n >= 10` passent maintenant par le certificat non-biparti au lieu du
+  placeholder ;
+- benchmark ciblé `non_bipartite_high_graph_plus_low_hub/star`, tailles
+  `6,8,10,12,20,40`, répétitions `3` : `0` timeout, `0` incomplet ; `n=40`
+  médiane `0.00052s`.
 
 Limite ajoutée :
 
