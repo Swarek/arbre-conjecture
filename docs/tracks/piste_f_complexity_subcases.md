@@ -1015,3 +1015,31 @@ binaires induites par deux petits nœuds `P`, en gardant visibles les contrainte
 parasites dues aux distances globales. Si toutes les relations observées restent
 bijunctives ou fortement structurées, cela renforce la piste algorithmique ; si
 une relation dure apparaît, elle nourrit une réduction NP-hard plus sérieuse.
+
+## Résultat T058 - Signal largeur/2-SAT par quartets
+
+Statut : mesure de complexité empirique hors candidate.
+
+T058 ajoute une mesure directe de la portée effective des contraintes de
+quartets. Sur `make bench-csp-quick`, tous les quartets profilés ont une portée
+effective d'acceptation au plus binaire :
+
+- `quartet_scope_quartets_profiled=2688` ;
+- support structurel conservateur taille `3` pour tous les quartets ;
+- portée effective type taille `2` pour tous les quartets ;
+- portée effective acceptation taille `0` pour `1536` quartets et taille `2`
+  pour `1152` quartets ;
+- `quartet_scope_projection_mismatches=0` ;
+- `quartet_scope_two_sat_candidate_quartet_count=2688` ;
+- `quartet_scope_non_boolean_effective_acceptance_scope_count=0`.
+
+Interprétation : pour les arbres balanced/mixed binaires de la gate, la relation
+de quartet observée tombe dans le sous-cas 2-SAT potentiel. Ce n'est pas une
+preuve du problème général : les probes fanout `3` gardent une portée effective
+`<=2` mais introduisent des domaines non booléens (`630` quartets non booléens
+sur `180` cas stress), ce qui renvoie vers le catalogue de relations binaires.
+
+Prochaine mesure complexité : construire le graphe primal des relations
+effectives et calculer une borne de treewidth. Sans cette largeur, le fait que
+les contraintes soient binaires ne suffit pas à garantir un algorithme
+polynomial efficace sur grands `P`.

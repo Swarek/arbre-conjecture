@@ -2853,3 +2853,66 @@
 - Next action : commencer par le rapport `quartet_pc_scope_report(D, T)`, car il
   sert de base commune au 2-SAT, à la DP treewidth, au relation catalog et aux
   stress-tests de signatures ouvertes.
+
+## 2026-05-23 quartet PC scope report
+
+- Date/heure : 2026-05-23 12:59:06 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : une formulation CSP exacte par quartets est possible si le
+  type ou au moins l'acceptation cR d'un quartet dépend d'un petit scope de
+  variables PC-tree. Il faut mesurer la portée effective, pas supposer que le
+  support structurel `quartet_support_paths` est minimal.
+- Changement fait : ajout de `quartet_type`, `quartet_allowed_types` et
+  `quartet_pc_scope_report`, plus câblage dans
+  `tools/pc_csp_internal_benchmark.py`. Aucun changement dans `candidate.py`.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre au commit `ff62fb1`; `238 passed`, puis `JUSTE`.
+- Plan subagents : quatre sidecars lecture seule. Résultats : Piste C précise
+  l'API et recommande de ne pas promouvoir `<=2` en théorème ; Piste A/D ne
+  trouve pas de contre-exemple petit mais souligne que `quartet_support_paths`
+  est conservateur ; Piste F recommande les métriques 2-SAT/treewidth/relation
+  catalog ; Piste E fournit les stress tests nested/dense, égalités et binaire
+  `n=5`.
+- Commande exécutée :
+  `pytest -q tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`.
+- Résultat correction ciblée : `61 passed`.
+- Tests ajoutés : types de quartet contre cR direct à 4 points, equal-distance,
+  support nested/dense, équivalence des types locaux avec cR complet sur
+  frontiers représentées, et exhaustif binaire `n=5` pour les atoms bad-side.
+- Commande exécutée : `make bench-csp-quick`.
+- Résultat benchmark interne : `reports/csp_internal_benchmark_quick.json`
+  écrit ; `192` lignes, `0` mismatch. Métriques T058 :
+  `quartet_scope_quartets_profiled=2688`,
+  `quartet_scope_support_assignments_seen=21504`,
+  `quartet_scope_projection_mismatches=0`,
+  `quartet_scope_support_scope_gt_2_count=2688`,
+  `quartet_scope_effective_type_scope_gt_2_count=0`,
+  `quartet_scope_effective_acceptance_scope_gt_2_count=0`,
+  `quartet_scope_two_sat_candidate_quartet_count=2688`,
+  histogrammes support `{3: 2688}`, type `{2: 2688}`, acceptation
+  `{0: 1536, 2: 1152}`.
+- Commande exécutée : probe stress
+  `n=4..8`, fanout `2/3`, arbres `P/C/mixed`, familles
+  `random/cycle/equal/non_strict/paired_farthest/permuted_cycle`.
+- Résultat probe stress : `180` cas, `4536` quartets,
+  `0` mismatch de projection, `0` portée effective type/acceptation `>2`,
+  `630` quartets à portée effective d'acceptation non booléenne sur les arbres
+  `P` fanout `3`.
+- Commande exécutée : `make quick`.
+- Résultat correction : `245 passed`, puis `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `8` tailles, `40` runs réussis, `0` timeout et `0` incomplet. `candidate.py`
+  n'a pas été modifié par T058.
+- Conclusion : T058 donne un signal fort pour poursuivre la formulation CSP par
+  quartets. La portée effective binaire observée rend le sous-cas 2-SAT
+  plausible sur les arbres binaires, mais les domaines non booléens des nœuds
+  `P` imposent une piste relation-catalog/treewidth avant toute revendication
+  générale.
+- Next action : construire les relations effectives par scope, le graphe primal
+  et une première classification 2-SAT / treewidth / relation non booléenne.

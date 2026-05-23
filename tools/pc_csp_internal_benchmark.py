@@ -33,6 +33,7 @@ from pc_circular.solvers.sat_like_experiments import (  # noqa: E402
     compile_cr_nogoods,
     component_mask_quotient_context_collision_profile,
     component_mask_open_boundary_profile,
+    quartet_pc_scope_report,
     solve_pruned_nogood_csp_from_compilation,
 )
 
@@ -156,6 +157,15 @@ def _aggregate_open_boundary_states(rows: Sequence[dict]) -> dict:
     return dict(sorted(aggregate.items()))
 
 
+def _sum_histograms(rows: Sequence[dict], field: str) -> dict[str, int]:
+    result: dict[str, int] = {}
+    for row in rows:
+        for key, value in row[field].items():
+            text_key = str(key)
+            result[text_key] = result.get(text_key, 0) + value
+    return dict(sorted(result.items(), key=lambda item: int(item[0])))
+
+
 def run_benchmark(
     *,
     sizes: Sequence[int],
@@ -261,6 +271,14 @@ def run_benchmark(
                     )
                     open_boundary_seconds = time.perf_counter() - open_boundary_start
 
+                    quartet_scope_start = time.perf_counter()
+                    quartet_scope_profile = quartet_pc_scope_report(
+                        D,
+                        T,
+                        max_p_degree=max_p_degree,
+                    )
+                    quartet_scope_seconds = time.perf_counter() - quartet_scope_start
+
                     first_hit_solve_start = time.perf_counter()
                     first_hit_solve_result = solve_pruned_nogood_csp_from_compilation(
                         D,
@@ -311,6 +329,7 @@ def run_benchmark(
                     profile_counts = support_outcome_profile["counts"]
                     context_collision_counts = context_collision_profile["counts"]
                     open_boundary_counts = open_boundary_profile["counts"]
+                    quartet_scope_counts = quartet_scope_profile["counts"]
                     signatures = _signature_set(compilation)
                     support_signatures = _signature_set(support_compilation)
                     grouped_signatures = _signature_set(grouped_compilation)
@@ -343,6 +362,7 @@ def run_benchmark(
                             "support_outcome_profile_seconds": profile_seconds,
                             "context_collision_profile_seconds": context_collision_seconds,
                             "open_boundary_profile_seconds": open_boundary_seconds,
+                            "quartet_scope_report_seconds": quartet_scope_seconds,
                             "first_hit_solve_seconds": first_hit_solve_seconds,
                             "direct_seconds": direct_seconds,
                             "atoms": len(compilation["atoms"]),
@@ -606,6 +626,65 @@ def run_benchmark(
                                 "max_context_support_product"
                             ],
                             "open_boundary_states": open_boundary_profile["states"],
+                            "quartet_scope_complete": quartet_scope_profile["complete"],
+                            "quartet_scope_quartet_count": quartet_scope_counts["quartet_count"],
+                            "quartet_scope_quartets_profiled": quartet_scope_counts[
+                                "quartets_profiled"
+                            ],
+                            "quartet_scope_support_assignments_seen": quartet_scope_counts[
+                                "support_assignments_seen"
+                            ],
+                            "quartet_scope_support_scope_gt_2_count": quartet_scope_counts[
+                                "support_scope_gt_2_count"
+                            ],
+                            "quartet_scope_effective_type_scope_gt_2_count": (
+                                quartet_scope_counts["effective_type_scope_gt_2_count"]
+                            ),
+                            "quartet_scope_effective_acceptance_scope_gt_2_count": (
+                                quartet_scope_counts["effective_acceptance_scope_gt_2_count"]
+                            ),
+                            "quartet_scope_two_sat_candidate_quartet_count": (
+                                quartet_scope_counts["two_sat_candidate_quartet_count"]
+                            ),
+                            "quartet_scope_non_boolean_effective_acceptance_scope_count": (
+                                quartet_scope_counts["non_boolean_effective_acceptance_scope_count"]
+                            ),
+                            "quartet_scope_projection_mismatch_count": quartet_scope_counts[
+                                "projection_mismatch_count"
+                            ],
+                            "quartet_scope_allowed_type_total": quartet_scope_counts[
+                                "allowed_type_total"
+                            ],
+                            "quartet_scope_realisable_type_total": quartet_scope_counts[
+                                "realisable_type_total"
+                            ],
+                            "quartet_scope_accepted_signature_total": quartet_scope_counts[
+                                "accepted_signature_total"
+                            ],
+                            "quartet_scope_rejected_signature_total": quartet_scope_counts[
+                                "rejected_signature_total"
+                            ],
+                            "quartet_scope_max_support_size": quartet_scope_counts[
+                                "max_support_size"
+                            ],
+                            "quartet_scope_max_effective_type_scope_size": quartet_scope_counts[
+                                "max_effective_type_scope_size"
+                            ],
+                            "quartet_scope_max_effective_acceptance_scope_size": (
+                                quartet_scope_counts["max_effective_acceptance_scope_size"]
+                            ),
+                            "quartet_scope_max_support_domain_product": quartet_scope_counts[
+                                "max_support_domain_product"
+                            ],
+                            "quartet_scope_support_size_histogram": quartet_scope_counts[
+                                "support_size_histogram"
+                            ],
+                            "quartet_scope_effective_type_scope_size_histogram": (
+                                quartet_scope_counts["effective_type_scope_size_histogram"]
+                            ),
+                            "quartet_scope_effective_acceptance_scope_size_histogram": (
+                                quartet_scope_counts["effective_acceptance_scope_size_histogram"]
+                            ),
                             "profile_ambiguous_no_hit_assignments": profile_counts[
                                 "ambiguous_no_hit_assignments"
                             ],
@@ -699,6 +778,9 @@ def run_benchmark(
             ),
             "median_open_boundary_profile_seconds": _median(
                 [row["open_boundary_profile_seconds"] for row in supported_rows]
+            ),
+            "median_quartet_scope_report_seconds": _median(
+                [row["quartet_scope_report_seconds"] for row in supported_rows]
             ),
             "median_solve_seconds": _median([row["solve_seconds"] for row in supported_rows]),
             "median_support_solve_seconds": _median(
@@ -904,6 +986,54 @@ def run_benchmark(
                 if sum(row["open_boundary_local_assignments_seen"] for row in supported_rows)
                 else 0.0
             ),
+            "quartet_scope_incomplete_rows": sum(
+                1 for row in supported_rows if not row["quartet_scope_complete"]
+            ),
+            "quartet_scope_quartets_profiled": sum(
+                row["quartet_scope_quartets_profiled"] for row in supported_rows
+            ),
+            "quartet_scope_support_assignments_seen": sum(
+                row["quartet_scope_support_assignments_seen"] for row in supported_rows
+            ),
+            "quartet_scope_support_scope_gt_2_count": sum(
+                row["quartet_scope_support_scope_gt_2_count"] for row in supported_rows
+            ),
+            "quartet_scope_effective_type_scope_gt_2_count": sum(
+                row["quartet_scope_effective_type_scope_gt_2_count"] for row in supported_rows
+            ),
+            "quartet_scope_effective_acceptance_scope_gt_2_count": sum(
+                row["quartet_scope_effective_acceptance_scope_gt_2_count"]
+                for row in supported_rows
+            ),
+            "quartet_scope_two_sat_candidate_quartet_count": sum(
+                row["quartet_scope_two_sat_candidate_quartet_count"] for row in supported_rows
+            ),
+            "quartet_scope_non_boolean_effective_acceptance_scope_count": sum(
+                row["quartet_scope_non_boolean_effective_acceptance_scope_count"]
+                for row in supported_rows
+            ),
+            "quartet_scope_projection_mismatches": sum(
+                row["quartet_scope_projection_mismatch_count"] for row in supported_rows
+            ),
+            "quartet_scope_accepted_signature_total": sum(
+                row["quartet_scope_accepted_signature_total"] for row in supported_rows
+            ),
+            "quartet_scope_rejected_signature_total": sum(
+                row["quartet_scope_rejected_signature_total"] for row in supported_rows
+            ),
+            "quartet_scope_max_support_domain_product": max(
+                [row["quartet_scope_max_support_domain_product"] for row in supported_rows],
+                default=0,
+            ),
+            "quartet_scope_support_size_histogram": _sum_histograms(
+                supported_rows, "quartet_scope_support_size_histogram"
+            ),
+            "quartet_scope_effective_type_scope_size_histogram": _sum_histograms(
+                supported_rows, "quartet_scope_effective_type_scope_size_histogram"
+            ),
+            "quartet_scope_effective_acceptance_scope_size_histogram": _sum_histograms(
+                supported_rows, "quartet_scope_effective_acceptance_scope_size_histogram"
+            ),
             "profile_pair_side_split_work_ratio": (
                 sum(row["profile_pair_side_split_checks"] for row in supported_rows)
                 / sum(row["profile_classification_atom_checks"] for row in supported_rows)
@@ -1046,6 +1176,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         or report["summary"]["first_hit_signature_mismatches"]
         or report["summary"]["grouped_first_hit_signature_mismatches"]
         or report["summary"]["profile_pair_side_split_mismatches"]
+        or report["summary"]["quartet_scope_projection_mismatches"]
         else 0
     )
 

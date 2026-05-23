@@ -453,6 +453,16 @@ Dernier commit green avant T009 : `07120e4`.
   mélangées mesurés tout en gardant un ratio `0.4291` sur la gate CSP rapide ;
   `local_boundary_response` est plus compressé (`0.2625`) mais reste seulement
   one-hop et non prouvé récursif. Aucun changement dans `candidate.py`.
+- Checkpoint T058 courant : commit contenant le diagnostic de portée PC-tree par
+  quartets hors candidate. Validation observée :
+  `tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`
+  (`61 passed`), `make bench-csp-quick` (`192` lignes, `0` mismatch,
+  `quartet_scope_projection_mismatches=0`), `make quick` (`245 passed`, puis
+  `JUSTE`), `make check` (`JUSTE`) et `make bench-quick` (`40/40` runs, `0`
+  timeout, `0` incomplet). Résultat observé : sur la gate CSP rapide, les `2688`
+  quartets ont un support structurel conservateur de taille `3`, mais une
+  portée effective de type toujours `2` et une portée effective d'acceptation
+  `0` ou `2`; aucun changement dans `candidate.py`.
 
 ## Rollback
 

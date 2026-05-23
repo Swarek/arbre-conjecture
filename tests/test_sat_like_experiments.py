@@ -4,6 +4,7 @@ import random
 from pc_circular.generators import (
     cycle_metric,
     equal_distance_instance,
+    non_strict_large_farthest_instance,
     quasi_circular_not_circular_four_point,
     random_dissimilarity,
 )
@@ -43,7 +44,10 @@ from pc_circular.solvers.sat_like_experiments import (
     iter_local_assignments,
     prop45_nogood_frontier_report,
     prop45_nogood_frontier_search,
+    quartet_allowed_types,
+    quartet_pc_scope_report,
     quartet_support_paths,
+    quartet_type,
     solve_compiled_bad_side_nogood_csp,
     solve_compiled_nogood_csp,
     solve_pruned_bad_side_nogood_csp,
@@ -258,6 +262,152 @@ def test_project_atom_order_from_support_assignment_matches_full_assignment_proj
         full_projection = tuple(label for label in frontier_from_assignment(T, assignment) if label in atom)
 
         assert projected == full_projection
+
+
+def test_quartet_allowed_types_match_direct_four_point_cr():
+    D = quasi_circular_not_circular_four_point()
+    allowed = quartet_allowed_types(D, (0, 1, 2, 3))
+
+    assert allowed == ((0, 2, 1, 3),)
+    for order in all_circular_orders(4):
+        type_order = quartet_type(order)
+        assert (type_order in allowed) == is_precircular_order_cR(D, order)
+
+
+def test_quartet_allowed_types_keep_equal_distance_degeneracy():
+    D = equal_distance_instance(4)
+
+    assert quartet_allowed_types(D, (0, 1, 2, 3)) == tuple(
+        sorted(quartet_type(order) for order in all_circular_orders(4))
+    )
+
+
+def test_quartet_pc_scope_report_finds_effective_binary_scopes():
+    D = cycle_metric(5)
+    T = balanced_pc_tree(5, kind="mixed")
+    report = quartet_pc_scope_report(D, T, max_p_degree=3)
+
+    assert report["complete"]
+    assert report["counts"]["quartet_count"] == 5
+    assert report["counts"]["quartets_profiled"] == 5
+    assert report["counts"]["full_assignments_seen"] == 16
+    assert report["counts"]["projection_mismatch_count"] == 0
+    assert report["counts"]["support_size_histogram"] == {3: 5}
+    assert report["counts"]["support_scope_gt_2_count"] == 5
+    assert report["counts"]["effective_type_scope_size_histogram"] == {2: 5}
+    assert report["counts"]["effective_acceptance_scope_size_histogram"] == {2: 5}
+    assert report["counts"]["effective_type_scope_gt_2_count"] == 0
+    assert report["counts"]["effective_acceptance_scope_gt_2_count"] == 0
+    assert report["counts"]["two_sat_candidate_quartet_count"] == 5
+    assert report["counts"]["non_boolean_effective_acceptance_scope_count"] == 0
+    assert report["counts"]["accepted_signature_total"] == 20
+    assert report["counts"]["rejected_signature_total"] == 20
+
+    first = report["quartets"][0]
+    assert first["quartet"] == (0, 1, 2, 3)
+    assert first["support_size"] == 3
+    assert len(first["effective_type_scope"]) == 2
+    assert len(first["effective_acceptance_scope"]) == 2
+    assert first["allowed_types"] == ((0, 1, 2, 3),)
+
+
+def test_quartet_pc_scope_report_limit_and_unsupported_are_visible():
+    D = cycle_metric(5)
+    limited = quartet_pc_scope_report(D, balanced_pc_tree(5, kind="mixed"), max_p_degree=3, limit=1)
+    unsupported = quartet_pc_scope_report(D, star_pc_tree(5), max_p_degree=3)
+
+    assert not limited["complete"]
+    assert limited["counts"]["quartet_count"] == 5
+    assert limited["counts"]["quartets_profiled"] == 1
+    assert limited["counts"]["projection_mismatch_count"] == 0
+
+    assert not unsupported["complete"]
+    assert unsupported["encoding"]["unsupported"]
+    assert unsupported["quartets"] == []
+    assert unsupported["counts"]["quartets_profiled"] == 0
+
+
+def test_quartet_pc_scope_report_stress_nested_and_dense_blocks():
+    nested6 = c_node(
+        [
+            p_node([p_node([leaf(0), leaf(1)]), leaf(2)]),
+            p_node([leaf(3), leaf(4)]),
+            leaf(5),
+        ]
+    )
+    triple_blocks9 = c_node(
+        [
+            p_node([leaf(0), leaf(1), leaf(2)]),
+            p_node([leaf(3), leaf(4), leaf(5)]),
+            p_node([leaf(6), leaf(7), leaf(8)]),
+        ]
+    )
+
+    balanced = quartet_pc_scope_report(cycle_metric(6), balanced_pc_tree(6, kind="mixed"))
+    nested = quartet_pc_scope_report(cycle_metric(6), nested6)
+    dense = quartet_pc_scope_report(cycle_metric(9), triple_blocks9)
+
+    assert balanced["counts"]["projection_mismatch_count"] == 0
+    assert balanced["counts"]["support_size_histogram"] == {3: 15}
+    assert balanced["counts"]["effective_type_scope_gt_2_count"] == 0
+    assert balanced["counts"]["effective_acceptance_scope_gt_2_count"] == 0
+
+    assert nested["counts"]["projection_mismatch_count"] == 0
+    assert nested["counts"]["support_size_histogram"] == {2: 9, 3: 6}
+    assert nested["counts"]["effective_type_scope_gt_2_count"] == 0
+    assert nested["counts"]["effective_acceptance_scope_gt_2_count"] == 0
+
+    assert dense["counts"]["projection_mismatch_count"] == 0
+    assert dense["counts"]["support_size_histogram"] == {2: 99, 3: 27}
+    assert dense["counts"]["effective_type_scope_size_histogram"] == {1: 18, 2: 108}
+    assert dense["counts"]["effective_acceptance_scope_gt_2_count"] == 0
+
+
+def test_quartet_allowed_types_match_direct_full_orders_on_seeded_frontiers():
+    nested6 = c_node(
+        [
+            p_node([p_node([leaf(0), leaf(1)]), leaf(2)]),
+            p_node([leaf(3), leaf(4)]),
+            leaf(5),
+        ]
+    )
+    instances = [
+        equal_distance_instance(6),
+        non_strict_large_farthest_instance(6),
+        random_dissimilarity(6, values=(1, 1, 2, 2, 3), rng=random.Random(20260530)),
+        random_dissimilarity(6, values=(1, 1, 2, 2, 3), rng=random.Random(20260534)),
+        random_dissimilarity(6, values=(1, 1, 2, 2, 3), rng=random.Random(20260544)),
+    ]
+    trees = [balanced_pc_tree(6, kind="mixed"), nested6]
+
+    for D in instances:
+        for T in trees:
+            for order in enumerate_frontiers(T, canonical=True):
+                local_ok = all(
+                    quartet_type(tuple(label for label in order if label in quartet))
+                    in quartet_allowed_types(D, quartet)
+                    for quartet in itertools.combinations(range(6), 4)
+                )
+                assert local_ok is is_precircular_order_cR(D, order)
+
+
+def test_bad_side_atoms_exhaustive_binary_n5_pc_frontiers():
+    trees = [
+        balanced_pc_tree(5, kind="mixed"),
+        c_node([p_node([leaf(0), leaf(1)]), p_node([leaf(2), leaf(3)]), leaf(4)]),
+    ]
+    pairs = list(itertools.combinations(range(5), 2))
+
+    for mask in range(1 << len(pairs)):
+        D = [[0 for _ in range(5)] for _ in range(5)]
+        for bit, (i, j) in enumerate(pairs):
+            value = 2 if (mask >> bit) & 1 else 1
+            D[i][j] = D[j][i] = value
+        atoms = forbidden_bad_side_atoms(D)
+        for T in trees:
+            for order in enumerate_frontiers(T, canonical=True):
+                via_bad_side = not any(_cyclic_atom_occurs(order, atom_info["atom"]) for atom_info in atoms)
+                assert via_bad_side is is_precircular_order_cR(D, order)
 
 
 def test_compiled_cr_nogoods_reject_wrapping_violation():

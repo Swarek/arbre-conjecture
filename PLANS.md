@@ -3695,3 +3695,106 @@ pour expliciter que T057 reste une piste parmi cinq.
 Décision : prochaine itération recommandée hors candidate : commencer par le CSP
 exact de quartets et le test automatique de portée `<= 2`, car il structure à la
 fois le 2-SAT, la treewidth-DP, le relation catalog et les collisions T057.
+
+## ExecPlan 2026-05-23 - quartet PC scope report
+
+But : construire le premier diagnostic exact de la formulation CSP par quartets
+issue de la revue externe, sans modifier `candidate.py`.
+
+Hypothèse : dans le scaffold PC-tree actuel, le type circulaire induit par un
+quartet peut être expliqué par un petit scope de variables locales. Le diagnostic
+doit mesurer cette portée, les types autorisés par `D`, les tables locales
+acceptées/rejetées, et les désaccords éventuels avec le type observé sur les
+frontiers complètes énumérées.
+
+Fichiers visés :
+`src/pc_circular/solvers/sat_like_experiments.py`,
+`tests/test_sat_like_experiments.py`, éventuellement
+`tools/pc_csp_internal_benchmark.py`, `tests/test_csp_internal_benchmark.py`,
+`docs/tracks/piste_c_sat_csp.md`, `docs/tracks/piste_f_complexity_subcases.md`,
+`docs/proof_obligations.md`, `docs/experiment_log.md`,
+`docs/checkpoints.md`, `docs/tracks/README.md`, `PLANS.md`.
+
+Algorithme pressenti : ajouter `quartet_allowed_types(D, quartet)` et
+`quartet_pc_scope_report(D, pc_tree, max_p_degree=3, limit=None)`. Pour chaque
+quartet `Q`, énumérer les affectations locales supportées, projeter les
+frontiers sur `Q`, convertir chaque projection en un type circulaire canonique,
+puis comparer les types réalisables par le support local avec ceux observés par
+les affectations complètes. Le rapport doit compter la taille du scope
+`quartet_support_paths(T, Q)`, les tables acceptées par cR, les quartets de
+portée `0/1/2/>2`, les scopes non booléens, et les éventuels mismatches.
+
+Plan de contre-exemples : chercher des quartets dont `quartet_support_paths`
+sous-estime les variables nécessaires, des cas nested split où deux variables ne
+suffisent pas, et des matrices non strictes où les types autorisés par `D`
+diffèrent de `is_precircular_order_cR` sur la frontier complète. Tout mismatch
+doit devenir une régression durable.
+
+Plan subagents : quatre sidecars lecture seule sont lancés : Piste C API et
+invariants, Piste A/D contre-exemples à la portée `<=2`, Piste F métriques
+treewidth/2-SAT/relation catalog, Piste E contre-exemples bad-side/non stricts.
+L'agent principal intègre seulement les éléments vérifiés.
+
+Tests à exécuter : tests ciblés `tests/test_sat_like_experiments.py`, si le
+benchmark CSP est câblé `tests/test_csp_internal_benchmark.py`, puis
+`make bench-csp-quick`, `make quick`, `make check`, `make bench-quick`.
+
+Risques : le lemme `<=2` peut être faux sur le scaffold enraciné ; un rapport
+qui énumère les affectations complètes n'est pas encore un solveur compact ;
+les types de quartets doivent être comparés modulo rotation/renversement sans
+perdre les cas non stricts ; les grands `P` doivent rester `unsupported` plutôt
+que produire un rejet.
+
+Résultats observés : ajout de `quartet_type`, `quartet_allowed_types` et
+`quartet_pc_scope_report` dans `sat_like_experiments.py`, hors `candidate.py`.
+Le rapport sépare :
+
+- le support structurel conservateur `quartet_support_paths(T, Q)` ;
+- la portée effective minimale qui détermine le type circulaire du quartet ;
+- la portée effective minimale qui détermine l'acceptation cR du quartet ;
+- les mismatches entre projection support-local et frontiers complètes.
+
+Tests ciblés
+`tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py` :
+`61 passed`. Les tests ajoutés couvrent : types autorisés contre cR direct à
+4 points, dégénérescence equal-distance, limites/unsupported, nested splits,
+blocs denses à 9 feuilles, équivalence "tous les types locaux autorisés" vs
+`is_precircular_order_cR` sur frontiers représentées, et exhaustif binaire
+`n=5` pour les atoms bad-side sur deux PC-trees.
+
+`make bench-csp-quick` : `192` lignes supportées, `0` mismatch. Métriques T058 :
+`quartet_scope_quartets_profiled=2688`,
+`quartet_scope_support_assignments_seen=21504`,
+`quartet_scope_projection_mismatches=0`,
+`quartet_scope_support_scope_gt_2_count=2688`,
+`quartet_scope_effective_type_scope_gt_2_count=0`,
+`quartet_scope_effective_acceptance_scope_gt_2_count=0`,
+`quartet_scope_two_sat_candidate_quartet_count=2688`,
+`quartet_scope_non_boolean_effective_acceptance_scope_count=0`.
+Histogrammes : support structurel `{3: 2688}`, portée effective type
+`{2: 2688}`, portée effective acceptation `{0: 1536, 2: 1152}`.
+
+Probe stress hors rapport, `n=4..8`, fanout `2/3`, arbres `P/C/mixed`,
+familles `random/cycle/equal/non_strict/paired_farthest/permuted_cycle` :
+`180` cas, `4536` quartets, `0` mismatch de projection, `0` portée effective
+type/acceptation `>2`. Les arbres `P` de fanout `3` introduisent
+`630` quartets à portée effective d'acceptation non booléenne ; ils alimentent
+la future piste relation-catalog plutôt que le sous-cas 2-SAT.
+
+Sidecars : Piste C recommande de garder un cross-check cR direct et de ne pas
+promouvoir `<=2` en théorème ; Piste A/D confirme que
+`quartet_support_paths` est conservateur et que la portée effective observée
+reste `<=2` sur ses probes ; Piste F propose les métriques treewidth/2-SAT ;
+Piste E recommande les stress nested/dense, equal-distance et binaire `n=5`,
+ajoutés aux tests.
+
+Gates finales : `make quick` (`245 passed`, puis `JUSTE`), `make check`
+(`JUSTE`), `make bench-quick` (`8` tailles, `40/40` runs sans timeout ni
+incomplet). `candidate.py` n'a pas été modifié.
+
+Décision : continuer Piste C, mais changer le prochain objet de "portée de
+quartet" à "CSP exact par relations". T058 soutient expérimentalement le pivot
+quartets : la projection support-local est exacte sur les probes, et la portée
+effective observée est binaire. La suite doit construire les relations par
+scope, le graphe primal et distinguer clairement sous-cas 2-SAT, treewidth et
+relations non booléennes de nœuds `P`.

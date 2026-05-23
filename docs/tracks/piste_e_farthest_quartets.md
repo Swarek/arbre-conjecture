@@ -359,6 +359,14 @@ Intérêt pour la suite : cette formulation donne des contraintes exactes de
 quartets `a,y,c,t` à interdire, et devient la source commune du CSP exact, du
 catalogue de relations binaires et des tests de collision DP.
 
+Complément T058 : `quartet_allowed_types` calcule les types circulaires cR
+autorisés d'un quartet par vérification directe des quatre rotations cR. Les
+tests ajoutés verrouillent l'égalité avec `is_precircular_order_cR` sur `n=4`,
+la dégénérescence equal-distance, les frontiers représentées de plusieurs arbres
+`n=6`, et un exhaustif binaire `n=5` où les atoms bad-side coïncident avec le
+test cR direct sur deux PC-trees. Cette couverture protège surtout les cas non
+stricts et égalités avant toute réduction 2-SAT.
+
 ## Prochaine action
 
 Utiliser les témoins `find_precircular_cR_violation` comme source principale

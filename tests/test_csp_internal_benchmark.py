@@ -37,6 +37,7 @@ def test_csp_internal_benchmark_reports_separate_compile_and_solve_metrics():
     assert row["support_outcome_profile_seconds"] >= 0
     assert row["context_collision_profile_seconds"] >= 0
     assert row["open_boundary_profile_seconds"] >= 0
+    assert row["quartet_scope_report_seconds"] >= 0
     assert row["profile_complete"]
     assert row["profile_hit_assignments"] == row["first_hit_assignments"]
     assert row["profile_no_hit_assignments"] == row["first_hit_no_hit_assignments"]
@@ -144,6 +145,18 @@ def test_csp_internal_benchmark_reports_separate_compile_and_solve_metrics():
     ]["state_count"]
     assert open_states["mask_multiset"]["boundary_mixed_count"] > 0
     assert open_states["mask_multiset_plus_boundary"]["boundary_mixed_count"] == 0
+    assert row["quartet_scope_complete"]
+    assert row["quartet_scope_quartet_count"] == 5
+    assert row["quartet_scope_quartets_profiled"] == 5
+    assert row["quartet_scope_projection_mismatch_count"] == 0
+    assert row["quartet_scope_support_scope_gt_2_count"] == 5
+    assert row["quartet_scope_effective_type_scope_gt_2_count"] == 0
+    assert row["quartet_scope_effective_acceptance_scope_gt_2_count"] == 0
+    assert row["quartet_scope_two_sat_candidate_quartet_count"] == 5
+    assert row["quartet_scope_non_boolean_effective_acceptance_scope_count"] == 0
+    assert row["quartet_scope_support_size_histogram"] == {3: 5}
+    assert row["quartet_scope_effective_type_scope_size_histogram"] == {2: 5}
+    assert row["quartet_scope_effective_acceptance_scope_size_histogram"] == {2: 5}
     assert report["summary"]["total_first_hit_position_sum"] == row["first_hit_position_sum"]
     assert report["summary"]["total_first_hit_atom_checks_if_exhaustive_seen"] == row[
         "first_hit_atom_checks_if_exhaustive_seen"
@@ -218,3 +231,18 @@ def test_csp_internal_benchmark_reports_separate_compile_and_solve_metrics():
     assert summary_open_states["mask_multiset"]["boundary_mixed_count"] == open_states[
         "mask_multiset"
     ]["boundary_mixed_count"]
+    assert report["summary"]["quartet_scope_incomplete_rows"] == 0
+    assert report["summary"]["quartet_scope_quartets_profiled"] == row[
+        "quartet_scope_quartets_profiled"
+    ]
+    assert report["summary"]["quartet_scope_projection_mismatches"] == 0
+    assert report["summary"]["quartet_scope_support_scope_gt_2_count"] == row[
+        "quartet_scope_support_scope_gt_2_count"
+    ]
+    assert report["summary"]["quartet_scope_effective_type_scope_gt_2_count"] == 0
+    assert report["summary"]["quartet_scope_effective_acceptance_scope_gt_2_count"] == 0
+    assert report["summary"]["quartet_scope_two_sat_candidate_quartet_count"] == 5
+    assert report["summary"]["quartet_scope_non_boolean_effective_acceptance_scope_count"] == 0
+    assert report["summary"]["quartet_scope_support_size_histogram"] == {"3": 5}
+    assert report["summary"]["quartet_scope_effective_type_scope_size_histogram"] == {"2": 5}
+    assert report["summary"]["quartet_scope_effective_acceptance_scope_size_histogram"] == {"2": 5}

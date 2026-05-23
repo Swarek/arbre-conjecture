@@ -505,6 +505,272 @@ def _project_atom_order_from_support_assignment(
     return _project_labels_order_from_support_assignment(pc_tree, atom, support_assignment)
 
 
+def quartet_type(order: Sequence[int]) -> tuple[int, ...]:
+    """Return the circular type of four labels modulo rotation/reversal."""
+
+    seq = tuple(order)
+    if len(seq) != 4 or len(set(seq)) != 4:
+        raise ValueError("quartet type needs four distinct labels")
+    return canonical_circular_order(seq)
+
+
+def _quartet_type_is_cr_allowed(D, type_order: Sequence[int]) -> bool:
+    """Return whether this circular quartet type satisfies all cR rotations."""
+
+    seq = quartet_type(type_order)
+    for i in range(4):
+        atom = (seq[i], seq[(i + 1) % 4], seq[(i + 2) % 4], seq[(i + 3) % 4])
+        if _cr_atom_violation(D, *atom) is not None:
+            return False
+    return True
+
+
+def quartet_allowed_types(D, quartet: Sequence[int]) -> tuple[tuple[int, ...], ...]:
+    """Return cR-allowed circular types for a four-label subset.
+
+    The result contains at most three representatives modulo rotation and
+    reversal.  This is a local fixed-quartet relation; it does not assert that a
+    global PC-tree frontier realizing the type exists.
+    """
+
+    n = validate_dissimilarity(D)
+    labels_set = set(quartet)
+    if len(tuple(quartet)) != 4 or len(labels_set) != 4:
+        raise ValueError("quartet must contain four distinct labels")
+    if not labels_set.issubset(set(range(n))):
+        raise ValueError("quartet labels must be in 0..n-1")
+
+    types = {quartet_type(order) for order in permutations(tuple(quartet))}
+    return tuple(sorted(type_order for type_order in types if _quartet_type_is_cr_allowed(D, type_order)))
+
+
+def _minimal_determining_scope(
+    paths: Sequence[Path],
+    rows: Sequence[dict],
+    value_key: str,
+) -> tuple[Path, ...] | None:
+    """Find a smallest variable subset determining ``value_key`` over rows."""
+
+    ordered_paths = tuple(paths)
+    for size in range(len(ordered_paths) + 1):
+        for subset in combinations(ordered_paths, size):
+            buckets: dict[NogoodSignature, set] = {}
+            for row in rows:
+                signature = _nogood_signature(row["assignment"], subset)
+                buckets.setdefault(signature, set()).add(row[value_key])
+            if all(len(values) == 1 for values in buckets.values()):
+                return tuple(subset)
+    return None
+
+
+def quartet_pc_scope_report(
+    D,
+    pc_tree: PCNode,
+    *,
+    max_p_degree: int = 3,
+    limit: Optional[int] = None,
+    max_min_scope_search_size: int = 8,
+) -> dict:
+    """Measure local PC-tree variable scopes for exact quartet constraints.
+
+    This is an experimental report, not a solver.  It compares the type induced
+    by a support-local assignment with the type induced by complete frontiers
+    sharing that support signature.  Mismatches indicate that
+    ``quartet_support_paths`` has understated the dependencies.
+    """
+
+    n = validate_dissimilarity(D)
+    if limit is not None and limit < 0:
+        raise ValueError("limit must be non-negative or None")
+    if max_min_scope_search_size < 0:
+        raise ValueError("max_min_scope_search_size must be non-negative")
+
+    encoding = build_local_domains(pc_tree, max_p_degree=max_p_degree)
+    all_quartets = list(combinations(range(n), 4))
+    report = {
+        "implemented": True,
+        "method": "quartet_pc_scope_report",
+        "encoding": encoding,
+        "complete": True,
+        "quartets": [],
+        "first_projection_mismatch": None,
+        "first_effective_type_scope_gt_2": None,
+        "first_effective_acceptance_scope_gt_2": None,
+        "counts": {
+            "quartet_count": len(all_quartets),
+            "quartets_profiled": 0,
+            "full_assignments_seen": 0,
+            "support_assignments_seen": 0,
+            "support_size_histogram": {},
+            "effective_type_scope_size_histogram": {},
+            "effective_acceptance_scope_size_histogram": {},
+            "max_support_size": 0,
+            "max_effective_type_scope_size": 0,
+            "max_effective_acceptance_scope_size": 0,
+            "support_scope_gt_2_count": 0,
+            "effective_type_scope_gt_2_count": 0,
+            "effective_acceptance_scope_gt_2_count": 0,
+            "boolean_effective_acceptance_scope_count": 0,
+            "non_boolean_effective_acceptance_scope_count": 0,
+            "two_sat_candidate_quartet_count": 0,
+            "min_scope_search_skipped_count": 0,
+            "projection_mismatch_count": 0,
+            "allowed_type_total": 0,
+            "realisable_type_total": 0,
+            "accepted_signature_total": 0,
+            "rejected_signature_total": 0,
+            "max_support_domain_product": 0,
+        },
+    }
+    if encoding["unsupported"]:
+        report["complete"] = False
+        return report
+
+    full_assignments = list(iter_local_assignments(encoding))
+    report["counts"]["full_assignments_seen"] = len(full_assignments)
+
+    truncated = False
+    quartets_to_profile = all_quartets
+    if limit is not None and len(all_quartets) > limit:
+        quartets_to_profile = all_quartets[:limit]
+        truncated = True
+
+    domains = encoding["domains"]
+    for quartet in quartets_to_profile:
+        support = quartet_support_paths(pc_tree, quartet)
+        allowed_types = quartet_allowed_types(D, quartet)
+        support_domain_product = 1
+        for path in support:
+            support_domain_product *= len(domains[path])
+
+        support_rows: list[dict] = []
+        support_paths = tuple(support)
+        support_domain_lists = [domains[path] for path in support_paths]
+        for values in product(*support_domain_lists):
+            assignment = dict(zip(support_paths, values))
+            projected = _project_labels_order_from_support_assignment(pc_tree, quartet, assignment)
+            type_order = quartet_type(projected)
+            support_rows.append(
+                {
+                    "assignment": assignment,
+                    "type": type_order,
+                    "accepted": type_order in allowed_types,
+                }
+            )
+
+        report["counts"]["support_assignments_seen"] += len(support_rows)
+        support_size = len(support)
+        report["counts"]["support_size_histogram"][support_size] = (
+            report["counts"]["support_size_histogram"].get(support_size, 0) + 1
+        )
+        report["counts"]["max_support_size"] = max(report["counts"]["max_support_size"], support_size)
+        if support_size > 2:
+            report["counts"]["support_scope_gt_2_count"] += 1
+        report["counts"]["max_support_domain_product"] = max(
+            report["counts"]["max_support_domain_product"], support_domain_product
+        )
+
+        effective_type_scope = None
+        effective_acceptance_scope = None
+        if support_size <= max_min_scope_search_size:
+            effective_type_scope = _minimal_determining_scope(support_paths, support_rows, "type")
+            effective_acceptance_scope = _minimal_determining_scope(support_paths, support_rows, "accepted")
+            assert effective_type_scope is not None
+            assert effective_acceptance_scope is not None
+            type_size = len(effective_type_scope)
+            acceptance_size = len(effective_acceptance_scope)
+            report["counts"]["effective_type_scope_size_histogram"][type_size] = (
+                report["counts"]["effective_type_scope_size_histogram"].get(type_size, 0) + 1
+            )
+            report["counts"]["effective_acceptance_scope_size_histogram"][acceptance_size] = (
+                report["counts"]["effective_acceptance_scope_size_histogram"].get(acceptance_size, 0) + 1
+            )
+            report["counts"]["max_effective_type_scope_size"] = max(
+                report["counts"]["max_effective_type_scope_size"], type_size
+            )
+            report["counts"]["max_effective_acceptance_scope_size"] = max(
+                report["counts"]["max_effective_acceptance_scope_size"], acceptance_size
+            )
+            if type_size > 2:
+                report["counts"]["effective_type_scope_gt_2_count"] += 1
+                if report["first_effective_type_scope_gt_2"] is None:
+                    report["first_effective_type_scope_gt_2"] = {
+                        "quartet": quartet,
+                        "support": support,
+                        "effective_type_scope": effective_type_scope,
+                    }
+            if acceptance_size > 2:
+                report["counts"]["effective_acceptance_scope_gt_2_count"] += 1
+                if report["first_effective_acceptance_scope_gt_2"] is None:
+                    report["first_effective_acceptance_scope_gt_2"] = {
+                        "quartet": quartet,
+                        "support": support,
+                        "effective_acceptance_scope": effective_acceptance_scope,
+                    }
+            acceptance_domain_sizes = [len(domains[path]) for path in effective_acceptance_scope]
+            if all(size <= 2 for size in acceptance_domain_sizes):
+                report["counts"]["boolean_effective_acceptance_scope_count"] += 1
+                if acceptance_size <= 2:
+                    report["counts"]["two_sat_candidate_quartet_count"] += 1
+            else:
+                report["counts"]["non_boolean_effective_acceptance_scope_count"] += 1
+        else:
+            report["counts"]["min_scope_search_skipped_count"] += 1
+
+        support_type_by_signature = {
+            _nogood_signature(row["assignment"], support): row["type"] for row in support_rows
+        }
+        for full_assignment in full_assignments:
+            full_frontier = frontier_from_assignment(pc_tree, full_assignment)
+            full_projection = tuple(label for label in full_frontier if label in quartet)
+            full_type = quartet_type(full_projection)
+            signature = _nogood_signature(full_assignment, support)
+            support_type = support_type_by_signature[signature]
+            if full_type != support_type:
+                report["counts"]["projection_mismatch_count"] += 1
+                if report["first_projection_mismatch"] is None:
+                    report["first_projection_mismatch"] = {
+                        "quartet": quartet,
+                        "support": support,
+                        "signature": signature,
+                        "support_type": support_type,
+                        "full_type": full_type,
+                        "full_frontier": full_frontier,
+                    }
+
+        realisable_types = {row["type"] for row in support_rows}
+        accepted_signature_count = sum(1 for row in support_rows if row["accepted"])
+        report["counts"]["allowed_type_total"] += len(allowed_types)
+        report["counts"]["realisable_type_total"] += len(realisable_types)
+        report["counts"]["accepted_signature_total"] += accepted_signature_count
+        report["counts"]["rejected_signature_total"] += len(support_rows) - accepted_signature_count
+        report["quartets"].append(
+            {
+                "quartet": quartet,
+                "support": support,
+                "support_size": support_size,
+                "support_domain_product": support_domain_product,
+                "allowed_types": allowed_types,
+                "realisable_types": tuple(sorted(realisable_types)),
+                "accepted_signature_count": accepted_signature_count,
+                "rejected_signature_count": len(support_rows) - accepted_signature_count,
+                "effective_type_scope": effective_type_scope,
+                "effective_acceptance_scope": effective_acceptance_scope,
+            }
+        )
+
+    report["counts"]["quartets_profiled"] = len(quartets_to_profile)
+    report["counts"]["support_size_histogram"] = dict(sorted(report["counts"]["support_size_histogram"].items()))
+    report["counts"]["effective_type_scope_size_histogram"] = dict(
+        sorted(report["counts"]["effective_type_scope_size_histogram"].items())
+    )
+    report["counts"]["effective_acceptance_scope_size_histogram"] = dict(
+        sorted(report["counts"]["effective_acceptance_scope_size_histogram"].items())
+    )
+    report["complete"] = not truncated
+    return report
+
+
 def _side_of_witness_between_pair(order: Sequence[int], pair: tuple[int, int], witness: int) -> int:
     """Return which open arc between pair endpoints contains ``witness``."""
 

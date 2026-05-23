@@ -96,6 +96,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T056 | 2026-05-23 | B/C/F | Collisions de contexte : `mask_multiset` et même l'état de masques complet ne sont pas des états DP autonomes | `component_mask_quotient_context_collision_profile` |
 | T057 | 2026-05-23 | B/C/F | Signature d'obligations ouvertes one-hop : compression visible mais diagnostic borné et encore non récursif | `component_mask_open_boundary_profile` |
 | R001 | 2026-05-23 | B/C/D/E/F | Revue externe globale post-T057 re-routée vers cinq pistes, pas seulement collision T057 | `docs/external_reviews/gpt55_global_strategy_2026-05-23.md` |
+| T058 | 2026-05-23 | C/F/E | Rapport de portée PC-tree par quartets : support conservateur taille 3, portée effective observée `<=2` sur la gate | `quartet_pc_scope_report` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

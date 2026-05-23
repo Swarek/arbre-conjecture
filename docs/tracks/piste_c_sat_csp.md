@@ -831,6 +831,53 @@ quartet le scope PC-tree minimal observé, les types autorisés par `D`, et les
 contraintes locales induites. Le rapport doit être comparé à l'oracle sur petits
 arbres avant tout solveur.
 
+## Tentative T058 - Portée PC-tree effective des quartets
+
+Statut : diagnostic exact sur le scaffold supporté, hors `candidate.py`.
+
+Changement : ajout de `quartet_type`, `quartet_allowed_types` et
+`quartet_pc_scope_report`. Le rapport énumère les affectations du support
+structurel `quartet_support_paths(T, Q)`, projette le quartet, calcule son type
+circulaire modulo rotation/renversement, puis mesure deux portées minimales :
+
+- portée effective de type : variables nécessaires pour déterminer le type
+  circulaire réalisé ;
+- portée effective d'acceptation : variables nécessaires pour déterminer si le
+  type réalisé appartient aux types cR autorisés par `D`.
+
+Invariant testé : pour chaque affectation complète, le type du quartet obtenu en
+projetant le frontier complet doit coïncider avec le type obtenu depuis la seule
+affectation du support. Un mismatch signifie que le support est sous-estimé.
+
+Résultat `make bench-csp-quick` :
+
+- `192` lignes supportées, `0` mismatch ;
+- `2688` quartets profilés ;
+- `21504` affectations de support inspectées ;
+- `0` mismatch de projection support-local vs frontier complet ;
+- support structurel conservateur : histogramme `{3: 2688}` ;
+- portée effective de type : histogramme `{2: 2688}` ;
+- portée effective d'acceptation : histogramme `{0: 1536, 2: 1152}` ;
+- `0` quartet à portée effective type `>2` ;
+- `0` quartet à portée effective acceptation `>2` ;
+- `2688` quartets candidats 2-SAT sur cette gate, car les portées effectives
+  d'acceptation sont booléennes.
+
+Probe stress : `180` cas (`n=4..8`, fanout `2/3`, arbres `P/C/mixed`, familles
+`random/cycle/equal/non_strict/paired_farthest/permuted_cycle`), `4536`
+quartets, `0` mismatch de projection et `0` portée effective `>2`. Les arbres
+`P` fanout `3` produisent des portées effectives binaires mais non booléennes :
+ces lignes ne sont pas 2-SAT et doivent nourrir le futur catalogue de relations.
+
+Limite : T058 ne prouve pas que le vrai PC-tree Hsu/McConnell général a portée
+`<=2`, ni que les relations se combinent polynomialement. Le support structurel
+peut rester taille `3` alors que la portée effective est `2`, donc une preuve
+devra expliquer cette redondance plutôt que l'ignorer.
+
+Prochaine action : grouper les quartets par portée effective, construire les
+tables de relations, le graphe primal, et séparer trois sorties : 2-SAT booléen,
+DP treewidth, relation-catalog pour domaines non booléens.
+
 ## Tentative T021 - Repair positive-only pour paired-farthest
 
 Statut : idée saine comme générateur expérimental vérifié, mais non intégrée à

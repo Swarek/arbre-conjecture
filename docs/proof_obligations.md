@@ -1471,6 +1471,30 @@ portefeuille plutôt qu'à imposer une seule prochaine expérience :
    réalisables et documenter les contraintes parasites dues à la globalité de
    `D`.
 
+T058 satisfait partiellement l'obligation 2 dans le scaffold actuel, mais ne la
+ferme pas comme théorème général :
+
+- `quartet_pc_scope_report` vérifie expérimentalement que la projection
+  support-local d'un quartet coïncide avec la projection des frontiers complets
+  sur la gate CSP rapide et sur probes stress ;
+- la portée structurelle `quartet_support_paths` peut être de taille `3`, donc
+  le lemme naïf "le support vaut toujours au plus deux nœuds" est faux dans le
+  scaffold ;
+- la portée effective observée du type et de l'acceptation est `<=2` sur les
+  probes T058, ce qui est une conjecture de travail, pas une preuve ;
+- les domaines non booléens observés avec des nœuds `P` fanout `3` empêchent de
+  conclure directement à 2-SAT hors du sous-cas booléen.
+
+Obligations restantes après T058 :
+
+- prouver pourquoi la variable redondante des supports taille `3` peut être
+  éliminée pour le type/acceptation du quartet ;
+- construire les relations par scope effectif et prouver qu'elles sont
+  suffisantes pour le CSP global ;
+- dans le sous-cas booléen, transformer les relations en clauses 2-SAT et
+  prouver l'équivalence avec l'existence d'un frontier cR représenté ;
+- hors booléen, mesurer/prouver la treewidth ou cataloguer les relations dures.
+
 ### Prédicats stricts d'ordre fixé
 
 Statut : définitions directes implémentées / base expérimentale Piste F.
