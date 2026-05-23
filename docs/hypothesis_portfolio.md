@@ -182,6 +182,13 @@ binaires non booléennes distinctes, mais aussi beaucoup de parasites
 unaires/constantes. La prochaine expérience doit chercher une relation
 structurée isolable, pas conclure à la dureté depuis le catalogue brut.
 
+Mise à jour T066 : le minage des formes trouve des relations
+`sparse_partial_matching`, `partial_bijection`, sélecteurs,
+`active_two_regular` et ponts `2 x 6`, mais aucun candidat positif sans parasite
+restrictif. La prochaine expérience prioritaire est donc soit une recherche
+d'élimination de parasites pour une forme choisie, soit une composition de
+chaînes fonctionnelles qui révèle une corrélation globale.
+
 Sous-cas ajouté : explorer le cas strict comme algorithme spécialisé
 potentiellement polynomial. Ne pas l'intégrer à `candidate.py` avant d'avoir une
 détection stricte et une génération de candidats stricts vérifiées contre les

@@ -525,6 +525,16 @@ Dernier commit green avant T009 : `07120e4`.
   tests ciblés `tests/test_csp_internal_benchmark.py` (`4 passed`),
   `make quick` (`266 passed`, puis `JUSTE`) et `make bench-quick` (`40/40`
   runs, `0` timeout, `0` incomplet). `candidate.py` n'a pas été modifié.
+- Checkpoint T066 courant : commit contenant le minage des formes de profils
+  relationnels non booléens entre nœuds `P`. Validation observée : test ciblé
+  shape search (`1 passed`), `make bench-relation-shapes` (`38` profils
+  binaires non booléens, `27` hashes, `0` mismatch,
+  `candidate_gadget_instances=0`), tests ciblés
+  `tests/test_csp_internal_benchmark.py` (`5 passed`), `make quick`
+  (`267 passed`, puis `JUSTE`) et `make bench-quick` (`40/40` runs,
+  `0` timeout, `0` incomplet). Résultat observé : formes structurées mais
+  aucun gadget positif sans parasite restrictif. `candidate.py` n'a pas été
+  modifié.
 
 ## Rollback
 

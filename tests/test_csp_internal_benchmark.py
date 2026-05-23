@@ -1,6 +1,7 @@
 from tools.pc_csp_internal_benchmark import run_benchmark
 from tools.pc_csp_width_stress import run_width_stress
 from tools.pc_relation_catalog import run_relation_catalog
+from tools.pc_relation_shape_search import run_relation_shape_search
 from tools.pc_single_p_domain_stress import run_single_p_domain_stress
 
 
@@ -435,3 +436,57 @@ def test_relation_catalog_reports_non_boolean_p3_relations_and_parasites():
     assert equal["binary_non_boolean_relation_count"] == 0
     assert equal["parasite_relation_count"] == 1
     assert equal["complexity_claim_allowed"] == "two_sat_after_relation_build"
+
+
+def test_relation_shape_search_classifies_non_boolean_relation_profiles():
+    report = run_relation_shape_search(
+        block_counts=[2],
+        instance_kinds=["cycle", "paired_farthest", "equal", "four_local_non_cr"],
+        repeats=1,
+    )
+
+    summary = report["summary"]
+    assert summary["catalog_rows"] == 4
+    assert summary["catalog_complete_rows"] == 4
+    assert summary["validation_mismatches"] == 0
+    assert summary["binary_relation_instances"] == 3
+    assert summary["shape_class_histogram"] == {
+        "active_two_regular": 1,
+        "partial_bijection": 1,
+        "sparse_partial_matching": 1,
+    }
+    assert summary["functional_relation_instances"] == 2
+    assert summary["partial_bijection_relation_instances"] == 1
+    assert summary["positive_parasite_free_relation_instances"] == 0
+    assert summary["candidate_gadget_instances"] == 0
+    assert report["candidate_gadgets"] == []
+
+    cycle = next(
+        row for row in report["relation_instances"] if row["instance_kind"] == "cycle"
+    )
+    assert cycle["shape_class"] == "sparse_partial_matching"
+    assert cycle["domain_sizes"] == [6, 6]
+    assert cycle["accepted_signature_count"] == 2
+    assert cycle["left_degree_histogram"] == {"0": 4, "1": 2}
+    assert cycle["right_degree_histogram"] == {"0": 4, "1": 2}
+    assert cycle["composability_tags"] == ["promise_scaffold_only", "unary_gated"]
+
+    paired = next(
+        row
+        for row in report["relation_instances"]
+        if row["instance_kind"] == "paired_farthest"
+    )
+    assert paired["shape_class"] == "partial_bijection"
+    assert paired["accepted_signature_count"] == 4
+    assert "constant_loose" in paired["composability_tags"]
+    assert "constant_blocked" not in paired["composability_tags"]
+
+    blocked = next(
+        row
+        for row in report["relation_instances"]
+        if row["instance_kind"] == "four_local_non_cr"
+    )
+    assert blocked["shape_class"] == "active_two_regular"
+    assert blocked["accepted_signature_count"] == 8
+    assert "constant_blocked" in blocked["composability_tags"]
+    assert "relation_unsat_only" in blocked["composability_tags"]

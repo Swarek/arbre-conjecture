@@ -3244,3 +3244,50 @@
   permutation-like / equality / disequality isolable sans parasite constant, ou
   basculer vers la preuve de suffisance du modèle relationnel si les parasites
   dominent.
+
+## 2026-05-23 relation shape mining for non-boolean P-node profiles
+
+- Date/heure : 2026-05-23 15:39:07 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les relations non booléennes cataloguées en T065 ont des
+  formes reconnaissables qui peuvent guider la recherche de gadgets ou de
+  compression, mais seulement si les parasites restent visibles.
+- Changement fait : ajout de `tools/pc_relation_shape_search.py`, de la cible
+  `make bench-relation-shapes`, d'un test ciblé et de la documentation T066.
+  L'outil classe les profils par fonctionnalité, histogrammes de degrés,
+  densité, taille de domaine et tags de composabilité.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `265 passed`, puis `JUSTE`.
+- Plan subagents : trois sidecars lecture seule. Résultats : un sidecar propose
+  la taxonomie forme/composabilité et des assertions de tests ; un sidecar
+  propose les prochaines familles adversariales (`single P`, élimination de
+  parasites, chaînes fonctionnelles, parasites comme obstruction, relèvement
+  vers gros `P`) ; un sidecar propose le langage documentaire prudent T066.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_csp_internal_benchmark.py::test_relation_shape_search_classifies_non_boolean_relation_profiles`.
+- Résultat correction ciblée : `1 passed`.
+- Commande exécutée : `make bench-relation-shapes`.
+- Résultat benchmark shapes : `reports/relation_shape_search.json` écrit ;
+  `20` lignes catalogue, `20` complètes, `0` mismatch, `38` profils binaires
+  non booléens, `27` hashes distincts, histogramme des formes :
+  `active_two_regular=10`, `left_selector=5`, `partial_bijection=3`,
+  `right_selector=4`, `small_domain_bridge=6`,
+  `sparse_partial_matching=9`, `total_cover_dense=1`, et
+  `candidate_gadget_instances=0`.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_csp_internal_benchmark.py`.
+- Résultat correction ciblée élargie : `5 passed`.
+- Commande exécutée : `make quick`.
+- Résultat correction finale : `267 passed`, puis `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `8` tailles, `40/40` runs réussis, `0` timeout et `0` incomplet.
+- Conclusion : T066 rend le catalogue T065 exploitable par forme, mais aucun
+  profil positif parasite-free n'est encore observé. Cela ne prouve ni
+  NP-hardness ni polynomialité. `candidate.py` n'a pas été modifié.
+- Next action : lancer une recherche d'élimination de parasites sur une forme
+  stable (`partial_bijection` ou `sparse_partial_matching`) ou composer des
+  chaînes fonctionnelles pour chercher une obstruction globale non locale.

@@ -232,6 +232,13 @@ complètes, `0` mismatch, `38` instances de relations binaires non booléennes,
 `18` lignes avec parasite unaire non booléen. Ces chiffres suggèrent une piste
 de gadgets, mais ne prouvent ni NP-hardness ni polynomialité.
 
+T066 raffine ce catalogue par formes de profils (`sparse_partial_matching`,
+`partial_bijection`, sélecteurs, `active_two_regular`, ponts `2 x 6`) et par
+tags de composabilité. Le résultat observé contient `38` profils, `0` mismatch,
+mais `0` candidat gadget positif sans parasite restrictif. Cela ne ferme aucune
+obligation de dureté ni de complexité ; cela rend seulement explicites les
+formes à isoler ou à compresser dans une prochaine étape.
+
 ### Caractérisation bad-side d'un ordre fixé
 
 Statut : conséquence directe pour ordre fixé + prédicat central exact depuis

@@ -1128,6 +1128,34 @@ fréquents et empêchent toute conclusion NP-hard. Pour Piste C, ce rapport
 confirme que "binaire" ne veut pas dire "2-SAT" : les domaines sont `6 x 6`, et
 la complexité correcte reste paramétrée par `q` et `w`.
 
+## Tentative T066 - Minage des formes de relations non booléennes
+
+Statut : diagnostic CSP/complexité, hors `candidate.py`.
+
+Changement : ajout de `tools/pc_relation_shape_search.py`, câblé par
+`make bench-relation-shapes`. L'outil classe les profils T065 par histogrammes
+de degrés, fonctionnalité, densité et tailles de domaines, puis ajoute des tags
+de composabilité : `unary_gated`, `constant_blocked`, `constant_loose`,
+`parasite_free`, `relation_unsat_only` et `promise_scaffold_only`.
+
+Résultat `make bench-relation-shapes` :
+
+- `38` instances de relations binaires non booléennes ;
+- `27` hashes distincts ;
+- formes observées : `sparse_partial_matching=9`,
+  `partial_bijection=3`, `left_selector=5`, `right_selector=4`,
+  `active_two_regular=10`, `small_domain_bridge=6`,
+  `total_cover_dense=1` ;
+- `0` mismatch de validation ;
+- `0` `candidate_gadget_instances`, car aucun profil positif n'est encore
+  parasite-free dans le contexte T065.
+
+Interprétation : T066 rend le catalogue actionnable. Pour Piste C, ces classes
+servent à choisir une représentation compacte éventuelle, mais elles ne
+remplacent pas la relation exacte. Pour Piste F, elles fournissent des cibles de
+gadget, mais seulement si une prochaine expérience supprime ou contrôle les
+parasites.
+
 ## Tentative T021 - Repair positive-only pour paired-farthest
 
 Statut : idée saine comme générateur expérimental vérifié, mais non intégrée à

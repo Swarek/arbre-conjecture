@@ -124,6 +124,21 @@ petits nœuds `P`, les contraintes parasites unaires/constantes, les densités,
 les tailles de domaine et les mismatches de validation. Une relation non
 booléenne observée est un signal expérimental, pas une réduction NP-hard.
 
+Minage de formes relationnelles Piste F :
+
+```bash
+make bench-relation-shapes
+```
+
+Cette commande régénère le catalogue puis écrit
+`reports/relation_shape_search.json`. Le rapport classe les relations non
+booléennes par forme (`sparse_partial_matching`, `partial_bijection`,
+`active_two_regular`, sélecteurs, ponts de petit domaine) et par tags de
+composabilité (`unary_gated`, `constant_blocked`, `parasite_free`). Les
+`candidate_gadgets` ne doivent jamais inclure une relation expliquée par un
+parasite `constant_reject`. Ce rapport oriente la recherche de gadgets ou de
+compressions ; il ne prouve ni NP-difficulté ni polynomialité.
+
 ## Interprétation
 
 Un algorithme qui passe les gates peut encore être faux. Après chaque succès, il

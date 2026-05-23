@@ -25,7 +25,7 @@ Elle ne remplace ni les tests ni les obligations de preuve.
 | C - SAT/CSP | `piste_c_sat_csp.md` | Solveurs 2-SAT puis DP treewidth des relations effectives hors candidate |
 | D - Circular-ones / intersection | `piste_d_circular_ones.md` | Boules validées pour quasi ; arcs bad-witness naïfs réfutés |
 | E - Obstructions farthest/quartets | `piste_e_farthest_quartets.md` | Farthest seul réfuté ; bad-witness one-side donne des certificats hub bas |
-| F - Complexité / sous-cas | `piste_f_complexity_subcases.md` | Stress `p3_block_tree(k)` montre la largeur comme paramètre limitant |
+| F - Complexité / sous-cas | `piste_f_complexity_subcases.md` | Relations `P3/P3` classées par formes ; aucun gadget parasite-free |
 
 ## Règle d’édition
 
@@ -111,6 +111,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | R003 | 2026-05-23 | C/F | Revue red-team : treewidth faible ne suffit pas si le domaine `P` est factoriel | `docs/external_reviews/gpt55_red_team_domain_warning_2026-05-23.md` |
 | T064 | 2026-05-23 | C/F | Stress single `P`-node : treewidth `0`, domaine `(n-1)!/2`, énumération bornée visible | `make bench-single-p-stress` |
 | T065 | 2026-05-23 | F/C | Catalogue de relations non booléennes `P3` : diversité et parasites visibles | `make bench-relation-catalog` |
+| T066 | 2026-05-23 | F/C | Minage des formes de relations non booléennes : classes structurées mais aucun gadget parasite-free | `make bench-relation-shapes` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

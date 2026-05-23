@@ -4271,3 +4271,72 @@ Décision : le catalogue est utile comme signal de recherche, mais les parasites
 dominants empêchent toute conclusion de dureté. La prochaine étape doit analyser
 les hashes pour chercher une relation structurée isolable, ou revenir à la
 preuve de suffisance du modèle relationnel si les parasites restent dominants.
+
+## ExecPlan 2026-05-23 - Relation shape mining
+
+But : transformer le catalogue T065 en rapport exploitable des formes de
+relations non booléennes entre nœuds `P`, sans surinterpréter ces formes comme
+preuve de dureté ou de tractabilité.
+
+Hypothèse : les hashes T065 se regroupent en classes reconnaissables
+(`sparse_partial_matching`, `partial_bijection`, sélecteurs,
+`active_two_regular`, ponts de petit domaine). Ces classes peuvent guider le
+prochain générateur adversarial : isolation de gadget, chaînes fonctionnelles
+ou recherche de compression certifiée.
+
+Fichiers visés : `tools/pc_relation_shape_search.py`,
+`tests/test_csp_internal_benchmark.py`, `Makefile`, `README.md`,
+`docs/experiment_protocol.md`, `docs/tracks/piste_c_sat_csp.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/proof_obligations.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `docs/tracks/README.md`,
+`PLANS.md`.
+
+Algorithme pressenti : lire ou régénérer `reports/relation_catalog.json`,
+classifier chaque profil binaire non booléen par histogrammes de degrés,
+fonctionnalité, densité et tailles de domaine, puis ajouter des tags de
+composabilité (`unary_gated`, `constant_blocked`, `parasite_free`,
+`relation_unsat_only`, `promise_scaffold_only`). Les candidats gadget ne
+doivent pas inclure de relation bloquée par parasite constant.
+
+Plan de contre-exemples : garder `cycle`, `paired_farthest`, `equal`,
+`four_local_non_cr`, `five_local_non_cr` et `random`. Les contrôles attendus
+sont un matching partiel sparse sur `cycle`, une bijection partielle sur
+`paired_farthest`, et une relation `active_two_regular` bloquée par
+`constant_reject` sur `four_local_non_cr`.
+
+Plan subagents : trois sidecars lecture seule ont été lancés. Ils recommandent
+une taxonomie forme/composabilité, des assertions de tests, et les prochaines
+familles adversariales : élimination de parasites, chaînes fonctionnelles,
+single `P` rare-witness, parasites comme obstruction et relèvement vers gros
+`P`.
+
+Tests à exécuter : test ciblé du shape search, `make bench-relation-shapes`,
+tests ciblés CSP, `make quick`, et `make bench-quick`. `candidate.py` ne doit
+pas changer.
+
+Risques : un regroupement de forme peut être un artefact du scaffold
+`p3_block_tree(k)` ou des contraintes parasites de `D`. Le rapport doit donc
+exposer les parasites et le caveat de promise, et ne pas conclure à
+NP-hardness.
+
+Résultats observés : ajout de `tools/pc_relation_shape_search.py`, cible
+`make bench-relation-shapes`, test ciblé et documentation T066. Le rapport
+`reports/relation_shape_search.json` contient `38` profils binaires non
+booléens, `27` hashes distincts, `0` mismatch, et l'histogramme de formes
+suivant : `active_two_regular=10`, `left_selector=5`,
+`partial_bijection=3`, `right_selector=4`, `small_domain_bridge=6`,
+`sparse_partial_matching=9`, `total_cover_dense=1`. Il y a `27` profils avec
+fonctionnalité d'un côté ou des deux, mais `0` candidat gadget positif sans
+parasite restrictif.
+
+Tests : test ciblé shape search `1 passed`; tests ciblés
+`tests/test_csp_internal_benchmark.py` : `5 passed`; `make
+bench-relation-shapes` écrit les rapports catalogue et shapes ; `make quick`
+passe avec `267 passed`, puis `JUSTE`; `make bench-quick` garde `40/40` runs
+réussis, `0` timeout et `0` incomplet.
+
+Décision : T066 rend le catalogue T065 actionnable, mais confirme que les
+formes structurées restent contaminées par parasites dans les générateurs
+actuels. Prochaine étape recommandée : choisir une classe stable, idéalement
+`partial_bijection` ou `sparse_partial_matching`, et lancer une recherche
+d'élimination de parasites ou de composition en chaînes fonctionnelles.

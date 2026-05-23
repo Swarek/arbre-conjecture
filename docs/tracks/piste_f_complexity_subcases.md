@@ -1241,3 +1241,42 @@ Conclusion prudente :
 Prochaine action Piste F : chercher une relation non booléenne plus structurée
 dans ce catalogue, par exemple permutation-like, égalité, disequality ou
 implication cyclique, puis tenter de l'isoler sans `constant_reject` parasite.
+
+## Résultat T066 - Formes des profils relationnels non booléens
+
+Statut : diagnostic de structure, non preuve.
+
+T066 ajoute `make bench-relation-shapes`. L'outil régénère le catalogue T065,
+puis classe chaque profil binaire non booléen par forme et tags de
+composabilité. Les classes observées dans `reports/relation_shape_search.json`
+sont :
+
+- `sparse_partial_matching` : relation fonctionnelle des deux côtés avec peu
+  de tuples acceptés ;
+- `partial_bijection` : matching partiel moins sparse ;
+- `left_selector` / `right_selector` : un seul côté fonctionnel ;
+- `active_two_regular` : support actif 2-régulier ;
+- `small_domain_bridge` : relation asymétrique de type `2 x 6` ;
+- `total_cover_dense` : relation couvrante non fonctionnelle.
+
+Résultat `make bench-relation-shapes` :
+
+- `catalog_rows=20`, toutes complètes ;
+- `validation_mismatches=0` ;
+- `binary_relation_instances=38` ;
+- histogramme des formes :
+  `active_two_regular=10`, `left_selector=5`, `partial_bijection=3`,
+  `right_selector=4`, `small_domain_bridge=6`,
+  `sparse_partial_matching=9`, `total_cover_dense=1` ;
+- `functional_relation_instances=27` ;
+- `candidate_gadget_instances=0` ;
+- `positive_parasite_free_relation_instances=0` ;
+- tous les profils observés ont encore un parasite restrictif dans leur ligne
+  de contexte.
+
+Conclusion prudente : les relations ont des formes structurées, ce qui donne
+des cibles concrètes pour les prochaines recherches, mais aucune relation
+positive n'est encore isolée sans parasite. La piste de dureté doit maintenant
+chercher une élimination de parasites ou une composition de chaînes
+fonctionnelles ; la piste algorithmique doit expliquer pourquoi ces formes
+resteraient compressibles si elle veut aller au-delà d'une classification FPT.

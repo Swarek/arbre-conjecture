@@ -1,7 +1,7 @@
 PYTHON ?= $(shell if [ -x .venv/bin/python ]; then echo .venv/bin/python; elif command -v python3 >/dev/null 2>&1; then echo python3; else echo python; fi)
 PYTEST ?= $(PYTHON) -m pytest
 
-.PHONY: quick check hunt-counterexamples bench-quick bench bench-piste-f bench-csp-quick bench-width-stress bench-single-p-stress bench-relation-catalog unit acceptance
+.PHONY: quick check hunt-counterexamples bench-quick bench bench-piste-f bench-csp-quick bench-width-stress bench-single-p-stress bench-relation-catalog bench-relation-shapes unit acceptance
 
 unit:
 	$(PYTEST) -q
@@ -131,6 +131,12 @@ bench-relation-catalog:
 	  --instance-kinds cycle,paired_farthest,random,equal,four_local_non_cr,five_local_non_cr \
 	  --repeats 3 \
 	  --output reports/relation_catalog.json
+
+bench-relation-shapes: bench-relation-catalog
+	mkdir -p reports && \
+	$(PYTHON) tools/pc_relation_shape_search.py \
+	  --input reports/relation_catalog.json \
+	  --output reports/relation_shape_search.json
 
 acceptance:
 	make check && make bench

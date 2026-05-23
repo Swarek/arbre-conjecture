@@ -44,6 +44,7 @@ make bench-csp-quick
 make bench-width-stress
 make bench-single-p-stress
 make bench-relation-catalog
+make bench-relation-shapes
 make acceptance
 ```
 
@@ -79,6 +80,12 @@ local contient déjà `(n-1)!/2` ordres circulaires.
 arbres composés de petits blocs `P3`. Il catalogue les relations de quartets
 non booléennes, les parasites unaires/constantes et les limites de validité du
 scaffold. Ce n’est pas une preuve de NP-difficulté.
+
+`make bench-relation-shapes` régénère le catalogue puis écrit
+`reports/relation_shape_search.json`. Il classe les profils non booléens en
+formes structurelles (`sparse_partial_matching`, `active_two_regular`,
+sélecteurs, etc.) et garde les tags de composabilité visibles. Ce n’est pas une
+preuve de NP-difficulté ni de polynomialité.
 
 Dans `tools/pc_circular_conjecture_test.py`, la sortie `JUSTE` signifie seulement
 que la candidate a été égale à l’oracle exact sur les instances générées par ce
