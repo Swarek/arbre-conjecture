@@ -655,6 +655,16 @@ Dernier commit green avant T009 : `07120e4`.
   `make bench-quick` (`40/40` runs, `0` timeout, `0` incomplet).
   `candidate.py` n'a pas été modifié.
 
+- Checkpoint T079 courant : commit contenant le learner borné de
+  PC-représentabilité scaffold des ordres cR. Validation observée :
+  `tests/test_pc_tree_learning.py` (`9 passed`),
+  `make bench-cr-pc-representability` (`39` lignes complètes, `0` incomplète,
+  `19` représentables, `10` cibles vides, `10` contre-exemples informatifs,
+  premier contre-exemple en `n=5 paired_farthest`, `max_seconds ~= 0.6084`),
+  `make quick` (`292 passed`, puis `JUSTE`) et `make bench-quick` (`40/40`
+  runs, `0` timeout, `0` incomplet).
+  `candidate.py` n'a pas été modifié.
+
 ## Rollback
 
 Si une modification régresse et que la cause n’est pas claire :

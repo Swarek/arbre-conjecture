@@ -3873,3 +3873,48 @@
 - Next action : tester si les contraintes `C_ab` par seuil forment une famille
   représentable par PC-tree/round-order, ou basculer vers le test de
   PC-représentabilité de l'ensemble des ordres cR.
+
+## 2026-05-23 scaffold PC-representability of cR orders
+
+- Date/heure : 2026-05-23 21:58:09 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : pour une matrice `D`, l'ensemble de tous ses ordres cR
+  pourrait être directement représentable par un PC-tree ; test borné dans la
+  grammaire `PCNode` du dépôt.
+- Changement fait : ajout de `src/pc_circular/pc_tree_learning.py`, du probe
+  `tools/pc_cr_pc_representability_probe.py`, de la cible
+  `make bench-cr-pc-representability`, de tests unitaires et de la
+  documentation T079. `candidate.py` n'a pas été modifié.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `283 passed`, puis `JUSTE`.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_pc_tree_learning.py`.
+- Résultat correction ciblée : `9 passed`.
+- Commande exécutée :
+  `rtk .venv/bin/python -m py_compile src/pc_circular/pc_tree_learning.py tools/pc_cr_pc_representability_probe.py`.
+- Résultat compilation : succès.
+- Commande exécutée : `rtk make bench-cr-pc-representability`.
+- Résultat benchmark T079 :
+  `reports/cr_pc_representability_probe.json` écrit ; `39` lignes,
+  `39` complètes, `0` incomplète, `19` représentables, `10` cibles vides,
+  `10` contre-exemples informatifs, `max_seconds=0.6084`.
+- Premier contre-exemple scaffold complet :
+  `n=5`, `paired_farthest`, seed `20293203`, `2` ordres cR :
+  `(0,1,3,2,4)` et `(0,1,4,3,2)`, aucun `PCNode` scaffold ne représente
+  exactement cette famille sous recherche complète. La matrice est régressée
+  dans `tests/test_pc_tree_learning.py`.
+- Contrôle minimalité bornée : exhaustif `n=4`, valeurs `{1,2,3}`, aucun
+  contre-exemple non vide/non total dans le scaffold.
+- Commande exécutée : `make quick`.
+- Résultat correction finale : `292 passed`, puis `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `8` tailles, `40/40` runs réussis, `0` timeout et `0` incomplet.
+- Conclusion provisoire : la route naïve "l'ensemble des ordres cR est un
+  `PCNode`" est réfutée dans le scaffold du dépôt. Ce n'est pas encore une
+  réfutation des PC-trees Hsu/McConnell complets.
+- Next action : comparer le contre-exemple T079 à un modèle PC-tree non enraciné
+  plus fidèle, ou basculer vers SAT chirotope / high-girth obstructions.

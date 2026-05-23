@@ -162,6 +162,13 @@ circular-ones simple, mais elle déplace l'objet vers les intersections
 `N_{d(a,b)}[a] intersect N_{d(a,b)}[b]`, ce qui alimente les pistes round-order
 commun, seuils imbriqués et projection-adjacence.
 
+Mise à jour T079 : le test de PC-représentabilité bornée des ordres cR produit
+des contre-exemples complets dans le scaffold `PCNode` dès `n=5` sur la famille
+`paired_farthest`. L'ensemble cR y contient exactement deux ordres, sans arbre
+`PCNode` généré par le learner exact borné. Cela réfute la route naïve
+"calculer un PCNode des ordres cR" dans le scaffold, mais pas encore la
+PC-représentabilité Hsu/McConnell complète.
+
 ## Piste E : obstructions interdites par quartets farthest-neighbor
 
 Intuition : les mauvais ordres pourraient être caractérisés par une famille

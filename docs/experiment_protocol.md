@@ -266,6 +266,20 @@ prioritaire à régresser. Une absence de mismatch établit seulement une
 équivalence expérimentale bornée pour ordre fixé ; elle ne décide pas
 l'existence dans un PC-tree compact.
 
+PC-représentabilité des ordres cR Piste D :
+
+```bash
+make bench-cr-pc-representability
+```
+
+Cette commande écrit `reports/cr_pc_representability_probe.json`. Elle énumère
+les ordres cR d'une matrice sur petites tailles, puis cherche une famille
+`PCNode` du scaffold dont les frontiers sont exactement cet ensemble. Les caps
+`max_families_per_subset` rendent une ligne incomplète si le learner déborde.
+Une ligne complète non représentable est un contre-exemple au scaffold enraciné
+du dépôt ; elle doit être minimisée et comparée à un modèle Hsu/McConnell plus
+fidèle avant toute conclusion externe.
+
 Contrôle promise-aware des permutations locales Piste F/C :
 
 ```bash

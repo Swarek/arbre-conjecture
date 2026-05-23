@@ -5072,3 +5072,69 @@ Résultats observés : `tests/test_predicates.py` passe (`20 passed`) ;
 Décision : continuer seulement si les gates globales restent vertes. La suite
 naturelle est le test de représentabilité PC-tree de l'ensemble des ordres cR,
 ou une tentative round-order/seuil imbriqué.
+
+## ExecPlan T079 - PC-représentabilité bornée des ordres cR
+
+But : tester la piste externe "l'ensemble des ordres cR d'une matrice est-il
+représentable par un PC-tree ?" avec un artefact exact borné dans la grammaire
+`PCNode` du dépôt.
+
+Hypothèse : sur petites tailles, l'ensemble
+`S_cr(D) = {beta : beta est circular Robinson pour D}` pourrait coïncider avec
+les frontiers d'un arbre `PCNode`. Si un contre-exemple non vide apparaît déjà
+dans le scaffold, la route "calculer directement le PC-tree des ordres cR" doit
+être traitée avec prudence.
+
+Fichiers visés : `src/pc_circular/pc_tree_learning.py`,
+`tools/pc_cr_pc_representability_probe.py`,
+`tests/test_pc_tree_learning.py`, `Makefile`, `README.md`,
+`docs/experiment_protocol.md`, `docs/hypothesis_portfolio.md`,
+`docs/tracks/piste_d_circular_ones.md`,
+`docs/proof_obligations.md`, `docs/experiment_log.md`,
+`docs/checkpoints.md`, `docs/tracks/README.md`, `PLANS.md`.
+
+Algorithme pressenti : énumérer récursivement, pour `n` petit, les familles de
+frontiers linéaires générées par les feuilles, nœuds `P` et nœuds `C` du
+scaffold. Pour chaque matrice `D`, énumérer tous les ordres circulaires, garder
+ceux qui passent `passes_bad_side_precircular_cR`, puis chercher une famille
+`PCNode` dont la canonicalisation circulaire égale exactement cet ensemble.
+L'énumération porte un cap explicite par sous-ensemble ; un dépassement rend la
+ligne incomplète, jamais négative.
+
+Plan de contre-exemples : scanner des familles `cycle`, `equal`, `random`,
+`paired_farthest`, `four_local_non_cr`, `five_local_non_cr`, puis enregistrer
+le premier ensemble cR non vide/non total non représenté dans le scaffold. Les
+contre-exemples doivent conserver la matrice, le nombre d'ordres cR et les
+ordres canoniques minimaux.
+
+Plan subagents : pas de nouveau fanout pour cette étape courte. La revue GPT
+5.5 fournit déjà le routage, et le livrable principal est un harnais exact
+borné. Si T079 trouve un contre-exemple, un prochain fanout pourra analyser
+séparément full PC-tree Hsu, round-order, SAT chirotope et shrink ordinal.
+
+Tests à exécuter : tests unitaires du learner, probe T079, `make quick`, puis
+`make bench-quick` si le dépôt reste vert. `candidate.py` ne change pas, donc
+`make hunt-counterexamples` n'est pas requis pour ce checkpoint.
+
+Risques : la grammaire `PCNode` est un scaffold enraciné, pas une implémentation
+Hsu/McConnell complète. Une non-représentabilité trouvée ici est un signal fort
+contre une route naïve du dépôt, mais pas encore un théorème externe. À
+l'inverse, l'absence de contre-exemple sous cap ne prouve pas la
+PC-représentabilité générale.
+
+Résultats observés : ajout du learner `pc_tree_learning.py`, du probe
+`pc_cr_pc_representability_probe.py` et d'une régression du premier
+contre-exemple. Tests ciblés : `tests/test_pc_tree_learning.py` passe
+(`9 passed`). `make bench-cr-pc-representability` produit `39` lignes
+complètes, `0` incomplète, `19` représentables, `10` cibles vides et `10`
+contre-exemples informatifs. Premier contre-exemple : `n=5 paired_farthest`,
+seed `20293203`, avec exactement deux ordres cR
+`(0,1,3,2,4)` et `(0,1,4,3,2)`. L'exhaustif `n=4`, valeurs `{1,2,3}`, ne donne
+aucun contre-exemple non vide/non total dans le scaffold. Gates finales :
+`make quick` passe avec `292 passed`, puis `JUSTE`; `make bench-quick` garde
+`40/40` runs, `0` timeout, `0` incomplet.
+
+Décision : ne pas poursuivre la route naïve "les ordres cR forment toujours un
+PCNode du dépôt" sans modèle PC-tree plus fidèle. Continuer T079 seulement pour
+comparer ce contre-exemple au modèle Hsu/McConnell non enraciné ; sinon changer
+vers SAT chirotope, high-girth obstructions ou compression active des nœuds `P`.

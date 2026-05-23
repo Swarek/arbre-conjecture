@@ -426,6 +426,56 @@ Limite : T078 ferme seulement une reformulation d'ordre fixé. Les obligations
 3, 4 et 5 restent ouvertes pour l'existence dans le PC-tree, et la contrainte
 clean-side n'est pas encore une construction circular-ones/PC-tree.
 
+### PC-représentabilité bornée de l'ensemble des ordres cR
+
+Statut : résultat négatif expérimental dans le scaffold `PCNode`, pas théorème
+Hsu/McConnell.
+
+T079 ajoute un learner exact borné pour la grammaire enracinée `PCNode` du
+dépôt. Pour une famille cible d'ordres circulaires canoniques, il énumère les
+familles de frontiers linéaires générées par feuilles, nœuds `P` et nœuds `C`,
+puis compare leur canonicalisation circulaire à la cible. Un cap par
+sous-ensemble rend le résultat incomplet si dépassé.
+
+Contre-exemple scaffold T079 :
+
+```text
+D = [
+  [0, 1, 2, 3, 1],
+  [1, 0, 3, 2, 1],
+  [2, 3, 0, 1, 1],
+  [3, 2, 1, 0, 1],
+  [1, 1, 1, 1, 0],
+]
+S_cr(D) = {
+  (0, 1, 3, 2, 4),
+  (0, 1, 4, 3, 2),
+}
+```
+
+Le learner est complet sur `n=5` avec le cap utilisé et ne trouve aucun
+`PCNode` représentant exactement ces deux ordres. Le test régressé vérifie aussi
+qu'aucun contre-exemple non vide/non total n'apparaît sur l'exhaustif `n=4`,
+valeurs `{1,2,3}`.
+
+Ce que cela couvre :
+
+- obligation négative locale : la route naïve "calculer un `PCNode` des ordres
+  cR" est fausse dans le scaffold actuel ;
+- obligation de contre-exemple : la matrice et les deux ordres cR sont conservés
+  dans `tests/test_pc_tree_learning.py` ;
+- obligation de prudence : les rapports distinguent cible vide, recherche
+  incomplète et contre-exemple informatif.
+
+Limites :
+
+- le scaffold `PCNode` est enraciné et plus pauvre qu'une implémentation
+  Hsu/McConnell complète ;
+- une non-représentabilité scaffold n'est pas une preuve de
+  non-représentabilité par PC-tree général ;
+- cette expérience ne donne pas encore de solveur d'existence dans le PC-tree
+  quasi-circulaire fourni.
+
 ### Signature bad-side de bloc
 
 Statut : outil expérimental / limite de compacité observée.

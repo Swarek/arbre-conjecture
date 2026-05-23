@@ -100,6 +100,20 @@ round-order et projection-adjacence. Il ne transforme pas encore cR en
 circular-ones standard, car la contrainte porte sur un arc choisi entre deux
 endpoints, pas sur la consécutivité globale de `C_ab`.
 
+Complément T079 : `make bench-cr-pc-representability` teste si l'ensemble
+complet des ordres cR d'une matrice est lui-même représentable par un `PCNode`
+du scaffold. Le learner énumère exactement les familles du scaffold jusqu'à
+`n=6` sous cap `50000` familles par sous-ensemble. Résultat observé :
+`39` lignes complètes, `0` incomplète, `19` représentables, `10` cibles vides
+et `10` contre-exemples informatifs. Le premier contre-exemple non vide/non
+total apparaît en `n=5` sur `paired_farthest`, avec exactement deux ordres cR :
+`(0,1,3,2,4)` et `(0,1,4,3,2)`.
+
+Interprétation : la route "l'ensemble des ordres cR est directement un PCNode"
+est réfutée pour le scaffold du dépôt. Il reste possible qu'un PC-tree
+Hsu/McConnell non enraciné plus fidèle représente cette famille ; T079 ne doit
+donc pas être vendu comme théorème externe.
+
 ## Risques
 
 - Les contraintes cR peuvent ne pas être exprimables comme contraintes d’arcs
@@ -115,6 +129,8 @@ Deux suites raisonnables :
   avec le PC-tree donné, au lieu d'énumérer les frontiers ;
 - tester si les familles de contraintes `C_ab` par seuil sont représentables
   par une structure round-order ou simultaneous PC/PQ-ordering imbriquée ;
+- comparer le contre-exemple T079 à un modèle PC-tree non enraciné plus fidèle
+  avant de conclure sur la PC-représentabilité générale ;
 - exploiter `B(a,b)` arc comme filtre positif suffisant ou obstruction locale,
   sans l'utiliser comme caractérisation, puis chercher les corrélations
   supplémentaires qui restaurent la condition exacte one-side dans un PC-tree.

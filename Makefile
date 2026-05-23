@@ -1,7 +1,7 @@
 PYTHON ?= $(shell if [ -x .venv/bin/python ]; then echo .venv/bin/python; elif command -v python3 >/dev/null 2>&1; then echo python3; else echo python; fi)
 PYTEST ?= $(PYTHON) -m pytest
 
-.PHONY: quick check hunt-counterexamples bench-quick bench bench-piste-f bench-csp-quick bench-width-stress bench-single-p-stress bench-relation-catalog bench-relation-shapes bench-relation-chains bench-relation-unsat-cores bench-sparse-matching bench-sparse-binary-cores bench-quartet-coverage bench-frontier-obstructions bench-strict-algorithm52 bench-strict-positive-coverage bench-threshold-roundness bench-permutation-like bench-permutation-composition bench-relation-components unit acceptance
+.PHONY: quick check hunt-counterexamples bench-quick bench bench-piste-f bench-csp-quick bench-width-stress bench-single-p-stress bench-relation-catalog bench-relation-shapes bench-relation-chains bench-relation-unsat-cores bench-sparse-matching bench-sparse-binary-cores bench-quartet-coverage bench-frontier-obstructions bench-strict-algorithm52 bench-strict-positive-coverage bench-threshold-roundness bench-cr-pc-representability bench-permutation-like bench-permutation-composition bench-relation-components unit acceptance
 
 unit:
 	$(PYTEST) -q
@@ -227,6 +227,16 @@ bench-threshold-roundness:
 	  --order-limit 5000 \
 	  --seed 20260620 \
 	  --output reports/threshold_roundness_probe.json
+
+bench-cr-pc-representability:
+	mkdir -p reports && \
+	$(PYTHON) tools/pc_cr_pc_representability_probe.py \
+	  --sizes 4,5,6 \
+	  --instance-kinds cycle,random,equal,paired_farthest,four_local_non_cr,five_local_non_cr \
+	  --repeats 5 \
+	  --max-families-per-subset 50000 \
+	  --seed 20260630 \
+	  --output reports/cr_pc_representability_probe.json
 
 bench-permutation-like:
 	mkdir -p reports && \

@@ -54,6 +54,7 @@ make bench-frontier-obstructions
 make bench-strict-algorithm52
 make bench-strict-positive-coverage
 make bench-threshold-roundness
+make bench-cr-pc-representability
 make bench-permutation-like
 make bench-permutation-composition
 make bench-relation-components
@@ -151,6 +152,12 @@ Il compare la reformulation fixed-order par seuils
 `N_{d(a,b)}[a] intersect N_{d(a,b)}[b]` au prédicat bad-side et à la définition
 cR directe. C'est un contrôle d'équivalence pour ordre fixé, pas un solveur
 d'existence dans le PC-tree.
+
+`make bench-cr-pc-representability` écrit
+`reports/cr_pc_representability_probe.json`. Il teste, dans la grammaire
+`PCNode` bornée du dépôt, si l'ensemble des ordres cR d'une matrice est
+exactement une famille de frontiers PC-tree. Les résultats négatifs sont des
+contre-exemples au scaffold, pas encore au modèle Hsu/McConnell complet.
 
 `make bench-permutation-like` écrit `reports/permutation_like_probe.json`. Il
 teste les profils locaux `permutation_like` observés sur `paired_farthest`
