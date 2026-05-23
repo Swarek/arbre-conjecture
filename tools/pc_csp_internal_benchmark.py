@@ -26,6 +26,7 @@ from pc_circular.generators import instance_by_kind  # noqa: E402
 from pc_circular.pc_tree import balanced_pc_tree  # noqa: E402
 from pc_circular.solvers.sat_like_experiments import (  # noqa: E402
     accepted_frontiers_by_csp,
+    bad_side_grouped_support_outcome_profile,
     compile_bad_side_nogoods_grouped_first_hit_support_local,
     compile_bad_side_nogoods_grouped_support_local,
     compile_bad_side_nogoods_support_local,
@@ -139,6 +140,15 @@ def run_benchmark(
                     )
                     first_hit_compile_seconds = time.perf_counter() - first_hit_compile_start
 
+                    profile_start = time.perf_counter()
+                    support_outcome_profile = bad_side_grouped_support_outcome_profile(
+                        D,
+                        T,
+                        max_p_degree=max_p_degree,
+                        max_groups=3,
+                    )
+                    profile_seconds = time.perf_counter() - profile_start
+
                     first_hit_solve_start = time.perf_counter()
                     first_hit_solve_result = solve_pruned_nogood_csp_from_compilation(
                         D,
@@ -186,6 +196,7 @@ def run_benchmark(
                     grouped_compile_counts = grouped_compilation["counts"]
                     first_hit_counts = first_hit_solve_result["counts"]
                     first_hit_compile_counts = first_hit_compilation["counts"]
+                    profile_counts = support_outcome_profile["counts"]
                     signatures = _signature_set(compilation)
                     support_signatures = _signature_set(support_compilation)
                     grouped_signatures = _signature_set(grouped_compilation)
@@ -215,6 +226,7 @@ def run_benchmark(
                             "grouped_compile_seconds": grouped_compile_seconds,
                             "grouped_solve_seconds": grouped_solve_seconds,
                             "first_hit_compile_seconds": first_hit_compile_seconds,
+                            "support_outcome_profile_seconds": profile_seconds,
                             "first_hit_solve_seconds": first_hit_solve_seconds,
                             "direct_seconds": direct_seconds,
                             "atoms": len(compilation["atoms"]),
@@ -289,6 +301,65 @@ def run_benchmark(
                             "first_hit_position_histogram": first_hit_compile_counts[
                                 "first_hit_position_histogram"
                             ],
+                            "profile_complete": support_outcome_profile["complete"],
+                            "profile_support_group_count": profile_counts["support_group_count"],
+                            "profile_groups_profiled": profile_counts["groups_profiled"],
+                            "profile_hit_assignments": profile_counts["hit_assignments"],
+                            "profile_no_hit_assignments": profile_counts["no_hit_assignments"],
+                            "profile_classification_atom_checks": profile_counts[
+                                "classification_atom_checks"
+                            ],
+                            "profile_exhaustive_atom_checks_seen": profile_counts[
+                                "exhaustive_atom_checks_seen"
+                            ],
+                            "profile_no_hit_exhaustive_atom_checks": profile_counts[
+                                "no_hit_exhaustive_atom_checks"
+                            ],
+                            "profile_unary_no_hit_certified_assignments": profile_counts[
+                                "unary_no_hit_certified_assignments"
+                            ],
+                            "profile_pair_side_split_hit_assignments": profile_counts[
+                                "pair_side_split_hit_assignments"
+                            ],
+                            "profile_pair_side_split_no_hit_assignments": profile_counts[
+                                "pair_side_split_no_hit_assignments"
+                            ],
+                            "profile_pair_side_split_checks": profile_counts[
+                                "pair_side_split_checks"
+                            ],
+                            "profile_pair_side_split_side_checks": profile_counts[
+                                "pair_side_split_side_checks"
+                            ],
+                            "profile_pair_side_split_component_witness_checks": profile_counts[
+                                "pair_side_split_component_witness_checks"
+                            ],
+                            "profile_pair_side_split_mismatches": profile_counts[
+                                "pair_side_split_mismatches"
+                            ],
+                            "profile_pair_side_split_work_ratio": profile_counts[
+                                "pair_side_split_work_ratio"
+                            ],
+                            "profile_ambiguous_no_hit_assignments": profile_counts[
+                                "ambiguous_no_hit_assignments"
+                            ],
+                            "profile_unary_hit_certified_assignments": profile_counts[
+                                "unary_hit_certified_assignments"
+                            ],
+                            "profile_ambiguous_hit_assignments": profile_counts[
+                                "ambiguous_hit_assignments"
+                            ],
+                            "profile_unary_no_hit_coverage_ratio": profile_counts[
+                                "unary_no_hit_coverage_ratio"
+                            ],
+                            "profile_ambiguous_no_hit_ratio": profile_counts[
+                                "ambiguous_no_hit_ratio"
+                            ],
+                            "profile_no_hit_assignment_ratio": profile_counts[
+                                "no_hit_assignment_ratio"
+                            ],
+                            "profile_max_group_no_hit_exhaustive_atom_checks": profile_counts[
+                                "max_group_no_hit_exhaustive_atom_checks"
+                            ],
                             "atoms_with_nogoods": compile_counts["atoms_with_nogoods"],
                             "max_support_size": compile_counts["max_support_size"],
                             "support_size_histogram": compile_counts["support_size_histogram"],
@@ -353,6 +424,9 @@ def run_benchmark(
             "median_first_hit_compile_seconds": _median(
                 [row["first_hit_compile_seconds"] for row in supported_rows]
             ),
+            "median_support_outcome_profile_seconds": _median(
+                [row["support_outcome_profile_seconds"] for row in supported_rows]
+            ),
             "median_solve_seconds": _median([row["solve_seconds"] for row in supported_rows]),
             "median_support_solve_seconds": _median(
                 [row["support_solve_seconds"] for row in supported_rows]
@@ -402,6 +476,61 @@ def run_benchmark(
             ),
             "total_first_hit_checks_saved_on_hits": sum(
                 row["first_hit_checks_saved_on_hits"] for row in supported_rows
+            ),
+            "total_profile_no_hit_exhaustive_atom_checks": sum(
+                row["profile_no_hit_exhaustive_atom_checks"] for row in supported_rows
+            ),
+            "total_profile_pair_side_split_checks": sum(
+                row["profile_pair_side_split_checks"] for row in supported_rows
+            ),
+            "total_profile_pair_side_split_side_checks": sum(
+                row["profile_pair_side_split_side_checks"] for row in supported_rows
+            ),
+            "total_profile_pair_side_split_component_witness_checks": sum(
+                row["profile_pair_side_split_component_witness_checks"] for row in supported_rows
+            ),
+            "profile_pair_side_split_mismatches": sum(
+                row["profile_pair_side_split_mismatches"] for row in supported_rows
+            ),
+            "profile_pair_side_split_work_ratio": (
+                sum(row["profile_pair_side_split_checks"] for row in supported_rows)
+                / sum(row["profile_classification_atom_checks"] for row in supported_rows)
+                if sum(row["profile_classification_atom_checks"] for row in supported_rows)
+                else 0.0
+            ),
+            "total_profile_unary_no_hit_certified_assignments": sum(
+                row["profile_unary_no_hit_certified_assignments"] for row in supported_rows
+            ),
+            "total_profile_ambiguous_no_hit_assignments": sum(
+                row["profile_ambiguous_no_hit_assignments"] for row in supported_rows
+            ),
+            "total_profile_unary_hit_certified_assignments": sum(
+                row["profile_unary_hit_certified_assignments"] for row in supported_rows
+            ),
+            "total_profile_ambiguous_hit_assignments": sum(
+                row["profile_ambiguous_hit_assignments"] for row in supported_rows
+            ),
+            "profile_unary_no_hit_coverage_ratio": (
+                sum(row["profile_unary_no_hit_certified_assignments"] for row in supported_rows)
+                / sum(row["profile_no_hit_assignments"] for row in supported_rows)
+                if sum(row["profile_no_hit_assignments"] for row in supported_rows)
+                else 0.0
+            ),
+            "profile_ambiguous_no_hit_ratio": (
+                sum(row["profile_ambiguous_no_hit_assignments"] for row in supported_rows)
+                / sum(row["profile_no_hit_assignments"] for row in supported_rows)
+                if sum(row["profile_no_hit_assignments"] for row in supported_rows)
+                else 0.0
+            ),
+            "profile_unary_hit_coverage_ratio": (
+                sum(row["profile_unary_hit_certified_assignments"] for row in supported_rows)
+                / sum(row["profile_hit_assignments"] for row in supported_rows)
+                if sum(row["profile_hit_assignments"] for row in supported_rows)
+                else 0.0
+            ),
+            "max_profile_group_no_hit_exhaustive_atom_checks": max(
+                [row["profile_max_group_no_hit_exhaustive_atom_checks"] for row in supported_rows],
+                default=0,
             ),
             "max_first_hit_position": max(
                 [row["first_hit_max_position"] for row in supported_rows],
@@ -480,6 +609,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         or report["summary"]["support_grouped_signature_mismatches"]
         or report["summary"]["first_hit_signature_mismatches"]
         or report["summary"]["grouped_first_hit_signature_mismatches"]
+        or report["summary"]["profile_pair_side_split_mismatches"]
         else 0
     )
 

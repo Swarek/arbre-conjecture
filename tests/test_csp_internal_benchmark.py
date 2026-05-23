@@ -34,7 +34,47 @@ def test_csp_internal_benchmark_reports_separate_compile_and_solve_metrics():
         int(position) * count
         for position, count in row["first_hit_position_histogram"].items()
     )
+    assert row["support_outcome_profile_seconds"] >= 0
+    assert row["profile_complete"]
+    assert row["profile_hit_assignments"] == row["first_hit_assignments"]
+    assert row["profile_no_hit_assignments"] == row["first_hit_no_hit_assignments"]
+    assert row["profile_hit_assignments"] + row["profile_no_hit_assignments"] == row[
+        "first_hit_support_assignments_seen"
+    ]
+    assert row["profile_classification_atom_checks"] == row["first_hit_atom_checks"]
+    assert row["profile_exhaustive_atom_checks_seen"] == row[
+        "first_hit_atom_checks_if_exhaustive_seen"
+    ]
+    assert row["profile_no_hit_exhaustive_atom_checks"] == row[
+        "first_hit_checks_spent_on_no_hit"
+    ]
+    assert (
+        row["profile_unary_no_hit_certified_assignments"]
+        + row["profile_ambiguous_no_hit_assignments"]
+        == row["profile_no_hit_assignments"]
+    )
+    assert (
+        row["profile_unary_hit_certified_assignments"] + row["profile_ambiguous_hit_assignments"]
+        == row["profile_hit_assignments"]
+    )
+    assert row["profile_pair_side_split_hit_assignments"] == row["profile_hit_assignments"]
+    assert row["profile_pair_side_split_no_hit_assignments"] == row["profile_no_hit_assignments"]
+    assert row["profile_pair_side_split_mismatches"] == 0
+    assert row["profile_pair_side_split_checks"] == (
+        row["profile_pair_side_split_side_checks"]
+        + row["profile_pair_side_split_component_witness_checks"]
+    )
     assert report["summary"]["total_first_hit_position_sum"] == row["first_hit_position_sum"]
     assert report["summary"]["total_first_hit_atom_checks_if_exhaustive_seen"] == row[
         "first_hit_atom_checks_if_exhaustive_seen"
+    ]
+    assert report["summary"]["total_profile_no_hit_exhaustive_atom_checks"] == row[
+        "profile_no_hit_exhaustive_atom_checks"
+    ]
+    assert report["summary"]["total_profile_ambiguous_no_hit_assignments"] == row[
+        "profile_ambiguous_no_hit_assignments"
+    ]
+    assert report["summary"]["profile_pair_side_split_mismatches"] == 0
+    assert report["summary"]["total_profile_pair_side_split_checks"] == row[
+        "profile_pair_side_split_checks"
     ]

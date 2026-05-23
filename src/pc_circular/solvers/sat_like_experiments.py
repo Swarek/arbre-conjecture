@@ -456,16 +456,16 @@ def _nogood_matches(assignment: Assignment, signature: NogoodSignature) -> bool:
     return all(assignment.get(path) == choice for path, choice in signature)
 
 
-def _project_atom_order_from_support_assignment(
+def _project_labels_order_from_support_assignment(
     pc_tree: PCNode,
-    atom: Sequence[int],
+    wanted_labels: Sequence[int],
     support_assignment: Assignment,
 ) -> tuple[int, ...]:
-    """Project the four atom labels using only choices on their support."""
+    """Project selected labels using the available local support choices."""
 
-    wanted = set(atom)
-    if len(wanted) != len(tuple(atom)):
-        raise ValueError("atom labels must be distinct")
+    wanted = set(wanted_labels)
+    if len(wanted) != len(tuple(wanted_labels)):
+        raise ValueError("projected labels must be distinct")
 
     def build(node: PCNode, path: Path) -> tuple[int, ...]:
         if node.kind == "leaf":
@@ -480,7 +480,7 @@ def _project_atom_order_from_support_assignment(
         if len(nonempty_children) >= 2:
             choice = support_assignment.get(path)
             if choice is None:
-                raise ValueError(f"missing support assignment for atom split at path {path}")
+                raise ValueError(f"missing support assignment for label split at path {path}")
         else:
             choice = tuple(range(len(node.children)))
 
@@ -491,8 +491,111 @@ def _project_atom_order_from_support_assignment(
 
     order = build(pc_tree, ())
     if set(order) != wanted or len(order) != len(wanted):
-        raise ValueError("support assignment did not project every atom label exactly once")
+        raise ValueError("support assignment did not project every label exactly once")
     return order
+
+
+def _project_atom_order_from_support_assignment(
+    pc_tree: PCNode,
+    atom: Sequence[int],
+    support_assignment: Assignment,
+) -> tuple[int, ...]:
+    """Project the four atom labels using only choices on their support."""
+
+    return _project_labels_order_from_support_assignment(pc_tree, atom, support_assignment)
+
+
+def _side_of_witness_between_pair(order: Sequence[int], pair: tuple[int, int], witness: int) -> int:
+    """Return which open arc between pair endpoints contains ``witness``."""
+
+    a, b = pair
+    position = {value: idx for idx, value in enumerate(order)}
+    n = len(order)
+    distance_ab = (position[b] - position[a]) % n
+    distance_aw = (position[witness] - position[a]) % n
+    return 0 if 0 < distance_aw < distance_ab else 1
+
+
+def _bad_witness_components_by_pair(
+    support_atoms: Sequence[dict],
+) -> dict[tuple[int, int], tuple[tuple[int, ...], ...]]:
+    """Build fixed witness graph components for one support group."""
+
+    adjacency_by_pair: dict[tuple[int, int], dict[int, set[int]]] = {}
+    for atom_info in support_atoms:
+        if "pair" not in atom_info or "bad_witnesses" not in atom_info:
+            continue
+        pair = tuple(atom_info["pair"])
+        y, t = atom_info["bad_witnesses"]
+        adjacency = adjacency_by_pair.setdefault(pair, {})
+        adjacency.setdefault(y, set()).add(t)
+        adjacency.setdefault(t, set()).add(y)
+
+    components_by_pair: dict[tuple[int, int], tuple[tuple[int, ...], ...]] = {}
+    for pair, adjacency in adjacency_by_pair.items():
+        components: list[tuple[int, ...]] = []
+        unseen = set(adjacency)
+        while unseen:
+            start = min(unseen)
+            stack = [start]
+            unseen.remove(start)
+            component = []
+            while stack:
+                witness = stack.pop()
+                component.append(witness)
+                for neighbor in sorted(adjacency[witness]):
+                    if neighbor in unseen:
+                        unseen.remove(neighbor)
+                        stack.append(neighbor)
+            components.append(tuple(sorted(component)))
+        components_by_pair[pair] = tuple(sorted(components))
+    return components_by_pair
+
+
+def _pair_side_split_outcome(
+    pc_tree: PCNode,
+    support_assignment: Assignment,
+    components_by_pair: dict[tuple[int, int], tuple[tuple[int, ...], ...]],
+) -> dict:
+    """Classify a support assignment by witness-component side splits."""
+
+    side_checks = 0
+    component_witness_checks = 0
+    for pair, components in components_by_pair.items():
+        witnesses = sorted({witness for component in components for witness in component})
+        sides: dict[int, int] = {}
+        for witness in witnesses:
+            order = _project_labels_order_from_support_assignment(
+                pc_tree,
+                (pair[0], pair[1], witness),
+                support_assignment,
+            )
+            sides[witness] = _side_of_witness_between_pair(order, pair, witness)
+            side_checks += 1
+        for component in components:
+            first_side = None
+            for witness in component:
+                component_witness_checks += 1
+                if first_side is None:
+                    first_side = sides[witness]
+                elif sides[witness] != first_side:
+                    return {
+                        "hit": True,
+                        "side_checks": side_checks,
+                        "component_witness_checks": component_witness_checks,
+                        "checks": side_checks + component_witness_checks,
+                        "pair": pair,
+                        "component": component,
+                    }
+
+    return {
+        "hit": False,
+        "side_checks": side_checks,
+        "component_witness_checks": component_witness_checks,
+        "checks": side_checks + component_witness_checks,
+        "pair": None,
+        "component": None,
+    }
 
 
 def _domain_product_size(encoding: dict, support: Sequence[Path]) -> int:
@@ -800,6 +903,351 @@ def _compile_nogoods_by_grouped_supports(
     )
     if any("pair" in nogood for nogood in nogoods):
         report["counts"]["pairs_with_nogoods"] = len(pairs_with_hits)
+    return report
+
+
+def _profile_single_support_group(
+    pc_tree: PCNode,
+    encoding: dict,
+    support: tuple[Path, ...],
+    support_atoms: list[dict],
+    *,
+    limit: Optional[int],
+) -> dict:
+    """Profile hit/no-hit outcomes for one support group.
+
+    This is diagnostic, not a solver: it still tests atoms sequentially.  The
+    extra value is to measure whether no-hit assignments have a simple
+    one-coordinate explanation.
+    """
+
+    domain_lists = [encoding["domains"][path] for path in support]
+    group_size = len(support_atoms)
+    support_product = _domain_product_size(encoding, support)
+    components_by_pair = _bad_witness_components_by_pair(support_atoms)
+    outcomes: list[tuple[NogoodSignature, bool, int]] = []
+    slice_stats: dict[tuple[Path, tuple[int, ...]], dict] = {}
+    hit_signatures: set[NogoodSignature] = set()
+    no_hit_signatures: set[NogoodSignature] = set()
+    hit_position_histogram: dict[int, int] = {}
+    first_hit_position_sum = 0
+    classification_atom_checks = 0
+    pair_side_split_hit_assignments = 0
+    pair_side_split_no_hit_assignments = 0
+    pair_side_split_side_checks = 0
+    pair_side_split_component_witness_checks = 0
+    pair_side_split_checks = 0
+    pair_side_split_mismatches = 0
+    first_pair_side_split_mismatch = None
+    truncated = False
+
+    for choices in product(*domain_lists):
+        if limit is not None and len(outcomes) >= limit:
+            truncated = True
+            break
+        support_assignment = dict(zip(support, choices))
+        signature = _nogood_signature(support_assignment, support)
+        hit_position = 0
+        checks = 0
+        for atom_position, atom_info in enumerate(support_atoms, start=1):
+            checks += 1
+            atom = tuple(atom_info["atom"])
+            order = canonical_circular_order(
+                _project_atom_order_from_support_assignment(pc_tree, atom, support_assignment)
+            )
+            if _cyclic_atom_occurs(order, atom):
+                hit_position = atom_position
+                break
+
+        hit = hit_position != 0
+        classification_atom_checks += checks
+        outcomes.append((signature, hit, hit_position))
+        if hit:
+            hit_signatures.add(signature)
+            first_hit_position_sum += hit_position
+            hit_position_histogram[hit_position] = hit_position_histogram.get(hit_position, 0) + 1
+        else:
+            no_hit_signatures.add(signature)
+
+        pair_side_split = _pair_side_split_outcome(pc_tree, support_assignment, components_by_pair)
+        pair_side_split_checks += pair_side_split["checks"]
+        pair_side_split_side_checks += pair_side_split["side_checks"]
+        pair_side_split_component_witness_checks += pair_side_split["component_witness_checks"]
+        if pair_side_split["hit"]:
+            pair_side_split_hit_assignments += 1
+        else:
+            pair_side_split_no_hit_assignments += 1
+        if pair_side_split["hit"] != hit:
+            pair_side_split_mismatches += 1
+            if first_pair_side_split_mismatch is None:
+                first_pair_side_split_mismatch = {
+                    "signature": signature,
+                    "atom_scan_hit": hit,
+                    "pair_side_split_hit": pair_side_split["hit"],
+                    "pair": pair_side_split["pair"],
+                    "component": pair_side_split["component"],
+                }
+
+        for path, choice in signature:
+            key = (path, choice)
+            stats = slice_stats.setdefault(
+                key,
+                {
+                    "seen": 0,
+                    "hits": 0,
+                    "signatures": set(),
+                },
+            )
+            stats["seen"] += 1
+            if hit:
+                stats["hits"] += 1
+            stats["signatures"].add(signature)
+
+    pure_hit_slices: list[dict] = []
+    pure_no_hit_slices: list[dict] = []
+    unary_hit_covered: set[NogoodSignature] = set()
+    unary_no_hit_covered: set[NogoodSignature] = set()
+    for (path, choice), stats in slice_stats.items():
+        if stats["seen"] == 0:
+            continue
+        if stats["hits"] == stats["seen"]:
+            pure_hit_slices.append(
+                {
+                    "path": path,
+                    "choice": choice,
+                    "assignments": stats["seen"],
+                }
+            )
+            unary_hit_covered.update(stats["signatures"])
+        elif stats["hits"] == 0:
+            pure_no_hit_slices.append(
+                {
+                    "path": path,
+                    "choice": choice,
+                    "assignments": stats["seen"],
+                }
+            )
+            unary_no_hit_covered.update(stats["signatures"])
+
+    hit_count = len(hit_signatures)
+    no_hit_count = len(no_hit_signatures)
+    unary_hit_certified = len(unary_hit_covered & hit_signatures)
+    unary_no_hit_certified = len(unary_no_hit_covered & no_hit_signatures)
+    assignments_seen = len(outcomes)
+    no_hit_exhaustive_atom_checks = no_hit_count * group_size
+    exhaustive_atom_checks_seen = assignments_seen * group_size
+
+    return {
+        "support": support,
+        "support_size": len(support),
+        "domain_sizes": tuple(len(encoding["domains"][path]) for path in support),
+        "group_size": group_size,
+        "support_product": support_product,
+        "assignments_seen": assignments_seen,
+        "hit_assignments": hit_count,
+        "no_hit_assignments": no_hit_count,
+        "hit_ratio": hit_count / assignments_seen if assignments_seen else 0.0,
+        "no_hit_ratio": no_hit_count / assignments_seen if assignments_seen else 0.0,
+        "classification_atom_checks": classification_atom_checks,
+        "exhaustive_atom_checks_seen": exhaustive_atom_checks_seen,
+        "no_hit_exhaustive_atom_checks": no_hit_exhaustive_atom_checks,
+        "first_hit_position_sum": first_hit_position_sum,
+        "first_hit_position_histogram": dict(sorted(hit_position_histogram.items())),
+        "pair_side_split_hit_assignments": pair_side_split_hit_assignments,
+        "pair_side_split_no_hit_assignments": pair_side_split_no_hit_assignments,
+        "pair_side_split_checks": pair_side_split_checks,
+        "pair_side_split_side_checks": pair_side_split_side_checks,
+        "pair_side_split_component_witness_checks": pair_side_split_component_witness_checks,
+        "pair_side_split_work_ratio": (
+            pair_side_split_checks / classification_atom_checks
+            if classification_atom_checks
+            else 0.0
+        ),
+        "pair_side_split_mismatches": pair_side_split_mismatches,
+        "first_pair_side_split_mismatch": first_pair_side_split_mismatch,
+        "pure_hit_slice_count": len(pure_hit_slices),
+        "pure_no_hit_slice_count": len(pure_no_hit_slices),
+        "unary_hit_certified_assignments": unary_hit_certified,
+        "unary_no_hit_certified_assignments": unary_no_hit_certified,
+        "ambiguous_hit_assignments": hit_count - unary_hit_certified,
+        "ambiguous_no_hit_assignments": no_hit_count - unary_no_hit_certified,
+        "unary_hit_coverage_ratio": unary_hit_certified / hit_count if hit_count else 0.0,
+        "unary_no_hit_coverage_ratio": (
+            unary_no_hit_certified / no_hit_count if no_hit_count else 0.0
+        ),
+        "pure_hit_slices": sorted(
+            pure_hit_slices,
+            key=lambda item: (item["path"], item["choice"]),
+        ),
+        "pure_no_hit_slices": sorted(
+            pure_no_hit_slices,
+            key=lambda item: (item["path"], item["choice"]),
+        ),
+        "truncated": truncated,
+    }
+
+
+def _grouped_support_outcome_profile(
+    D,
+    pc_tree: PCNode,
+    *,
+    atoms: list[dict],
+    method: str,
+    max_p_degree: int,
+    limit: Optional[int],
+    max_groups: Optional[int],
+) -> dict:
+    validate_dissimilarity(D)
+    if max_groups is not None and max_groups < 0:
+        raise ValueError("max_groups must be non-negative or None")
+
+    encoding = build_local_domains(pc_tree, max_p_degree=max_p_degree)
+    report = {
+        "implemented": True,
+        "method": method,
+        "encoding": encoding,
+        "complete": True,
+        "atoms": atoms,
+        "groups": [],
+        "counts": {
+            "support_group_count": 0,
+            "groups_profiled": 0,
+            "grouped_support_assignments_seen": 0,
+            "hit_assignments": 0,
+            "no_hit_assignments": 0,
+            "classification_atom_checks": 0,
+            "exhaustive_atom_checks_seen": 0,
+            "no_hit_exhaustive_atom_checks": 0,
+            "first_hit_position_sum": 0,
+            "pair_side_split_hit_assignments": 0,
+            "pair_side_split_no_hit_assignments": 0,
+            "pair_side_split_checks": 0,
+            "pair_side_split_side_checks": 0,
+            "pair_side_split_component_witness_checks": 0,
+            "pair_side_split_mismatches": 0,
+            "pair_side_split_work_ratio": 0.0,
+            "first_pair_side_split_mismatch": None,
+            "pure_hit_slice_count": 0,
+            "pure_no_hit_slice_count": 0,
+            "unary_hit_certified_assignments": 0,
+            "unary_no_hit_certified_assignments": 0,
+            "ambiguous_hit_assignments": 0,
+            "ambiguous_no_hit_assignments": 0,
+            "max_group_no_hit_assignments": 0,
+            "max_group_no_hit_ratio": 0.0,
+            "max_group_no_hit_exhaustive_atom_checks": 0,
+            "unary_hit_coverage_ratio": 0.0,
+            "unary_no_hit_coverage_ratio": 0.0,
+            "ambiguous_hit_ratio": 0.0,
+            "ambiguous_no_hit_ratio": 0.0,
+            "no_hit_assignment_ratio": 0.0,
+        },
+    }
+    if encoding["unsupported"]:
+        report["complete"] = False
+        return report
+
+    atoms_by_support: dict[tuple[Path, ...], list[dict]] = {}
+    for atom_info in atoms:
+        support = quartet_support_paths(pc_tree, atom_info["atom"])
+        atoms_by_support.setdefault(support, []).append(atom_info)
+    report["counts"]["support_group_count"] = len(atoms_by_support)
+
+    group_profiles: list[dict] = []
+    truncated = False
+    for support, support_atoms in atoms_by_support.items():
+        if limit is None:
+            remaining_limit = None
+        else:
+            remaining_limit = limit - report["counts"]["grouped_support_assignments_seen"]
+            if remaining_limit <= 0:
+                truncated = True
+                break
+        group = _profile_single_support_group(
+            pc_tree,
+            encoding,
+            support,
+            support_atoms,
+            limit=remaining_limit,
+        )
+        group_profiles.append(group)
+        counts = report["counts"]
+        counts["groups_profiled"] += 1
+        counts["grouped_support_assignments_seen"] += group["assignments_seen"]
+        counts["hit_assignments"] += group["hit_assignments"]
+        counts["no_hit_assignments"] += group["no_hit_assignments"]
+        counts["classification_atom_checks"] += group["classification_atom_checks"]
+        counts["exhaustive_atom_checks_seen"] += group["exhaustive_atom_checks_seen"]
+        counts["no_hit_exhaustive_atom_checks"] += group["no_hit_exhaustive_atom_checks"]
+        counts["first_hit_position_sum"] += group["first_hit_position_sum"]
+        counts["pair_side_split_hit_assignments"] += group["pair_side_split_hit_assignments"]
+        counts["pair_side_split_no_hit_assignments"] += group["pair_side_split_no_hit_assignments"]
+        counts["pair_side_split_checks"] += group["pair_side_split_checks"]
+        counts["pair_side_split_side_checks"] += group["pair_side_split_side_checks"]
+        counts["pair_side_split_component_witness_checks"] += group[
+            "pair_side_split_component_witness_checks"
+        ]
+        counts["pair_side_split_mismatches"] += group["pair_side_split_mismatches"]
+        if (
+            counts["first_pair_side_split_mismatch"] is None
+            and group["first_pair_side_split_mismatch"] is not None
+        ):
+            counts["first_pair_side_split_mismatch"] = group["first_pair_side_split_mismatch"]
+        counts["pure_hit_slice_count"] += group["pure_hit_slice_count"]
+        counts["pure_no_hit_slice_count"] += group["pure_no_hit_slice_count"]
+        counts["unary_hit_certified_assignments"] += group["unary_hit_certified_assignments"]
+        counts["unary_no_hit_certified_assignments"] += group["unary_no_hit_certified_assignments"]
+        counts["ambiguous_hit_assignments"] += group["ambiguous_hit_assignments"]
+        counts["ambiguous_no_hit_assignments"] += group["ambiguous_no_hit_assignments"]
+        counts["max_group_no_hit_assignments"] = max(
+            counts["max_group_no_hit_assignments"],
+            group["no_hit_assignments"],
+        )
+        counts["max_group_no_hit_ratio"] = max(
+            counts["max_group_no_hit_ratio"],
+            group["no_hit_ratio"],
+        )
+        counts["max_group_no_hit_exhaustive_atom_checks"] = max(
+            counts["max_group_no_hit_exhaustive_atom_checks"],
+            group["no_hit_exhaustive_atom_checks"],
+        )
+        if group["truncated"]:
+            truncated = True
+            break
+
+    counts = report["counts"]
+    if counts["hit_assignments"]:
+        counts["unary_hit_coverage_ratio"] = (
+            counts["unary_hit_certified_assignments"] / counts["hit_assignments"]
+        )
+        counts["ambiguous_hit_ratio"] = counts["ambiguous_hit_assignments"] / counts["hit_assignments"]
+    if counts["no_hit_assignments"]:
+        counts["unary_no_hit_coverage_ratio"] = (
+            counts["unary_no_hit_certified_assignments"] / counts["no_hit_assignments"]
+        )
+        counts["ambiguous_no_hit_ratio"] = (
+            counts["ambiguous_no_hit_assignments"] / counts["no_hit_assignments"]
+        )
+    if counts["grouped_support_assignments_seen"]:
+        counts["no_hit_assignment_ratio"] = (
+            counts["no_hit_assignments"] / counts["grouped_support_assignments_seen"]
+        )
+    if counts["classification_atom_checks"]:
+        counts["pair_side_split_work_ratio"] = (
+            counts["pair_side_split_checks"] / counts["classification_atom_checks"]
+        )
+
+    group_profiles.sort(
+        key=lambda group: (
+            group["no_hit_exhaustive_atom_checks"],
+            group["ambiguous_no_hit_assignments"],
+            group["support_product"],
+            group["group_size"],
+        ),
+        reverse=True,
+    )
+    report["groups"] = group_profiles if max_groups is None else group_profiles[:max_groups]
+    report["complete"] = not truncated
     return report
 
 
@@ -1127,6 +1575,53 @@ def compile_bad_side_nogoods_grouped_first_hit_support_local(
     report["counts"]["witness_pair_constraints"] = witness_pair_constraints
     if "pairs_with_nogoods" not in report["counts"]:
         report["counts"]["pairs_with_nogoods"] = 0
+    return report
+
+
+def bad_side_grouped_support_outcome_profile(
+    D,
+    pc_tree: PCNode,
+    *,
+    max_p_degree: int = 3,
+    limit: Optional[int] = None,
+    max_groups: Optional[int] = 10,
+) -> dict:
+    """Profile support-level hit/no-hit outcomes for bad-side atoms.
+
+    A no-hit assignment is a support assignment for which no atom in the group
+    occurs.  This report is deliberately diagnostic: it still scans atoms and
+    therefore is not a compact solver.  The unary coverage counters measure how
+    often a hit/no-hit outcome is certified by a single pure local choice.
+    """
+
+    validate_dissimilarity(D)
+    witnesses_by_pair = bad_witnesses_by_pair(D)
+    witness_pair_constraints = sum(
+        len(witnesses) * (len(witnesses) - 1) // 2
+        for witnesses in witnesses_by_pair.values()
+    )
+    report = _grouped_support_outcome_profile(
+        D,
+        pc_tree,
+        atoms=forbidden_bad_side_atoms(D),
+        method="grouped_support_bad_side_outcome_profile",
+        max_p_degree=max_p_degree,
+        limit=limit,
+        max_groups=max_groups,
+    )
+    report["bad_pairs"] = [
+        {"pair": pair, "bad_witnesses": witnesses, "bad_witness_count": len(witnesses)}
+        for pair, witnesses in witnesses_by_pair.items()
+        if witnesses
+    ]
+    report["counts"]["nonempty_bad_pair_count"] = sum(
+        1 for witnesses in witnesses_by_pair.values() if witnesses
+    )
+    report["counts"]["nontrivial_bad_pair_count"] = sum(
+        1 for witnesses in witnesses_by_pair.values() if len(witnesses) >= 2
+    )
+    report["counts"]["bad_witness_total"] = sum(len(witnesses) for witnesses in witnesses_by_pair.values())
+    report["counts"]["witness_pair_constraints"] = witness_pair_constraints
     return report
 
 

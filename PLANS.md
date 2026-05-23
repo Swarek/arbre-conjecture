@@ -3111,3 +3111,71 @@ Décision : conserver T050 comme profilage de complexité Piste C hors
 précoces : le coût restant est majoritairement dans les affectations sans hit,
 donc la prochaine piste doit viser un test négatif agrégé par support ou une
 preuve structurelle bornant les no-hit.
+
+## ExecPlan 2026-05-23 - support no-hit outcome profile
+
+But : tester si le coût no-hit restant peut être remplacé par un diagnostic
+agrégé par support, au lieu de scanner les atoms bad-side un par un.
+
+Hypothèse : pour un support fixé, les atoms bad-side se factorisent par paire
+endpoint `{a,b}` et graphe de mauvais témoins. Une affectation de support est
+hit ssi une composante de ce graphe contient des témoins sur les deux côtés de
+`a,b`. Si ce test donne les mêmes hit/no-hit que le scan atomique, il fournit
+une signature support-level plus mathématique ; si son coût mesuré reste plus
+grand que first-hit, cela réfute une version naïve de la compression.
+
+Fichiers à modifier : `src/pc_circular/solvers/sat_like_experiments.py`,
+`tests/test_sat_like_experiments.py`, `tools/pc_csp_internal_benchmark.py`,
+`tests/test_csp_internal_benchmark.py`, `docs/tracks/piste_c_sat_csp.md`,
+`docs/tracks/piste_b_dp_pc_tree.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/proof_obligations.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `docs/tracks/README.md`,
+`PLANS.md`.
+
+Algorithme pressenti : ajouter
+`bad_side_grouped_support_outcome_profile`, qui regroupe les atoms par support,
+profile les affectations hit/no-hit, mesure les tranches unaires pures, puis
+construit pour chaque paire endpoint un graphe de mauvais témoins. Pour une
+affectation, calculer le côté de chaque témoin et déclarer un hit si une
+composante a deux côtés. Le diagnostic reste hors `candidate.py`.
+
+Plan de contre-exemples : comparer les compteurs hit/no-hit et checks au
+compilateur first-hit ; vérifier `pair_side_split_mismatches == 0` sur les
+tests ciblés et `make bench-csp-quick` ; garder les cas equal-distance,
+`limit=1` et gros `P` comme non-décisions ; traiter un mismatch pair-side
+comme contre-exemple à ajouter en régression.
+
+Plan subagents : Piste C propose l'invariant pair-side et signale que les
+tranches unaires seules sont faibles ; Piste F identifie les familles no-hit
+adverses (`cycle`, `ultrametric`, `non_strict`, `block`,
+`paired_farthest`) ; Piste B formule la version graphe/composantes et les
+contre-exemples aux masques trop faibles ; Piste tests liste les assertions
+anti-faux-sens à verrouiller.
+
+Tests à exécuter : tests ciblés `tests/test_sat_like_experiments.py` et
+`tests/test_csp_internal_benchmark.py`, `make bench-csp-quick`, `make quick`,
+`make check`. `make hunt-counterexamples` n'est pas requis car `candidate.py`
+reste inchangé.
+
+Risques : un no-hit local n'est pas un certificat positif de frontier cR ; les
+métriques de travail pair-side sont encore dépendantes de cette implémentation ;
+une égalité de compteurs avec first-hit ne prouve pas de borne polynomiale.
+
+Résultats observés : ajout du profil support-level, tests ciblés
+`tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py` :
+`44 passed`. `make bench-csp-quick` : `192` lignes, `0` mismatch,
+`0` first-hit mismatch, `0` mismatch de signatures,
+`profile_pair_side_split_mismatches=0`. Le diagnostic confirme les totaux T050 :
+`3320/6224` no-hit et `30520` checks no-hit. Les tranches unaires certifient
+`1888/3320` no-hit sur la gate rapide, mais `cycle` et `permuted_cycle` gardent
+`0%` de couverture unaire no-hit. Le test pair-side/composantes est exact sur
+la gate, mais son ratio de travail mesuré est `1.7732` fois le scan first-hit
+actuel ; il n'est donc pas une amélioration algorithmique directe. `make quick`
+final : `226 passed`, puis `JUSTE`; `make check` final : `JUSTE`;
+`make bench-quick` final : `0` timeout et `0` incomplet sur les huit tailles
+`4,5,6,8,10,12,16,20`.
+
+Décision : conserver T051 comme diagnostic exact et comme résultat négatif
+contre deux compressions naïves : tranches unaires seules et pair-side
+recalculé naïvement. La prochaine piste doit soit précompiler les côtés des
+témoins à travers le PC-tree, soit changer de famille de signature DP.

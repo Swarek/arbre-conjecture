@@ -323,3 +323,22 @@ insuffisante si elle est encore construite par scan. Le bon objet serait une
 contrainte agrégée capable de décider directement qu'au moins un atom du groupe
 apparaît, ou de certifier qu'aucun ne peut apparaître, pour une affectation de
 support donnée.
+
+## Résultats T051
+
+Statut : hypothèse DP clarifiée, pas encore compression.
+
+Le diagnostic pair-side/composantes transforme chaque support groupé en graphes
+`G(S,a,b)` dont les sommets sont les mauvais témoins de la paire `{a,b}` et les
+arêtes les couples de témoins qui produisent un atom du support `S`. Pour une
+affectation locale, un hit existe ssi une composante de `G(S,a,b)` a des témoins
+sur les deux côtés de `{a,b}`.
+
+Ce résultat donne une signature DP candidate plus structurée que la liste
+d'atoms : transporter les composantes de témoins et leurs côtés exposés. Mais le
+profil T051 montre que recalculer ces côtés par affectation coûte plus cher que
+le first-hit actuel sur la gate rapide (`pair_side_split_work_ratio=1.7732`).
+
+Conséquence DP : il faut factoriser le calcul des côtés lui-même, probablement
+par sous-arbre ou par paire endpoint, sinon le passage atom -> composante ne
+suffit pas.

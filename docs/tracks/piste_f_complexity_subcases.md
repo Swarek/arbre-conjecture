@@ -804,3 +804,24 @@ low-hub (`25.7%`), mais fort sur cycle (`50.0%`) et paired-farthest (`44.4%`).
 Cela suggère que l'obstacle de complexité restant n'est pas seulement trouver
 un meilleur ordre de scan, mais certifier rapidement l'absence d'atom violé dans
 un groupe.
+
+## Résultat T051 - Pair-side exact mais non plus rapide
+
+Statut : résultat empirique de complexité, hors candidate.
+
+Le benchmark interne enrichi confirme les familles no-hit adverses. Sur la gate
+rapide, les no-hit coûtent surtout :
+
+- `cycle` : ratio no-hit `0.500`, part des checks no-hit `0.801`,
+  couverture unaire no-hit `0.0` ;
+- `ultrametric` : ratio no-hit `0.900`, part `0.965`, couverture unaire
+  `0.889` ;
+- `non_strict` : ratio no-hit `0.962`, part `0.996`, couverture unaire
+  `0.960` ;
+- `block` : ratio no-hit `0.750`, part `0.867`, couverture unaire `0.667` ;
+- `paired_farthest` : ratio no-hit `0.333..0.455`, couverture unaire faible.
+
+Le test pair-side/composantes n'a aucun mismatch sur `192` lignes, mais son
+travail agrégé est `1.7732` fois le first-hit mesuré. Cela réfute l'idée qu'une
+simple reformulation par paires suffit à améliorer la complexité sans cache ou
+DP supplémentaire.

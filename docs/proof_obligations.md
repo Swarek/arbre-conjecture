@@ -1303,6 +1303,26 @@ Limites T050 :
   `atom_checks_if_exhaustive_seen` concerne le préfixe inspecté, tandis que
   `atom_checks_if_exhaustive` reste la taille totale théorique.
 
+T051 ajoute `bad_side_grouped_support_outcome_profile`. Pour chaque support
+groupé, il mesure les affectations hit/no-hit et teste une reformulation par
+graphe de mauvais témoins : pour chaque paire `{a,b}`, une composante de
+témoins qui occupe les deux côtés de `{a,b}` équivaut à l'existence d'un atom
+bad-side dans ce support. Sur la gate CSP rapide, cette reformulation a
+`0` mismatch avec le scan atomique.
+
+Limites T051 :
+
+- le profil reste un diagnostic construit par énumération des affectations de
+  support, pas une compilation compacte ;
+- un no-hit local n'est pas un certificat positif de frontier cR ;
+- les tranches unaires pures et le test pair-side/composantes ne sont pas des
+  preuves de suffisance globale ;
+- le test pair-side naïf est plus coûteux que first-hit sur la gate rapide
+  (`profile_pair_side_split_work_ratio=1.7732`), donc il ne satisfait pas
+  l'obligation de complexité ;
+- les cas `limit` et `unsupported` restent des profils partiels, jamais des
+  rejets.
+
 ### Prédicats stricts d'ordre fixé
 
 Statut : définitions directes implémentées / base expérimentale Piste F.

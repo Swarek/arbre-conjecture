@@ -373,6 +373,19 @@ Dernier commit green avant T009 : `07120e4`.
   `3320/6224` affectations de support sont no-hit sur la gate CSP rapide et
   consomment `30520` checks ; les métriques sont dépendantes de l'ordre de scan,
   pas des invariants mathématiques.
+- Checkpoint T051 courant : commit contenant
+  `bad_side_grouped_support_outcome_profile` hors candidate. Le profil mesure
+  hit/no-hit par support groupé, tranches unaires pures et test
+  pair-side/composantes de mauvais témoins. Validation observée :
+  `tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`
+  (`44 passed`), `make bench-csp-quick` (`192` lignes, `0` mismatch,
+  `0` first-hit mismatch, `profile_pair_side_split_mismatches=0`),
+  `make quick` (`226 passed`, puis `JUSTE`), `make check`, et
+  `make bench-quick` (`0` timeout, `0` incomplet). Résultat
+  observé : le test pair-side est exact sur la gate mais plus coûteux que
+  first-hit (`profile_pair_side_split_work_ratio=1.7732`) ; les tranches
+  unaires couvrent `1888/3320` no-hit globalement mais `0%` sur les familles
+  cycliques de la gate rapide.
 
 ## Rollback
 

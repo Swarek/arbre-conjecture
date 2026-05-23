@@ -20,6 +20,7 @@ from pc_circular.solvers.sat_like_experiments import (
     _project_atom_order_from_support_assignment,
     accepted_frontiers_by_csp,
     assignment_frontier_report,
+    bad_side_grouped_support_outcome_profile,
     build_local_domains,
     compile_bad_side_nogoods,
     compile_bad_side_nogoods_grouped_first_hit_support_local,
@@ -486,6 +487,72 @@ def test_grouped_first_hit_equal_distance_profile_has_no_hits_or_atoms():
     assert first_hit["counts"]["atom_checks_if_exhaustive_seen"] == 0
     assert first_hit["counts"]["atom_checks_saved_by_first_hit"] == 0
     _assert_first_hit_accounting(first_hit)
+
+
+def test_bad_side_support_outcome_profile_matches_first_hit_accounting():
+    T = balanced_pc_tree(6, kind="mixed")
+    D = cycle_metric(6)
+    first_hit = compile_bad_side_nogoods_grouped_first_hit_support_local(D, T, max_p_degree=3)
+    profile = bad_side_grouped_support_outcome_profile(D, T, max_p_degree=3, max_groups=None)
+
+    assert profile["complete"] is True
+    assert "exists" not in profile
+    assert "order" not in profile
+    assert "accepted_frontiers" not in profile
+    assert profile["counts"]["support_group_count"] == first_hit["counts"]["support_group_count"]
+    assert profile["counts"]["grouped_support_assignments_seen"] == first_hit["counts"][
+        "grouped_support_assignments_seen"
+    ]
+    assert profile["counts"]["hit_assignments"] == first_hit["counts"]["first_hit_assignments"]
+    assert profile["counts"]["no_hit_assignments"] == first_hit["counts"]["first_hit_no_hit_assignments"]
+    assert profile["counts"]["classification_atom_checks"] == first_hit["counts"]["atom_checks"]
+    assert profile["counts"]["exhaustive_atom_checks_seen"] == first_hit["counts"][
+        "atom_checks_if_exhaustive_seen"
+    ]
+    assert profile["counts"]["no_hit_exhaustive_atom_checks"] == first_hit["counts"][
+        "first_hit_checks_spent_on_no_hit"
+    ]
+    assert profile["counts"]["first_hit_position_sum"] == first_hit["counts"]["first_hit_position_sum"]
+    assert profile["counts"]["pair_side_split_hit_assignments"] == profile["counts"]["hit_assignments"]
+    assert profile["counts"]["pair_side_split_no_hit_assignments"] == profile["counts"][
+        "no_hit_assignments"
+    ]
+    assert profile["counts"]["pair_side_split_mismatches"] == 0
+    assert profile["counts"]["first_pair_side_split_mismatch"] is None
+    assert profile["counts"]["pair_side_split_checks"] > 0
+    assert profile["counts"]["unary_no_hit_certified_assignments"] == 0
+    assert profile["counts"]["ambiguous_no_hit_assignments"] == profile["counts"]["no_hit_assignments"]
+    assert profile["counts"]["ambiguous_no_hit_ratio"] == 1.0
+    assert profile["groups"][0]["no_hit_exhaustive_atom_checks"] >= profile["groups"][-1][
+        "no_hit_exhaustive_atom_checks"
+    ]
+
+
+def test_bad_side_support_outcome_profile_reports_limit_and_unsupported():
+    D = cycle_metric(6)
+    T = balanced_pc_tree(6, kind="mixed")
+    limited = bad_side_grouped_support_outcome_profile(D, T, max_p_degree=3, limit=1)
+
+    assert limited["complete"] is False
+    assert limited["counts"]["grouped_support_assignments_seen"] == 1
+    assert limited["counts"]["groups_profiled"] == 1
+    assert limited["counts"]["hit_assignments"] + limited["counts"]["no_hit_assignments"] == 1
+
+    unsupported = bad_side_grouped_support_outcome_profile(cycle_metric(5), star_pc_tree(5), max_p_degree=3)
+    assert unsupported["complete"] is False
+    assert unsupported["encoding"]["unsupported"]
+    assert unsupported["counts"]["grouped_support_assignments_seen"] == 0
+
+
+def test_bad_side_support_outcome_profile_equal_distance_has_no_groups():
+    T = balanced_pc_tree(6, kind="mixed")
+    profile = bad_side_grouped_support_outcome_profile(equal_distance_instance(6), T, max_p_degree=3)
+
+    assert profile["complete"] is True
+    assert profile["counts"]["support_group_count"] == 0
+    assert profile["counts"]["hit_assignments"] == 0
+    assert profile["counts"]["no_hit_assignments"] == 0
+    assert profile["groups"] == []
 
 
 def test_grouped_support_compilation_reports_limit_without_false_completion():

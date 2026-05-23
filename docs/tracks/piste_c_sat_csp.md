@@ -439,6 +439,45 @@ Prochaine action : construire une contrainte agrégée par support qui décide
 directement l'existence d'un atom hit pour une affectation, ou isoler les
 familles no-hit dominantes pour chercher une borne structurelle.
 
+## Tentative T051 - Profil support-level hit/no-hit
+
+Statut : diagnostic Piste C exact sur la gate interne, non intégré à
+`candidate.py`.
+
+Changement : ajout de `bad_side_grouped_support_outcome_profile`. Pour chaque
+support groupé, le diagnostic mesure les affectations hit/no-hit, les checks
+first-hit équivalents, les tranches unaires pures, puis un test agrégé par
+paire endpoint et composantes de graphe de mauvais témoins. Le test pair-side
+déclare un hit quand une composante de témoins d'une même paire `{a,b}` contient
+des témoins des deux côtés de l'arc.
+
+Résultats :
+
+- tests ciblés `tests/test_sat_like_experiments.py` et
+  `tests/test_csp_internal_benchmark.py` : `44 passed` ;
+- `make bench-csp-quick` : `192` lignes, `0` mismatch,
+  `0` first-hit mismatch, `0` mismatch de signatures ;
+- `profile_pair_side_split_mismatches=0` ;
+- les compteurs du profil coïncident avec T050 :
+  `total_first_hit_no_hit_assignments=3320` et
+  `total_profile_no_hit_exhaustive_atom_checks=30520` ;
+- couverture unaire no-hit globale `1888/3320`, mais `0%` sur `cycle` et
+  `permuted_cycle` dans la gate rapide ;
+- le travail pair-side/composantes vaut `74248` checks contre `41872`
+  atom-checks first-hit, ratio `1.7732`.
+
+Interprétation : le test pair-side/composantes est une reformulation exacte du
+hit/no-hit support-level sur les probes, mais sa version naïve ne réduit pas le
+coût. Les tranches unaires pures expliquent une partie des familles très
+structurées (`non_strict`, `ultrametric`, `block`) mais échouent totalement sur
+les familles cycliques. T051 est donc surtout un résultat négatif contrôlé : la
+compression doit réutiliser les côtés/composantes de façon plus globale, pas les
+recalculer par affectation.
+
+Prochaine action : précompiler les côtés de témoins par paire à travers les
+variables du PC-tree, ou basculer vers une signature DP qui transporte les
+composantes de témoins ouvertes au lieu d'une table d'affectations.
+
 ## Tentative T021 - Repair positive-only pour paired-farthest
 
 Statut : idée saine comme générateur expérimental vérifié, mais non intégrée à

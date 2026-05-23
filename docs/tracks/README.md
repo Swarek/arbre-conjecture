@@ -88,6 +88,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T048 | 2026-05-23 | C/B/F | Compilation bad-side groupée par support ; même signatures que T047, produit support rapide réduit mais `atom_checks` inchangé | `compile_bad_side_nogoods_grouped_support_local` |
 | T049 | 2026-05-23 | C/B/F | Variante first-hit : mêmes signatures que T048, `atom_checks` réduit, diagnostics atoms/pairs volontairement non exhaustifs | `compile_bad_side_nogoods_grouped_first_hit_support_local` |
 | T050 | 2026-05-23 | C/B/F | Profil first-hit : le coût restant est dominé par les affectations no-hit, pas seulement par les hits tardifs | métriques `first_hit_*` |
+| T051 | 2026-05-23 | C/B/F | Profil support hit/no-hit : pair-side exact sur la gate, mais tranches unaires et recomputation par composantes insuffisantes comme compression | `bad_side_grouped_support_outcome_profile` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

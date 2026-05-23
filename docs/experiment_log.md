@@ -2392,3 +2392,59 @@
 - Next action : chercher une contrainte agrégée par support qui certifie
   directement hit/no-hit, ou une borne structurelle sur les familles où le
   no-hit est fréquent.
+
+## 2026-05-23 support no-hit outcome profile
+
+- Date/heure : 2026-05-23 09:18:00 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : le hit/no-hit d'un support groupé peut être reformulé par
+  paires endpoint et composantes de graphes de mauvais témoins. Si cela coïncide
+  avec le scan atomique et réduit le travail, ce serait une piste de
+  compression support-level ; sinon, c'est un contre-signal pour cette
+  compression naïve.
+- Changement fait : ajout de `bad_side_grouped_support_outcome_profile`, avec
+  compteurs hit/no-hit, tranches unaires pures, coût no-hit, top groupes, test
+  pair-side/composantes, et intégration au benchmark CSP interne. Aucun
+  changement dans `candidate.py`.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre sur `460871f`; `223 passed`, puis `JUSTE`.
+- Plan subagents : quatre sidecars lecture seule. Résultats : Piste C propose
+  l'invariant pair-side et prévient que les tranches unaires seules sont faibles
+  sur cycle/random ; Piste F classe les familles no-hit adverses
+  (`cycle`, `ultrametric`, `non_strict`, `block`, `paired_farthest`) et les
+  hits tardifs (`permuted_cycle`) ; Piste B formule la version
+  graphe/composantes et les contre-exemples aux masques trop faibles ; Piste
+  tests recommande de verrouiller que no-hit local n'est pas un certificat
+  positif.
+- Commande exécutée :
+  `pytest -q tests/test_sat_like_experiments.py tests/test_csp_internal_benchmark.py`.
+- Résultat correction : `44 passed`.
+- Commande exécutée : `make bench-csp-quick`.
+- Résultat benchmark interne : `reports/csp_internal_benchmark_quick.json`
+  écrit ; `192` lignes, `0` mismatch, `0` support/grouped/first-hit mismatch,
+  `0` mismatch de signatures, `profile_pair_side_split_mismatches=0`.
+  Totaux principaux : no-hit `3320/6224`, checks no-hit `30520`,
+  couverture unaire no-hit `1888/3320`, no-hit ambigus `1432/3320`,
+  travail pair-side `74248` checks, ratio pair-side/first-hit `1.7732`.
+- Résultat par familles : `cycle` et `permuted_cycle` ont `0%` de couverture
+  unaire no-hit ; `ultrametric` et `non_strict` ont une couverture unaire forte
+  mais restent dominés par le coût no-hit. Le pair-side/composantes est exact
+  mais plus cher que first-hit sur toutes les agrégations rapides observées.
+- Commande exécutée : `make quick`.
+- Résultat correction : `226 passed`, puis `JUSTE`.
+- Commande exécutée : `make check`.
+- Résultat correction : `JUSTE`.
+- Commande exécutée : `make bench-quick`.
+- Résultat benchmark candidate : `reports/complexity_report_quick.json` écrit ;
+  `0` timeout et `0` incomplet sur les tailles
+  `4,5,6,8,10,12,16,20`. `candidate.py` n'a pas été modifié par T051.
+- Conclusion : T051 donne un diagnostic exact et un résultat négatif utile. Les
+  tranches unaires seules ne couvrent pas les familles cycliques, et le
+  pair-side/composantes naïf ne réduit pas la complexité mesurée. La piste reste
+  utile seulement si les côtés de témoins sont précompilés ou transportés par
+  une vraie DP.
+- Next action : précompiler/mettre en cache les côtés de témoins par paire et
+  sous-arbre, ou basculer vers une signature DP de composantes ouvertes.
