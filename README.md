@@ -65,6 +65,7 @@ make bench-pnode-interface
 make bench-pnode-context-interface
 make bench-residual-interface
 make bench-residual-interface-stress
+make bench-boundary-residual-projection
 make bench-permutation-like
 make bench-permutation-composition
 make bench-relation-components
@@ -227,6 +228,12 @@ expérimentale, pas une preuve.
 sur `P2 x P2 x P2 x P2` et `P3 x P3 x P3` sparse two-level, avec seeds
 binaires contrôlés. C'est une attaque expérimentale plus large de l'hypothèse
 interface binaire, pas une preuve.
+
+`make bench-boundary-residual-projection` écrit
+`reports/boundary_residual_projection_probe.json`. Il projette une relation
+résiduelle exacte sur des variables de bord après avoir caché au moins une
+branche interne. C'est une attaque expérimentale de la composition de patches,
+pas une DP prouvée.
 
 `make bench-permutation-like` écrit `reports/permutation_like_probe.json`. Il
 teste les profils locaux `permutation_like` observés sur `paired_farthest`

@@ -501,6 +501,40 @@ simple augmentation du nombre de seeds sparse two-level ; il faut changer de
 source de difficulté, vers patches composés, contexte extérieur non figé, ou
 graphe d'entrelacement/circle graph des contraintes same-side.
 
+## T090 - Projection de relation résiduelle de bord
+
+Statut : diagnostic implémenté, non décisionnel.
+
+Artefact ajouté : `tools/pc_boundary_residual_projection_probe.py`, lancé par
+`make bench-boundary-residual-projection`.
+
+Objectif : tester un mécanisme que T088/T089 ne couvraient pas. Une relation
+exacte sur toutes les branches peut être binaire, mais une DP de patch composé
+doit parfois cacher des branches internes et ne garder qu'une relation de bord.
+Le probe projette donc la relation acceptée sur tous les sous-ensembles de bord
+de taille au moins `3`, puis mesure l'arité minimale de projections qui
+reconstruit exactement chaque relation projetée.
+
+Résultat du benchmark T090 :
+
+- contrôle `P2x4` avec paires hautes `{(0,2),(1,3)}` : relation de bord
+  non unaire, reconstruite exactement par projections binaires ;
+- sweep `P2x4` sparse two-level : `20000` cas scannés, `2645` relations
+  complètes non triviales, projections de bord histogramme `{1: 9315, 2: 168}`,
+  aucun cas `>2` ;
+- sweep `P2x5` sparse two-level : `20000` cas scannés, `3166` relations
+  complètes non triviales, projections de bord histogramme `{1: 37708, 2: 792}`,
+  aucun cas `>2` ;
+- random multi-niveaux `P2x4` : `500` essais, aucune projection de bord
+  non triviale.
+
+Interprétation : même après élimination d'une ou plusieurs branches internes,
+ce banc borné ne trouve pas d'arité de bord supérieure au binaire. C'est un
+signal supplémentaire pour les interfaces binaires, mais pas une preuve. Après
+T088/T089/T090, la piste ne doit plus chercher seulement plus de seeds
+two-level ; il faut changer vers un contexte extérieur avec degrés de liberté
+ou vers le lab circle graph / split decomposition.
+
 ## T022 - Rapport `project_farthest_sets_to_pc_nodes`
 
 Statut : diagnostic implémenté, explicitement non décisionnel.

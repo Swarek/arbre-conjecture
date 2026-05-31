@@ -770,6 +770,17 @@ Dernier commit green avant T009 : `07120e4`.
   `{1: 1478, 2: 22}` ; `0` cas au-delà du binaire) et `make quick`
   (`332 passed`, puis `JUSTE`). `candidate.py` n'a pas été modifié.
 
+- Checkpoint T090 courant : commit contenant le probe de projection de relation
+  résiduelle sur variables de bord après branches cachées. Validation observée :
+  compilation Python de `pc_boundary_residual_projection_probe.py` réussie,
+  tests ciblés `tests/test_boundary_residual_projection_probe.py`
+  (`2 passed`), `make bench-boundary-residual-projection` (`P2x4` :
+  `20000` cas, histogramme de bord `{1: 9315, 2: 168}` ; `P2x5` :
+  `20000` cas, histogramme de bord `{1: 37708, 2: 792}` ; random
+  multi-niveaux `P2x4` : `500` essais sans projection non triviale ;
+  `0` cas au-delà du binaire) et `make quick` (`334 passed`, puis `JUSTE`).
+  `candidate.py` n'a pas été modifié.
+
 ## Rollback
 
 Si une modification régresse et que la cause n’est pas claire :

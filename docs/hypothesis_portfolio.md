@@ -91,6 +91,13 @@ contrôles). Après deux itérations sans arité `3`, la prochaine attaque doit
 changer de famille : patches composés, contexte extérieur non fixe ou route
 circle graph/split decomposition.
 
+Mise à jour T090 : la projection de relations résiduelles après avoir caché des
+branches internes ne trouve toujours aucune arité de bord `>2` sur `P2x4` et
+`P2x5` sparse two-level (`40000` cas scannés au total) ni sur `500` essais
+random multi-niveaux `P2x4`. Cela renforce expérimentalement l'intérêt d'une
+interface binaire, sans preuve. La piste A doit maintenant changer de mécanisme
+plutôt que continuer à augmenter les seeds two-level.
+
 ## Piste B : programmation dynamique sur le PC-tree
 
 Intuition : un état de frontière pourrait résumer les contraintes externes d’un

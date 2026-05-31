@@ -4369,3 +4369,45 @@
 - Next action : basculer vers une source de difficulté différente : relation
   résiduelle de patches composés, contexte extérieur avec degrés de liberté, ou
   lab circle graph/split decomposition des contraintes same-side.
+
+## 2026-05-31 projection de relation résiduelle de bord
+
+- Date/heure : 2026-05-31 15:55 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : même si la relation complète d'une interface reste
+  déterminée par ses projections binaires, une DP de patch composé pourrait
+  cacher des branches internes et induire sur le bord une relation d'arité
+  minimale `3`.
+- Changement fait : ajout de
+  `tools/pc_boundary_residual_projection_probe.py`,
+  `tests/test_boundary_residual_projection_probe.py`, de la cible
+  `make bench-boundary-residual-projection`, et de la documentation T090.
+  `candidate.py` n'a pas été modifié.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `rtk make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `332 passed`, puis `JUSTE`.
+- Commande exécutée :
+  `rtk .venv/bin/python -m py_compile tools/pc_boundary_residual_projection_probe.py`.
+- Résultat compilation : succès.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_boundary_residual_projection_probe.py`.
+- Résultat correction ciblée : `2 passed`.
+- Commande exécutée : `rtk make bench-boundary-residual-projection`.
+- Résultat benchmark T090 :
+  `reports/boundary_residual_projection_probe.json` écrit ;
+  contrôle binaire `P2x4` positif ; sweep `P2x4` sparse two-level :
+  `20000` cas scannés, `2645` relations complètes non triviales,
+  histogramme de projections de bord `{1: 9315, 2: 168}` ; sweep `P2x5` :
+  `20000` cas scannés, `3166` relations complètes non triviales,
+  histogramme `{1: 37708, 2: 792}` ; random multi-niveaux `P2x4` :
+  `500` essais, `0` projection de bord non triviale ; aucun cas d'arité `>2`.
+- Commande exécutée : `rtk make quick`.
+- Résultat correction finale : `334 passed`, puis `JUSTE`.
+- Conclusion provisoire : l'élimination d'une ou plusieurs branches internes ne
+  produit pas d'arité `3` dans ces familles bornées. C'est un signal
+  expérimental supplémentaire pour des interfaces binaires, pas une preuve.
+- Next action : ne plus continuer par simple augmentation de seeds two-level ;
+  basculer vers contexte extérieur avec degrés de liberté ou vers le lab
+  circle graph/split decomposition des contraintes `same_side`.

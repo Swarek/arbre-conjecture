@@ -2364,3 +2364,38 @@ Obligation suivante : après T088/T089, ne pas continuer uniquement à augmenter
 les essais sparse two-level. Basculer vers une nouvelle source de complexité :
 patchs composés, contexte extérieur avec degrés de liberté, ou modélisation
 circle graph/split decomposition des contraintes same-side.
+
+### T090 : projection de relation résiduelle de bord
+
+Statut : preuve expérimentale bornée, pas théorème.
+
+`tools/pc_boundary_residual_projection_probe.py` teste une faiblesse plus proche
+d'une DP de patch composé : partir de la relation exacte sur toutes les branches
+d'un focus `P`, cacher au moins une branche interne, et mesurer l'arité minimale
+nécessaire pour reconstruire la relation projetée sur le bord.
+
+Ce que T090 couvre :
+
+- contrôle `P2x4` reproduisant une relation de bord binaire ;
+- sweep `P2x4` sparse two-level : `20000` cas scannés, `2645` relations
+  complètes non triviales, histogramme de projections de bord `{1: 9315, 2: 168}`,
+  aucun cas d'arité `>2` ;
+- sweep `P2x5` sparse two-level : `20000` cas scannés, `3166` relations
+  complètes non triviales, histogramme de projections de bord
+  `{1: 37708, 2: 792}`, aucun cas d'arité `>2` ;
+- random multi-niveaux `P2x4` : `500` essais, aucune projection de bord
+  non triviale.
+
+Ce que T090 ne prouve pas :
+
+- une absence d'arité `3` dans ces sweeps ne prouve pas une interface binaire
+  générale ;
+- les scans sparse sont tronqués par nombre de cas et restent two-level ;
+- le random multi-niveaux est surtout vide/plein, donc peu stressant ;
+- le contexte extérieur reste fixe et les patches multiples avec contexte
+  variable ne sont pas encore modélisés ;
+- aucun résultat ne justifie une intégration dans `candidate.py`.
+
+Obligation suivante : chercher une source de complexité différente, soit par
+contexte extérieur avec degrés de liberté, soit par une traduction circle
+graph/split decomposition des contraintes `same_side`.

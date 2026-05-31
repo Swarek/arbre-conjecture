@@ -417,6 +417,19 @@ explicitement une relation exigeant une arité `>2`. Une absence de telle
 relation dans ce budget doit déclencher un changement de générateur ou de piste,
 pas une conclusion positive.
 
+Projection de relation résiduelle de bord Piste A/B :
+
+```bash
+make bench-boundary-residual-projection
+```
+
+Cette commande écrit `reports/boundary_residual_projection_probe.json`. Elle
+part de la relation exacte des complétions internes d'un focus `P`, cache au
+moins une branche interne, puis mesure l'arité minimale des projections
+nécessaires pour reconstruire la relation de bord. Le rapport teste des sweeps
+`P2x4`/`P2x5` sparse two-level et un contrôle random multi-niveaux. Une absence
+d'arité `>2` reste une preuve expérimentale bornée seulement.
+
 Contrôle promise-aware des permutations locales Piste F/C :
 
 ```bash

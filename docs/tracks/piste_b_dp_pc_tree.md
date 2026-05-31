@@ -589,3 +589,29 @@ Probe recommandé :
 Même sans mismatch, la taille des relations d'interface doit être mesurée :
 une factorisation exacte mais exponentielle serait utile pour la preuve, pas
 forcément pour un algorithme polynomial général.
+
+## T090 - Relation résiduelle projetée après élimination interne
+
+Statut : preuve expérimentale bornée.
+
+T090 ajoute `tools/pc_boundary_residual_projection_probe.py`. Il prend la
+relation exacte des complétions internes acceptées autour d'un focus `P`, puis
+cache au moins une branche et mesure la relation résiduelle restante sur le
+bord. C'est le modèle minimal d'une composition de patch où des variables
+internes ont été éliminées.
+
+Résultat observé :
+
+- `P2x4` sparse two-level : `20000` cas, aucune projection de bord d'arité
+  minimale `>2` ;
+- `P2x5` sparse two-level : `20000` cas, aucune projection de bord d'arité
+  minimale `>2` ;
+- contrôle binaire reproduit l'égalité de deux branches après projection ;
+- random multi-niveaux `P2x4`, `500` essais : aucune projection de bord
+  non triviale.
+
+Lecture DP : ce résultat ne prouve pas qu'une relation binaire de séparateur
+suffit, mais il ferme une variante simple du contre-argument "l'élimination
+interne crée immédiatement une arité 3" dans les familles testées. La prochaine
+attaque DP doit introduire un contexte extérieur non fixé ou plusieurs patches
+dont les contextes restent variables.

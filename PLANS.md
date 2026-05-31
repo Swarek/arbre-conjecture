@@ -22,6 +22,58 @@ Dans un Goal long, le plan doit aussi définir le critère d’arrêt : succès
 mesurable, réfutation, blocage théorique, ou bascule vers une autre piste. Ne pas
 laisser un Goal tourner comme une recherche ouverte sans sortie concrète.
 
+## ExecPlan 2026-05-31 - T090 projection de relation residuelle composee
+
+But : changer de mecanisme apres T088/T089 en testant si une relation exacte
+sur plusieurs branches, une fois certaines branches internes eliminees, peut
+induire sur le bord une correlation d'arite strictement superieure a 2.
+
+Hypothese : les probes two-level precedents n'ont vu que des interfaces
+binaires parce qu'ils mesuraient la relation complete sur toutes les branches.
+Une DP de patch compose doit projeter ou eliminer des variables internes ; cette
+projection peut en principe creer une relation residuelle de bord plus haute
+arite.
+
+Fichiers a modifier : ajouter un outil `tools/pc_boundary_residual_projection_probe.py`,
+des tests cibles, une cible Makefile, puis documenter dans
+`docs/experiment_log.md`, `docs/tracks/piste_a_local_pc_constraints.md` et
+`docs/tracks/piste_b_dp_pc_tree.md`.
+
+Algorithme pressenti : pour des focus `P2x4`, `P2x5` et controles
+deterministes, enumerer exactement les completions internes acceptees par
+`passes_bad_side_precircular_cR`, projeter la relation sur tous les sous-ensembles
+de bord de taille au moins 3 et calculer la plus petite arite de projections
+qui reconstruit exactement la relation projetee.
+
+Tests a executer : py_compile du nouvel outil, pytest cible, benchmark T090,
+puis `rtk make quick`.
+
+Risques : absence d'arite 3 ne prouve rien ; une recherche sparse two-level
+reste un modele etroit ; les relations vides/pleines peuvent masquer les cas
+interessants.
+
+Plan de contre-exemples : si une projection de bord exige l'arite 3, enregistrer
+la matrice et le sous-ensemble de bord comme regression. Sinon, documenter le
+resultat comme preuve experimentale bornee et basculer ensuite vers contexte
+exterieur avec degres de liberte ou circle graph/split decomposition.
+
+Plan subagents : non lance pour ce checkpoint court ; le livrable est borne et
+reuse le harnais T088/T089. Les prochaines pistes externes restent disponibles
+si ce probe ne donne pas de contre-exemple.
+
+Resultats observes : le probe T090 a ete implemente et lance. Le controle
+`P2x4` reproduit une relation de bord binaire. Le sweep sparse `P2x4` scanne
+`20000` cas avec histogramme de projections de bord `{1: 9315, 2: 168}` ;
+le sweep `P2x5` scanne `20000` cas avec histogramme `{1: 37708, 2: 792}`.
+Le random multi-niveaux `P2x4` lance `500` essais sans projection de bord
+non triviale. Aucun cas d'arite de bord `>2` n'est trouve.
+
+Decision : conserver T090 comme preuve experimentale bornee en faveur
+d'interfaces binaires sur ces familles, mais changer de source de difficulte
+pour la suite. Ne pas augmenter simplement les seeds two-level ; passer a un
+contexte exterieur avec degres de liberte ou au lab circle graph/split
+decomposition des contraintes `same_side`.
+
 ## ExecPlan initial
 
 But : créer le dépôt reproductible et les gates de correction/complexité.
