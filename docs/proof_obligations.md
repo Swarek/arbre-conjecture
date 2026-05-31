@@ -2746,3 +2746,41 @@ Ce que T099 ne prouve pas :
 Obligation suivante : construire un prototype de propagation binaire ou un
 générateur orienté arité `3` qui mélange plusieurs obligations avec contextes
 non-ladder.
+
+### T100 : largeur 4 multi-obligations des gaps
+
+Statut : preuve expérimentale bornée, pas théorème général.
+
+`pc_context_gap_high_arity_probe.py` relance T099 pour plusieurs tailles de
+tuples de projections ouvertes, notamment `3` et `4`. Il agrège séparément les
+résultats par taille pour tester si la closure par projections binaires cesse de
+reconstruire la relation réelle lorsque la largeur augmente.
+
+Ce que T100 couvre :
+
+- tuple sizes `3` et `4` sur `mixed` et quatre familles d'instances ;
+- `22` lignes agrégées ;
+- `18` lignes arrêtées par `max_projection_tuples=3000` ;
+- `57645` tuples de projections ;
+- `149290` relations visibles ;
+- `product_false_case_count=123508` ;
+- `binary_sufficient_case_count=123508` ;
+- `higher_order_case_count=0` ;
+- `max_product_size=256`, `max_actual_relation_size=8`,
+  `max_pairwise_closure_size=8`.
+
+Interprétation : aucune arité `>=3` n'est observée, même à largeur `4`, dans le
+sweep borné. Cela renforce l'hypothèse de relations binaires de gaps comme état
+DP potentiel.
+
+Ce que T100 ne prouve pas :
+
+- pas d'exhaustivité sur les lignes capées ;
+- pas de borne sur les tailles de relations binaires dans les grands PC-trees ;
+- pas de résultat sous le promise `T=T(D)` Hsu/McConnell ;
+- pas de preuve qu'une propagation binaire soit complète ;
+- pas de décision intégrable dans `candidate.py`.
+
+Obligation suivante : formaliser la sémantique d'une propagation binaire de gaps
+ou construire une famille adversariale cherchant explicitement une closure
+binaire fausse.

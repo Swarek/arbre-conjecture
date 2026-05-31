@@ -548,6 +548,19 @@ réelle. Les lignes peuvent être bornées par `max_projection_tuples`; un
 `tuple_limit_rows` non nul doit rester visible et empêche toute conclusion
 globale.
 
+Lab largeur 4 des gaps multi-obligations Piste A/B :
+
+```bash
+make bench-context-gap-high-arity
+```
+
+Cette commande écrit `reports/context_gap_high_arity_probe.json`. Elle relance
+le probe multi-obligations pour plusieurs tailles de tuples, notamment `3` et
+`4`, puis agrège les métriques par taille. Un `higher_order_case_count` positif
+serait un contre-exemple à la reconstruction binaire dans ce scaffold ; un
+compteur nul reste seulement une non-réfutation bornée, surtout si
+`tuple_limit_rows` est positif.
+
 Contrôle promise-aware des permutations locales Piste F/C :
 
 ```bash

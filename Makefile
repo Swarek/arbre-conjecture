@@ -1,7 +1,7 @@
 PYTHON ?= $(shell if [ -x .venv/bin/python ]; then echo .venv/bin/python; elif command -v python3 >/dev/null 2>&1; then echo python3; else echo python; fi)
 PYTEST ?= $(PYTHON) -m pytest
 
-.PHONY: quick check hunt-counterexamples bench-quick bench bench-piste-f bench-csp-quick bench-width-stress bench-single-p-stress bench-relation-catalog bench-relation-shapes bench-relation-chains bench-relation-unsat-cores bench-sparse-matching bench-sparse-binary-cores bench-quartet-coverage bench-frontier-obstructions bench-strict-algorithm52 bench-strict-positive-coverage bench-threshold-roundness bench-cr-pc-representability bench-unrooted-pc-representability bench-local-obstruction-depth bench-chirotope-high-girth bench-r004-bad-side-projections bench-pnode-width4 bench-handwritten-gadget bench-pnode-interface bench-pnode-context-interface bench-residual-interface bench-residual-interface-stress bench-boundary-residual-projection bench-circle-graph-lab bench-partial-obligation-lab bench-partial-context-lab bench-separator-signature-lab bench-context-signature-ladder bench-context-gap-relation bench-context-gap-composition bench-context-gap-arity bench-context-gap-multi-arity bench-permutation-like bench-permutation-composition bench-relation-components unit acceptance
+.PHONY: quick check hunt-counterexamples bench-quick bench bench-piste-f bench-csp-quick bench-width-stress bench-single-p-stress bench-relation-catalog bench-relation-shapes bench-relation-chains bench-relation-unsat-cores bench-sparse-matching bench-sparse-binary-cores bench-quartet-coverage bench-frontier-obstructions bench-strict-algorithm52 bench-strict-positive-coverage bench-threshold-roundness bench-cr-pc-representability bench-unrooted-pc-representability bench-local-obstruction-depth bench-chirotope-high-girth bench-r004-bad-side-projections bench-pnode-width4 bench-handwritten-gadget bench-pnode-interface bench-pnode-context-interface bench-residual-interface bench-residual-interface-stress bench-boundary-residual-projection bench-circle-graph-lab bench-partial-obligation-lab bench-partial-context-lab bench-separator-signature-lab bench-context-signature-ladder bench-context-gap-relation bench-context-gap-composition bench-context-gap-arity bench-context-gap-multi-arity bench-context-gap-high-arity bench-permutation-like bench-permutation-composition bench-relation-components unit acceptance
 
 unit:
 	$(PYTEST) -q
@@ -464,6 +464,22 @@ bench-context-gap-multi-arity:
 	  --max-examples 8 \
 	  --seed 20260690 \
 	  --output reports/context_gap_multi_arity_probe.json
+
+bench-context-gap-high-arity:
+	mkdir -p reports && \
+	$(PYTHON) tools/pc_context_gap_high_arity_probe.py \
+	  --tuple-sizes 3,4 \
+	  --sizes 5,6,7 \
+	  --pc-trees mixed \
+	  --instance-kinds cycle,paired_farthest,random,padded_five_local_non_cr \
+	  --repeats 1 \
+	  --frontier-limit 20000 \
+	  --min-distinct-obligations 2 \
+	  --scope all_open \
+	  --max-projection-tuples 3000 \
+	  --max-examples 8 \
+	  --seed 20260700 \
+	  --output reports/context_gap_high_arity_probe.json
 
 bench-permutation-like:
 	mkdir -p reports && \

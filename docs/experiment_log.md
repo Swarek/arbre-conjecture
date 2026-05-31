@@ -4866,3 +4866,54 @@
 - Next action : soit construire un prototype de propagation binaire de gaps,
   soit générer des familles explicitement conçues pour chercher une arité `3`
   hors du scaffold mixed courant.
+
+## 2026-05-31 largeur 4 multi-obligations des gaps
+
+- Date/heure : 2026-05-31 15:16 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : le signal T099 de reconstruction par projections binaires
+  pourrait casser quand on passe de tuples de `3` projections ouvertes à des
+  tuples de `4`, surtout en mélangeant plusieurs obligations `same_side`.
+- Changement fait : ajout de `tools/pc_context_gap_high_arity_probe.py`, cible
+  `make bench-context-gap-high-arity`, extension des tests
+  `tests/test_partial_obligation_experiments.py`, et documentation T100.
+  `candidate.py` n'a pas été modifié.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `rtk make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `361 passed`, puis `JUSTE`.
+- Commande exécutée :
+  `rtk .venv/bin/python -m py_compile tools/pc_context_gap_high_arity_probe.py`.
+- Résultat compilation : succès.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_partial_obligation_experiments.py`.
+- Résultat correction ciblée : `25 passed`.
+- Commande exécutée : `rtk make bench-context-gap-high-arity`.
+- Résultat benchmark T100 :
+  `reports/context_gap_high_arity_probe.json` écrit ; `22` lignes agrégées,
+  `4` complètes, `18` capées par `max_projection_tuples=3000`.
+- Résultat tuple size `3` :
+  `26644` tuples de projections, `69477` relations visibles,
+  `54491` cas binaires, `0` arité `>=3`,
+  `max_product_size=64`.
+- Résultat tuple size `4` :
+  `31001` tuples de projections, `79813` relations visibles,
+  `69017` cas binaires, `0` arité `>=3`,
+  `max_product_size=256`.
+- Résultat total :
+  `57645` tuples de projections, `149290` relations visibles,
+  `product_false_case_count=123508`,
+  `binary_sufficient_case_count=123508`,
+  `higher_order_case_count=0`,
+  `max_actual_relation_size=8`,
+  `max_pairwise_closure_size=8`.
+- Conclusion provisoire : la largeur `4` ne fournit pas de contre-exemple à la
+  closure binaire dans ce sweep borné. Les caps nombreux rendent ce résultat
+  strictement expérimental ; la suite doit viser un générateur adversarial pour
+  arité `>=3` ou un prototype de propagation binaire à casser.
+- Commande exécutée : `rtk make quick`.
+- Résultat correction finale : `363 passed`, puis `JUSTE`.
+- Next action : construire soit une famille orientée "binary-closure false",
+  soit un premier propagateur de relations binaires de gaps, puis le stresser
+  sur T075/T097/T100.

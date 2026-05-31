@@ -6354,3 +6354,35 @@ plausible expérimentalement dans ces familles, mais continuer en augmentant
 simplement les seeds serait une faible valeur d'information. La prochaine
 itération doit changer de source de difficulté : patches composés, contexte
 extérieur variable, ou circle graph/split decomposition.
+
+## ExecPlan T100 - stress largeur 4 des relations de gaps multi-obligations
+
+But : attaquer directement le signal T099 "les projections binaires
+reconstruisent les relations jointes de gaps" en passant de tuples de 3
+projections ouvertes à des tuples de 4 projections ouvertes.
+
+Hypothèse testée : même quand plusieurs obligations `same_side` distinctes
+sont mélangées, la relation jointe des gaps observée reste déterminée par ses
+projections binaires. Une ligne avec `higher_order_case_count > 0` serait un
+contre-exemple immédiat au modèle d'interface binaire dans ce scaffold.
+
+Fichiers visés : `tools/pc_context_gap_high_arity_probe.py`,
+`tests/test_partial_obligation_experiments.py`, `Makefile`, `README.md`,
+`docs/experiment_protocol.md`, `docs/hypothesis_portfolio.md`,
+`docs/proof_obligations.md`, `docs/tracks/piste_a_local_pc_constraints.md`,
+`docs/tracks/piste_b_dp_pc_tree.md`, `docs/tracks/README.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md` et `PLANS.md`.
+
+Algorithme : réutiliser
+`pnode_context_gap_multi_obligation_arity_report` via le wrapper T099, lancer
+un sweep par `projection_tuple_size in {3,4}`, puis agréger les métriques par
+taille de tuple. Le target Makefile garde un cap explicite sur les tuples de
+projections pour que le coût de la largeur 4 soit visible.
+
+Critères de succès : produire `reports/context_gap_high_arity_probe.json`,
+avec `by_tuple_size`, `higher_order_case_count`, `pairwise_false_case_count`,
+`tuple_limit_rows` et exemples éventuels. `candidate.py` ne doit pas changer.
+
+Risques : la largeur 4 augmente vite le nombre de combinaisons ; des rows
+capées ne prouvent rien. Une absence d'arité `>=3` reste une preuve
+expérimentale bornée, pas un théorème de DP binaire.

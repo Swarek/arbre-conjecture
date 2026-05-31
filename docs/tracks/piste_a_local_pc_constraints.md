@@ -879,6 +879,42 @@ observés restent reconstruits par des projections binaires. Les caps empêchent
 une conclusion globale, mais l'hypothèse "interface de gaps binaire" devient
 plus concrète et plus falsifiable.
 
+## T100 - Largeur 4 des relations de gaps multi-obligations
+
+Statut : diagnostic implémenté, preuve expérimentale bornée.
+
+Artefacts ajoutés :
+
+- `tools/pc_context_gap_high_arity_probe.py`
+- cible `make bench-context-gap-high-arity`
+
+Idée testée : T099 utilisait des tuples de trois projections ouvertes. T100
+relance le même diagnostic en comparant les tailles `3` et `4`, toujours avec
+au moins deux obligations `same_side` distinctes, pour chercher une relation de
+gaps qui ne serait pas reconstruite par ses projections binaires.
+
+Résultat du benchmark T100 :
+
+- `22` lignes agrégées ;
+- `4` lignes complètes et `18` lignes arrêtées par le cap
+  `max_projection_tuples=3000` ;
+- tuple size `3` : `26644` tuples de projections, `69477` relations visibles,
+  `54491` cas binaires, `0` arité `>=3` ;
+- tuple size `4` : `31001` tuples de projections, `79813` relations visibles,
+  `69017` cas binaires, `0` arité `>=3` ;
+- total : `123508` cas où le produit unaire est trop large mais la closure
+  binaire est exacte ;
+- `max_product_size=256`, `max_actual_relation_size=8`,
+  `max_pairwise_closure_size=8`.
+
+Interprétation : la largeur `4` ne casse pas l'hypothèse binaire dans ce sweep
+borné, tout en montrant que les marges unaires deviennent beaucoup trop larges.
+Les nombreuses rows capées et le scaffold non promise-aware interdisent toute
+conclusion globale. La prochaine étape à valeur d'information plus forte est
+soit un générateur explicitement conçu pour forcer une arité `>=3`, soit un
+prototype de propagation binaire de gaps à soumettre aux contre-exemples T075,
+T097 et T100.
+
 ## T022 - Rapport `project_farthest_sets_to_pc_nodes`
 
 Statut : diagnostic implémenté, explicitement non décisionnel.

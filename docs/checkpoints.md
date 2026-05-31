@@ -898,6 +898,18 @@ Dernier commit green avant T009 : `07120e4`.
   `make quick` (`361 passed`, puis `JUSTE`). Les caps restent visibles.
   `candidate.py` n'a pas été modifié.
 
+- Checkpoint T100 courant : commit contenant le probe largeur 4
+  multi-obligations des relations de gaps. Validation observée : compilation
+  Python de `pc_context_gap_high_arity_probe.py` réussie, tests ciblés
+  `tests/test_partial_obligation_experiments.py` (`25 passed`),
+  `make bench-context-gap-high-arity` (`22` lignes agrégées, `4` complètes,
+  `18` capées, `57645` tuples de projections, `149290` relations visibles,
+  `product_false_case_count=123508`, `binary_sufficient_case_count=123508`,
+  `higher_order_case_count=0`, `max_product_size=256`,
+  `max_actual_relation_size=8`) et `make quick` (`363 passed`, puis `JUSTE`).
+  Les caps restent visibles et empêchent toute conclusion globale.
+  `candidate.py` n'a pas été modifié.
+
 ## Rollback
 
 Si une modification régresse et que la cause n’est pas claire :

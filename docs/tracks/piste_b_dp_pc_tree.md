@@ -791,3 +791,31 @@ mais le cap de tuples et le scaffold non promise-aware empêchent toute preuve.
 La prochaine étape utile est soit un générateur plus agressif pour chercher une
 arity `>=3`, soit un prototype de propagation de relations binaires de gaps
 dont on pourra mesurer la taille et les collisions.
+
+## T100 - Stress largeur 4 pour l'interface binaire de gaps
+
+Statut : preuve expérimentale bornée, garde-fou DP.
+
+T100 ajoute `make bench-context-gap-high-arity`. Il compare le même diagnostic
+multi-obligations aux tailles de tuple `3` et `4`. L'intérêt DP est simple :
+si une relation de quatre projections a une closure binaire strictement plus
+large que la relation réelle, alors une DP à seules arêtes de compatibilité de
+gaps serait insuffisante dans ce scaffold.
+
+Résultat borné :
+
+- `22` lignes agrégées, dont `18` atteignent le cap de tuples ;
+- tuple size `4` : `31001` tuples de projections et `79813` relations
+  visibles ;
+- total tuple sizes `3/4` : `149290` relations visibles ;
+- `product_false_case_count=123508`, donc les marges unaires restent
+  insuffisantes ;
+- `binary_sufficient_case_count=123508` ;
+- `higher_order_case_count=0` ;
+- `max_product_size=256`, `max_actual_relation_size=8`.
+
+Lecture DP : le résultat renforce l'idée d'une interface binaire de gaps, mais
+ne la prouve pas. Les caps augmentent avec la largeur `4`, donc la suite ne
+doit pas seulement augmenter les combinaisons ; elle doit soit construire une
+famille adversariale ciblant l'arité `>=3`, soit essayer une propagation binaire
+réelle et chercher ses collisions.

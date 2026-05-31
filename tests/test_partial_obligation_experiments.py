@@ -19,6 +19,9 @@ from tools.pc_context_gap_composition_probe import run_probe as run_gap_composit
 from tools.pc_context_gap_multi_arity_probe import (
     run_probe as run_gap_multi_arity_probe,
 )
+from tools.pc_context_gap_high_arity_probe import (
+    run_probe as run_gap_high_arity_probe,
+)
 from tools.pc_context_gap_relation_probe import run_probe as run_gap_probe
 from tools.pc_context_signature_ladder_probe import run_probe as run_ladder_probe
 from tools.pc_partial_context_lab_probe import run_probe as run_context_probe
@@ -444,5 +447,44 @@ def test_context_gap_multi_arity_probe_summarizes_small_sweep():
     assert report["method"] == "t099_context_gap_multi_obligation_arity_probe"
     assert report["summary"]["rows"] == 1
     assert report["summary"]["projection_tuple_count"] > 0
+    assert report["summary"]["binary_sufficient_case_count"] > 0
+    assert report["summary"]["higher_order_case_count"] == 0
+
+
+def test_context_gap_multi_obligation_width4_cycle5_is_binary_on_sweep():
+    report = pnode_context_gap_multi_obligation_arity_report(
+        instance_by_kind(5, kind="cycle"),
+        pc_tree_from_kind("mixed", 5),
+        projection_tuple_size=4,
+        min_distinct_obligations=2,
+        max_projection_tuples=1000,
+    )
+
+    assert report["method"] == "pnode_context_gap_multi_obligation_arity_report"
+    assert report["projection_tuple_size"] == 4
+    assert report["projection_tuple_count"] > 0
+    assert report["product_false_case_count"] > 0
+    assert report["binary_sufficient_case_count"] > 0
+    assert report["higher_order_case_count"] == 0
+
+
+def test_context_gap_high_arity_probe_compares_tuple_sizes():
+    report = run_gap_high_arity_probe(
+        tuple_sizes=[3, 4],
+        sizes=[5],
+        pc_trees=["mixed"],
+        instance_kinds=["cycle"],
+        repeats=1,
+        frontier_limit=200,
+        min_distinct_obligations=2,
+        scope="all_open",
+        max_projection_tuples=1000,
+        max_examples=2,
+        seed=20260700,
+    )
+
+    assert report["method"] == "t100_context_gap_high_arity_probe"
+    assert set(report["by_tuple_size"]) == {"3", "4"}
+    assert report["by_tuple_size"]["4"]["projection_tuple_count"] > 0
     assert report["summary"]["binary_sufficient_case_count"] > 0
     assert report["summary"]["higher_order_case_count"] == 0

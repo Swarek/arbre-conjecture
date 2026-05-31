@@ -75,6 +75,7 @@ make bench-context-gap-relation
 make bench-context-gap-composition
 make bench-context-gap-arity
 make bench-context-gap-multi-arity
+make bench-context-gap-high-arity
 make bench-permutation-like
 make bench-permutation-composition
 make bench-relation-components
@@ -261,6 +262,12 @@ une décision d'existence.
 partielles sont décidées par le seul ordre local des branches. Les groupes
 mixtes signalent une dépendance au contexte ou aux ordres internes ; ce n'est
 pas un solver.
+
+`make bench-context-gap-high-arity` écrit
+`reports/context_gap_high_arity_probe.json`. Il relance le diagnostic de gaps
+multi-obligations en tuple sizes `3` et `4` pour chercher une arité supérieure
+au binaire. Les caps de tuples restent visibles ; l'absence de témoin n'est pas
+une preuve de DP binaire.
 
 `make bench-permutation-like` écrit `reports/permutation_like_probe.json`. Il
 teste les profils locaux `permutation_like` observés sur `paired_farthest`

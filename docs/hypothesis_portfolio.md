@@ -167,6 +167,14 @@ bornées, `370927` demandent une contrainte binaire et `0` demandent une arité
 `>=3`. Les caps sont visibles (`tuple_limit_rows=14`), donc c'est un signal
 expérimental en faveur d'une interface binaire, pas une preuve.
 
+Mise à jour T100 : le même test est poussé à des tuples de `4` projections
+ouvertes via `make bench-context-gap-high-arity`. Sur `149290` relations visibles
+agrégées tuple sizes `3/4`, `123508` demandent une contrainte binaire,
+`0` demandent une arité `>=3`, et le produit unaire monte à `256` tuples
+possibles en largeur `4`. Les caps sont encore plus visibles (`18` rows capées
+sur `22`) : l'hypothèse d'interface binaire devient plus robuste
+expérimentalement, mais reste non prouvée et non promise-aware.
+
 ## Piste B : programmation dynamique sur le PC-tree
 
 Intuition : un état de frontière pourrait résumer les contraintes externes d’un
