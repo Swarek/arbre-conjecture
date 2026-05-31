@@ -601,6 +601,22 @@ choisi ne médie pas toutes les contraintes ; si
 `cross_edge_unrepaired_case_count` reste nul, les arêtes binaires transverses
 réparent les fausses jointures dans ce scaffold borné.
 
+Cycle de parité ciblé pour les gaps Piste A/B :
+
+```bash
+make bench-context-gap-parity-cycle
+```
+
+Cette commande écrit `reports/context_gap_parity_cycle_probe.json`. Elle ne
+fait pas un sweep uniforme : elle cible les obligations high-cycle/low-hub de
+forme `same_side(0,v; prev,next)` et compare la relation réelle des gaps à sa
+closure binaire. Le rapport distingue `current_gap`, qui peut quotienter trop
+fort, et `gap_with_distance`, qui garde la distance cyclique du rôle manquant
+dans le gap. Un `higher_order_case_count` survivant dans `gap_with_distance`
+est un contre-signal plus fort contre une interface purement binaire ; les
+arbres `cycle_pair_*` restent explicitement hors-promise tant qu'ils ne sont
+pas reliés à `T(D)`.
+
 Contrôle promise-aware des permutations locales Piste F/C :
 
 ```bash

@@ -535,6 +535,23 @@ bench-context-gap-join-decomposition:
 	  --seed 20260721 \
 	  --output reports/context_gap_join_decomposition_probe.json
 
+bench-context-gap-parity-cycle:
+	mkdir -p reports && \
+	$(PYTHON) tools/pc_context_gap_parity_cycle_probe.py \
+	  --set-sizes 4,6 \
+	  --sizes 7,8 \
+	  --pc-trees cycle_pair_p,mixed \
+	  --instance-kinds even_high_cycle_low_hub,odd_high_cycle_low_hub \
+	  --gap-modes current_gap,gap_with_distance \
+	  --frontier-limit 20000 \
+	  --scope all_open \
+	  --sample-count 300 \
+	  --max-attempt-multiplier 20 \
+	  --max-product-size 600000 \
+	  --max-examples 8 \
+	  --seed 20260722 \
+	  --output reports/context_gap_parity_cycle_probe.json
+
 bench-permutation-like:
 	mkdir -p reports && \
 	$(PYTHON) tools/pc_permutation_like_probe.py \

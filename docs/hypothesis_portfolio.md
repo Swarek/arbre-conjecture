@@ -489,6 +489,17 @@ trouve aucune réfutation complète (`0` nœud réfuté sur `35` lignes testées
 mais cela reste une preuve expérimentale bornée : la branche parent/outside et
 la vraie relation d'interface ne sont pas encore modélisées.
 
+Mise à jour T104 : le probe ciblé
+`make bench-context-gap-parity-cycle` casse la tendance T098-T103 sur les
+familles high-cycle/low-hub. Il trouve des cas `higher_order` où la closure
+binaire des signatures de gaps admet des tuples jamais réalisés. Le signal
+`current_gap` sur `cycle_pair_p` peut être un artefact de quotient ; le signal
+`gap_with_distance` sur `mixed/odd_high_cycle_low_hub` est plus robuste mais
+reste expérimental et non promise-aware. La piste "interface binaire de gaps"
+doit donc être reformulée : soit prouver qu'un état plus riche répare T104,
+soit accepter une relation résiduelle d'arité supérieure dans certains
+scaffolds.
+
 État 2026-05-22 : deux familles explicites ont été ajoutées sans modifier
 `mixed` :
 

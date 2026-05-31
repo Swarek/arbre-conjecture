@@ -1025,6 +1025,35 @@ observées restent expliquées par des contraintes binaires entre variables des
 deux côtés. T103 ne réfute donc pas T102 ; il précise qu'une DP doit transporter
 les bonnes arêtes transverses ou choisir des séparateurs plus riches.
 
+## T104 - Projections cycle high-cycle/low-hub
+
+Statut : contre-signal expérimental, non intégré au solveur.
+
+Artefacts ajoutés :
+
+- `tools/pc_context_gap_parity_cycle_probe.py`
+- cible `make bench-context-gap-parity-cycle`
+
+Idée testée : plutôt que sampler des projections ouvertes au hasard, sélectionner
+les obligations de cycle `same_side(0,v; prev,next)` dans les familles
+high-cycle/low-hub. Ces obligations sont une bonne cible pour chercher une
+corrélation globale qui ne serait pas visible par toutes les paires.
+
+Résultat du benchmark T104 :
+
+- `8` lignes complètes et non capées ;
+- `54` projections ciblées cycle ;
+- `2880` cas visibles ;
+- `2708` cas où le produit unaire est trop large ;
+- `2632` cas réparés par la closure binaire ;
+- `76` cas `higher_order`, avec `92` faux tuples de closure binaire ;
+- `12` cas `higher_order` survivent au mode enrichi `gap_with_distance`.
+
+Interprétation : les contraintes locales/gaps ne doivent plus être supposées
+toujours 2-décomposables. Le résultat n'est pas une preuve sous le promise
+`T=T(D)` et ne modifie pas `candidate.py`, mais il donne une cible concrète à
+minimiser et à relire mathématiquement.
+
 ## T022 - Rapport `project_farthest_sets_to_pc_nodes`
 
 Statut : diagnostic implémenté, explicitement non décisionnel.

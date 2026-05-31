@@ -31,6 +31,9 @@ from tools.pc_context_gap_binary_component_probe import (
 from tools.pc_context_gap_join_decomposition_probe import (
     run_probe as run_gap_join_decomposition_probe,
 )
+from tools.pc_context_gap_parity_cycle_probe import (
+    run_probe as run_gap_parity_cycle_probe,
+)
 from tools.pc_context_gap_relation_probe import run_probe as run_gap_probe
 from tools.pc_context_signature_ladder_probe import run_probe as run_ladder_probe
 from tools.pc_partial_context_lab_probe import run_probe as run_context_probe
@@ -577,3 +580,29 @@ def test_context_gap_join_decomposition_probe_finds_cycle5_false_join():
     assert report["by_decomposition_spec"]["4:4:2"][
         "sampled_decomposition_count"
     ] > 0
+
+
+def test_context_gap_parity_cycle_probe_classifies_targeted_high_cycle_signal():
+    report = run_gap_parity_cycle_probe(
+        set_sizes=[4, 6],
+        sizes=[8],
+        pc_trees=["cycle_pair_p", "mixed"],
+        instance_kinds=["odd_high_cycle_low_hub"],
+        gap_modes=["current_gap", "gap_with_distance"],
+        frontier_limit=1000,
+        include_full_target_set=True,
+        scope="all_open",
+        sample_count=100,
+        max_attempt_multiplier=10,
+        max_product_size=600000,
+        max_examples=2,
+        seed=20260722,
+    )
+
+    assert report["method"] == "t104_context_gap_parity_cycle_probe"
+    assert report["summary"]["complete_rows"] == report["summary"]["rows"]
+    assert report["summary"]["rows_with_cycle_targets"] == report["summary"]["rows"]
+    assert report["summary"]["product_capped_case_count"] == 0
+    assert report["by_gap_mode"]["current_gap"]["higher_order_case_count"] > 0
+    assert report["by_gap_mode"]["gap_with_distance"]["higher_order_case_count"] > 0
+    assert report["summary"]["min_higher_order_projection_count"] == 4

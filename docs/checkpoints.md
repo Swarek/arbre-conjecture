@@ -948,6 +948,19 @@ Dernier commit green avant T009 : `07120e4`.
   overlaps naïfs comme séparateurs suffisants dans le sweep, mais pas la closure
   binaire globale. `candidate.py` n'a pas été modifié.
 
+- Checkpoint T104 courant : commit contenant le probe cycle/parité ciblé pour
+  les relations de gaps. Validation observée : compilation Python de
+  `pc_context_gap_parity_cycle_probe.py` réussie, tests ciblés
+  `tests/test_partial_obligation_experiments.py` (`29 passed`),
+  `make bench-context-gap-parity-cycle` (`8` lignes complètes,
+  `54` projections ciblées cycle, `2880` cas visibles,
+  `product_capped_case_count=0`, `higher_order_case_count=76`,
+  `12` cas higher-order sous `gap_with_distance`,
+  `min_higher_order_projection_count=4`) et `make quick`
+  (`367 passed`, puis `JUSTE`). T104 est un contre-signal expérimental contre
+  la closure binaire universelle des gaps, pas une preuve sous `T=T(D)`.
+  `candidate.py` n'a pas été modifié.
+
 ## Rollback
 
 Si une modification régresse et que la cause n’est pas claire :

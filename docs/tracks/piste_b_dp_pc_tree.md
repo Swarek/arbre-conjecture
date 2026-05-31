@@ -907,3 +907,34 @@ transverses entre left-only et right-only sont nécessaires. Le fait que toutes
 les fausses jointures soient réparées par les arêtes binaires transverses garde
 ouverte une DP par graphe de contraintes binaires de gaps, mais pas une DP par
 overlaps fixes naïfs.
+
+## T104 - Cycle de parité ciblé pour les gaps
+
+Statut : contre-signal expérimental pour l'interface binaire de gaps.
+
+T104 ajoute `make bench-context-gap-parity-cycle`. L'expérience arrête
+l'échantillonnage uniforme de T101/T102 et cible les familles
+high-cycle/low-hub, où les obligations `same_side(0,v; prev,next)` forment
+naturellement un cycle. Le probe compare deux modes :
+
+- `current_gap`, la signature utilisée dans les expériences précédentes ;
+- `gap_with_distance`, qui garde en plus la distance cyclique des rôles
+  manquants dans leur gap.
+
+Résultat borné :
+
+- `8` lignes complètes ;
+- `54` projections ciblées cycle ;
+- `2880` cas visibles ;
+- `product_capped_case_count=0`, `frontier_truncated_rows=0` ;
+- `higher_order_case_count=76`, dont `12` sous `gap_with_distance` ;
+- `min_higher_order_projection_count=4` ;
+- `pairwise_false_tuple_count=92`.
+
+Lecture DP : T104 fournit le premier contre-signal ciblé contre la conjecture
+"les relations exactes de gaps sont toujours 2-décomposables" dans les
+scaffolds testés. Une partie du signal est un artefact possible de quotient
+(`current_gap` sur `cycle_pair_p`), mais le mode enrichi `gap_with_distance`
+produit encore un higher-order sur `mixed/odd_high_cycle_low_hub`. La prochaine
+étape doit donc shrinker ce cas et le comparer à des signatures plus exactes,
+avant de conclure sur la nécessité d'une relation résiduelle d'arité supérieure.

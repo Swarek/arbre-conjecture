@@ -291,6 +291,14 @@ jointure naturelle recrée exactement la relation globale. Les fausses jointures
 signalent qu'un séparateur choisi oublie des contraintes transverses ; ce n'est
 pas une réfutation de la closure binaire globale T102.
 
+`make bench-context-gap-parity-cycle` écrit
+`reports/context_gap_parity_cycle_probe.json`. Il cible les familles
+high-cycle/low-hub et des projections de gaps suivant le cycle pour chercher
+une vraie fausse closure binaire. Le rapport compare `current_gap` et
+`gap_with_distance` afin de distinguer quotient trop faible et signal plus
+robuste. Les lignes `cycle_pair_*` sont un stress adversarial, pas une preuve
+sous le promise `T=T(D)`.
+
 `make bench-permutation-like` écrit `reports/permutation_like_probe.json`. Il
 teste les profils locaux `permutation_like` observés sur `paired_farthest`
 contre les ordres quasi-circulaires exacts en petite taille. C’est un contrôle

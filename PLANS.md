@@ -6551,3 +6551,58 @@ doit transporter des contraintes transverses ou un séparateur plus riche. Comme
 toutes les fausses jointures sont réparées par des arêtes binaires, le prochain
 contre-test doit viser une vraie famille `binary-closure false` plutôt que des
 overlaps plus grands au hasard.
+
+## ExecPlan T104 - cycle de parité ciblé pour les gaps
+
+But : construire un contre-test structurel à l'hypothèse T102. Les sweeps
+T098-T103 n'ont pas trouvé de fausse closure binaire globale ; T104 vise une
+famille high-cycle/low-hub où les obligations `same_side(0,v; prev,next)`
+peuvent former une corrélation de cycle.
+
+Hypothèse testée : les relations de gaps visibles sur ces obligations ciblées
+pourraient nécessiter une arité supérieure à deux, au moins dans certains
+scaffolds PC-tree. Un `higher_order_case_count > 0` signifie qu'un tuple de
+gaps est accepté par toutes les projections binaires mais n'est réalisé par
+aucune frontier du sweep.
+
+Fichiers visés : `tools/pc_context_gap_parity_cycle_probe.py`,
+`tests/test_partial_obligation_experiments.py`, `Makefile`, `README.md`,
+`docs/experiment_protocol.md`, `docs/hypothesis_portfolio.md`,
+`docs/proof_obligations.md`, `docs/tracks/piste_a_local_pc_constraints.md`,
+`docs/tracks/piste_b_dp_pc_tree.md`, `docs/tracks/README.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md` et `PLANS.md`.
+
+Algorithme : générer `even_high_cycle_low_hub` et `odd_high_cycle_low_hub`,
+construire les PC-trees `mixed` et `cycle_pair_p`, extraire les projections
+ouvertes qui correspondent aux voisins du cycle haut, puis comparer la relation
+réelle des gaps à sa closure binaire. Tester deux modes : `current_gap`, qui
+reprend la signature précédente, et `gap_with_distance`, qui garde la distance
+cyclique dans le gap pour limiter les artefacts de quotient.
+
+Critères de succès : produire
+`reports/context_gap_parity_cycle_probe.json` sans frontier tronquée ni cap de
+produit, avec les compteurs par mode de gap et des exemples `higher_order`.
+Un signal seulement dans `current_gap` serait un artefact probable ; un signal
+dans `gap_with_distance` mérite un shrink et une relecture mathématique.
+
+Risques : les arbres `cycle_pair_*` sont adversariaux et non promise-aware ; le
+résultat ne doit pas être utilisé comme preuve sur `T(D)`. Même un signal sous
+`gap_with_distance` peut encore dépendre de la canonicalisation ou d'une
+signature pas complètement exacte.
+
+Résultats observés : compilation Python réussie pour
+`tools/pc_context_gap_parity_cycle_probe.py`. Tests ciblés
+`tests/test_partial_obligation_experiments.py` : `29 passed`.
+`make bench-context-gap-parity-cycle` écrit
+`reports/context_gap_parity_cycle_probe.json` avec `8` lignes complètes,
+`54` projections ciblées cycle, `2880` cas visibles,
+`product_capped_case_count=0`, `higher_order_case_count=76`,
+`pairwise_false_tuple_count=92`, `min_higher_order_projection_count=4`,
+`max_actual_relation_size=24` et `max_closure_size=24`.
+
+Décision : T104 réfute expérimentalement la version naïve "toute relation de
+gaps sélectionnée est 2-décomposable". Le signal le plus important est
+`mixed/odd_high_cycle_low_hub` sous `gap_with_distance` (`12` cas
+higher-order). La prochaine étape doit shrinker ce cas, comparer aux frontiers
+brutes/non canoniques et éventuellement promouvoir un contre-exemple de
+régression si le signal reste exact.

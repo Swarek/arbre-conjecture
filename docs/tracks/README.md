@@ -150,6 +150,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T101 | 2026-05-31 | A/B/R004 | Échantillonnage randomisé tuple sizes `4/5` : `32730` tuples, aucune fausse closure binaire trouvée, non-réfutation seulement | `make bench-context-gap-random-arity` |
 | T102 | 2026-05-31 | A/B/R004 | Prototype de propagation binaire : ensembles `6/8`, `87533` cas binaires, aucune fausse closure binaire trouvée, non-réfutation seulement | `make bench-context-gap-binary-components` |
 | T103 | 2026-05-31 | A/B/R004 | Jointure de séparateurs : `10271` fausses jointures sur petits overlaps, toutes réparées par arêtes binaires transverses | `make bench-context-gap-join-decomposition` |
+| T104 | 2026-05-31 | A/B/R004 | Cycle high-cycle/low-hub ciblé : `76` cas higher-order, dont `12` sous `gap_with_distance`; contre-signal expérimental à shrinker | `make bench-context-gap-parity-cycle` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

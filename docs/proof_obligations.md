@@ -2910,3 +2910,53 @@ Ce que T103 ne prouve pas :
 Obligation suivante : construire une famille ciblée `binary-closure false`, ou
 formaliser une DP qui transporte explicitement le graphe de compatibilités
 binaires de gaps et mesurer sa taille sur des PC-trees plus grands.
+
+### T104 : cycle de parité ciblé pour les gaps
+
+Statut : contre-signal expérimental, pas théorème général.
+
+`pc_context_gap_parity_cycle_probe.py` cible les familles high-cycle/low-hub et
+les obligations `same_side(0,v; prev,next)` autour du cycle haut. Contrairement
+aux sweeps T098-T103, il choisit explicitement des projections censées exposer
+une corrélation de cycle.
+
+Résultat borné :
+
+- `8` lignes, toutes complètes ;
+- `570` projections ouvertes, dont `54` projections ciblées cycle ;
+- `2880` cas visibles ;
+- `product_capped_case_count=0`, `frontier_truncated_rows=0` ;
+- `product_false_case_count=2708` ;
+- `binary_sufficient_case_count=2632` ;
+- `higher_order_case_count=76` ;
+- `pairwise_false_tuple_count=92` ;
+- `min_higher_order_projection_count=4` ;
+- `max_actual_relation_size=24`, `max_closure_size=24`,
+  `max_product_size=480249`.
+
+Lecture :
+
+- sous `current_gap`, `cycle_pair_p/odd_high_cycle_low_hub` donne `64` cas
+  higher-order, mais ce mode quotient les distances dans les gaps et peut donc
+  créer un artefact de signature ;
+- sous `gap_with_distance`, `mixed/odd_high_cycle_low_hub` donne `12` cas
+  higher-order qui survivent à une signature de gap enrichie par distance ;
+- les arbres `cycle_pair_*` sont des stress adversariaux, pas une preuve sous
+  le promise Hsu/McConnell `T=T(D)`.
+
+Ce que T104 réfute expérimentalement : la conjecture trop forte selon laquelle
+les relations de gaps sélectionnées dans tous les scaffolds testables seraient
+toujours déterminées par leurs projections binaires.
+
+Ce que T104 ne prouve pas :
+
+- pas de NP-difficulté ;
+- pas de faux négatif/positif de `candidate.py` ;
+- pas de résultat sous `T=T(D)` ;
+- pas de preuve que toute interface binaire enrichie est impossible ;
+- pas de borne inférieure sur la largeur nécessaire.
+
+Obligation suivante : shrinker le cas `mixed/odd_high_cycle_low_hub` en
+contre-exemple lisible, puis tester si une signature encore plus exacte
+(`full_context` ou frontiers brutes non canoniques) maintient le higher-order
+ou le reclassifie comme artefact de représentation.

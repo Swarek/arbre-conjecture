@@ -5066,3 +5066,56 @@
 - Next action : chercher une vraie famille `binary-closure false`, par exemple
   un cycle de parité de gaps inspiré des familles high-cycle low-hub, ou
   formaliser une DP qui transporte toutes les arêtes binaires nécessaires.
+
+## 2026-05-31 cycle de parité ciblé pour les gaps
+
+- Date/heure : 2026-05-31 17:25 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les familles high-cycle/low-hub peuvent produire une
+  corrélation de gaps qui n'est pas déterminée par toutes ses projections
+  binaires.
+- Changement fait : ajout de
+  `tools/pc_context_gap_parity_cycle_probe.py`, cible
+  `make bench-context-gap-parity-cycle`, extension des tests
+  `tests/test_partial_obligation_experiments.py`, et documentation T104.
+  `candidate.py` n'a pas été modifié.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `rtk make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `366 passed`, puis `JUSTE`.
+- Commande exécutée :
+  `rtk .venv/bin/python -m py_compile tools/pc_context_gap_parity_cycle_probe.py`.
+- Résultat compilation : succès.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_partial_obligation_experiments.py`.
+- Résultat correction ciblée : `29 passed`.
+- Commande exécutée : `rtk make bench-context-gap-parity-cycle`.
+- Résultat benchmark T104 :
+  `reports/context_gap_parity_cycle_probe.json` écrit ; `8` lignes complètes,
+  `54` projections ciblées cycle, `2880` cas visibles,
+  `frontier_truncated_rows=0`, `product_capped_case_count=0`.
+- Résultat clé :
+  `product_false_case_count=2708`,
+  `binary_sufficient_case_count=2632`,
+  `higher_order_case_count=76`,
+  `pairwise_false_tuple_count=92`,
+  `min_higher_order_projection_count=4`,
+  `max_product_size=480249`,
+  `max_actual_relation_size=24`,
+  `max_closure_size=24`.
+- Détail par mode :
+  `current_gap` donne `64` cas higher-order sur
+  `cycle_pair_p/odd_high_cycle_low_hub`, signal potentiellement artefact de
+  quotient ; `gap_with_distance` donne `12` cas higher-order sur
+  `mixed/odd_high_cycle_low_hub`, signal plus robuste mais encore non
+  promise-aware.
+- Conclusion provisoire : T104 fournit le premier contre-signal ciblé contre
+  la conjecture de closure binaire universelle des relations de gaps. Il ne
+  prouve ni NP-difficulté, ni impossibilité d'une interface enrichie, ni résultat
+  sous `T=T(D)`.
+- Commande exécutée : `rtk make quick`.
+- Résultat correction finale : `367 passed`, puis `JUSTE`.
+- Next action : shrinker le cas `mixed/odd_high_cycle_low_hub` sous
+  `gap_with_distance`, puis le tester contre une signature encore plus exacte
+  et contre frontiers non canoniques.
