@@ -1,7 +1,7 @@
 PYTHON ?= $(shell if [ -x .venv/bin/python ]; then echo .venv/bin/python; elif command -v python3 >/dev/null 2>&1; then echo python3; else echo python; fi)
 PYTEST ?= $(PYTHON) -m pytest
 
-.PHONY: quick check hunt-counterexamples bench-quick bench bench-piste-f bench-csp-quick bench-width-stress bench-single-p-stress bench-relation-catalog bench-relation-shapes bench-relation-chains bench-relation-unsat-cores bench-sparse-matching bench-sparse-binary-cores bench-quartet-coverage bench-frontier-obstructions bench-strict-algorithm52 bench-strict-positive-coverage bench-threshold-roundness bench-cr-pc-representability bench-unrooted-pc-representability bench-local-obstruction-depth bench-chirotope-high-girth bench-r004-bad-side-projections bench-pnode-width4 bench-permutation-like bench-permutation-composition bench-relation-components unit acceptance
+.PHONY: quick check hunt-counterexamples bench-quick bench bench-piste-f bench-csp-quick bench-width-stress bench-single-p-stress bench-relation-catalog bench-relation-shapes bench-relation-chains bench-relation-unsat-cores bench-sparse-matching bench-sparse-binary-cores bench-quartet-coverage bench-frontier-obstructions bench-strict-algorithm52 bench-strict-positive-coverage bench-threshold-roundness bench-cr-pc-representability bench-unrooted-pc-representability bench-local-obstruction-depth bench-chirotope-high-girth bench-r004-bad-side-projections bench-pnode-width4 bench-handwritten-gadget bench-permutation-like bench-permutation-composition bench-relation-components unit acceptance
 
 unit:
 	$(PYTEST) -q
@@ -291,6 +291,13 @@ bench-pnode-width4:
 	  --include-high-girth-n9 \
 	  --seed 20260670 \
 	  --output reports/pnode_width4_probe.json
+
+bench-handwritten-gadget:
+	mkdir -p reports && \
+	$(PYTHON) tools/pc_handwritten_gadget_probe.py \
+	  --max-high-pairs 2 \
+	  --max-examples 25 \
+	  --output reports/handwritten_gadget_probe.json
 
 bench-permutation-like:
 	mkdir -p reports && \

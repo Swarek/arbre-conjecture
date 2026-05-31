@@ -60,6 +60,7 @@ make bench-local-obstruction-depth
 make bench-chirotope-high-girth
 make bench-r004-bad-side-projections
 make bench-pnode-width4
+make bench-handwritten-gadget
 make bench-permutation-like
 make bench-permutation-composition
 make bench-relation-components
@@ -192,6 +193,11 @@ P-nœuds ; il ne décide pas l'existence et ne modifie pas `candidate.py`.
 empiriquement, sous énumération complète bornée, si les ordres de branches
 acceptés sur un nœud `P` sont déterminés par leurs restrictions à quatre
 branches. Une absence de réfutation n'est pas une preuve de largeur 4.
+
+`make bench-handwritten-gadget` écrit `reports/handwritten_gadget_probe.json`.
+Il formalise le screenshot manuscrit 4 blocs x 2 feuilles comme une recherche
+bornée d'interprétations `P` libre vs `C` fixé. C'est un diagnostic de
+provenance, pas un solver ni une preuve de dureté.
 
 `make bench-permutation-like` écrit `reports/permutation_like_probe.json`. Il
 teste les profils locaux `permutation_like` observés sur `paired_farthest`

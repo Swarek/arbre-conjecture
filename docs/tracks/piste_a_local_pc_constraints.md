@@ -270,6 +270,67 @@ ou chercher activement une famille synthétique où une famille d'ordres de
 branches non fermée par largeur 4 est réellement réalisable par une matrice
 `D` et un PC-tree.
 
+## T085 - Formalisation du gadget manuscrit 4 blocs
+
+Statut : diagnostic de provenance implémenté, non décisionnel.
+
+Artefact ajouté : `tools/pc_handwritten_gadget_probe.py`, lancé par
+`make bench-handwritten-gadget`. Le screenshot reste une source de provenance ;
+la source de vérité mathématique versionnée est le générateur explicite du
+probe.
+
+Modèle testé :
+
+```text
+A = {A0,A1}, B = {B0,B1}, C = {C0,C1}, D = {D0,D1}
+```
+
+Le probe teste deux profils de distances :
+
+- lecture fidèle au croquis : intra-bloc `2`, inter-bloc par défaut `2`,
+  paires hautes sélectionnées `3` ;
+- contrôle blocs visibles : intra-bloc `1`, inter-bloc par défaut `2`,
+  paires hautes sélectionnées `3`.
+
+Il énumère des ensembles bornés de paires hautes, incluant le seed visible
+`A0-D1`, `A1-C1`, `B0-C0` et toutes les lectures par endpoints du motif de
+blocs visible `(A,D)`, `(A,C)`, `(B,C)`. Pour chaque matrice, il compare :
+
+- un root `P` libre sur les quatre blocs ;
+- les trois roots `C` fixant les ordres de blocs `ABCD`, `ABDC`, `ACBD` ;
+- la projection farthest `I_x(v)` et les obligations bad-side projetées au
+  root.
+
+Résultat du sweep borné :
+
+- `730` lignes testées ;
+- `730` lignes `P` libre positives, `0` négative ;
+- `416` lignes où `P` libre est positif mais au moins un `C` fixé est négatif ;
+- `256` lignes où `P` libre est positif mais `C=ABCD` est négatif ;
+- `224` lignes avec un seul ordre de branches accepté ;
+- `196` lignes où `I_x(v)` est silencieux mais bad-side est actif ;
+- `max_obligation_count=71` et
+  `max_root_four_branch_obligation_count=6`.
+
+Le seed manuscrit lui-même donne, dans les deux profils, un seul ordre de
+branches accepté pour le `P` libre : `ABDC`. Les ordres `ABCD` et `ACBD` sont
+rejetés. Dans le profil plat `2/2/3`, la projection farthest est silencieuse
+alors que bad-side est actif ; c'est un témoin utile contre les diagnostics
+fondés seulement sur `I_x(v)`.
+
+Interprétation : le croquis formalise bien un phénomène "ordre de branches
+imposé vs P libre". Il ne donne pas un `False` pour le P-noeud libre, donc ce
+n'est ni une preuve de dureté ni une réfutation du lemme de largeur 4. Il
+renforce l'idée que le signal pertinent est bad-side complet, et que la suite
+doit tester la relation d'interface à ordre de branches fixé.
+
+Prochaine expérience recommandée : un probe `pnode_interface_product_report`
+qui fixe un P-noeud, un ordre circulaire de branches `sigma` et un contexte
+extérieur, énumère les complétions internes de chaque branche, puis compare la
+relation exacte acceptée `A_exact` avec le produit cartésien de ses projections
+internes. Un échec de factorisation donnerait une corrélation de bord minimale ;
+une réussite bornée devra aussi mesurer la taille de la relation résiduelle.
+
 ## T022 - Rapport `project_farthest_sets_to_pc_nodes`
 
 Statut : diagnostic implémenté, explicitement non décisionnel.

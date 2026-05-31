@@ -2205,3 +2205,32 @@ Limites :
 - une absence de réfutation sur un sweep ne prouve pas la largeur 4 ;
 - un statut `holds` ne justifie aucune intégration candidate sans preuve que le
   modèle local ainsi testé est nécessaire, suffisant et composable.
+
+### T085 : formalisation du gadget manuscrit 4 blocs
+
+Statut : preuve expérimentale bornée / artefact de provenance, pas théorème.
+
+Le probe T085 donne une matrice et des PC-trees explicites pour une famille de
+lectures du screenshot 4 blocs x 2 feuilles. La comparaison `P` libre vs `C`
+fixé est faite par énumération exacte des frontiers `n=8` et validation
+bad-side/cR de chaque ordre accepté.
+
+Ce que T085 permet d'affirmer :
+
+- dans le budget testé, le seed manuscrit a bien un ordre de branches cR
+  représenté par le `P` libre ;
+- pour le même seed, le root `C=ABCD` est négatif alors que `ABDC` est positif ;
+- dans la lecture plate `2/2/3`, le signal farthest projeté peut être silencieux
+  alors que les obligations bad-side au root sont actives.
+
+Ce que T085 ne prouve pas :
+
+- aucune dureté générale ;
+- aucune réfutation du cas `P` libre ;
+- aucune preuve du lemme d'interface P-nœud ;
+- aucune preuve de largeur 4 ;
+- aucun `False` utilisable par `candidate.py`.
+
+Obligation suivante : définir et tester une relation d'interface à ordre de
+branches fixé, car T085 montre un phénomène de contrainte sur l'ordre de
+branches mais ne teste pas encore la factorisation des complétions internes.

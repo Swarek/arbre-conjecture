@@ -194,13 +194,18 @@ Lecture prudente du screenshot :
 - objectif probable : montrer un cas ou la projection locale est muette alors
   qu'un ordre de blocs fixe viole bad-side.
 
-Statut :
+Statut apres T085 :
 
-- pas assez specifie pour etre un contre-exemple ;
-- avec un root `P` libre, une lecture naturelle semble probablement positive ;
-- avec un root `C` fixe `A-B-C-D`, la meme lecture peut devenir negative avec
-  projection `I_x(v)` silencieuse ;
-- a formaliser comme generateur, puis valider par oracle et shrink.
+- le screenshot reste une source de provenance ; la source de vérité
+  mathématique est maintenant `tools/pc_handwritten_gadget_probe.py` ;
+- le probe teste explicitement deux profils de distances, dont la lecture plate
+  `2/2/3` la plus proche du croquis ;
+- le seed versionné `A0-D1`, `A1-C1`, `B0-C0` est positif pour le root `P`
+  libre, mais rejette les roots `C=ABCD` et `C=ACBD` ;
+- dans la lecture plate, la projection `I_x(v)` est silencieuse alors que les
+  obligations bad-side sont actives ;
+- ce n'est toujours pas un contre-exemple au `P` libre, ni un gadget de dureté,
+  ni une preuve du lemme d'interface.
 
 ## Claims a ne pas importer comme faits
 

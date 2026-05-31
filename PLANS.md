@@ -5479,3 +5479,62 @@ Décision provisoire : T084 ne casse pas la conjecture largeur 4 dans le sweep
 initial. La piste reste vivante, mais doit maintenant être renforcée par une
 vraie relation d'interface ou par une recherche synthétique de famille
 réalisable qui produit une fermeture 4 strictement trop grande.
+
+## ExecPlan T085 - formalisation bornée du gadget manuscrit 4 blocs
+
+But : transformer le croquis manuscrit du 2026-05-31 en artefact
+reproductible, sans figer une lecture incertaine de l'image.
+
+Hypothèse testée : un gadget à quatre blocs de deux feuilles, avec distances
+internes de bloc contrôlées et quelques paires inter-blocs hautes, pourrait
+distinguer un ordre de branches imposé d'un ordre libre de type `P`, ou produire
+une projection bad-side locale informative pour les pistes P-nœud/interface.
+
+Fichiers visés : `tools/pc_handwritten_gadget_probe.py`,
+`tests/test_handwritten_gadget_probe.py`, `Makefile`, `README.md`,
+`docs/tracks/piste_a_local_pc_constraints.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md` et `PLANS.md`.
+
+Algorithme pressenti : construire les huit feuilles
+`A0,A1,B0,B1,C0,C1,D0,D1`, tester une lecture plate `2/2/3` fidèle au croquis
+et un contrôle `1/2/3` où les blocs sont plus visibles. Énumérer toutes les
+affectations de paires hautes de taille bornée, avec priorité aux trois paires
+visibles dans le croquis si elles sont interprétables. Comparer par oracle exact
+un arbre `P` sur les quatre blocs et des arbres `C` fixant quelques ordres de
+blocs. Mesurer aussi les obligations bad-side projetées au nœud racine.
+
+Tests à exécuter : compilation Python, tests ciblés du générateur/probe,
+`make bench-handwritten-gadget`, puis `make quick`.
+
+Risques : le croquis est ambigu ; une absence de gadget dans ce sweep ne réfute
+pas l'idée mathématique. Le rapport doit donc distinguer "aucun témoin dans le
+budget testé" d'une preuve. Les PC-trees utilisés sont des scaffolds
+manuels, pas forcément des arbres Hsu/McConnell reconstruits depuis `D`.
+
+Plan de contre-exemples : rechercher en priorité les lignes où `P` libre est
+positive mais un `C` fixé est négatif, où la projection farthest est muette mais
+bad-side active, et où les obligations se concentrent sur quatre branches.
+Conserver les meilleurs témoins dans le JSON, avec les paires hautes et les
+ordres témoins.
+
+Plan subagents : trois explorateurs read-only auditent en parallèle la
+documentation R004, le design du probe de gadget et la suite possible côté
+relation d'interface P-nœud. L'agent principal garde les edits, les tests, le
+rapport et le commit.
+
+Résultats observés : tests ciblés `tests/test_handwritten_gadget_probe.py`
+(`3 passed`). `make bench-handwritten-gadget` écrit
+`reports/handwritten_gadget_probe.json` avec `730` lignes, `730` positives pour
+le `P` libre, `0` négative pour le `P` libre, `416` lignes où au moins un `C`
+fixé est négatif, `256` lignes où `C=ABCD` est négatif, `224` lignes avec un
+seul ordre de branches accepté, `196` lignes où `I_x(v)` est silencieux mais
+bad-side actif, `max_obligation_count=71` et
+`max_root_four_branch_obligation_count=6`. Le seed manuscrit versionné
+`A0-D1`, `A1-C1`, `B0-C0` accepte seulement l'ordre de branches `ABDC` dans les
+deux profils testés.
+
+Décision : garder T085 comme artefact de provenance et de stress local. Il
+confirme un phénomène "ordre de branches imposé vs P libre" et un faux silence
+farthest sur la lecture plate, mais il ne réfute pas le `P` libre et ne prouve
+ni dureté, ni largeur 4, ni lemme d'interface. La suite doit basculer vers le
+diagnostic d'interface P-nœud à ordre de branches fixé.

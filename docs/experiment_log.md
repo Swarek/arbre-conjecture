@@ -4163,3 +4163,44 @@
 - Next action : ajouter une couche interface à T084 ou chercher une famille
   synthétique réalisable par `D,T` dont la fermeture width4 est strictement trop
   grande.
+
+## 2026-05-31 formalisation du gadget manuscrit 4 blocs
+
+- Date/heure : 2026-05-31 12:10 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : le screenshot manuscrit 4 blocs x 2 feuilles peut être
+  transformé en une recherche bornée d'interprétations explicites, pour mesurer
+  si un `P` libre et des `C` fixés se comportent différemment sous les
+  contraintes bad-side complètes.
+- Changement fait : ajout de `tools/pc_handwritten_gadget_probe.py`,
+  `tests/test_handwritten_gadget_probe.py`, de la cible
+  `make bench-handwritten-gadget` et de la documentation T085. `candidate.py`
+  n'a pas été modifié.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `rtk make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `319 passed`, puis `JUSTE`.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_handwritten_gadget_probe.py`.
+- Résultat correction ciblée : `3 passed`.
+- Commande exécutée : `rtk make bench-handwritten-gadget`.
+- Résultat benchmark T085 :
+  `reports/handwritten_gadget_probe.json` écrit ; `730` lignes testées,
+  `730` lignes `P` libre positives, `0` négative, `416` lignes où `P` libre
+  est positif mais au moins un `C` fixé est négatif, `256` lignes où `P` libre
+  est positif mais `C=ABCD` est négatif, `224` lignes avec un seul ordre de
+  branches accepté, `196` lignes où la projection farthest est silencieuse mais
+  bad-side active, `max_obligation_count=71`,
+  `max_root_four_branch_obligation_count=6`.
+- Seed manuscrit : pour les profils `sketch_flat_2_2_3` et
+  `block_low_control_1_2_3`, les paires hautes `A0-D1`, `A1-C1`, `B0-C0`
+  acceptent seulement l'ordre de branches `ABDC`; les ordres `ABCD` et `ACBD`
+  sont rejetés. Dans le profil plat, `I_x(v)` est silencieux mais bad-side est
+  actif.
+- Conclusion provisoire : le croquis devient un artefact versionné utile pour
+  la piste "ordre de branches imposé vs P libre", mais il ne donne pas de
+  contre-exemple au `P` libre et ne prouve ni dureté, ni largeur 4, ni lemme
+  d'interface.
+- Next action : basculer vers le diagnostic d'interface P-nœud à ordre de
+  branches fixé, en comparant `A_exact` aux produits des projections internes.

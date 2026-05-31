@@ -351,6 +351,19 @@ par ses restrictions à toutes les sous-familles de quatre branches. Une ligne
 largeur 4 dans le scaffold ; une absence de réfutation reste seulement un
 signal expérimental.
 
+Probe gadget manuscrit 4 blocs Piste A/R004 :
+
+```bash
+make bench-handwritten-gadget
+```
+
+Cette commande écrit `reports/handwritten_gadget_probe.json`. Elle encode le
+screenshot manuscrit du 2026-05-31 comme une famille bornée de matrices à
+quatre blocs de deux feuilles, puis compare par oracle exact un root `P` libre
+et des roots `C` fixant les trois ordres circulaires de blocs. Le rapport est
+un artefact de diagnostic/provenance : il ne décide pas l'existence générale,
+ne prouve pas la dureté, et ne justifie aucun changement dans `candidate.py`.
+
 Contrôle promise-aware des permutations locales Piste F/C :
 
 ```bash

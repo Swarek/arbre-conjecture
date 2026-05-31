@@ -721,6 +721,15 @@ Dernier commit green avant T009 : `07120e4`.
   `max_frontiers_seen=20160`, `max_missing_order_count=0`) et `make quick`
   (`319 passed`, puis `JUSTE`). `candidate.py` n'a pas été modifié.
 
+- Checkpoint T085 courant : commit contenant le probe du gadget manuscrit 4
+  blocs x 2 feuilles. Validation observée : tests ciblés
+  `tests/test_handwritten_gadget_probe.py` (`3 passed`),
+  `make bench-handwritten-gadget` (`730` lignes, `730` positives pour le `P`
+  libre, `416` lignes où un `C` fixé devient négatif,
+  `256` lignes où `C=ABCD` est négatif, `196` lignes farthest silencieuses mais
+  bad-side actives, `max_root_four_branch_obligation_count=6`) et `make quick`
+  (`322 passed`, puis `JUSTE`). `candidate.py` n'a pas été modifié.
+
 ## Rollback
 
 Si une modification régresse et que la cause n’est pas claire :

@@ -36,3 +36,6 @@ in `docs/source_notes.md` and covered by tests for
 The 2026-05-31 handwritten screenshot is not a proof. It is summarized as an
 ambiguous four-block gadget seed in
 `docs/external_reviews/researcher_advances_2026-05-31.md`.
+It is provenance only; the executable formalization lives in
+`tools/pc_handwritten_gadget_probe.py` and the reproducible report is generated
+by `make bench-handwritten-gadget`.
