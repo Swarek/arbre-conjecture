@@ -84,6 +84,13 @@ hautes. Il trouve `54` relations exigeant une projection binaire, mais aucune
 relation exigeant une arité `3`. C'est un signal en faveur d'interfaces
 binaires dans cette famille bornée, pas une preuve générale.
 
+Mise à jour T089 : le stress sparse two-level plus riche sur
+`P2 x P2 x P2 x P2` et `P3 x P3 x P3` trouve de nouveaux témoins binaires
+contrôlés, mais toujours aucune arité `3` (`6500` essais random plus deux
+contrôles). Après deux itérations sans arité `3`, la prochaine attaque doit
+changer de famille : patches composés, contexte extérieur non fixe ou route
+circle graph/split decomposition.
+
 ## Piste B : programmation dynamique sur le PC-tree
 
 Intuition : un état de frontière pourrait résumer les contraintes externes d’un

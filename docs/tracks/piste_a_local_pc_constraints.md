@@ -467,6 +467,40 @@ une DP d'interface binaire, pas une preuve. La prochaine attaque doit chercher
 une arité `3` avec branches `P3`, distances à plus de niveaux, contexte plus
 riche ou patches composés.
 
+## T089 - Stress d'interfaces résiduelles plus riches
+
+Statut : diagnostic implémenté, non décisionnel.
+
+Artefact ajouté : `tools/pc_residual_interface_stress_probe.py`, lancé par
+`make bench-residual-interface-stress`.
+
+Objectif : attaquer T088 avec deux familles plus riches :
+
+- `P2 x P2 x P2 x P2`, qui augmente le nombre de branches de l'interface ;
+- `P3 x P3 x P3`, qui augmente le domaine interne de chaque branche.
+
+Contrôles déterministes :
+
+- `p2x4_binary_seed`, paires hautes `{(0,2),(1,3)}` :
+  `accepted_tuple_count=8`, arité minimale `2` ;
+- `p3x3_binary_seed`, paires hautes `{(0,4),(0,5),(1,7),(2,6)}` :
+  `accepted_tuple_count=24`, arité minimale `2`.
+
+Résultat du stress random sparse two-level :
+
+- `P2x4` : `5000` essais, `384` relations non triviales,
+  histogramme `{1: 4981, 2: 19}`, aucun cas `>2` ;
+- `P3x3` : `1500` essais, `198` relations non triviales,
+  histogramme `{1: 1478, 2: 22}`, aucun cas `>2` ;
+- meilleur témoin `P3x3` non unaire observé : `4` tuples acceptés, arité `2`.
+
+Interprétation : le signal "interfaces binaires possibles" survit à deux
+stress plus riches, mais cela reste un résultat expérimental borné. Comme T088
+et T089 n'ont pas trouvé d'arité `3`, la prochaine étape ne doit pas être une
+simple augmentation du nombre de seeds sparse two-level ; il faut changer de
+source de difficulté, vers patches composés, contexte extérieur non figé, ou
+graphe d'entrelacement/circle graph des contraintes same-side.
+
 ## T022 - Rapport `project_farthest_sets_to_pc_nodes`
 
 Statut : diagnostic implémenté, explicitement non décisionnel.

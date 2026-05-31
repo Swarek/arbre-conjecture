@@ -2332,3 +2332,35 @@ Ce que T088 ne prouve pas :
 Obligation suivante : chercher activement une relation résiduelle d'arité `3`
 dans des familles plus riches : branches `P3`, plus de niveaux de distance,
 contexts non vides plus longs, et patches composés de plusieurs supports.
+
+### T089 : stress d'interfaces résiduelles plus riches
+
+Statut : preuve expérimentale bornée, pas théorème.
+
+`tools/pc_residual_interface_stress_probe.py` étend T088 avec deux familles :
+
+- `P2 x P2 x P2 x P2` sparse two-level ;
+- `P3 x P3 x P3` sparse two-level.
+
+Ce que T089 couvre :
+
+- deux contrôles déterministes binaires sont versionnés :
+  `p2x4_binary_seed` et `p3x3_binary_seed` ;
+- le stress `P2x4` lance `5000` essais random : `384` relations non
+  triviales, `19` relations d'arité minimale `2`, aucun cas `>2` ;
+- le stress `P3x3` lance `1500` essais random : `198` relations non triviales,
+  `22` relations d'arité minimale `2`, aucun cas `>2` ;
+- la meilleure ligne `P3x3` observée a `4` tuples acceptés et reste
+  déterminée par ses projections binaires.
+
+Ce que T089 ne prouve pas :
+
+- deux stress sparse two-level ne prouvent pas une largeur binaire générale ;
+- les contextes restent fixés linéairement ;
+- les patches composés et les interactions multi-supports ne sont pas testés ;
+- la promesse "T vient de D" n'est pas vérifiée.
+
+Obligation suivante : après T088/T089, ne pas continuer uniquement à augmenter
+les essais sparse two-level. Basculer vers une nouvelle source de complexité :
+patchs composés, contexte extérieur avec degrés de liberté, ou modélisation
+circle graph/split decomposition des contraintes same-side.

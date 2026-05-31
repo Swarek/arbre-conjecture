@@ -758,6 +758,18 @@ Dernier commit green avant T009 : `07120e4`.
   `{1: 24103, 2: 54}`, `0` cas au-delà du binaire) et `make quick`
   (`330 passed`, puis `JUSTE`). `candidate.py` n'a pas été modifié.
 
+- Checkpoint T089 courant : commit contenant le stress d'interfaces
+  résiduelles plus riches. Validation observée : compilation Python de
+  `pc_residual_interface_stress_probe.py` réussie, tests ciblés
+  `tests/test_residual_interface_stress_probe.py`,
+  `tests/test_residual_interface_probe.py` et
+  `tests/test_interface_experiments.py` (`10 passed`),
+  `make bench-residual-interface-stress` (`P2x4`: `5000` essais,
+  `384` relations non triviales, histogramme `{1: 4981, 2: 19}` ;
+  `P3x3`: `1500` essais, `198` relations non triviales, histogramme
+  `{1: 1478, 2: 22}` ; `0` cas au-delà du binaire) et `make quick`
+  (`332 passed`, puis `JUSTE`). `candidate.py` n'a pas été modifié.
+
 ## Rollback
 
 Si une modification régresse et que la cause n’est pas claire :

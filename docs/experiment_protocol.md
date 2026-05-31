@@ -404,6 +404,19 @@ paires hautes. Une ligne exigeant une arité strictement supérieure à `2` sera
 un contre-signal fort contre une interface binaire ; son absence reste une
 preuve expérimentale bornée seulement.
 
+Stress interfaces résiduelles riches Piste A/B :
+
+```bash
+make bench-residual-interface-stress
+```
+
+Cette commande écrit `reports/residual_interface_stress_probe.json`. Elle ajoute
+des contrôles binaires `P2 x P2 x P2 x P2` et `P3 x P3 x P3`, puis lance un
+stress sparse two-level seedé sur ces deux familles. Le rapport cherche
+explicitement une relation exigeant une arité `>2`. Une absence de telle
+relation dans ce budget doit déclencher un changement de générateur ou de piste,
+pas une conclusion positive.
+
 Contrôle promise-aware des permutations locales Piste F/C :
 
 ```bash

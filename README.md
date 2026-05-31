@@ -64,6 +64,7 @@ make bench-handwritten-gadget
 make bench-pnode-interface
 make bench-pnode-context-interface
 make bench-residual-interface
+make bench-residual-interface-stress
 make bench-permutation-like
 make bench-permutation-composition
 make bench-relation-components
@@ -220,6 +221,12 @@ projections nécessaires pour reconstruire exactement une relation résiduelle
 d'interface. Le sweep par défaut cherche une relation au-delà du binaire dans
 un focus `P2 x P2 x P2` two-level borné ; une absence de témoin est
 expérimentale, pas une preuve.
+
+`make bench-residual-interface-stress` écrit
+`reports/residual_interface_stress_probe.json`. Il stress le même diagnostic
+sur `P2 x P2 x P2 x P2` et `P3 x P3 x P3` sparse two-level, avec seeds
+binaires contrôlés. C'est une attaque expérimentale plus large de l'hypothèse
+interface binaire, pas une preuve.
 
 `make bench-permutation-like` écrit `reports/permutation_like_probe.json`. Il
 teste les profils locaux `permutation_like` observés sur `paired_farthest`

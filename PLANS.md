@@ -5696,3 +5696,57 @@ Décision : garder l'hypothèse "interfaces binaires possibles" comme piste à
 attaquer, pas comme résultat. La prochaine expérience doit chercher une arité
 `3` dans des familles plus riches : branches `P3`, distances à quatre niveaux,
 contextes plus longs ou patches composés.
+
+## ExecPlan T089 - stress d'interfaces résiduelles plus riches
+
+But : attaquer le signal T088 "pas d'arité 3" avec des interfaces plus riches
+que `P2 x P2 x P2`.
+
+Hypothèse testée : les relations résiduelles restent peut-être binaires dans
+des familles sparse two-level plus larges (`P2 x P2 x P2 x P2`) et avec des
+branches internes plus riches (`P3 x P3 x P3`). Une relation exigeant une arité
+`3` serait un contre-exemple immédiat à cette hypothèse expérimentale.
+
+Fichiers visés : `tools/pc_residual_interface_stress_probe.py`,
+`tests/test_residual_interface_stress_probe.py`, `Makefile`, `README.md`,
+`docs/experiment_protocol.md`, `docs/hypothesis_portfolio.md`,
+`docs/proof_obligations.md`, `docs/tracks/piste_a_local_pc_constraints.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `docs/tracks/README.md` et
+`PLANS.md`.
+
+Algorithme : ajouter deux contrôles déterministes binaires :
+
+- `P2 x P2 x P2 x P2` avec paires hautes `{(0,2),(1,3)}` ;
+- `P3 x P3 x P3` avec paires hautes `{(0,4),(0,5),(1,7),(2,6)}`.
+
+Puis lancer une recherche random sparse two-level, seedée et bornée, sur ces
+deux familles. Reporter histogrammes d'arité, relations vides/pleines/non
+triviales, meilleur témoin non unaire et premier témoin au-delà du binaire si
+trouvé.
+
+Risques : un échec à trouver l'arité `3` reste seulement expérimental. Les
+familles sont des scaffolds two-level à contexte extérieur fixé, pas des
+instances promise-aware Hsu/McConnell.
+
+Résultats observés : compilation Python réussie pour
+`tools/pc_residual_interface_stress_probe.py`. Tests ciblés
+`tests/test_residual_interface_stress_probe.py`,
+`tests/test_residual_interface_probe.py` et
+`tests/test_interface_experiments.py` : `10 passed`.
+`make bench-residual-interface-stress` écrit
+`reports/residual_interface_stress_probe.json`.
+
+Résultat quantitatif :
+
+- `p2x4_binary_seed` et `p3x3_binary_seed` confirment des relations binaires
+  non unaires ;
+- `P2x4` random sparse : `5000` essais, `384` non triviaux,
+  histogramme `{1: 4981, 2: 19}`, aucun cas `>2` ;
+- `P3x3` random sparse : `1500` essais, `198` non triviaux,
+  histogramme `{1: 1478, 2: 22}`, aucun cas `>2`.
+
+Décision : après T088 et T089, l'hypothèse "relation résiduelle binaire" reste
+plausible expérimentalement dans ces familles, mais continuer en augmentant
+simplement les seeds serait une faible valeur d'information. La prochaine
+itération doit changer de source de difficulté : patches composés, contexte
+extérieur variable, ou circle graph/split decomposition.

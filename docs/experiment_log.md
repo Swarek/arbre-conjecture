@@ -4330,3 +4330,42 @@
   attaquer.
 - Next action : chercher l'arité `3` avec branches `P3`, distances `1/2/3/4`,
   contextes plus longs ou patches composés de plusieurs supports.
+
+## 2026-05-31 stress d'interfaces résiduelles plus riches
+
+- Date/heure : 2026-05-31 15:05 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : des interfaces plus riches (`P2x4`, `P3x3`) pourraient
+  produire une relation résiduelle exigeant une arité `3`, contrairement au
+  sweep T088 `P2x3`.
+- Changement fait : ajout de `tools/pc_residual_interface_stress_probe.py`,
+  `tests/test_residual_interface_stress_probe.py`, de la cible
+  `make bench-residual-interface-stress` et de la documentation T089.
+  `candidate.py` n'a pas été modifié.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `rtk make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `330 passed`, puis `JUSTE`.
+- Commande exécutée :
+  `rtk .venv/bin/python -m py_compile tools/pc_residual_interface_stress_probe.py`.
+- Résultat compilation : succès.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_residual_interface_stress_probe.py tests/test_residual_interface_probe.py tests/test_interface_experiments.py`.
+- Résultat correction ciblée : `10 passed`.
+- Commande exécutée : `rtk make bench-residual-interface-stress`.
+- Résultat benchmark T089 :
+  `reports/residual_interface_stress_probe.json` écrit ;
+  contrôles `p2x4_binary_seed` et `p3x3_binary_seed` tous deux d'arité `2` ;
+  profil `P2x4` : `5000` essais, `384` relations non triviales,
+  histogramme `{1: 4981, 2: 19}`, aucun cas au-delà du binaire ;
+  profil `P3x3` : `1500` essais, `198` relations non triviales,
+  histogramme `{1: 1478, 2: 22}`, aucun cas au-delà du binaire.
+- Commande exécutée : `rtk make quick`.
+- Résultat correction finale : `332 passed`, puis `JUSTE`.
+- Conclusion provisoire : deux stress plus riches n'ont toujours pas trouvé
+  d'arité `3`. Cela renforce expérimentalement l'intérêt d'interfaces binaires,
+  sans preuve. La piste ne doit pas continuer par simple augmentation de seeds.
+- Next action : basculer vers une source de difficulté différente : relation
+  résiduelle de patches composés, contexte extérieur avec degrés de liberté, ou
+  lab circle graph/split decomposition des contraintes same-side.
