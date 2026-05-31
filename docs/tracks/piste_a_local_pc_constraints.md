@@ -698,6 +698,44 @@ minimal, mais il n'est pas une contrainte locale suffisante. La piste A doit
 maintenant représenter les côtés des obligations ouvertes vis-à-vis du contexte
 extérieur, ou passer explicitement à une relation résiduelle.
 
+## T095 - Ladder de signatures de contexte
+
+Statut : diagnostic implémenté, lemme négatif expérimental.
+
+Artefacts ajoutés :
+
+- extension de `src/pc_circular/solvers/partial_obligation_experiments.py`
+- `tools/pc_context_signature_ladder_probe.py`
+- cible `make bench-context-signature-ladder`
+
+Idée testée : comparer plusieurs signatures croissantes pour les obligations
+ouvertes :
+
+- `t094_visible_per_branch` ;
+- `visible_global`, qui garde l'ordre global des rôles visibles entre branches ;
+- `visible_global_plus_missing_order`, qui ajoute l'ordre des rôles absents du
+  nœud ;
+- `full_context_order`, contrôle qui encode l'ordre des quatre rôles avec leur
+  localisation visible/extérieur.
+
+Résultat du benchmark T095 :
+
+- `120` lignes, toutes complètes ;
+- `80` lignes avec P-nœuds ;
+- `t094_visible_per_branch` : `2048` groupes mixtes ;
+- `visible_global` : `1861` groupes mixtes ;
+- `visible_global_plus_missing_order` : `1793` groupes mixtes ;
+- `full_context_order` : `0` groupe mixte ;
+- tous les modes gardent `0` groupe mixte fully-visible.
+
+Lecture : ajouter l'ordre des rôles manquants aide certains seeds, mais ne
+suffit pas. Le seed `cycle/mixed/n=5` reste mixte avec
+`visible_global_plus_missing_order` : l'obligation `same_side(0,4;1,2)` peut
+avoir le même ordre visible et le même rôle manquant, tout en satisfaisant ou
+violant selon la position d'insertion de ce rôle extérieur. La prochaine
+signature locale doit donc représenter un ensemble de positions/côtés possibles
+du contexte extérieur, ou assumer explicitement une relation résiduelle.
+
 ## T022 - Rapport `project_farthest_sets_to_pc_nodes`
 
 Statut : diagnostic implémenté, explicitement non décisionnel.

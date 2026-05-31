@@ -129,6 +129,16 @@ groupe fully-visible. La prochaine relation de séparateur doit donc porter les
 obligations ouvertes vers le contexte extérieur, pas seulement mémoriser l'ordre
 interne des rôles visibles.
 
+Mise à jour T095 : le ladder de signatures confirme que le problème n'est pas
+seulement l'ordre interne des branches. Sur `120` lignes complètes, T094 donne
+`2048` groupes mixtes, l'ordre global des rôles visibles en donne `1861`, et
+l'ajout de l'ordre des rôles manquants en garde encore `1793`. Le contrôle
+`full_context_order` tombe à `0`, ce qui montre que les collisions restantes
+viennent de la position/insertion des rôles extérieurs par rapport aux rôles
+visibles. Un seed `cycle/mixed/n=5` verrouille ce contre-signal. La prochaine
+abstraction doit donc être une relation de côté/insertion de contexte, pas une
+signature séparant simplement visible et extérieur.
+
 ## Piste B : programmation dynamique sur le PC-tree
 
 Intuition : un état de frontière pourrait résumer les contraintes externes d’un

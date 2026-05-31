@@ -22,6 +22,66 @@ Dans un Goal long, le plan doit aussi définir le critère d’arrêt : succès
 mesurable, réfutation, blocage théorique, ou bascule vers une autre piste. Ne pas
 laisser un Goal tourner comme une recherche ouverte sans sortie concrète.
 
+## ExecPlan 2026-05-31 - T095 ladder de signatures de contexte
+
+But : comprendre les groupes mixtes restants de T094 sans sur-ajuster un état
+local. T094 montre que l'ordre des rôles visibles dans les branches distingue le
+témoin minimal T093, mais laisse encore des groupes mixtes. Le checkpoint T095
+doit mesurer si ces groupes viennent surtout de l'ordre global des rôles
+visibles entre branches, de l'ordre des rôles manquants dans le contexte
+extérieur, ou d'une vraie relation résiduelle plus riche.
+
+Hypothèse : une échelle de signatures
+`t094_visible_per_branch -> visible_global -> visible_global_plus_missing_order`
+réduit ou élimine les groupes mixtes sur les sweeps bornés. Si la dernière
+signature reste mixte, elle produit des contre-exemples plus forts. Si elle
+supprime les mixtes, cela indique que l'interface doit au moins transporter
+l'ordre des rôles absents dans le contexte, sans prouver de composabilité.
+
+Fichiers à modifier :
+`src/pc_circular/solvers/partial_obligation_experiments.py`,
+`tools/pc_context_signature_ladder_probe.py`,
+`tests/test_partial_obligation_experiments.py`, `Makefile`, puis les documents
+de suivi (`docs/experiment_log.md`, `docs/checkpoints.md`,
+`docs/proof_obligations.md`, `docs/hypothesis_portfolio.md`,
+`docs/tracks/README.md`, `docs/tracks/piste_a_local_pc_constraints.md`,
+`docs/tracks/piste_b_dp_pc_tree.md`). `candidate.py` reste hors scope.
+
+Algorithme pressenti : énumérer les frontiers bornées, les obligations
+`same_side` projetées sur les P-nœuds, puis grouper les satisfactions/violations
+par plusieurs signatures croissantes : T094, ordre global des rôles visibles,
+ordre global visible plus ordre des rôles manquants, et contrôle
+`full_context_order` comme borne haute diagnostique.
+
+Tests à exécuter : `py_compile`, pytest ciblé,
+`make bench-context-signature-ladder`, puis `rtk make quick`.
+
+Risques : les signatures enrichies sont dérivées de frontiers complètes et
+peuvent être trop informatives. Une disparition des groupes mixtes n'est pas une
+preuve d'algorithme polynomial ; c'est seulement un diagnostic de bord.
+
+Plan de contre-exemples : verrouiller deux seeds : le témoin minimal T093 et
+`cycle/mixed/n=4` qui casse T094. Si la signature
+`visible_global_plus_missing_order` reste mixte, documenter le premier exemple
+comme nouvelle cible de relation résiduelle.
+
+Plan subagents : pas de fanout pour ce checkpoint borné ; il suit directement
+la réfutation T094 et vise un rapport quantitatif.
+
+Résultats observés : T095 est implémenté. Le benchmark
+`make bench-context-signature-ladder` donne `120` lignes complètes, `80` avec
+P-nœuds, `4098` projections d'obligations, `1918` support-boundary, `1624`
+fully-visible et `556` projection-only. Par mode :
+`t094_visible_per_branch=2048` groupes mixtes, `visible_global=1861`,
+`visible_global_plus_missing_order=1793`, `full_context_order=0`. Les seeds
+T093 et `cycle/mixed/n=4` sont expliqués par
+`visible_global_plus_missing_order`, mais `cycle/mixed/n=5` reste mixte.
+
+Décision : l'ordre des rôles absents dans le contexte ne suffit pas. Le prochain
+objet doit représenter la position d'insertion ou les côtés possibles des rôles
+extérieurs par rapport au bloc visible. Le mode `full_context_order` est une
+borne haute diagnostique, pas un état DP compact.
+
 ## ExecPlan 2026-05-31 - T094 signature de separateur pour obligations ouvertes
 
 But : réparer le collage raté et créer un checkpoint de code réel après T093.

@@ -4614,3 +4614,58 @@
 - Next action : définir une signature/relation d'obligation ouverte qui inclut
   les ports extérieurs du nœud, puis tester si elle réduit les groupes mixtes
   sans simplement encoder la frontier complète.
+
+## 2026-05-31 ladder de signatures de contexte
+
+- Date/heure : 2026-05-31 19:25 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les groupes mixtes T094 viennent peut-être d'une
+  information de contexte simple : ordre global des rôles visibles entre
+  branches, puis ordre des rôles absents dans le contexte extérieur.
+- Changement fait : ajout de `pnode_context_signature_ladder_report` et des
+  signatures associées dans
+  `src/pc_circular/solvers/partial_obligation_experiments.py`, ajout de
+  `tools/pc_context_signature_ladder_probe.py`, extension des tests
+  `tests/test_partial_obligation_experiments.py`, cible
+  `make bench-context-signature-ladder`, et documentation T095. `candidate.py`
+  n'a pas été modifié.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `rtk make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `348 passed`, puis `JUSTE`.
+- Commande exécutée :
+  `rtk .venv/bin/python -m py_compile src/pc_circular/solvers/partial_obligation_experiments.py tools/pc_context_signature_ladder_probe.py`.
+- Résultat compilation : succès.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_partial_obligation_experiments.py`.
+- Résultat correction ciblée : `14 passed`.
+- Commande exécutée : `rtk make bench-context-signature-ladder`.
+- Résultat benchmark T095 :
+  `reports/context_signature_ladder_probe.json` écrit ; `120` lignes,
+  `120` complètes, `80` lignes avec P-nœuds, `4098` projections
+  d'obligations, `1918` obligations support-boundary, `1624` fully-visible et
+  `556` projection-only.
+- Résultat par mode :
+  `t094_visible_per_branch`: `2048` groupes mixtes, dont `1503`
+  support-boundary et `545` projection-only ;
+  `visible_global`: `1861` groupes mixtes ;
+  `visible_global_plus_missing_order`: `1793` groupes mixtes, dont `1551`
+  support-boundary et `242` projection-only ;
+  `full_context_order`: `0` groupe mixte.
+- Signal positif : les seeds `single_bad_side_quartet_instance()` et
+  `cycle/mixed/n=4` sont expliqués par `visible_global_plus_missing_order`.
+- Contre-signal : `cycle/mixed/n=5` reste mixte avec
+  `visible_global_plus_missing_order`; exemple `same_side(0,4;1,2)` avec un
+  seul endpoint manquant. Comme il n'y a qu'un rôle manquant, l'ordre des rôles
+  absents est insuffisant : il faut savoir où ce rôle s'insère par rapport aux
+  rôles visibles.
+- Conclusion provisoire : l'interface doit transporter une relation de
+  positions/côtés extérieurs possibles, ou quelque chose d'équivalent à une
+  relation résiduelle. Le contrôle `full_context_order` élimine les mixtes parce
+  qu'il encode le type du quartet ; ce n'est pas une compression exploitable.
+- Commande exécutée : `rtk make quick`.
+- Résultat correction finale : `352 passed`, puis `JUSTE`.
+- Next action : construire un probe de relation d'insertion extérieure qui
+  encode, pour chaque obligation ouverte, les gaps possibles du contexte par
+  rapport à la séquence visible et mesurer sa taille face à la relation complète.

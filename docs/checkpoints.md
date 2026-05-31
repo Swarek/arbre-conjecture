@@ -832,6 +832,20 @@ Dernier commit green avant T009 : `07120e4`.
   groupes mixtes ; la signature par ordre de rôles visibles n'est donc pas une
   relation de séparateur suffisante. `candidate.py` n'a pas été modifié.
 
+- Checkpoint T095 courant : commit contenant le ladder de signatures de
+  contexte pour obligations ouvertes. Validation observée : compilation Python
+  de `partial_obligation_experiments.py` et
+  `pc_context_signature_ladder_probe.py` réussie, tests ciblés
+  `tests/test_partial_obligation_experiments.py` (`14 passed`),
+  `make bench-context-signature-ladder` (`120` lignes, `120` complètes,
+  `80` lignes avec P-nœuds ; groupes mixtes par mode :
+  `t094_visible_per_branch=2048`, `visible_global=1861`,
+  `visible_global_plus_missing_order=1793`, `full_context_order=0`) et
+  `make quick` (`352 passed`, puis `JUSTE`).
+  Le seed `cycle/mixed/n=5` reste mixte même après ajout de l'ordre des rôles
+  manquants ; il faut représenter une position d'insertion/côté extérieur, pas
+  seulement séparer visible et contexte. `candidate.py` n'a pas été modifié.
+
 ## Rollback
 
 Si une modification régresse et que la cause n’est pas claire :

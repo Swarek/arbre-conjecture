@@ -1,10 +1,12 @@
 from pc_circular.generators import instance_by_kind, single_bad_side_quartet_instance
 from pc_circular.pc_tree import leaf, p_node, pc_tree_from_kind, star_pc_tree
 from pc_circular.solvers.partial_obligation_experiments import (
+    pnode_context_signature_ladder_report,
     pnode_partial_context_dependency_report,
     pnode_partial_obligation_report,
     pnode_separator_signature_report,
 )
+from tools.pc_context_signature_ladder_probe import run_probe as run_ladder_probe
 from tools.pc_partial_context_lab_probe import run_probe as run_context_probe
 from tools.pc_partial_obligation_lab_probe import run_probe as run_obligation_probe
 from tools.pc_separator_signature_lab_probe import run_probe as run_separator_probe
@@ -205,3 +207,69 @@ def test_separator_signature_probe_summarizes_small_sweep():
     assert report["summary"]["rows"] == 4
     assert report["summary"]["rows_with_pnodes"] == 4
     assert "separator_signature_mixed_group_count" in report["summary"]
+
+
+def test_context_signature_ladder_explains_t093_minimal_witness():
+    T = p_node(
+        (
+            p_node((leaf(0), leaf(1))),
+            p_node((leaf(2), leaf(3))),
+        )
+    )
+    report = pnode_context_signature_ladder_report(
+        single_bad_side_quartet_instance(),
+        T,
+    )
+
+    assert report["modes"]["t094_visible_per_branch"]["mixed_group_count"] == 2
+    assert report["modes"]["visible_global"]["mixed_group_count"] == 1
+    assert (
+        report["modes"]["visible_global_plus_missing_order"]["mixed_group_count"]
+        == 0
+    )
+    assert report["modes"]["full_context_order"]["mixed_group_count"] == 0
+
+
+def test_context_signature_ladder_explains_mixed_cycle_t094_counter_signal():
+    report = pnode_context_signature_ladder_report(
+        instance_by_kind(4, kind="cycle"),
+        pc_tree_from_kind("mixed", 4),
+    )
+
+    assert report["modes"]["t094_visible_per_branch"]["mixed_group_count"] == 4
+    assert report["modes"]["visible_global"]["mixed_group_count"] == 2
+    assert (
+        report["modes"]["visible_global_plus_missing_order"]["mixed_group_count"]
+        == 0
+    )
+    assert report["modes"]["full_context_order"]["mixed_group_count"] == 0
+
+
+def test_context_signature_ladder_keeps_cycle5_as_stronger_counter_signal():
+    report = pnode_context_signature_ladder_report(
+        instance_by_kind(5, kind="cycle"),
+        pc_tree_from_kind("mixed", 5),
+    )
+
+    assert (
+        report["modes"]["visible_global_plus_missing_order"]["mixed_group_count"]
+        > 0
+    )
+    assert report["modes"]["full_context_order"]["mixed_group_count"] == 0
+
+
+def test_context_signature_ladder_probe_summarizes_small_sweep():
+    report = run_ladder_probe(
+        sizes=[4, 5],
+        pc_trees=["star"],
+        instance_kinds=["equal", "paired_farthest"],
+        repeats=1,
+        frontier_limit=200,
+        max_examples=2,
+        seed=20260650,
+    )
+
+    assert report["method"] == "t095_context_signature_ladder_probe"
+    assert report["summary"]["rows"] == 4
+    assert report["summary"]["rows_with_pnodes"] == 4
+    assert "visible_global_plus_missing_order" in report["summary"]["modes"]

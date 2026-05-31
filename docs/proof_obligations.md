@@ -2550,3 +2550,47 @@ Ce que T094 ne prouve pas :
 - pas de composabilité DP ;
 - pas de borne d'arité ou de taille d'interface ;
 - pas de décision `False` ou `True` intégrable dans `candidate.py`.
+
+### T095 : ladder de signatures de contexte
+
+Statut : lemme négatif expérimental dans le scaffold, pas théorème général.
+
+`pnode_context_signature_ladder_report` compare plusieurs raffinements de la
+signature T094 :
+
+- `t094_visible_per_branch` : ordre local plus rôles visibles par branche ;
+- `visible_global` : ordre global des rôles visibles entre branches ;
+- `visible_global_plus_missing_order` : ajout de l'ordre des rôles absents du
+  nœud ;
+- `full_context_order` : contrôle riche donnant l'ordre des quatre rôles, avec
+  localisation branche/extérieur.
+
+Ce que T095 couvre :
+
+- benchmark borné : `120` lignes complètes, `80` lignes avec P-nœuds ;
+- `t094_visible_per_branch` : `2048` groupes mixtes ;
+- `visible_global` : `1861` groupes mixtes ;
+- `visible_global_plus_missing_order` : `1793` groupes mixtes ;
+- `full_context_order` : `0` groupe mixte ;
+- `fully_visible_mixed_group_count=0` pour tous les modes ;
+- le témoin minimal T093 et le contre-signal `cycle/mixed/n=4` sont expliqués
+  par `visible_global_plus_missing_order` ;
+- un contre-signal plus fort `cycle/mixed/n=5` reste mixte même avec l'ordre des
+  rôles manquants.
+
+Interprétation : l'ordre des rôles absents dans le contexte n'est pas suffisant.
+Quand un seul rôle manque, son ordre relatif aux autres rôles absents est vide ;
+il faut savoir où il s'insère par rapport au bloc visible. Le contrôle
+`full_context_order` élimine les groupes mixtes parce qu'il encode pratiquement
+le type circulaire du quartet ; ce n'est pas un état DP compact.
+
+Ce que T095 ne prouve pas :
+
+- aucune compression polynomiale de l'interface ;
+- aucune borne sur la taille de relation de contexte ;
+- aucune composabilité ;
+- aucun résultat utilisable pour accepter ou rejeter dans `candidate.py`.
+
+Obligation suivante : définir une relation d'interface qui transporte les
+positions/côtés possibles des rôles extérieurs par rapport au bloc visible, puis
+tester si elle reste plus petite que la relation complète sur les frontiers.

@@ -482,6 +482,19 @@ information de séparateur utile ; si des groupes mixtes restent, ils indiquent
 qu'il faut transporter du contexte extérieur ou une relation résiduelle plus
 riche. Le rapport n'est pas un solver.
 
+Lab ladder de signatures de contexte Piste A/B :
+
+```bash
+make bench-context-signature-ladder
+```
+
+Cette commande écrit `reports/context_signature_ladder_probe.json`. Elle compare
+plusieurs signatures croissantes pour les obligations ouvertes : T094 visible
+par branche, ordre global des rôles visibles, ajout de l'ordre des rôles
+manquants, puis un contrôle `full_context_order`. Les signatures enrichies sont
+des diagnostics sur frontiers énumérées ; elles ne sont pas des états DP
+compacts.
+
 Contrôle promise-aware des permutations locales Piste F/C :
 
 ```bash

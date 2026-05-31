@@ -660,3 +660,29 @@ peut même scinder un groupe mixte grossier en plusieurs groupes mixtes plus
 fins. Les exemples restants ont des rôles absents du nœud courant ; une vraie
 relation de séparateur doit donc représenter la relation entre les rôles visibles
 et les côtés/contextes extérieurs, pas seulement l'ordre visible interne.
+
+## T095 - Ladder de contexte et insertion extérieure
+
+Statut : diagnostic implémenté, garde-fou DP.
+
+T095 ajoute `make bench-context-signature-ladder`. Le rapport compare quatre
+niveaux de signature pour une obligation ouverte :
+
+1. T094 visible par branche ;
+2. ordre global des rôles visibles ;
+3. ordre global visible plus ordre des rôles absents ;
+4. ordre complet des quatre rôles avec localisation branche/extérieur.
+
+Résultat borné :
+
+- `t094_visible_per_branch` : `2048` groupes mixtes ;
+- `visible_global` : `1861` groupes mixtes ;
+- `visible_global_plus_missing_order` : `1793` groupes mixtes ;
+- `full_context_order` : `0` groupe mixte.
+
+Lecture DP : connaître séparément l'ordre visible et l'ordre des rôles absents
+ne suffit pas. Il faut connaître où le contexte extérieur s'insère par rapport
+au bloc visible. Le mode `full_context_order` élimine les mixtes parce qu'il
+encode presque directement le type du quartet, donc il sert de borne haute
+diagnostique, pas d'état DP. La prochaine expérience doit chercher une relation
+plus abstraite de positions/côtés extérieurs possibles.

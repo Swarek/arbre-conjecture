@@ -248,6 +248,77 @@ def _branch_role_order_signature(frontier, projected_roles) -> tuple:
     )
 
 
+def _obligation_roles(same_side) -> tuple[tuple[str, int], ...]:
+    a, c, b, d = same_side
+    return (
+        ("endpoint", a),
+        ("endpoint", c),
+        ("witness", b),
+        ("witness", d),
+    )
+
+
+def _visible_global_role_order_signature(frontier, projected_roles) -> tuple:
+    branch_by_label = {label: branch for _, label, branch in projected_roles}
+    items = []
+    projected_labels = set(branch_by_label)
+    for role, label in _obligation_roles_from_projected(projected_roles):
+        if label in projected_labels:
+            items.append((frontier.index(label), role, label, branch_by_label[label]))
+    return tuple((role, label, branch) for _, role, label, branch in sorted(items))
+
+
+def _missing_role_order_signature(frontier, same_side, projected_roles) -> tuple:
+    projected_labels = {label for _, label, _ in projected_roles}
+    items = []
+    for role, label in _obligation_roles(same_side):
+        if label not in projected_labels:
+            items.append((frontier.index(label), role, label))
+    return tuple((role, label) for _, role, label in sorted(items))
+
+
+def _full_context_role_order_signature(frontier, same_side, projected_roles) -> tuple:
+    branch_by_label = {label: branch for _, label, branch in projected_roles}
+    items = []
+    for role, label in _obligation_roles(same_side):
+        if label in branch_by_label:
+            location = ("branch", branch_by_label[label])
+        else:
+            location = ("outside",)
+        items.append((frontier.index(label), role, label, location))
+    return tuple((role, label, location) for _, role, label, location in sorted(items))
+
+
+def _obligation_roles_from_projected(projected_roles) -> tuple[tuple[str, int], ...]:
+    # The projected roles preserve the original endpoint/witness labels but may
+    # omit labels outside the current P-node.
+    return tuple((role, label) for role, label, _ in projected_roles)
+
+
+def _context_ladder_signature(mode: str, frontier, local_order, obligation) -> tuple:
+    projected_roles = obligation["projected_roles"]
+    same_side = obligation["same_side"]
+    if mode == "t094_visible_per_branch":
+        return (
+            local_order,
+            _branch_role_order_signature(frontier, projected_roles),
+        )
+    if mode == "visible_global":
+        return (
+            local_order,
+            _visible_global_role_order_signature(frontier, projected_roles),
+        )
+    if mode == "visible_global_plus_missing_order":
+        return (
+            local_order,
+            _visible_global_role_order_signature(frontier, projected_roles),
+            _missing_role_order_signature(frontier, same_side, projected_roles),
+        )
+    if mode == "full_context_order":
+        return _full_context_role_order_signature(frontier, same_side, projected_roles)
+    raise ValueError(f"unknown context ladder mode: {mode}")
+
+
 def pnode_partial_obligation_report(
     D,
     T: PCNode,
@@ -1009,5 +1080,178 @@ def pnode_separator_signature_report(
             "per-branch order of visible endpoint/witness roles refines the "
             "T093 branch-order mixed groups. This is a frontier-derived "
             "diagnostic, not a compact DP state or solver."
+        ),
+    }
+
+
+CONTEXT_LADDER_MODES = (
+    "t094_visible_per_branch",
+    "visible_global",
+    "visible_global_plus_missing_order",
+    "full_context_order",
+)
+
+
+def pnode_context_signature_ladder_report(
+    D,
+    T: PCNode,
+    *,
+    frontier_limit: int = 20000,
+    max_examples: int = 5,
+    modes: tuple[str, ...] = CONTEXT_LADDER_MODES,
+) -> dict:
+    """Compare increasingly context-aware signatures for open obligations."""
+
+    tree_labels = set(labels(T))
+    if tree_labels != set(range(len(D))):
+        raise ValueError("PC-tree labels must be exactly 0..n-1")
+    if frontier_limit <= 0:
+        raise ValueError("frontier_limit must be positive")
+    if max_examples < 0:
+        raise ValueError("max_examples must be non-negative")
+    for mode in modes:
+        if mode not in CONTEXT_LADDER_MODES:
+            raise ValueError(f"unknown context ladder mode: {mode}")
+
+    raw_frontiers = enumerate_frontiers(T, canonical=True, limit=frontier_limit + 1)
+    frontier_truncated = len(raw_frontiers) > frontier_limit
+    frontiers = tuple(raw_frontiers[:frontier_limit])
+
+    node_infos = [
+        node_info
+        for node_info in iter_internal_node_child_labels(T)
+        if node_info["kind"] == "P"
+    ]
+    node_by_path = {tuple(node_info["path"]): node_info for node_info in node_infos}
+    local_order_by_path = {path: {} for path in node_by_path}
+    for path, node_info in node_by_path.items():
+        child_label_sets = node_info["child_label_sets"]
+        for frontier in frontiers:
+            local_order_by_path[path][frontier] = induced_child_circular_order(
+                frontier,
+                child_label_sets,
+            )
+
+    obligations = tuple(_iter_pnode_obligation_projections(D, T))
+    mode_stats = {
+        mode: {
+            "group_count": 0,
+            "mixed_group_count": 0,
+            "support_boundary_mixed_group_count": 0,
+            "fully_visible_mixed_group_count": 0,
+            "projection_only_mixed_group_count": 0,
+            "mixed_fine_role_pattern_histogram": {},
+            "mixed_examples": [],
+        }
+        for mode in modes
+    }
+    fine_role_pattern_histogram: dict = {}
+    obligation_projection_count = 0
+    support_boundary_obligation_count = 0
+    fully_visible_obligation_count = 0
+    projection_only_obligation_count = 0
+
+    for obligation in obligations:
+        path = obligation["path"]
+        if path not in local_order_by_path:
+            continue
+        pattern = obligation["fine_role_pattern"]
+        obligation_projection_count += 1
+        fine_role_pattern_histogram[pattern] = fine_role_pattern_histogram.get(pattern, 0) + 1
+        if obligation["is_support_node"]:
+            if pattern == "support:full_four_branch":
+                fully_visible_obligation_count += 1
+            else:
+                support_boundary_obligation_count += 1
+        else:
+            projection_only_obligation_count += 1
+
+        grouped_by_mode = {mode: {} for mode in modes}
+        for frontier in frontiers:
+            local_order = local_order_by_path[path].get(frontier)
+            if local_order is None:
+                continue
+            satisfied = same_side_constraint_satisfied(frontier, obligation["same_side"])
+            target = "satisfied" if satisfied else "violated"
+            for mode in modes:
+                signature = _context_ladder_signature(
+                    mode,
+                    frontier,
+                    local_order,
+                    obligation,
+                )
+                group = grouped_by_mode[mode].setdefault(
+                    signature,
+                    {
+                        "satisfied": 0,
+                        "violated": 0,
+                        "satisfied_example": None,
+                        "violated_example": None,
+                    },
+                )
+                group[target] += 1
+                if group[f"{target}_example"] is None:
+                    group[f"{target}_example"] = frontier
+
+        for mode, groups in grouped_by_mode.items():
+            stats = mode_stats[mode]
+            for signature, group in groups.items():
+                stats["group_count"] += 1
+                if not (group["satisfied"] and group["violated"]):
+                    continue
+                stats["mixed_group_count"] += 1
+                if obligation["is_support_node"] and pattern != "support:full_four_branch":
+                    stats["support_boundary_mixed_group_count"] += 1
+                if pattern == "support:full_four_branch":
+                    stats["fully_visible_mixed_group_count"] += 1
+                if not obligation["is_support_node"]:
+                    stats["projection_only_mixed_group_count"] += 1
+                mixed_histogram = stats["mixed_fine_role_pattern_histogram"]
+                mixed_histogram[pattern] = mixed_histogram.get(pattern, 0) + 1
+                if len(stats["mixed_examples"]) < max_examples:
+                    stats["mixed_examples"].append(
+                        {
+                            "same_side": obligation["same_side"],
+                            "path": path,
+                            "fine_role_pattern": pattern,
+                            "is_support_node": obligation["is_support_node"],
+                            "signature": signature,
+                            "satisfied_frontier": group["satisfied_example"],
+                            "violated_frontier": group["violated_example"],
+                        }
+                    )
+
+    for stats in mode_stats.values():
+        stats["mixed_fine_role_pattern_histogram"] = _sorted_histogram(
+            stats["mixed_fine_role_pattern_histogram"]
+        )
+        stats["mixed_examples"] = tuple(stats["mixed_examples"])
+
+    previous_mode = None
+    mode_deltas = {}
+    for mode in modes:
+        current = mode_stats[mode]["mixed_group_count"]
+        mode_deltas[mode] = None if previous_mode is None else previous_mode - current
+        previous_mode = current
+
+    return {
+        "method": "pnode_context_signature_ladder_report",
+        "n": len(D),
+        "frontier_limit": frontier_limit,
+        "frontiers_seen": len(frontiers),
+        "frontier_truncated": frontier_truncated,
+        "pnode_count": len(node_infos),
+        "obligation_projection_count": obligation_projection_count,
+        "support_boundary_obligation_count": support_boundary_obligation_count,
+        "fully_visible_obligation_count": fully_visible_obligation_count,
+        "projection_only_obligation_count": projection_only_obligation_count,
+        "fine_role_pattern_histogram": _sorted_histogram(fine_role_pattern_histogram),
+        "modes": mode_stats,
+        "mode_mixed_group_deltas": mode_deltas,
+        "interpretation": (
+            "T095 context-signature ladder. It compares visible-only and "
+            "context-aware signatures for open same-side obligations. These "
+            "signatures are diagnostics over enumerated frontiers, not compact "
+            "DP states or solver decisions."
         ),
     }
