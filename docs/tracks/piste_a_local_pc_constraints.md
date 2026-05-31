@@ -535,6 +535,42 @@ T088/T089/T090, la piste ne doit plus chercher seulement plus de seeds
 two-level ; il faut changer vers un contexte extérieur avec degrés de liberté
 ou vers le lab circle graph / split decomposition.
 
+## T091 - Lab interlacement/circle graph des contraintes locales
+
+Statut : diagnostic implémenté, non décisionnel.
+
+Artefacts ajoutés :
+
+- `src/pc_circular/solvers/circle_graph_experiments.py`
+- `tools/pc_circle_graph_lab_probe.py`
+- cible `make bench-circle-graph-lab`
+
+Idée testée : une obligation `same_side(a,c;b,d)` pleinement visible dans un
+nœud `P`, avec les quatre labels dans quatre branches distinctes, dit que la
+corde de branches `(a,c)` ne doit pas croiser la corde `(b,d)`. Le probe
+énumère donc les ordres circulaires de branches satisfaisant toutes ces
+contraintes de non-interlacement, puis les compare aux ordres de branches
+réellement induits par les frontiers globales cR.
+
+Résultat du benchmark T091 :
+
+- `120` lignes, toutes complètes sous les limites du benchmark ;
+- `80` lignes avec P-nœuds ;
+- `35` lignes avec au moins une contrainte locale pleinement visible ;
+- `0` ligne où un ordre de branches venant d'une frontier cR manque dans le
+  modèle local ;
+- `17` lignes localement UNSAT, toutes avec `0` frontier cR vue ;
+- `25` lignes avec superset local, mais `0` superset contraint : ces cas sont
+  vacus, sans paire de cordes locale ;
+- maximum observé : `140` paires de cordes contraintes sur un nœud.
+
+Interprétation : dans ce sweep, dès qu'une contrainte `same_side` est pleinement
+visible au P-nœud, le modèle de non-croisement de cordes est aussi fort que les
+ordres de branches cR observés localement. C'est un signal intéressant pour la
+route circle/interlacement, mais très borné : les contraintes partiellement
+visibles, les corrélations multi-niveaux et la vraie split decomposition ne
+sont pas encore traitées.
+
 ## T022 - Rapport `project_farthest_sets_to_pc_nodes`
 
 Statut : diagnostic implémenté, explicitement non décisionnel.

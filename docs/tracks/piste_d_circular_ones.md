@@ -127,6 +127,23 @@ Interprétation : le contre-exemple n'est pas seulement un artefact du scaffold
 enraciné. Il reste borné à `n=5`, mais il affaiblit fortement la route
 "PC-tree unique des ordres cR" comme stratégie générale.
 
+Complément T091 : `make bench-circle-graph-lab` lance un premier lab
+circle/interlacement. Une obligation `same_side(a,c;b,d)` pleinement visible
+sur quatre branches d'un P-nœud devient une contrainte de non-croisement entre
+les cordes de branches `(a,c)` et `(b,d)`. Le probe énumère les ordres locaux
+admissibles et les compare aux ordres de branches vus dans les frontiers cR.
+Résultat borné : `120` lignes complètes, `35` avec contraintes locales
+pleinement visibles, `0` ordre cR projeté manquant localement,
+`0` superset contraint, `17` lignes localement UNSAT et `25` supersets vacus
+sans paire locale.
+
+Interprétation : ce n'est pas encore une reconnaissance de circle graph ni une
+split decomposition, mais c'est le premier pont concret entre bad-side exact et
+graphes d'entrelacement. Le signal est meilleur que les anciennes contraintes
+`I_x(v)` : quand une obligation est pleinement visible au nœud, le modèle local
+de non-interlacement ne perd pas les ordres cR observés et ne crée pas de
+superset contraint dans ce sweep.
+
 ## Risques
 
 - Les contraintes cR peuvent ne pas être exprimables comme contraintes d’arcs
@@ -144,6 +161,8 @@ Deux suites raisonnables :
   par une structure round-order ou simultaneous PC/PQ-ordering imbriquée ;
 - transformer T079/T080 en argument structurel de non-représentabilité, ou
   chercher une structure plus riche qu'un seul PC-tree ;
+- approfondir T091 vers une vraie structure circle graph/split decomposition,
+  en ajoutant les contraintes partiellement visibles et les séparateurs ;
 - exploiter `B(a,b)` arc comme filtre positif suffisant ou obstruction locale,
   sans l'utiliser comme caractérisation, puis chercher les corrélations
   supplémentaires qui restaurent la condition exacte one-side dans un PC-tree.

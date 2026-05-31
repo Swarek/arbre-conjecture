@@ -137,6 +137,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T088 | 2026-05-31 | A/B/R004 | Relations résiduelles d'interface : sweep `P2 x P2 x P2` two-level complet jusqu'à 4 paires hautes, 54 relations binaires, aucune arité 3 trouvée | `make bench-residual-interface` |
 | T089 | 2026-05-31 | A/B/R004 | Stress `P2x4` et `P3x3` : nouveaux témoins binaires, aucun cas d'arité 3 ; prochaine attaque doit changer de famille | `make bench-residual-interface-stress` |
 | T090 | 2026-05-31 | A/B/R004 | Projection de relation résiduelle après branche cachée : `P2x4/P2x5` sparse et random multi-niveaux, aucune arité de bord `>2` trouvée | `make bench-boundary-residual-projection` |
+| T091 | 2026-05-31 | A/D/R004 | Lab circle/interlacement : obligations `same_side` locales comme non-croisement de cordes ; aucun ordre cR projeté manquant, supersets seulement vacus | `make bench-circle-graph-lab` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

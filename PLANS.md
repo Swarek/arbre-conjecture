@@ -22,6 +22,63 @@ Dans un Goal long, le plan doit aussi définir le critère d’arrêt : succès
 mesurable, réfutation, blocage théorique, ou bascule vers une autre piste. Ne pas
 laisser un Goal tourner comme une recherche ouverte sans sortie concrète.
 
+## ExecPlan 2026-05-31 - T091 lab interlacement des contraintes same_side
+
+But : explorer explicitement la route circle graph / split decomposition
+mentionnee par R004, apres trois checkpoints T088-T090 qui n'ont pas trouve
+d'arite superieure a 2 dans les interfaces sparse.
+
+Hypothese : les obligations locales pleinement visibles sur un P-noeud peuvent
+etre vues comme des contraintes de non-croisement entre cordes de branches.
+Comparer les ordres de branches autorises par ces contraintes locales aux
+ordres de branches reellement induits par les frontiers cR doit dire si le
+modele circle/interlacement local est proche d'une decision ou s'il reste trop
+faible sans contexte.
+
+Fichiers a modifier : ajouter `src/pc_circular/solvers/circle_graph_experiments.py`,
+un outil `tools/pc_circle_graph_lab_probe.py`, des tests cibles, une cible
+Makefile, puis documenter `docs/experiment_log.md`, `docs/proof_obligations.md`,
+`docs/tracks/README.md`, `docs/tracks/piste_a_local_pc_constraints.md` et
+`docs/tracks/piste_d_circular_ones.md`.
+
+Algorithme pressenti : projeter les obligations bad-side avec
+`project_bad_side_obligations_to_pc_nodes`; pour chaque P-noeud de degre borne,
+prendre les `forbidden_chord_pairs` comme paires de cordes devant etre
+non-interlacees ; enumerer tous les ordres circulaires de branches qui
+satisfont ces contraintes ; enumerer les frontiers globales sous limite et
+projeter les frontiers cR sur le meme noeud ; mesurer l'ecart local/global et
+les composantes du graphe de non-croisement force.
+
+Tests a executer : py_compile du nouveau module et outil, pytest cible,
+`make bench-circle-graph-lab`, puis `rtk make quick`.
+
+Risques : ce n'est pas une reconnaissance de circle graph complete ; les
+contraintes partiellement visibles et multi-niveaux restent ignorees ; une
+frontier limit tronquee rend les comparaisons globales incompletes.
+
+Plan de contre-exemples : si un ordre global cR projeté n'est pas dans les
+ordres locaux autorises, enregistrer la ligne comme bug/regression. Si les
+contraintes locales autorisent beaucoup plus d'ordres que les frontiers cR,
+documenter que la route circle/interlacement locale est trop faible sans
+relation de contexte.
+
+Plan subagents : non lance pour ce checkpoint ; le probe est borne et
+directement lie a R004. Les resultats decideront s'il faut approfondir vers
+split decomposition ou revenir aux contextes exterieurs variables.
+
+Resultats observes : T091 est implemente. Le benchmark `make
+bench-circle-graph-lab` donne `120` lignes completes, `80` lignes avec
+P-noeuds, `35` lignes avec contraintes locales pleinement visibles,
+`0` ordre de branche cR projete manquant localement, `17` lignes localement
+UNSAT, `25` supersets locaux tous vacus, et `0` superset contraint. Le maximum
+observe est `140` paires de cordes contraintes sur un noeud.
+
+Decision : continuer la route circle/interlacement, mais seulement en
+l'enrichissant. Le modele local pleinement visible est prometteur dans ce
+sweep ; la prochaine etape doit traiter les obligations partiellement visibles
+comme relations de separateur ou formaliser une vraie decomposition
+circle/split. Ne pas integrer dans `candidate.py`.
+
 ## ExecPlan 2026-05-31 - T090 projection de relation residuelle composee
 
 But : changer de mecanisme apres T088/T089 en testant si une relation exacte

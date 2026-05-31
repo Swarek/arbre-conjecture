@@ -66,6 +66,7 @@ make bench-pnode-context-interface
 make bench-residual-interface
 make bench-residual-interface-stress
 make bench-boundary-residual-projection
+make bench-circle-graph-lab
 make bench-permutation-like
 make bench-permutation-composition
 make bench-relation-components
@@ -234,6 +235,12 @@ interface binaire, pas une preuve.
 résiduelle exacte sur des variables de bord après avoir caché au moins une
 branche interne. C'est une attaque expérimentale de la composition de patches,
 pas une DP prouvée.
+
+`make bench-circle-graph-lab` écrit `reports/circle_graph_lab_probe.json`. Il
+traduit les obligations `same_side` pleinement visibles sur un nœud `P` en
+contraintes de non-croisement entre cordes de branches, puis compare les ordres
+locaux autorisés aux ordres de branches vus dans les frontiers cR. C'est un lab
+circle/interlacement borné, pas une split decomposition ni un solver.
 
 `make bench-permutation-like` écrit `reports/permutation_like_probe.json`. Il
 teste les profils locaux `permutation_like` observés sur `paired_farthest`

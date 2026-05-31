@@ -2399,3 +2399,39 @@ Ce que T090 ne prouve pas :
 Obligation suivante : chercher une source de complexité différente, soit par
 contexte extérieur avec degrés de liberté, soit par une traduction circle
 graph/split decomposition des contraintes `same_side`.
+
+### T091 : lab circle/interlacement des contraintes locales
+
+Statut : preuve expérimentale bornée, pas théorème.
+
+`src/pc_circular/solvers/circle_graph_experiments.py` traduit chaque obligation
+`same_side(a,c;b,d)` pleinement visible sur quatre branches distinctes d'un
+P-nœud en contrainte locale : la corde de branches `(a,c)` ne doit pas croiser
+la corde `(b,d)`. Le probe `tools/pc_circle_graph_lab_probe.py` énumère les
+ordres de branches satisfaisant ces contraintes de non-interlacement et les
+compare aux ordres de branches induits par les frontiers cR énumérées.
+
+Ce que T091 couvre :
+
+- `120` lignes bornées, toutes complètes sous `frontier_limit=20000` ;
+- `80` lignes avec P-nœuds ;
+- `35` lignes avec au moins une paire de cordes locale ;
+- `0` ligne où un ordre de branche venant d'une frontier cR est absent du
+  modèle local ;
+- `17` lignes localement UNSAT, toutes avec `0` frontier cR vue ;
+- `25` lignes avec superset local, mais `0` superset contraint : les supersets
+  sont vacus, sans obligation locale pleinement visible ;
+- maximum observé : `140` paires de cordes contraintes sur un nœud.
+
+Ce que T091 ne prouve pas :
+
+- les contraintes partiellement visibles et multi-niveaux ne sont pas encore
+  intégrées au modèle local ;
+- ce n'est pas une reconnaissance de circle graph ni une split decomposition ;
+- l'énumération des frontiers reste bornée par `frontier_limit` ;
+- le résultat ne prouve pas que les contraintes locales suffisent en général ;
+- aucun résultat ne justifie une intégration dans `candidate.py`.
+
+Obligation suivante : essayer d'ajouter les obligations partiellement visibles
+comme contraintes de séparateur, ou bien formaliser le graphe de cordes obtenu
+pour attaquer une vraie décomposition de type split/circle.

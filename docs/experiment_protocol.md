@@ -430,6 +430,20 @@ nécessaires pour reconstruire la relation de bord. Le rapport teste des sweeps
 `P2x4`/`P2x5` sparse two-level et un contrôle random multi-niveaux. Une absence
 d'arité `>2` reste une preuve expérimentale bornée seulement.
 
+Lab circle/interlacement Piste A/D :
+
+```bash
+make bench-circle-graph-lab
+```
+
+Cette commande écrit `reports/circle_graph_lab_probe.json`. Elle transforme les
+obligations `same_side(a,c;b,d)` pleinement visibles sur un nœud `P` en paires
+de cordes de branches qui ne doivent pas se croiser, énumère les ordres locaux
+admissibles, puis les compare aux ordres de branches induits par les frontiers
+cR énumérées sous limite. Une inclusion locale cassée signale un bug ou une
+mauvaise projection ; un grand superset local signale que le modèle
+circle/interlacement local doit transporter davantage de contexte.
+
 Contrôle promise-aware des permutations locales Piste F/C :
 
 ```bash

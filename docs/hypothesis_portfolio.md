@@ -98,6 +98,14 @@ random multi-niveaux `P2x4`. Cela renforce expérimentalement l'intérêt d'une
 interface binaire, sans preuve. La piste A doit maintenant changer de mécanisme
 plutôt que continuer à augmenter les seeds two-level.
 
+Mise à jour T091 : le premier lab circle/interlacement transforme les
+obligations `same_side` pleinement visibles sur un `P` en contraintes de
+non-croisement de cordes. Sur `120` lignes bornées, `35` ont des contraintes
+locales, `0` ordre de branche cR projeté manque localement, et `0` superset
+contraint est observé ; les `25` supersets locaux sont vacus, sans paire de
+cordes locale. Signal positif pour cette abstraction locale, mais pas une split
+decomposition ni une preuve.
+
 ## Piste B : programmation dynamique sur le PC-tree
 
 Intuition : un état de frontière pourrait résumer les contraintes externes d’un
@@ -208,6 +216,13 @@ non enraciné explicite à `5` feuilles : `893` candidats topologie/type/ordre C
 La route "les ordres cR forment toujours un PC-tree" devient nettement moins
 plausible ; la prochaine étape doit chercher soit un argument général de
 non-représentabilité, soit une structure plus riche qu'un seul PC-tree.
+
+Mise à jour T091 : les obligations locales `same_side` sur un nœud `P` sont
+maintenant testées comme contraintes de non-interlacement de cordes de branches.
+Le probe ne fait pas de reconnaissance de circle graph complète, mais fournit
+un premier pont concret vers la route split/circle : sur les lignes bornées,
+les contraintes pleinement visibles ne produisent pas de superset contraint par
+rapport aux ordres de branches cR observés.
 
 ## Piste E : obstructions interdites par quartets farthest-neighbor
 

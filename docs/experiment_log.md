@@ -4411,3 +4411,47 @@
 - Next action : ne plus continuer par simple augmentation de seeds two-level ;
   basculer vers contexte extérieur avec degrés de liberté ou vers le lab
   circle graph/split decomposition des contraintes `same_side`.
+
+## 2026-05-31 lab circle/interlacement des contraintes same_side
+
+- Date/heure : 2026-05-31 16:35 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : une obligation bad-side `same_side(a,c;b,d)` pleinement
+  visible dans un P-nœud peut être vue comme une contrainte de non-croisement
+  entre deux cordes de branches. Si ce modèle local est proche des frontiers cR,
+  il peut alimenter une route circle graph / split decomposition.
+- Changement fait : ajout de
+  `src/pc_circular/solvers/circle_graph_experiments.py`,
+  `tools/pc_circle_graph_lab_probe.py`,
+  `tests/test_circle_graph_experiments.py`, de la cible
+  `make bench-circle-graph-lab`, et de la documentation T091.
+  `candidate.py` n'a pas été modifié.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `rtk make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `334 passed`, puis `JUSTE`.
+- Commande exécutée :
+  `rtk .venv/bin/python -m py_compile src/pc_circular/solvers/circle_graph_experiments.py tools/pc_circle_graph_lab_probe.py`.
+- Résultat compilation : succès.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_circle_graph_experiments.py`.
+- Résultat correction ciblée : `4 passed`.
+- Commande exécutée : `rtk make bench-circle-graph-lab`.
+- Résultat benchmark T091 :
+  `reports/circle_graph_lab_probe.json` écrit ; `120` lignes,
+  `120` complètes, `80` lignes avec P-nœuds, `35` lignes avec contraintes
+  locales pleinement visibles, `0` ligne où un ordre de branche d'une frontier
+  cR manque dans le modèle local, `17` lignes localement UNSAT,
+  `25` lignes avec superset local mais toutes vacues (`0` superset contraint),
+  `max_forbidden_chord_pair_count=140`.
+- Commande exécutée : `rtk make quick`.
+- Résultat correction finale : `338 passed`, puis `JUSTE`.
+- Conclusion provisoire : le modèle local de non-interlacement des cordes est
+  nettement plus informatif que les anciennes projections `I_x(v)` quand les
+  obligations sont pleinement visibles. Ce n'est toutefois ni une split
+  decomposition, ni un traitement des obligations partielles/multi-niveaux, ni
+  un solver.
+- Next action : enrichir T091 avec contraintes partiellement visibles comme
+  relation de séparateur, ou formaliser le graphe de cordes pour une vraie
+  décomposition circle/split.

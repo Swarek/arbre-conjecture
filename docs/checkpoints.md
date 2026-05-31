@@ -781,6 +781,19 @@ Dernier commit green avant T009 : `07120e4`.
   `0` cas au-delà du binaire) et `make quick` (`334 passed`, puis `JUSTE`).
   `candidate.py` n'a pas été modifié.
 
+- Checkpoint T091 courant : commit contenant le lab circle/interlacement des
+  contraintes `same_side` pleinement visibles sur P-nœuds. Validation observée :
+  compilation Python de `circle_graph_experiments.py` et
+  `pc_circle_graph_lab_probe.py` réussie, tests ciblés
+  `tests/test_circle_graph_experiments.py` (`4 passed`),
+  `make bench-circle-graph-lab` (`120` lignes, `120` complètes,
+  `80` lignes avec P-nœuds, `35` lignes avec contraintes locales,
+  `0` ordre cR projeté manquant localement, `17` lignes localement UNSAT,
+  `25` supersets locaux tous vacus, `0` superset contraint,
+  `max_forbidden_chord_pair_count=140`) et `make quick` (`338 passed`, puis
+  `JUSTE`).
+  `candidate.py` n'a pas été modifié.
+
 ## Rollback
 
 Si une modification régresse et que la cause n’est pas claire :
