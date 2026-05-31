@@ -77,6 +77,7 @@ make bench-context-gap-arity
 make bench-context-gap-multi-arity
 make bench-context-gap-high-arity
 make bench-context-gap-random-arity
+make bench-context-gap-binary-components
 make bench-permutation-like
 make bench-permutation-composition
 make bench-relation-components
@@ -275,6 +276,12 @@ une preuve de DP binaire.
 des tuples de projections ouvertes en tailles `4` et `5` pour chercher une
 fausse closure binaire que le préfixe déterministe capé de T099/T100 aurait pu
 manquer. C'est un chasseur de contre-exemples borné, pas une preuve.
+
+`make bench-context-gap-binary-components` écrit
+`reports/context_gap_binary_component_probe.json`. Il traite les compatibilités
+binaires de gaps comme un CSP local sur des ensembles plus grands de projections
+ouvertes et cherche si cette propagation binaire admet des tuples jamais vus
+dans les frontiers. C'est un prototype de diagnostic DP, pas un solver.
 
 `make bench-permutation-like` écrit `reports/permutation_like_probe.json`. Il
 teste les profils locaux `permutation_like` observés sur `paired_farthest`

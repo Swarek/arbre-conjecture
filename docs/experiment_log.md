@@ -4971,3 +4971,51 @@
 - Résultat correction finale : `364 passed`, puis `JUSTE`.
 - Next action : prototype de propagation binaire de gaps, ou générateur
   construit pour imposer une obstruction d'arité `>=3`.
+
+## 2026-05-31 prototype de propagation binaire des gaps
+
+- Date/heure : 2026-05-31 15:55 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les relations de gaps sur des ensembles plus grands de
+  projections ouvertes pourraient être exactement les solutions d'un CSP local
+  défini par les projections binaires.
+- Changement fait : ajout de
+  `tools/pc_context_gap_binary_component_probe.py`, cible
+  `make bench-context-gap-binary-components`, extension des tests
+  `tests/test_partial_obligation_experiments.py`, et documentation T102.
+  `candidate.py` n'a pas été modifié.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `rtk make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `364 passed`, puis `JUSTE`.
+- Commande exécutée :
+  `rtk .venv/bin/python -m py_compile tools/pc_context_gap_binary_component_probe.py`.
+- Résultat compilation : succès.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_partial_obligation_experiments.py`.
+- Résultat correction ciblée : `27 passed`.
+- Commande exécutée : `rtk make bench-context-gap-binary-components`.
+- Résultat benchmark T102 :
+  `reports/context_gap_binary_component_probe.json` écrit ; `21765` ensembles
+  de projections échantillonnés, `88103` cas visibles,
+  `open_obligation_projection_count=1618`.
+- Résultat clé :
+  `product_false_case_count=87533`,
+  `binary_sufficient_case_count=87533`,
+  `higher_order_case_count=0`,
+  `product_capped_case_count=0`,
+  `frontier_truncated_rows=0`,
+  `visible_cases_with_restrictive_edges=87533`,
+  `restrictive_edge_count_total=897564`,
+  `max_product_size=16384`,
+  `max_closure_size=8`,
+  `max_actual_relation_size=8`.
+- Conclusion provisoire : le signal d'interface binaire survit à un prototype
+  de propagation locale plus structurel que T101, mais cela reste une
+  non-réfutation expérimentale. Il manque une preuve de composition, une borne
+  de taille et un contrôle sous le promise `T=T(D)`.
+- Commande exécutée : `rtk make quick`.
+- Résultat correction finale : `365 passed`, puis `JUSTE`.
+- Next action : transformer ce CSP binaire de gaps en prototype de séparateur
+  composable ou construire une famille adversariale `binary-closure false`.

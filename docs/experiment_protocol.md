@@ -574,6 +574,19 @@ un cas où la relation réelle de gaps n'est pas reconstruite par les projection
 binaires. Un témoin `higher_order_case_count > 0` doit devenir un
 contre-exemple durable ; un compteur nul reste une non-réfutation aléatoire.
 
+Prototype de propagation binaire de gaps Piste A/B :
+
+```bash
+make bench-context-gap-binary-components
+```
+
+Cette commande écrit `reports/context_gap_binary_component_probe.json`. Elle
+sélectionne des ensembles plus grands de projections ouvertes, fixe les états
+visibles joints observés dans les frontiers, puis compare la relation réelle
+des gaps à la solution du CSP défini par toutes ses projections binaires. Un
+`higher_order_case_count` positif réfute ce prototype binaire ; un compteur nul
+reste une non-réfutation bornée.
+
 Contrôle promise-aware des permutations locales Piste F/C :
 
 ```bash

@@ -846,3 +846,32 @@ Mais le résultat reste très loin d'une preuve : aucune borne de taille, aucune
 composition prouvée, aucune garantie promise-aware. La suite doit arrêter les
 simples sweeps d'arité et passer à un modèle constructif ou à une famille
 adversariale explicitement conçue.
+
+## T102 - Propagation binaire locale de gaps
+
+Statut : prototype de diagnostic DP, preuve expérimentale bornée.
+
+T102 ajoute `make bench-context-gap-binary-components`. Le probe choisit des
+ensembles de `6` et `8` projections ouvertes, fixe les états visibles joints
+observés dans les frontiers, puis compare la relation réelle de gaps à la
+closure produite par toutes les contraintes binaires entre projections.
+
+Résultat borné :
+
+- `21765` ensembles de projections échantillonnés ;
+- `88103` cas visibles ;
+- `product_false_case_count=87533` ;
+- `binary_sufficient_case_count=87533` ;
+- `higher_order_case_count=0` ;
+- `product_capped_case_count=0` ;
+- `frontier_truncated_rows=0` ;
+- `visible_cases_with_restrictive_edges=87533` ;
+- `max_product_size=16384`, `max_closure_size=8`,
+  `max_actual_relation_size=8`.
+
+Lecture DP : ce résultat est le signal le plus fort jusqu'ici pour une
+interface de gaps binaire dans les scaffolds testés : les cas non triviaux ont
+de nombreuses arêtes restrictives, mais aucun tuple admis par la closure
+binaire et absent des frontiers n'est observé. La limite reste majeure : T102 ne
+compose pas encore des sous-arbres, ne prouve pas de borne de taille, et ne
+travaille pas sous le promise Hsu/McConnell `T=T(D)`.

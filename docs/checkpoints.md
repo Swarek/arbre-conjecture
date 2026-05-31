@@ -922,6 +922,19 @@ Dernier commit green avant T009 : `07120e4`.
   L'absence de higher-order reste une non-réfutation randomisée, pas une
   preuve. `candidate.py` n'a pas été modifié.
 
+- Checkpoint T102 courant : commit contenant le prototype de propagation
+  binaire des relations de gaps. Validation observée : compilation Python de
+  `pc_context_gap_binary_component_probe.py` réussie, tests ciblés
+  `tests/test_partial_obligation_experiments.py` (`27 passed`),
+  `make bench-context-gap-binary-components` (`21765` ensembles de projections,
+  `88103` cas visibles, `product_false_case_count=87533`,
+  `binary_sufficient_case_count=87533`, `higher_order_case_count=0`,
+  `product_capped_case_count=0`, `frontier_truncated_rows=0`,
+  `max_product_size=16384`, `max_actual_relation_size=8`) et `make quick`
+  (`365 passed`, puis `JUSTE`). Le résultat renforce
+  l'hypothèse de compatibilités binaires de gaps, mais reste une
+  non-réfutation bornée. `candidate.py` n'a pas été modifié.
+
 ## Rollback
 
 Si une modification régresse et que la cause n’est pas claire :

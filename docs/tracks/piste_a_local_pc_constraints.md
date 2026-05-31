@@ -951,6 +951,43 @@ augmenter des samples aléatoires a un rendement faible ; la prochaine piste
 doit soit produire une famille adversariale ciblée `binary-closure false`, soit
 implémenter un prototype de propagation binaire à casser.
 
+## T102 - Prototype de propagation binaire des gaps
+
+Statut : prototype de diagnostic DP, preuve expérimentale bornée.
+
+Artefacts ajoutés :
+
+- `tools/pc_context_gap_binary_component_probe.py`
+- cible `make bench-context-gap-binary-components`
+
+Idée testée : au lieu de vérifier seulement des tuples fixes de projections, on
+choisit des ensembles plus grands de projections ouvertes (`k=6,8`). Pour chaque
+état visible joint observé dans les frontiers, le probe compare la relation
+réelle des patterns de gaps avec les solutions du CSP défini par toutes les
+projections binaires.
+
+Résultat du benchmark T102 :
+
+- `21765` ensembles de projections échantillonnés ;
+- `88103` cas visibles ;
+- `87533` cas où le produit unaire est trop large mais la closure binaire est
+  exacte ;
+- `0` cas d'arité `>=3` ;
+- `0` frontier tronquée et `0` cas capé par `max_product_size` ;
+- `open_obligation_projection_count=1618` ;
+- `visible_cases_with_restrictive_edges=87533` ;
+- `restrictive_edge_count_total=897564` ;
+- `max_product_size=16384`, `max_closure_size=8`,
+  `max_actual_relation_size=8`.
+
+Interprétation : contrairement à un simple sweep de tuples, T102 vérifie des
+composants locaux plus larges et confirme que les compatibilités binaires
+suffisent sur les cas non triviaux observés. Ce n'est toujours pas une preuve :
+les ensembles sont échantillonnés, les frontiers restent ceux du scaffold borné,
+et aucune composition de DP complète n'est validée. Le prochain test utile doit
+soit construire une famille `binary-closure false`, soit transformer ce CSP
+binaire local en prototype de séparateur composable et essayer de le casser.
+
 ## T022 - Rapport `project_farthest_sets_to_pc_nodes`
 
 Statut : diagnostic implémenté, explicitement non décisionnel.

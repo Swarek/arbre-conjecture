@@ -2825,3 +2825,44 @@ Ce que T101 ne prouve pas :
 Obligation suivante : soit construire un générateur ciblé qui impose
 explicitement une obstruction d'arité `>=3`, soit formaliser et tester un
 prototype de propagation binaire de gaps.
+
+### T102 : prototype de propagation binaire des gaps
+
+Statut : preuve expérimentale bornée, pas théorème général.
+
+`pc_context_gap_binary_component_probe.py` passe d'un test de tuples fixes à un
+test de composants locaux : choisir un ensemble de projections ouvertes,
+regrouper les frontiers par état visible joint, puis comparer la relation réelle
+des gaps avec la closure des contraintes binaires entre toutes les projections.
+
+Ce que T102 couvre :
+
+- tailles d'ensembles `6` et `8` ;
+- PC-trees `balanced` et `mixed` ;
+- familles `cycle`, `paired_farthest`, `random`, `random4`,
+  `padded_five_local_non_cr` ;
+- `21765` ensembles de projections échantillonnés ;
+- `88103` cas visibles ;
+- `87533` cas avec arêtes binaires restrictives ;
+- `product_false_case_count=87533` ;
+- `binary_sufficient_case_count=87533` ;
+- `higher_order_case_count=0` ;
+- `product_capped_case_count=0`, `frontier_truncated_rows=0` ;
+- `max_product_size=16384`, `max_closure_size=8`,
+  `max_actual_relation_size=8`.
+
+Interprétation : T102 ne trouve pas de collision de propagation binaire. Les
+cas non triviaux ne sont pas vacus : ils contiennent `897564` arêtes binaires
+restrictives agrégées, donc le résultat teste réellement des compatibilités.
+
+Ce que T102 ne prouve pas :
+
+- pas d'exhaustivité sur les ensembles de projections ;
+- pas de preuve que les relations de séparateur restent petites ;
+- pas de preuve que la closure binaire se compose sur des patches PC-tree ;
+- pas de résultat sous le promise `T=T(D)` ;
+- pas de décision intégrable dans `candidate.py`.
+
+Obligation suivante : construire une famille qui force une fausse closure
+binaire, ou formaliser un vrai prototype de DP qui transporte ces relations
+binaires de gaps et vérifier qu'il reproduit l'oracle sur petits PC-trees.

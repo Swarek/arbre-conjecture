@@ -184,6 +184,15 @@ le produit unaire monte à `1024`. C'est une non-réfutation randomisée de la
 closure binaire, pas une preuve ; la piste doit maintenant soit construire une
 famille ciblée, soit prototyper la propagation binaire.
 
+Mise à jour T102 : `make bench-context-gap-binary-components` traite les
+compatibilités de gaps comme un CSP binaire local sur des ensembles plus grands
+de projections ouvertes (`k=6,8`). Sur `88103` cas visibles et `21765` ensembles
+échantillonnés, `87533` cas ont un produit unaire trop large mais une closure
+binaire exacte, `0` cas demandent une arité `>=3`, sans frontier tronquée ni
+cap de produit. Le signal binaire devient plus structurel, mais reste une
+non-réfutation bornée : aucune preuve de composition DP, aucune borne de taille
+et aucun résultat promise-aware.
+
 ## Piste B : programmation dynamique sur le PC-tree
 
 Intuition : un état de frontière pourrait résumer les contraintes externes d’un

@@ -6438,3 +6438,56 @@ rien. Après T098-T101, l'augmentation simple de largeur/samples a un rendement
 décroissant. La prochaine étape doit changer de forme : prototype de
 propagation binaire de gaps ou générateur construit pour rendre la closure
 binaire fausse.
+
+## ExecPlan T102 - prototype de propagation binaire des gaps
+
+But : passer de la question "un tuple fixe est-il 2-décomposable ?" à une
+question plus proche d'une DP : si l'on choisit un ensemble plus grand de
+projections ouvertes, est-ce que les relations binaires entre projections
+décrivent exactement les tuples de gaps réellement observés pour chaque état
+visible joint ?
+
+Hypothèse testée : les relations de gaps observées sur des ensembles de
+projections ouvertes sont les solutions d'un CSP binaire local, au moins dans
+les scaffolds bornés du dépôt. Un cas où la closure binaire contient un tuple
+de gaps absent serait une collision de propagation binaire.
+
+Fichiers visés : `tools/pc_context_gap_binary_component_probe.py`,
+`tests/test_partial_obligation_experiments.py`, `Makefile`, `README.md`,
+`docs/experiment_protocol.md`, `docs/hypothesis_portfolio.md`,
+`docs/proof_obligations.md`, `docs/tracks/piste_a_local_pc_constraints.md`,
+`docs/tracks/piste_b_dp_pc_tree.md`, `docs/tracks/README.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md` et `PLANS.md`.
+
+Algorithme : pour chaque instance, collecter les projections ouvertes
+`same_side`, échantillonner des ensembles de `k` projections (`k=6,8` par
+défaut), fixer l'état visible joint vu dans les frontiers, puis comparer la
+relation réelle des tuples de gaps avec la closure définie par toutes les
+projections binaires. Reporter aussi combien d'arêtes binaires sont réellement
+restrictives, pour éviter un diagnostic vide.
+
+Critères de succès : produire `reports/context_gap_binary_component_probe.json`
+avec nombres de sets échantillonnés, cas visibles, cas où le produit unaire est
+trop large, cas où la closure binaire est exacte, et exemples de collisions si
+elles existent. `candidate.py` ne doit pas changer.
+
+Risques : les états visibles joints deviennent rares quand `k` augmente, et le
+test peut devenir vacu si chaque état visible n'a qu'un seul tuple de gaps. Il
+faut donc reporter les cas non triviaux et les arêtes restrictives, pas
+seulement `higher_order_case_count=0`.
+
+Résultats observés : compilation Python réussie pour
+`tools/pc_context_gap_binary_component_probe.py`. Tests ciblés
+`tests/test_partial_obligation_experiments.py` : `27 passed`.
+`make bench-context-gap-binary-components` écrit
+`reports/context_gap_binary_component_probe.json` avec `21765` ensembles de
+projections échantillonnés, `88103` cas visibles, `87533` cas où le produit
+unaire est trop large mais la closure binaire est exacte,
+`higher_order_case_count=0`, `product_capped_case_count=0`,
+`frontier_truncated_rows=0`, `max_product_size=16384`,
+`max_closure_size=8` et `max_actual_relation_size=8`.
+
+Décision : T102 est une non-réfutation plus structurelle de l'hypothèse
+interface binaire de gaps, pas une preuve. La suite doit éviter d'empiler
+seulement plus de samples et passer à un vrai prototype de séparateur composable
+ou à une famille adversariale conçue pour produire une fausse closure binaire.

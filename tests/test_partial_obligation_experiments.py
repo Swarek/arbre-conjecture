@@ -25,6 +25,9 @@ from tools.pc_context_gap_high_arity_probe import (
 from tools.pc_context_gap_random_arity_probe import (
     run_probe as run_gap_random_arity_probe,
 )
+from tools.pc_context_gap_binary_component_probe import (
+    run_probe as run_gap_binary_component_probe,
+)
 from tools.pc_context_gap_relation_probe import run_probe as run_gap_probe
 from tools.pc_context_signature_ladder_probe import run_probe as run_ladder_probe
 from tools.pc_partial_context_lab_probe import run_probe as run_context_probe
@@ -515,3 +518,29 @@ def test_context_gap_random_arity_probe_samples_width4_cycle5():
     assert report["summary"]["binary_sufficient_case_count"] > 0
     assert report["summary"]["higher_order_case_count"] == 0
     assert report["by_tuple_size"]["4"]["sampled_tuple_count"] > 0
+
+
+def test_context_gap_binary_component_probe_propagates_cycle5():
+    report = run_gap_binary_component_probe(
+        set_sizes=[6],
+        sizes=[5],
+        pc_trees=["mixed"],
+        instance_kinds=["cycle"],
+        repeats=1,
+        frontier_limit=200,
+        min_distinct_obligations=2,
+        scope="all_open",
+        sample_count=100,
+        max_attempt_multiplier=10,
+        max_product_size=20000,
+        max_examples=2,
+        seed=20260720,
+    )
+
+    assert report["method"] == "t102_context_gap_binary_component_probe"
+    assert report["summary"]["sampled_set_count"] > 0
+    assert report["summary"]["visible_case_count"] > 0
+    assert report["summary"]["visible_cases_with_restrictive_edges"] > 0
+    assert report["summary"]["binary_sufficient_case_count"] > 0
+    assert report["summary"]["higher_order_case_count"] == 0
+    assert report["by_set_size"]["6"]["sampled_set_count"] > 0

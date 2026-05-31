@@ -148,6 +148,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T099 | 2026-05-31 | A/B/R004 | Arité multi-obligations des gaps : plusieurs contraintes `same_side` mélangées, aucune arité `>=3` trouvée sous cap, signal binaire non prouvé | `make bench-context-gap-multi-arity` |
 | T100 | 2026-05-31 | A/B/R004 | Largeur 4 multi-obligations : tuple sizes `3/4`, produit unaire trop large, closure binaire exacte sur le sweep borné, caps encore visibles | `make bench-context-gap-high-arity` |
 | T101 | 2026-05-31 | A/B/R004 | Échantillonnage randomisé tuple sizes `4/5` : `32730` tuples, aucune fausse closure binaire trouvée, non-réfutation seulement | `make bench-context-gap-random-arity` |
+| T102 | 2026-05-31 | A/B/R004 | Prototype de propagation binaire : ensembles `6/8`, `87533` cas binaires, aucune fausse closure binaire trouvée, non-réfutation seulement | `make bench-context-gap-binary-components` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les
