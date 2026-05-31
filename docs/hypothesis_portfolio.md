@@ -193,6 +193,16 @@ cap de produit. Le signal binaire devient plus structurel, mais reste une
 non-réfutation bornée : aucune preuve de composition DP, aucune borne de taille
 et aucun résultat promise-aware.
 
+Mise à jour T103 : `make bench-context-gap-join-decomposition` teste la
+composition de deux sous-relations exactes de gaps par jointure sur un overlap.
+Sur `90833` cas visibles, `10271` fausses jointures apparaissent : l'overlap
+seul ne suffit donc pas comme séparateur dans ces décompositions. En revanche,
+ces `10271` cas sont tous réparés par les contraintes binaires transverses
+(`cross_edge_unrepaired_case_count=0`, `binary_higher_order_case_count=0`).
+Conclusion : T103 fournit un lemme négatif expérimental contre une DP à petits
+overlaps naïfs, tout en renforçant le signal "les incompatibilités observées
+sont encore binaires".
+
 ## Piste B : programmation dynamique sur le PC-tree
 
 Intuition : un état de frontière pourrait résumer les contraintes externes d’un

@@ -988,6 +988,43 @@ et aucune composition de DP complète n'est validée. Le prochain test utile doi
 soit construire une famille `binary-closure false`, soit transformer ce CSP
 binaire local en prototype de séparateur composable et essayer de le casser.
 
+## T103 - Jointure de séparateurs de gaps
+
+Statut : lemme négatif expérimental contre les overlaps naïfs, pas théorème.
+
+Artefacts ajoutés :
+
+- `tools/pc_context_gap_join_decomposition_probe.py`
+- cible `make bench-context-gap-join-decomposition`
+
+Idée testée : T102 utilise toutes les projections binaires d'un ensemble de
+projections ouvertes. T103 pose une question plus proche d'une DP : si l'on
+coupe cet ensemble en deux composants `left/right` avec overlap, la jointure
+naturelle des deux relations exactes projetées recrée-t-elle la relation
+globale ?
+
+Résultat du benchmark T103 :
+
+- `56` lignes, `28` complètes, `0` frontier tronquée ;
+- `22400` décompositions échantillonnées ;
+- `90833` cas visibles ;
+- `89429` cas avec composants non triviaux ;
+- `80562` jointures exactes ;
+- `10271` fausses jointures, pour `25104` tuples de gaps faux ;
+- les deux specs testées produisent des fausses jointures :
+  `4:4:2` en donne `4439`, `5:5:2` en donne `5832` ;
+- toutes les fausses jointures sont réparées par les arêtes binaires transverses
+  (`cross_edge_repaired_case_count=10271`,
+  `cross_edge_unrepaired_case_count=0`) ;
+- `binary_higher_order_case_count=0` ;
+- `max_join_size=32`, `max_false_join_count=24`.
+
+Interprétation : un petit overlap ne suffit pas à composer les relations de
+gaps, même quand chaque composant projeté est exact. En revanche, les erreurs
+observées restent expliquées par des contraintes binaires entre variables des
+deux côtés. T103 ne réfute donc pas T102 ; il précise qu'une DP doit transporter
+les bonnes arêtes transverses ou choisir des séparateurs plus riches.
+
 ## T022 - Rapport `project_farthest_sets_to_pc_nodes`
 
 Statut : diagnostic implémenté, explicitement non décisionnel.

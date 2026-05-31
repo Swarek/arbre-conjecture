@@ -935,6 +935,19 @@ Dernier commit green avant T009 : `07120e4`.
   l'hypothèse de compatibilités binaires de gaps, mais reste une
   non-réfutation bornée. `candidate.py` n'a pas été modifié.
 
+- Checkpoint T103 courant : commit contenant le probe de jointure de
+  séparateurs de gaps. Validation observée : compilation Python de
+  `pc_context_gap_join_decomposition_probe.py` réussie, tests ciblés
+  `tests/test_partial_obligation_experiments.py` (`28 passed`),
+  `make bench-context-gap-join-decomposition` (`22400` décompositions,
+  `90833` cas visibles, `false_join_case_count=10271`,
+  `cross_edge_repaired_case_count=10271`,
+  `cross_edge_unrepaired_case_count=0`, `binary_higher_order_case_count=0`,
+  `join_capped_case_count=0`, `frontier_truncated_rows=0`) et `make quick`
+  (`366 passed`, puis `JUSTE`). T103 réfute les
+  overlaps naïfs comme séparateurs suffisants dans le sweep, mais pas la closure
+  binaire globale. `candidate.py` n'a pas été modifié.
+
 ## Rollback
 
 Si une modification régresse et que la cause n’est pas claire :

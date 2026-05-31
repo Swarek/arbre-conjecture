@@ -6491,3 +6491,63 @@ Décision : T102 est une non-réfutation plus structurelle de l'hypothèse
 interface binaire de gaps, pas une preuve. La suite doit éviter d'empiler
 seulement plus de samples et passer à un vrai prototype de séparateur composable
 ou à une famille adversariale conçue pour produire une fausse closure binaire.
+
+## ExecPlan T103 - jointure de séparateurs pour relations de gaps
+
+But : tester une propriété plus proche d'une DP que T102. Même si une relation
+globale de gaps est reconstruite par toutes ses projections binaires, une
+composition de deux patches ne voit généralement que les relations de chaque
+patch et leur recouvrement. T103 mesure si la jointure naturelle de deux
+sous-relations de gaps avec overlap recrée exactement la relation globale, ou
+si elle introduit des tuples de gaps jamais observés par aucune frontier.
+
+Hypothèse testée : les composants locaux de gaps pourraient se composer par
+jointure sur un petit séparateur. Un `false_join_case_count > 0` indique que le
+séparateur choisi ne suffit pas : il manque des contraintes transverses entre
+les deux côtés, même si les deux sous-relations sont exactes individuellement.
+
+Fichiers visés : `tools/pc_context_gap_join_decomposition_probe.py`,
+`tests/test_partial_obligation_experiments.py`, `Makefile`, `README.md`,
+`docs/experiment_protocol.md`, `docs/hypothesis_portfolio.md`,
+`docs/proof_obligations.md`, `docs/tracks/piste_a_local_pc_constraints.md`,
+`docs/tracks/piste_b_dp_pc_tree.md`, `docs/tracks/README.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md` et `PLANS.md`.
+
+Algorithme : échantillonner des décompositions `(left, right, overlap)` de
+projections ouvertes `same_side`, par défaut `(4,4,2)` et `(5,5,2)`. Pour
+chaque état visible joint observé, calculer la relation globale réelle des
+patterns de gaps, ses projections exactes sur `left` et `right`, puis la
+jointure naturelle sur l'overlap. Reporter les faux tuples de jointure, les cas
+capés, les tailles de relations, et les contraintes binaires transverses
+restrictives entre `left-only` et `right-only`.
+
+Critères de succès : produire
+`reports/context_gap_join_decomposition_probe.json`, avec des exemples lisibles
+de fausse jointure si elle existe. Une fausse jointure n'est pas un échec du
+modèle binaire T102 ; elle précise seulement qu'une DP doit conserver les
+contraintes transverses ou choisir des séparateurs plus riches. `candidate.py`
+ne doit pas changer.
+
+Risques : beaucoup de fausses jointures peuvent être un résultat attendu et non
+une découverte profonde si l'overlap est trop petit. Le rapport doit donc
+distinguer les cas non triviaux, les relations de composant de taille `>1`, et
+la présence d'arêtes binaires transverses restrictives.
+
+Résultats observés : compilation Python réussie pour
+`tools/pc_context_gap_join_decomposition_probe.py`. Tests ciblés
+`tests/test_partial_obligation_experiments.py` : `28 passed`.
+`make bench-context-gap-join-decomposition` écrit
+`reports/context_gap_join_decomposition_probe.json` avec `22400`
+décompositions échantillonnées, `90833` cas visibles,
+`nontrivial_component_case_count=89429`, `exact_join_case_count=80562`,
+`false_join_case_count=10271`, `false_join_tuple_count=25104`,
+`cross_edge_repaired_case_count=10271`,
+`cross_edge_unrepaired_case_count=0`, `binary_higher_order_case_count=0`,
+`join_capped_case_count=0` et `frontier_truncated_rows=0`.
+
+Décision : T103 devient un garde-fou DP important. Il montre qu'un recollage de
+relations exactes par petit overlap perd des corrélations, donc une future DP
+doit transporter des contraintes transverses ou un séparateur plus riche. Comme
+toutes les fausses jointures sont réparées par des arêtes binaires, le prochain
+contre-test doit viser une vraie famille `binary-closure false` plutôt que des
+overlaps plus grands au hasard.

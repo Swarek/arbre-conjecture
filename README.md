@@ -78,6 +78,7 @@ make bench-context-gap-multi-arity
 make bench-context-gap-high-arity
 make bench-context-gap-random-arity
 make bench-context-gap-binary-components
+make bench-context-gap-join-decomposition
 make bench-permutation-like
 make bench-permutation-composition
 make bench-relation-components
@@ -282,6 +283,13 @@ manquer. C'est un chasseur de contre-exemples borné, pas une preuve.
 binaires de gaps comme un CSP local sur des ensembles plus grands de projections
 ouvertes et cherche si cette propagation binaire admet des tuples jamais vus
 dans les frontiers. C'est un prototype de diagnostic DP, pas un solver.
+
+`make bench-context-gap-join-decomposition` écrit
+`reports/context_gap_join_decomposition_probe.json`. Il projette une relation
+globale de gaps sur deux composants qui se recouvrent, puis teste si leur
+jointure naturelle recrée exactement la relation globale. Les fausses jointures
+signalent qu'un séparateur choisi oublie des contraintes transverses ; ce n'est
+pas une réfutation de la closure binaire globale T102.
 
 `make bench-permutation-like` écrit `reports/permutation_like_probe.json`. Il
 teste les profils locaux `permutation_like` observés sur `paired_farthest`

@@ -28,6 +28,9 @@ from tools.pc_context_gap_random_arity_probe import (
 from tools.pc_context_gap_binary_component_probe import (
     run_probe as run_gap_binary_component_probe,
 )
+from tools.pc_context_gap_join_decomposition_probe import (
+    run_probe as run_gap_join_decomposition_probe,
+)
 from tools.pc_context_gap_relation_probe import run_probe as run_gap_probe
 from tools.pc_context_signature_ladder_probe import run_probe as run_ladder_probe
 from tools.pc_partial_context_lab_probe import run_probe as run_context_probe
@@ -544,3 +547,33 @@ def test_context_gap_binary_component_probe_propagates_cycle5():
     assert report["summary"]["binary_sufficient_case_count"] > 0
     assert report["summary"]["higher_order_case_count"] == 0
     assert report["by_set_size"]["6"]["sampled_set_count"] > 0
+
+
+def test_context_gap_join_decomposition_probe_finds_cycle5_false_join():
+    report = run_gap_join_decomposition_probe(
+        decomposition_specs=[(4, 4, 2)],
+        sizes=[5],
+        pc_trees=["mixed"],
+        instance_kinds=["cycle"],
+        repeats=1,
+        frontier_limit=200,
+        min_distinct_obligations=2,
+        scope="all_open",
+        sample_count=100,
+        max_attempt_multiplier=10,
+        max_product_size=20000,
+        max_join_pairs=20000,
+        max_examples=2,
+        seed=20260721,
+    )
+
+    assert report["method"] == "t103_context_gap_join_decomposition_probe"
+    assert report["summary"]["sampled_decomposition_count"] > 0
+    assert report["summary"]["visible_case_count"] > 0
+    assert report["summary"]["nontrivial_component_case_count"] > 0
+    assert report["summary"]["false_join_case_count"] > 0
+    assert report["summary"]["false_join_full_binary_exact_case_count"] > 0
+    assert report["summary"]["binary_higher_order_case_count"] == 0
+    assert report["by_decomposition_spec"]["4:4:2"][
+        "sampled_decomposition_count"
+    ] > 0

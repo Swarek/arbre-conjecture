@@ -5019,3 +5019,50 @@
 - Résultat correction finale : `365 passed`, puis `JUSTE`.
 - Next action : transformer ce CSP binaire de gaps en prototype de séparateur
   composable ou construire une famille adversariale `binary-closure false`.
+
+## 2026-05-31 jointure de séparateurs de gaps
+
+- Date/heure : 2026-05-31 16:35 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : deux sous-relations exactes de gaps pourraient se composer
+  par jointure naturelle sur un petit overlap. Une fausse jointure indique que
+  le séparateur choisi oublie des compatibilités transverses.
+- Changement fait : ajout de
+  `tools/pc_context_gap_join_decomposition_probe.py`, cible
+  `make bench-context-gap-join-decomposition`, extension des tests
+  `tests/test_partial_obligation_experiments.py`, et documentation T103.
+  `candidate.py` n'a pas été modifié.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `rtk make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `365 passed`, puis `JUSTE`.
+- Commande exécutée :
+  `rtk .venv/bin/python -m py_compile tools/pc_context_gap_join_decomposition_probe.py`.
+- Résultat compilation : succès.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_partial_obligation_experiments.py`.
+- Résultat correction ciblée : `28 passed`.
+- Commande exécutée : `rtk make bench-context-gap-join-decomposition`.
+- Résultat benchmark T103 :
+  `reports/context_gap_join_decomposition_probe.json` écrit ; `56` lignes,
+  `28` complètes, `22400` décompositions échantillonnées, `90833` cas visibles.
+- Résultat clé :
+  `nontrivial_component_case_count=89429`,
+  `exact_join_case_count=80562`,
+  `false_join_case_count=10271`,
+  `false_join_tuple_count=25104`,
+  `cross_edge_repaired_case_count=10271`,
+  `cross_edge_unrepaired_case_count=0`,
+  `binary_higher_order_case_count=0`,
+  `join_capped_case_count=0`,
+  `frontier_truncated_rows=0`.
+- Conclusion provisoire : une DP qui recolle des composants par petits overlaps
+  naïfs est insuffisante dans le sweep ; les fausses jointures observées restent
+  cependant expliquées par des arêtes binaires transverses, donc T103 ne réfute
+  pas l'hypothèse de closure binaire globale.
+- Commande exécutée : `rtk make quick`.
+- Résultat correction finale : `366 passed`, puis `JUSTE`.
+- Next action : chercher une vraie famille `binary-closure false`, par exemple
+  un cycle de parité de gaps inspiré des familles high-cycle low-hub, ou
+  formaliser une DP qui transporte toutes les arêtes binaires nécessaires.

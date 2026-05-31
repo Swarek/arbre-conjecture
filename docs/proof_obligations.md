@@ -2866,3 +2866,47 @@ Ce que T102 ne prouve pas :
 Obligation suivante : construire une famille qui force une fausse closure
 binaire, ou formaliser un vrai prototype de DP qui transporte ces relations
 binaires de gaps et vérifier qu'il reproduit l'oracle sur petits PC-trees.
+
+### T103 : jointure de séparateurs de gaps
+
+Statut : lemme négatif expérimental, pas théorème général.
+
+`pc_context_gap_join_decomposition_probe.py` teste une propriété de composition
+plus proche d'une DP : une relation globale de gaps est projetée sur deux
+sous-ensembles de projections ouvertes avec overlap, puis les deux projections
+sont recollées par jointure naturelle.
+
+Ce que T103 couvre :
+
+- specs de décomposition `4:4:2` et `5:5:2` ;
+- PC-trees `balanced` et `mixed` ;
+- familles `cycle`, `paired_farthest`, `random`, `random4`,
+  `padded_five_local_non_cr` ;
+- `22400` décompositions échantillonnées ;
+- `90833` cas visibles ;
+- `89429` cas à composants non triviaux ;
+- `10271` cas où la jointure sur overlap crée des tuples absents de la relation
+  globale ;
+- `25104` faux tuples de jointure ;
+- `cross_edge_repaired_case_count=10271` ;
+- `cross_edge_unrepaired_case_count=0` ;
+- `binary_higher_order_case_count=0` ;
+- `join_capped_case_count=0`, `frontier_truncated_rows=0`.
+
+Interprétation : T103 réfute expérimentalement une DP qui composerait deux
+relations exactes de gaps par petit overlap sans transporter les contraintes
+transverses. Ce n'est pas une réfutation de la closure binaire globale : dans
+le sweep, toutes les fausses jointures sont réparées par les arêtes binaires
+entre les deux côtés.
+
+Ce que T103 ne prouve pas :
+
+- pas de borne sur la taille du graphe binaire de gaps ;
+- pas de preuve qu'une DP par toutes les arêtes binaires soit polynomiale ;
+- pas de résultat sous le promise `T=T(D)` ;
+- pas d'exhaustivité des décompositions échantillonnées ;
+- pas de décision intégrable dans `candidate.py`.
+
+Obligation suivante : construire une famille ciblée `binary-closure false`, ou
+formaliser une DP qui transporte explicitement le graphe de compatibilités
+binaires de gaps et mesurer sa taille sur des PC-trees plus grands.

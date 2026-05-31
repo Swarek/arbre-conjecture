@@ -587,6 +587,20 @@ des gaps à la solution du CSP défini par toutes ses projections binaires. Un
 `higher_order_case_count` positif réfute ce prototype binaire ; un compteur nul
 reste une non-réfutation bornée.
 
+Jointure de séparateurs de gaps Piste A/B :
+
+```bash
+make bench-context-gap-join-decomposition
+```
+
+Cette commande écrit `reports/context_gap_join_decomposition_probe.json`. Elle
+projette une relation globale de gaps sur deux composants `left/right` avec
+overlap, puis compare la jointure naturelle des deux projections à la relation
+globale observée. Un `false_join_case_count` positif signifie que l'overlap
+choisi ne médie pas toutes les contraintes ; si
+`cross_edge_unrepaired_case_count` reste nul, les arêtes binaires transverses
+réparent les fausses jointures dans ce scaffold borné.
+
 Contrôle promise-aware des permutations locales Piste F/C :
 
 ```bash

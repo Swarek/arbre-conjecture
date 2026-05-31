@@ -875,3 +875,35 @@ de nombreuses arêtes restrictives, mais aucun tuple admis par la closure
 binaire et absent des frontiers n'est observé. La limite reste majeure : T102 ne
 compose pas encore des sous-arbres, ne prouve pas de borne de taille, et ne
 travaille pas sous le promise Hsu/McConnell `T=T(D)`.
+
+## T103 - Jointure de composants de gaps
+
+Statut : garde-fou DP, lemme négatif expérimental.
+
+T103 ajoute `make bench-context-gap-join-decomposition`. Le probe choisit une
+union de projections ouvertes, la décompose en deux côtés avec overlap
+(`4:4:2` ou `5:5:2`), puis compare :
+
+1. la relation globale réelle des gaps ;
+2. les deux relations exactes projetées sur les côtés ;
+3. leur jointure naturelle sur l'overlap.
+
+Résultat borné :
+
+- `22400` décompositions échantillonnées ;
+- `90833` cas visibles ;
+- `nontrivial_component_case_count=89429` ;
+- `exact_join_case_count=80562` ;
+- `false_join_case_count=10271` ;
+- `false_join_tuple_count=25104` ;
+- `cross_edge_repaired_case_count=10271` ;
+- `cross_edge_unrepaired_case_count=0` ;
+- `binary_higher_order_case_count=0` ;
+- `join_capped_case_count=0`, `frontier_truncated_rows=0`.
+
+Lecture DP : T103 casse le modèle trop faible "deux patchs exacts se recollent
+par petit overlap". Les fausses jointures montrent que des compatibilités
+transverses entre left-only et right-only sont nécessaires. Le fait que toutes
+les fausses jointures soient réparées par les arêtes binaires transverses garde
+ouverte une DP par graphe de contraintes binaires de gaps, mais pas une DP par
+overlaps fixes naïfs.
