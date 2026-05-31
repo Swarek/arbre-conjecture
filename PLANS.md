@@ -22,6 +22,65 @@ Dans un Goal long, le plan doit aussi définir le critère d’arrêt : succès
 mesurable, réfutation, blocage théorique, ou bascule vers une autre piste. Ne pas
 laisser un Goal tourner comme une recherche ouverte sans sortie concrète.
 
+## ExecPlan 2026-05-31 - T096 relation de gaps d'insertion exterieure
+
+But : transformer le contre-signal T095 en objet mesurable. T095 montre que
+l'ordre des rôles extérieurs absents ne suffit pas ; il manque leur position
+d'insertion par rapport à la séquence visible. T096 doit mesurer une relation de
+gaps cycliques pour les obligations ouvertes et comparer sa taille à
+`full_context_order`.
+
+Hypothèse : une signature `(ordre local, ordre global des rôles visibles,
+gaps cycliques des rôles extérieurs)` décide chaque obligation sur les frontiers
+énumérées, tout en exposant une relation de bord plus petite et plus lisible que
+la frontier complète. Si cette signature reste mixte, le contre-exemple est plus
+fort que T095. Si elle n'est jamais mixte mais produit beaucoup de patterns par
+état visible, la difficulté se déplace vers la taille de la relation de gaps.
+
+Fichiers à modifier :
+`src/pc_circular/solvers/partial_obligation_experiments.py`,
+`tools/pc_context_gap_relation_probe.py`,
+`tests/test_partial_obligation_experiments.py`, `Makefile`, puis les documents
+de suivi (`README.md`, `docs/experiment_protocol.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `docs/proof_obligations.md`,
+`docs/hypothesis_portfolio.md`, `docs/tracks/README.md`,
+`docs/tracks/piste_a_local_pc_constraints.md`,
+`docs/tracks/piste_b_dp_pc_tree.md`). `candidate.py` reste hors scope.
+
+Algorithme pressenti : pour chaque frontier, P-nœud et obligation projetée,
+calculer les rôles visibles ordonnés, puis placer chaque rôle manquant dans le
+gap cyclique après un rôle visible. Grouper les satisfactions/violations par cet
+état de gap, et mesurer la relation `visible_state -> set(gap_patterns)`.
+
+Tests à exécuter : `py_compile`, pytest ciblé,
+`make bench-context-gap-relation`, puis `rtk make quick`.
+
+Risques : l'état de gap est encore calculé depuis des frontiers complètes ; une
+absence de groupe mixte ne prouve pas qu'on sait composer ces relations. Le
+résultat utile est surtout la taille et la forme de la relation de gaps.
+
+Plan de contre-exemples : verrouiller `cycle/mixed/n=5` comme seed que T095 ne
+résout pas. Si la relation de gaps ne l'explique pas, elle est insuffisante. Si
+elle l'explique, chercher dans le sweep des relations de gaps à grande taille.
+
+Plan subagents : pas de fanout pour ce checkpoint borné ; l'objet testé découle
+directement de T095.
+
+Résultats observés : T096 est implémenté. `make bench-context-gap-relation`
+donne `120` lignes complètes, `80` avec P-nœuds, `4142` projections
+d'obligations, `1912` support-boundary, `1657` fully-visible et `573`
+projection-only. Les groupes mixtes T095 restent visibles avant les gaps
+(`visible_missing_mixed_group_count=1730`), mais disparaissent avec l'état de
+gaps (`gap_state_mixed_group_count=0`). La relation de gaps n'est pas triviale :
+`2359499` buckets visibles, `3008` non triviaux, maximum `4` patterns par état
+visible, histogramme `{1: 2356491, 2: 2449, 4: 559}`.
+
+Décision : les gaps cycliques sont la bonne prochaine abstraction locale pour
+les obligations ouvertes isolées, mais pas encore un état DP. Continuer vers la
+composition/projection de ces relations de gaps pour tester si leur taille reste
+bornée ou si elle réencode la relation résiduelle complète. Ne pas intégrer dans
+`candidate.py`.
+
 ## ExecPlan 2026-05-31 - T095 ladder de signatures de contexte
 
 But : comprendre les groupes mixtes restants de T094 sans sur-ajuster un état

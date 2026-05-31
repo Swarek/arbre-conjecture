@@ -736,6 +736,39 @@ violant selon la position d'insertion de ce rôle extérieur. La prochaine
 signature locale doit donc représenter un ensemble de positions/côtés possibles
 du contexte extérieur, ou assumer explicitement une relation résiduelle.
 
+## T096 - Relation de gaps d'insertion extérieure
+
+Statut : diagnostic implémenté, preuve expérimentale bornée.
+
+Artefacts ajoutés :
+
+- extension de `src/pc_circular/solvers/partial_obligation_experiments.py`
+- `tools/pc_context_gap_relation_probe.py`
+- cible `make bench-context-gap-relation`
+
+Idée testée : représenter chaque rôle absent d'une obligation ouverte par le gap
+cyclique où il s'insère entre les rôles visibles au nœud `P`. Cela raffine T095
+sans encoder les feuilles non concernées.
+
+Résultat du benchmark T096 :
+
+- `120` lignes, toutes complètes ;
+- `80` lignes avec P-nœuds ;
+- `4142` projections d'obligations ;
+- `visible_missing_mixed_group_count=1730` ;
+- `gap_state_mixed_group_count=0` ;
+- `full_context_mixed_group_count=0` ;
+- `nontrivial_gap_relation_bucket_count=3008` ;
+- `max_gap_patterns_per_visible_state=4` ;
+- histogramme des tailles `visible_state -> gap_patterns` :
+  `{1: 2356491, 2: 2449, 4: 559}`.
+
+Interprétation : les gaps cycliques expliquent le contre-signal T095
+`cycle/mixed/n=5` et tous les groupes mixtes du sweep. Mais la relation locale
+de bord n'est pas libre : des états visibles admettent plusieurs insertions
+extérieures. La prochaine piste locale doit mesurer la composition de ces
+relations, pas seulement leur capacité à décider une obligation isolée.
+
 ## T022 - Rapport `project_farthest_sets_to_pc_nodes`
 
 Statut : diagnostic implémenté, explicitement non décisionnel.

@@ -2594,3 +2594,44 @@ Ce que T095 ne prouve pas :
 Obligation suivante : définir une relation d'interface qui transporte les
 positions/côtés possibles des rôles extérieurs par rapport au bloc visible, puis
 tester si elle reste plus petite que la relation complète sur les frontiers.
+
+### T096 : relation de gaps d'insertion extérieure
+
+Statut : preuve expérimentale bornée, pas théorème général.
+
+`pnode_context_gap_relation_report` encode l'information qui manquait à T095 :
+pour une obligation ouverte projetée sur un P-nœud, les rôles visibles forment
+une séquence circulaire, et chaque rôle absent est placé dans le gap cyclique
+après l'un de ces rôles visibles.
+
+Ce que T096 couvre :
+
+- benchmark borné : `120` lignes complètes, `80` lignes avec P-nœuds ;
+- `4142` projections d'obligations ;
+- `1912` obligations support-boundary, `1657` fully-visible et `573`
+  projection-only ;
+- `visible_missing_mixed_group_count=1730`, donc T095 reste insuffisant ;
+- `gap_state_mixed_group_count=0` ;
+- `full_context_mixed_group_count=0` ;
+- `gap_relation_bucket_count=2359499` ;
+- `nontrivial_gap_relation_bucket_count=3008` ;
+- `max_gap_patterns_per_visible_state=4` ;
+- histogramme des tailles de relation de gaps :
+  `{1: 2356491, 2: 2449, 4: 559}`.
+
+Interprétation : les gaps cycliques expliquent les collisions observées dans ce
+sweep, y compris `cycle/mixed/n=5`. Cependant, la relation de bord n'est pas
+triviale : certains états visibles admettent plusieurs insertions extérieures.
+Le point dur devient la composition et la taille de cette relation, pas la
+définition d'un bit manquant.
+
+Ce que T096 ne prouve pas :
+
+- pas de borne générale sur le nombre de patterns de gaps ;
+- pas de composabilité d'une DP ;
+- pas de lien prouvé avec les PC-trees Hsu/McConnell réels ;
+- pas de décision intégrable dans `candidate.py`.
+
+Obligation suivante : composer deux relations de gaps voisines ou les projeter
+après élimination d'un patch pour voir si les tailles restent bornées ou
+augmentent comme une relation résiduelle complète.

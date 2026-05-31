@@ -495,6 +495,19 @@ manquants, puis un contrôle `full_context_order`. Les signatures enrichies sont
 des diagnostics sur frontiers énumérées ; elles ne sont pas des états DP
 compacts.
 
+Lab relation de gaps de contexte Piste A/B :
+
+```bash
+make bench-context-gap-relation
+```
+
+Cette commande écrit `reports/context_gap_relation_probe.json`. Elle encode les
+rôles extérieurs d'une obligation ouverte par le gap cyclique où ils s'insèrent
+entre les rôles visibles au P-nœud, puis mesure la relation
+`visible_state -> gap_patterns`. Un `gap_state_mixed_group_count` nul signifie
+seulement que ces gaps expliquent les collisions observées sur les frontiers
+énumérées ; la taille de la relation reste le vrai signal.
+
 Contrôle promise-aware des permutations locales Piste F/C :
 
 ```bash

@@ -4669,3 +4669,52 @@
 - Next action : construire un probe de relation d'insertion extérieure qui
   encode, pour chaque obligation ouverte, les gaps possibles du contexte par
   rapport à la séquence visible et mesurer sa taille face à la relation complète.
+
+## 2026-05-31 relation de gaps d'insertion extérieure
+
+- Date/heure : 2026-05-31 20:05 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les collisions restantes de T095 peuvent être expliquées
+  par la position d'insertion des rôles extérieurs dans les gaps cycliques entre
+  rôles visibles au P-nœud.
+- Changement fait : ajout de `pnode_context_gap_relation_report` et de la
+  signature de gaps cycliques dans
+  `src/pc_circular/solvers/partial_obligation_experiments.py`, ajout de
+  `tools/pc_context_gap_relation_probe.py`, extension des tests
+  `tests/test_partial_obligation_experiments.py`, cible
+  `make bench-context-gap-relation`, et documentation T096. `candidate.py` n'a
+  pas été modifié.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `rtk make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `352 passed`, puis `JUSTE`.
+- Commande exécutée :
+  `rtk .venv/bin/python -m py_compile src/pc_circular/solvers/partial_obligation_experiments.py tools/pc_context_gap_relation_probe.py`.
+- Résultat compilation : succès.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_partial_obligation_experiments.py`.
+- Résultat correction ciblée : `17 passed`.
+- Commande exécutée : `rtk make bench-context-gap-relation`.
+- Résultat benchmark T096 :
+  `reports/context_gap_relation_probe.json` écrit ; `120` lignes, `120`
+  complètes, `80` lignes avec P-nœuds, `4142` projections d'obligations,
+  `1912` support-boundary, `1657` fully-visible et `573` projection-only.
+- Résultat clé :
+  `visible_missing_mixed_group_count=1730`,
+  `gap_state_mixed_group_count=0`,
+  `full_context_mixed_group_count=0`.
+- Taille de la relation de gaps :
+  `gap_relation_bucket_count=2359499`,
+  `nontrivial_gap_relation_bucket_count=3008`,
+  `max_gap_patterns_per_visible_state=4`,
+  histogramme `{1: 2356491, 2: 2449, 4: 559}`.
+- Conclusion provisoire : les gaps cycliques expliquent les collisions T095 du
+  sweep, mais ils exposent une vraie relation de bord non triviale. Le prochain
+  test doit composer ou projeter ces relations de gaps pour voir si elles
+  restent petites ou réencodent une relation résiduelle complète.
+- Commande exécutée : `rtk make quick`.
+- Résultat correction finale : `355 passed`, puis `JUSTE`.
+- Next action : construire un probe de composition/projection de relations de
+  gaps sur deux nœuds ou deux patches adjacents, en cherchant une croissance du
+  nombre de patterns par état visible.

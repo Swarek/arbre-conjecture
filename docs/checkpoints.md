@@ -846,6 +846,20 @@ Dernier commit green avant T009 : `07120e4`.
   manquants ; il faut représenter une position d'insertion/côté extérieur, pas
   seulement séparer visible et contexte. `candidate.py` n'a pas été modifié.
 
+- Checkpoint T096 courant : commit contenant la relation de gaps d'insertion
+  extérieure pour obligations ouvertes. Validation observée : compilation
+  Python de `partial_obligation_experiments.py` et
+  `pc_context_gap_relation_probe.py` réussie, tests ciblés
+  `tests/test_partial_obligation_experiments.py` (`17 passed`),
+  `make bench-context-gap-relation` (`120` lignes, `120` complètes,
+  `80` lignes avec P-nœuds, `visible_missing_mixed_group_count=1730`,
+  `gap_state_mixed_group_count=0`, `nontrivial_gap_relation_bucket_count=3008`,
+  `max_gap_patterns_per_visible_state=4`) et `make quick`
+  (`355 passed`, puis `JUSTE`).
+  Les gaps expliquent les collisions isolées du sweep, mais la relation de bord
+  reste non triviale et doit être testée en composition. `candidate.py` n'a pas
+  été modifié.
+
 ## Rollback
 
 Si une modification régresse et que la cause n’est pas claire :

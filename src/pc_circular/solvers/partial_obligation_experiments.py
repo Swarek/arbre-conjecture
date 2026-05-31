@@ -277,6 +277,33 @@ def _missing_role_order_signature(frontier, same_side, projected_roles) -> tuple
     return tuple((role, label) for _, role, label in sorted(items))
 
 
+def _missing_cyclic_gap_signature(frontier, same_side, projected_roles) -> tuple:
+    """Place missing roles in cyclic gaps between visible projected roles."""
+
+    projected_labels = {label for _, label, _ in projected_roles}
+    visible_positions = sorted(frontier.index(label) for _, label, _ in projected_roles)
+    if not visible_positions:
+        return ()
+    n = len(frontier)
+    missing_items = []
+    for role, label in _obligation_roles(same_side):
+        if label in projected_labels:
+            continue
+        position = frontier.index(label)
+        previous_index = len(visible_positions) - 1
+        for index, visible_position in enumerate(visible_positions):
+            if visible_position > position:
+                previous_index = index - 1 if index > 0 else len(visible_positions) - 1
+                break
+        previous_position = visible_positions[previous_index]
+        cyclic_distance = (position - previous_position) % n
+        missing_items.append((previous_index, cyclic_distance, role, label))
+    return tuple(
+        (gap_index, role, label)
+        for gap_index, _, role, label in sorted(missing_items)
+    )
+
+
 def _full_context_role_order_signature(frontier, same_side, projected_roles) -> tuple:
     branch_by_label = {label: branch for _, label, branch in projected_roles}
     items = []
@@ -317,6 +344,18 @@ def _context_ladder_signature(mode: str, frontier, local_order, obligation) -> t
     if mode == "full_context_order":
         return _full_context_role_order_signature(frontier, same_side, projected_roles)
     raise ValueError(f"unknown context ladder mode: {mode}")
+
+
+def _context_gap_state_signature(frontier, local_order, obligation) -> tuple:
+    return (
+        local_order,
+        _visible_global_role_order_signature(frontier, obligation["projected_roles"]),
+        _missing_cyclic_gap_signature(
+            frontier,
+            obligation["same_side"],
+            obligation["projected_roles"],
+        ),
+    )
 
 
 def pnode_partial_obligation_report(
@@ -1253,5 +1292,240 @@ def pnode_context_signature_ladder_report(
             "context-aware signatures for open same-side obligations. These "
             "signatures are diagnostics over enumerated frontiers, not compact "
             "DP states or solver decisions."
+        ),
+    }
+
+
+def pnode_context_gap_relation_report(
+    D,
+    T: PCNode,
+    *,
+    frontier_limit: int = 20000,
+    max_examples: int = 5,
+) -> dict:
+    """Measure the insertion-gap relation needed by open obligations."""
+
+    tree_labels = set(labels(T))
+    if tree_labels != set(range(len(D))):
+        raise ValueError("PC-tree labels must be exactly 0..n-1")
+    if frontier_limit <= 0:
+        raise ValueError("frontier_limit must be positive")
+    if max_examples < 0:
+        raise ValueError("max_examples must be non-negative")
+
+    raw_frontiers = enumerate_frontiers(T, canonical=True, limit=frontier_limit + 1)
+    frontier_truncated = len(raw_frontiers) > frontier_limit
+    frontiers = tuple(raw_frontiers[:frontier_limit])
+
+    node_infos = [
+        node_info
+        for node_info in iter_internal_node_child_labels(T)
+        if node_info["kind"] == "P"
+    ]
+    node_by_path = {tuple(node_info["path"]): node_info for node_info in node_infos}
+    local_order_by_path = {path: {} for path in node_by_path}
+    for path, node_info in node_by_path.items():
+        child_label_sets = node_info["child_label_sets"]
+        for frontier in frontiers:
+            local_order_by_path[path][frontier] = induced_child_circular_order(
+                frontier,
+                child_label_sets,
+            )
+
+    obligations = tuple(_iter_pnode_obligation_projections(D, T))
+    fine_role_pattern_histogram: dict = {}
+    gap_relation_size_histogram: dict = {}
+    visible_missing_mixed_histogram: dict = {}
+    gap_mixed_histogram: dict = {}
+    obligation_projection_count = 0
+    support_boundary_obligation_count = 0
+    fully_visible_obligation_count = 0
+    projection_only_obligation_count = 0
+    visible_missing_group_count = 0
+    visible_missing_mixed_group_count = 0
+    gap_state_group_count = 0
+    gap_state_mixed_group_count = 0
+    full_context_group_count = 0
+    full_context_mixed_group_count = 0
+    gap_relation_bucket_count = 0
+    nontrivial_gap_relation_bucket_count = 0
+    max_gap_patterns_per_visible_state = 0
+    max_gap_state_count_per_obligation = 0
+    visible_missing_mixed_examples = []
+    gap_mixed_examples = []
+    nontrivial_gap_relation_examples = []
+
+    for obligation in obligations:
+        path = obligation["path"]
+        if path not in local_order_by_path:
+            continue
+        pattern = obligation["fine_role_pattern"]
+        obligation_projection_count += 1
+        fine_role_pattern_histogram[pattern] = fine_role_pattern_histogram.get(pattern, 0) + 1
+        if obligation["is_support_node"]:
+            if pattern == "support:full_four_branch":
+                fully_visible_obligation_count += 1
+            else:
+                support_boundary_obligation_count += 1
+        else:
+            projection_only_obligation_count += 1
+
+        visible_missing_groups = {}
+        gap_state_groups = {}
+        full_context_groups = {}
+        gap_relation: dict[tuple, set[tuple]] = {}
+        for frontier in frontiers:
+            local_order = local_order_by_path[path].get(frontier)
+            if local_order is None:
+                continue
+            visible_order = _visible_global_role_order_signature(
+                frontier,
+                obligation["projected_roles"],
+            )
+            missing_order = _missing_role_order_signature(
+                frontier,
+                obligation["same_side"],
+                obligation["projected_roles"],
+            )
+            gap_signature = _missing_cyclic_gap_signature(
+                frontier,
+                obligation["same_side"],
+                obligation["projected_roles"],
+            )
+            visible_missing_state = (local_order, visible_order, missing_order)
+            gap_state = (local_order, visible_order, gap_signature)
+            full_context_state = _full_context_role_order_signature(
+                frontier,
+                obligation["same_side"],
+                obligation["projected_roles"],
+            )
+            satisfied = same_side_constraint_satisfied(frontier, obligation["same_side"])
+            target = "satisfied" if satisfied else "violated"
+
+            for groups, state in (
+                (visible_missing_groups, visible_missing_state),
+                (gap_state_groups, gap_state),
+                (full_context_groups, full_context_state),
+            ):
+                group = groups.setdefault(
+                    state,
+                    {
+                        "satisfied": 0,
+                        "violated": 0,
+                        "satisfied_example": None,
+                        "violated_example": None,
+                    },
+                )
+                group[target] += 1
+                if group[f"{target}_example"] is None:
+                    group[f"{target}_example"] = frontier
+
+            visible_state = (local_order, visible_order)
+            gap_relation.setdefault(visible_state, set()).add(gap_signature)
+
+        max_gap_state_count_per_obligation = max(
+            max_gap_state_count_per_obligation,
+            len(gap_state_groups),
+        )
+
+        for state, group in visible_missing_groups.items():
+            visible_missing_group_count += 1
+            if group["satisfied"] and group["violated"]:
+                visible_missing_mixed_group_count += 1
+                visible_missing_mixed_histogram[pattern] = (
+                    visible_missing_mixed_histogram.get(pattern, 0) + 1
+                )
+                if len(visible_missing_mixed_examples) < max_examples:
+                    visible_missing_mixed_examples.append(
+                        {
+                            "path": path,
+                            "same_side": obligation["same_side"],
+                            "fine_role_pattern": pattern,
+                            "state": state,
+                            "satisfied_frontier": group["satisfied_example"],
+                            "violated_frontier": group["violated_example"],
+                        }
+                    )
+
+        for state, group in gap_state_groups.items():
+            gap_state_group_count += 1
+            if group["satisfied"] and group["violated"]:
+                gap_state_mixed_group_count += 1
+                gap_mixed_histogram[pattern] = gap_mixed_histogram.get(pattern, 0) + 1
+                if len(gap_mixed_examples) < max_examples:
+                    gap_mixed_examples.append(
+                        {
+                            "path": path,
+                            "same_side": obligation["same_side"],
+                            "fine_role_pattern": pattern,
+                            "state": state,
+                            "satisfied_frontier": group["satisfied_example"],
+                            "violated_frontier": group["violated_example"],
+                        }
+                    )
+
+        for group in full_context_groups.values():
+            full_context_group_count += 1
+            if group["satisfied"] and group["violated"]:
+                full_context_mixed_group_count += 1
+
+        for visible_state, gap_patterns in gap_relation.items():
+            gap_relation_bucket_count += 1
+            relation_size = len(gap_patterns)
+            gap_relation_size_histogram[relation_size] = (
+                gap_relation_size_histogram.get(relation_size, 0) + 1
+            )
+            max_gap_patterns_per_visible_state = max(
+                max_gap_patterns_per_visible_state,
+                relation_size,
+            )
+            if relation_size > 1:
+                nontrivial_gap_relation_bucket_count += 1
+                if len(nontrivial_gap_relation_examples) < max_examples:
+                    nontrivial_gap_relation_examples.append(
+                        {
+                            "path": path,
+                            "same_side": obligation["same_side"],
+                            "fine_role_pattern": pattern,
+                            "visible_state": visible_state,
+                            "gap_patterns": tuple(sorted(gap_patterns)),
+                        }
+                    )
+
+    return {
+        "method": "pnode_context_gap_relation_report",
+        "n": len(D),
+        "frontier_limit": frontier_limit,
+        "frontiers_seen": len(frontiers),
+        "frontier_truncated": frontier_truncated,
+        "pnode_count": len(node_infos),
+        "obligation_projection_count": obligation_projection_count,
+        "support_boundary_obligation_count": support_boundary_obligation_count,
+        "fully_visible_obligation_count": fully_visible_obligation_count,
+        "projection_only_obligation_count": projection_only_obligation_count,
+        "fine_role_pattern_histogram": _sorted_histogram(fine_role_pattern_histogram),
+        "visible_missing_group_count": visible_missing_group_count,
+        "visible_missing_mixed_group_count": visible_missing_mixed_group_count,
+        "gap_state_group_count": gap_state_group_count,
+        "gap_state_mixed_group_count": gap_state_mixed_group_count,
+        "full_context_group_count": full_context_group_count,
+        "full_context_mixed_group_count": full_context_mixed_group_count,
+        "gap_relation_bucket_count": gap_relation_bucket_count,
+        "nontrivial_gap_relation_bucket_count": nontrivial_gap_relation_bucket_count,
+        "max_gap_patterns_per_visible_state": max_gap_patterns_per_visible_state,
+        "max_gap_state_count_per_obligation": max_gap_state_count_per_obligation,
+        "gap_relation_size_histogram": _sorted_histogram(gap_relation_size_histogram),
+        "visible_missing_mixed_fine_role_pattern_histogram": _sorted_histogram(
+            visible_missing_mixed_histogram
+        ),
+        "gap_mixed_fine_role_pattern_histogram": _sorted_histogram(gap_mixed_histogram),
+        "visible_missing_mixed_examples": tuple(visible_missing_mixed_examples),
+        "gap_mixed_examples": tuple(gap_mixed_examples),
+        "nontrivial_gap_relation_examples": tuple(nontrivial_gap_relation_examples),
+        "interpretation": (
+            "T096 context-gap diagnostic. A zero gap_state_mixed count means "
+            "that insertion gaps explain the open obligation on enumerated "
+            "frontiers; relation-size counters measure whether this is compact. "
+            "This is not a solver."
         ),
     }

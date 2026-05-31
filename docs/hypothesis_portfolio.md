@@ -139,6 +139,14 @@ visibles. Un seed `cycle/mixed/n=5` verrouille ce contre-signal. La prochaine
 abstraction doit donc être une relation de côté/insertion de contexte, pas une
 signature séparant simplement visible et extérieur.
 
+Mise à jour T096 : la relation de gaps cycliques explique les collisions T095
+sur le sweep borné : `gap_state_mixed_group_count=0` sur `120` lignes complètes.
+Mais elle révèle aussi une vraie relation de bord : `3008` états visibles ont
+plus d'un pattern de gap possible, avec un maximum observé de `4`. La prochaine
+question n'est donc plus "quel bit manque ?", mais si cette relation
+`visible_state -> gap_patterns` se compose sans explosion ou si elle réencode la
+frontier globale.
+
 ## Piste B : programmation dynamique sur le PC-tree
 
 Intuition : un état de frontière pourrait résumer les contraintes externes d’un

@@ -686,3 +686,26 @@ au bloc visible. Le mode `full_context_order` élimine les mixtes parce qu'il
 encode presque directement le type du quartet, donc il sert de borne haute
 diagnostique, pas d'état DP. La prochaine expérience doit chercher une relation
 plus abstraite de positions/côtés extérieurs possibles.
+
+## T096 - Relation de gaps et taille d'interface
+
+Statut : diagnostic implémenté, garde-fou DP.
+
+T096 ajoute `make bench-context-gap-relation`. Le rapport encode le contexte
+extérieur d'une obligation ouverte par des gaps cycliques entre les rôles
+visibles au P-nœud, puis mesure la relation
+`visible_state -> set(gap_patterns)`.
+
+Résultat borné :
+
+- `gap_state_mixed_group_count=0` sur `120` lignes complètes ;
+- `visible_missing_mixed_group_count=1730`, donc T095 était bien trop faible ;
+- `gap_relation_bucket_count=2359499` ;
+- `nontrivial_gap_relation_bucket_count=3008` ;
+- `max_gap_patterns_per_visible_state=4`.
+
+Lecture DP : la bonne information locale ressemble maintenant à une relation de
+positions d'insertion du contexte extérieur. Elle décide les obligations isolées
+du sweep, mais sa composition n'est pas testée. Si plusieurs patches font croître
+ces ensembles de gaps, on retombe sur une relation résiduelle complète ; si leur
+taille reste bornée ou structurée, c'est une piste DP réelle.
