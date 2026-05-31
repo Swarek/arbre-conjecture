@@ -72,6 +72,7 @@ make bench-partial-context-lab
 make bench-separator-signature-lab
 make bench-context-signature-ladder
 make bench-context-gap-relation
+make bench-context-gap-composition
 make bench-permutation-like
 make bench-permutation-composition
 make bench-relation-components

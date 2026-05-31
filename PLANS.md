@@ -22,6 +22,66 @@ Dans un Goal long, le plan doit aussi définir le critère d’arrêt : succès
 mesurable, réfutation, blocage théorique, ou bascule vers une autre piste. Ne pas
 laisser un Goal tourner comme une recherche ouverte sans sortie concrète.
 
+## ExecPlan 2026-05-31 - T097 composition des relations de gaps
+
+But : tester si la relation de gaps T096, qui explique les obligations ouvertes
+prises une par une, peut se composer comme un produit de marges locales entre
+plusieurs nœuds `P` touchés par la même contrainte `same_side`.
+
+Hypothèse : à état visible fixé, les patterns de gaps possibles sur chaque
+projection de nœud pourraient être indépendants. Si le produit des marges locales
+contient des tuples de gaps jamais observés dans les frontiers réelles, alors une
+DP correcte doit transporter une relation jointe de bord, pas seulement les
+relations locales T096.
+
+Fichiers à modifier :
+`src/pc_circular/solvers/partial_obligation_experiments.py`,
+`tools/pc_context_gap_composition_probe.py`,
+`tests/test_partial_obligation_experiments.py`, `Makefile`, puis les documents
+de suivi (`README.md`, `docs/experiment_protocol.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `docs/proof_obligations.md`,
+`docs/hypothesis_portfolio.md`, `docs/tracks/README.md`,
+`docs/tracks/piste_a_local_pc_constraints.md`,
+`docs/tracks/piste_b_dp_pc_tree.md`). `candidate.py` reste hors scope.
+
+Algorithme pressenti : pour chaque obligation `same_side`, regrouper ses
+projections ouvertes sur les nœuds `P`. Pour chaque frontier, calculer pour
+chaque projection l'état visible `(ordre local, ordre global des rôles
+visibles)` et le pattern de gaps. Pour chaque tuple de projections, comparer la
+relation jointe observée des patterns de gaps avec le produit cartésien des
+marges par projection.
+
+Tests à exécuter : `py_compile`, pytest ciblé,
+`make bench-context-gap-composition`, puis `rtk make quick`.
+
+Risques : si aucune fausse combinaison produit n'apparaît sur le sweep borné, le
+résultat ne prouve pas l'indépendance ; il signifie seulement que ce stress n'a
+pas encore trouvé de corrélation. Si beaucoup de relations jointes apparaissent,
+le rapport doit rester un diagnostic et ne doit pas être intégré à
+`candidate.py`.
+
+Plan de contre-exemples : commencer par `cycle/mixed` et les familles du sweep
+T096. Chercher un cas où `product_size > actual_relation_size`. Si trouvé,
+documenter le premier exemple avec les chemins de projections, l'état visible,
+les marges locales et les tuples réellement observés.
+
+Plan subagents : pas de fanout pour ce checkpoint de code borné. Le résultat
+sert de base à une future exploration multi-agent sur DP résiduelle, compression
+de relations ou hardness.
+
+Résultats observés : T097 est implémenté. `make bench-context-gap-composition`
+donne `120` lignes complètes, `80` lignes avec P-nœuds, `2487` projections
+ouvertes, `1607` obligations `same_side`, `880` tuples de projections et
+`2040` cas de relation visible. Le produit des marges est réfuté :
+`false_product_case_count=1120`, `false_product_tuple_count=2240`,
+`rows_with_false_products=30`, avec `max_product_size=4`,
+`max_actual_relation_size=2` et `max_false_product_count=2`.
+
+Décision : la relation de gaps T096 explique les obligations isolées mais ne
+compose pas par produit indépendant. Continuer vers une relation jointe de bord
+sur patches composés ou vers une compression exacte de cette relation. Ne pas
+intégrer dans `candidate.py`.
+
 ## ExecPlan 2026-05-31 - T096 relation de gaps d'insertion exterieure
 
 But : transformer le contre-signal T095 en objet mesurable. T095 montre que

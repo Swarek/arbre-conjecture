@@ -147,6 +147,13 @@ question n'est donc plus "quel bit manque ?", mais si cette relation
 `visible_state -> gap_patterns` se compose sans explosion ou si elle réencode la
 frontier globale.
 
+Mise à jour T097 : la composition indépendante des marges de gaps est réfutée
+dans le sweep borné. `make bench-context-gap-composition` trouve `1120` cas où
+le produit des marges locales crée des tuples de gaps jamais observés, sur
+`30` lignes avec faux produits. La piste A/B doit donc transporter une relation
+jointe de bord au moins entre projections, pas seulement une liste de relations
+locales `visible_state -> gap_patterns`.
+
 ## Piste B : programmation dynamique sur le PC-tree
 
 Intuition : un état de frontière pourrait résumer les contraintes externes d’un

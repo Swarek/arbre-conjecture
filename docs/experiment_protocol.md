@@ -508,6 +508,20 @@ entre les rôles visibles au P-nœud, puis mesure la relation
 seulement que ces gaps expliquent les collisions observées sur les frontiers
 énumérées ; la taille de la relation reste le vrai signal.
 
+Lab composition de relations de gaps Piste A/B :
+
+```bash
+make bench-context-gap-composition
+```
+
+Cette commande écrit `reports/context_gap_composition_probe.json`. Elle prend
+les patterns de gaps de T096 pour plusieurs projections `P` d'une même
+obligation `same_side`, fixe les états visibles locaux, puis compare la relation
+jointe observée avec le produit cartésien des marges locales. Un
+`false_product_case_count` positif réfute la composition indépendante des
+relations locales sur le sweep borné. Un compteur nul serait seulement une
+non-réfutation bornée.
+
 Contrôle promise-aware des permutations locales Piste F/C :
 
 ```bash

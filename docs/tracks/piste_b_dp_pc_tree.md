@@ -709,3 +709,28 @@ positions d'insertion du contexte extérieur. Elle décide les obligations isol�
 du sweep, mais sa composition n'est pas testée. Si plusieurs patches font croître
 ces ensembles de gaps, on retombe sur une relation résiduelle complète ; si leur
 taille reste bornée ou structurée, c'est une piste DP réelle.
+
+## T097 - Produit des marges de gaps insuffisant
+
+Statut : lemme négatif expérimental, garde-fou DP.
+
+T097 ajoute `make bench-context-gap-composition`. Pour chaque obligation
+`same_side` projetée sur plusieurs nœuds `P`, le rapport fixe l'état visible de
+chaque projection, collecte les tuples de patterns de gaps observés, puis les
+compare au produit cartésien des marges locales.
+
+Résultat borné :
+
+- `120` lignes complètes ;
+- `2487` projections ouvertes ;
+- `880` tuples de projections ;
+- `2040` relations visibles jointes ;
+- `1120` cas où le produit des marges ajoute des tuples impossibles ;
+- `false_product_tuple_count=2240` ;
+- `max_product_size=4` et `max_actual_relation_size=2`.
+
+Lecture DP : une DP qui stocke seulement les relations T096 séparément par
+projection perd des corrélations. Le prochain objet DP doit être une relation
+résiduelle jointe sur le séparateur, ou une factorisation prouvée plus fine que
+le produit naïf. Le résultat ne borne pas encore la taille de cette relation
+jointe et ne justifie aucune intégration dans `candidate.py`.

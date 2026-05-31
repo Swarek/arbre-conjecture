@@ -860,6 +860,20 @@ Dernier commit green avant T009 : `07120e4`.
   reste non triviale et doit être testée en composition. `candidate.py` n'a pas
   été modifié.
 
+- Checkpoint T097 courant : commit contenant le probe de composition des
+  relations de gaps. Validation observée : compilation Python de
+  `partial_obligation_experiments.py` et
+  `pc_context_gap_composition_probe.py` réussie, tests ciblés
+  `tests/test_partial_obligation_experiments.py` (`19 passed`),
+  `make bench-context-gap-composition` (`120` lignes, `120` complètes,
+  `80` lignes avec P-nœuds, `2487` projections ouvertes, `880` tuples de
+  projections, `false_product_case_count=1120`,
+  `false_product_tuple_count=2240`, `max_product_size=4`,
+  `max_actual_relation_size=2`) et `make quick` (`357 passed`, puis `JUSTE`).
+  Le produit indépendant des marges de gaps est réfuté dans le sweep borné ;
+  la prochaine abstraction doit transporter une relation jointe de bord.
+  `candidate.py` n'a pas été modifié.
+
 ## Rollback
 
 Si une modification régresse et que la cause n’est pas claire :

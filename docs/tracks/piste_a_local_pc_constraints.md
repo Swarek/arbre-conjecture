@@ -769,6 +769,45 @@ de bord n'est pas libre : des états visibles admettent plusieurs insertions
 extérieures. La prochaine piste locale doit mesurer la composition de ces
 relations, pas seulement leur capacité à décider une obligation isolée.
 
+## T097 - Composition des relations de gaps
+
+Statut : diagnostic implémenté, lemme négatif expérimental.
+
+Artefacts ajoutés :
+
+- extension de `src/pc_circular/solvers/partial_obligation_experiments.py`
+- `tools/pc_context_gap_composition_probe.py`
+- cible `make bench-context-gap-composition`
+
+Idée testée : pour une même obligation `same_side` vue par plusieurs nœuds `P`,
+fixer les états visibles locaux de chaque projection, puis comparer les tuples
+de gaps réellement observés avec le produit cartésien des marges locales. Si le
+produit contient des tuples jamais observés, les relations T096 ne se composent
+pas indépendamment.
+
+Résultat du benchmark T097 :
+
+- `120` lignes, toutes complètes ;
+- `80` lignes avec P-nœuds ;
+- `2487` projections ouvertes ;
+- `880` tuples de projections testés ;
+- `2040` cas de relation visible ;
+- `1120` cas de faux produit sur `30` lignes ;
+- `false_product_tuple_count=2240` ;
+- `max_product_size=4`, `max_actual_relation_size=2`,
+  `max_false_product_count=2`.
+
+Premier témoin lisible : `cycle/mixed/n=5` donne déjà une obligation
+`same_side(0,4;2,3)` avec deux projections support `partial2:EW:split`. Chaque
+projection locale admet deux patterns de gaps, mais seulement deux des quatre
+combinaisons du produit sont réalisables par des frontiers.
+
+Interprétation : la piste locale ne peut pas garder seulement une relation de
+gaps par nœud et composer par produit. Il faut transporter une relation jointe
+de bord, ou trouver une structure supplémentaire qui compresse exactement cette
+corrélation. Ce résultat reste un diagnostic borné du scaffold, pas une preuve
+de dureté générale.
+
 ## T022 - Rapport `project_farthest_sets_to_pc_nodes`
 
 Statut : diagnostic implémenté, explicitement non décisionnel.

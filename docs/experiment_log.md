@@ -4718,3 +4718,54 @@
 - Next action : construire un probe de composition/projection de relations de
   gaps sur deux nœuds ou deux patches adjacents, en cherchant une croissance du
   nombre de patterns par état visible.
+
+## 2026-05-31 composition des relations de gaps
+
+- Date/heure : 2026-05-31 14:37 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les relations de gaps T096 pourraient peut-être se composer
+  indépendamment par produit de marges locales lorsque les états visibles de
+  plusieurs projections `P` d'une même obligation `same_side` sont fixés.
+- Changement fait : ajout de `pnode_context_gap_composition_report` dans
+  `src/pc_circular/solvers/partial_obligation_experiments.py`, ajout de
+  `tools/pc_context_gap_composition_probe.py`, extension des tests
+  `tests/test_partial_obligation_experiments.py`, cible
+  `make bench-context-gap-composition`, et documentation T097. `candidate.py`
+  n'a pas été modifié.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `rtk make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `355 passed`, puis `JUSTE`.
+- Commande exécutée :
+  `rtk .venv/bin/python -m py_compile src/pc_circular/solvers/partial_obligation_experiments.py tools/pc_context_gap_composition_probe.py`.
+- Résultat compilation : succès.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_partial_obligation_experiments.py`.
+- Résultat correction ciblée : `19 passed`.
+- Commande exécutée : `rtk make bench-context-gap-composition`.
+- Résultat benchmark T097 :
+  `reports/context_gap_composition_probe.json` écrit ; `120` lignes, `120`
+  complètes, `80` lignes avec P-nœuds, `2487` projections ouvertes,
+  `1607` obligations `same_side`, `880` tuples de projections, `2040` cas de
+  relation visible.
+- Résultat clé :
+  `false_product_case_count=1120`,
+  `false_product_tuple_count=2240`,
+  `rows_with_false_products=30`,
+  `max_product_size=4`,
+  `max_actual_relation_size=2`,
+  `max_false_product_count=2`.
+- Exemple : `cycle/mixed/n=5` produit déjà un faux produit pour
+  `same_side(0,4;2,3)` avec deux projections support
+  `partial2:EW:split:clean`. Chaque projection locale a deux patterns de gaps,
+  mais seulement deux des quatre combinaisons du produit sont réalisables.
+- Conclusion provisoire : les gaps T096 décident les obligations isolées dans le
+  sweep, mais ils ne se composent pas par produit indépendant. Une DP doit
+  transporter une relation jointe de bord ou prouver une compression plus forte
+  que les marges locales.
+- Commande exécutée : `rtk make quick`.
+- Résultat correction finale : `357 passed`, puis `JUSTE`.
+- Next action : mesurer la taille minimale de cette relation jointe sur patches
+  composés, puis chercher soit une compression exacte, soit une famille où la
+  relation jointe croît.

@@ -2635,3 +2635,40 @@ Ce que T096 ne prouve pas :
 Obligation suivante : composer deux relations de gaps voisines ou les projeter
 après élimination d'un patch pour voir si les tailles restent bornées ou
 augmentent comme une relation résiduelle complète.
+
+### T097 : composition des relations de gaps
+
+Statut : lemme négatif expérimental borné.
+
+`pnode_context_gap_composition_report` prend les patterns de gaps de T096 et
+teste une hypothèse de composition plus forte : pour une même obligation
+`same_side` vue par plusieurs nœuds `P`, les choix de gaps seraient
+indépendants une fois les états visibles locaux fixés.
+
+Ce que T097 couvre :
+
+- benchmark borné : `120` lignes complètes, `80` lignes avec P-nœuds ;
+- `2487` projections ouvertes ;
+- `880` tuples de projections testés ;
+- `2040` cas de relation visible ;
+- `1120` cas où le produit cartésien des marges locales ajoute des tuples de
+  gaps jamais observés ;
+- `false_product_tuple_count=2240` ;
+- `max_product_size=4`, `max_actual_relation_size=2`,
+  `max_false_product_count=2`.
+
+Interprétation : les gaps T096 ne se composent pas par produit indépendant dans
+le scaffold testé. Une preuve DP ne peut donc pas se contenter de stocker pour
+chaque projection une relation locale `visible_state -> gap_patterns`; elle doit
+expliquer ou transporter la relation jointe entre projections.
+
+Ce que T097 ne prouve pas :
+
+- pas de borne générale sur la relation jointe ;
+- pas de preuve que la relation jointe soit exponentielle ;
+- pas de preuve sur les PC-trees Hsu/McConnell reconstruits depuis `D` ;
+- pas de décision intégrable dans `candidate.py`.
+
+Obligation suivante : mesurer la taille minimale de la relation jointe sur des
+patches composés, puis chercher soit une compression exacte, soit une famille
+paramétrée où cette relation croît.

@@ -9,7 +9,7 @@ diagnostic, not a solver.
 
 from __future__ import annotations
 
-from itertools import combinations
+from itertools import combinations, product
 
 from pc_circular.cyclic_order_sat import same_side_constraint_satisfied
 from pc_circular.pc_tree import PCNode, enumerate_frontiers, labels
@@ -356,6 +356,37 @@ def _context_gap_state_signature(frontier, local_order, obligation) -> tuple:
             obligation["projected_roles"],
         ),
     )
+
+
+def _is_gap_composition_projection(obligation: dict, scope: str) -> bool:
+    has_missing_role = len(obligation["projected_roles"]) < 4
+    if not has_missing_role:
+        return False
+    if scope == "all_open":
+        return True
+    if scope == "support_open":
+        return bool(obligation["is_support_node"])
+    if scope == "projection_only_open":
+        return not obligation["is_support_node"]
+    raise ValueError(f"unknown gap-composition scope: {scope}")
+
+
+def _product_size(sets: tuple[set, ...]) -> int:
+    size = 1
+    for values in sets:
+        size *= len(values)
+    return size
+
+
+def _first_missing_product_tuple(marginals: tuple[set, ...], actual: set) -> tuple | None:
+    sorted_marginals = [
+        sorted(values, key=repr)
+        for values in marginals
+    ]
+    for candidate in product(*sorted_marginals):
+        if candidate not in actual:
+            return candidate
+    return None
 
 
 def pnode_partial_obligation_report(
@@ -1527,5 +1558,243 @@ def pnode_context_gap_relation_report(
             "that insertion gaps explain the open obligation on enumerated "
             "frontiers; relation-size counters measure whether this is compact. "
             "This is not a solver."
+        ),
+    }
+
+
+def pnode_context_gap_composition_report(
+    D,
+    T: PCNode,
+    *,
+    frontier_limit: int = 20000,
+    projection_tuple_size: int = 2,
+    scope: str = "all_open",
+    max_projection_tuples: int = 50000,
+    max_examples: int = 5,
+) -> dict:
+    """Compare joint gap relations with products of local marginals.
+
+    T096 shows that gap signatures decide isolated open obligations on the
+    enumerated frontiers.  This diagnostic asks a stricter question: for the
+    same ``same_side`` obligation seen through several P-nodes, can the gap
+    choices be composed independently once the visible state of each projection
+    is fixed?
+    """
+
+    tree_labels = set(labels(T))
+    if tree_labels != set(range(len(D))):
+        raise ValueError("PC-tree labels must be exactly 0..n-1")
+    if frontier_limit <= 0:
+        raise ValueError("frontier_limit must be positive")
+    if projection_tuple_size < 2:
+        raise ValueError("projection_tuple_size must be at least 2")
+    if max_projection_tuples < 1:
+        raise ValueError("max_projection_tuples must be positive")
+    if max_examples < 0:
+        raise ValueError("max_examples must be non-negative")
+
+    raw_frontiers = enumerate_frontiers(T, canonical=True, limit=frontier_limit + 1)
+    frontier_truncated = len(raw_frontiers) > frontier_limit
+    frontiers = tuple(raw_frontiers[:frontier_limit])
+
+    node_infos = [
+        node_info
+        for node_info in iter_internal_node_child_labels(T)
+        if node_info["kind"] == "P"
+    ]
+    node_by_path = {tuple(node_info["path"]): node_info for node_info in node_infos}
+    local_order_by_path = {path: {} for path in node_by_path}
+    for path, node_info in node_by_path.items():
+        child_label_sets = node_info["child_label_sets"]
+        for frontier in frontiers:
+            local_order_by_path[path][frontier] = induced_child_circular_order(
+                frontier,
+                child_label_sets,
+            )
+
+    obligations = tuple(_iter_pnode_obligation_projections(D, T))
+    open_obligations = tuple(
+        obligation
+        for obligation in obligations
+        if _is_gap_composition_projection(obligation, scope)
+    )
+    obligations_by_same_side: dict[tuple, list[dict]] = {}
+    for obligation in open_obligations:
+        obligations_by_same_side.setdefault(obligation["same_side"], []).append(obligation)
+
+    same_side_obligation_count = len(obligations_by_same_side)
+    composition_obligation_count = 0
+    projection_tuple_count = 0
+    visible_relation_case_count = 0
+    nontrivial_product_case_count = 0
+    false_product_case_count = 0
+    false_product_tuple_count = 0
+    max_product_size = 0
+    max_actual_relation_size = 0
+    max_false_product_count = 0
+    actual_relation_size_histogram: dict = {}
+    product_size_histogram: dict = {}
+    false_product_size_histogram: dict = {}
+    tuple_pattern_histogram: dict = {}
+    false_product_examples = []
+    nontrivial_product_examples = []
+    projection_tuple_limit_reached = False
+
+    for same_side, same_side_obligations in sorted(obligations_by_same_side.items()):
+        ordered_obligations = sorted(
+            same_side_obligations,
+            key=lambda obligation: (
+                obligation["path"],
+                obligation["fine_role_pattern"],
+                obligation["projected_roles"],
+            ),
+        )
+        if len(ordered_obligations) < projection_tuple_size:
+            continue
+        composition_obligation_count += 1
+
+        for obligation_tuple in combinations(ordered_obligations, projection_tuple_size):
+            if projection_tuple_count >= max_projection_tuples:
+                projection_tuple_limit_reached = True
+                break
+            projection_tuple_count += 1
+            tuple_patterns = tuple(
+                obligation["fine_role_pattern"] for obligation in obligation_tuple
+            )
+            tuple_pattern_histogram[tuple_patterns] = (
+                tuple_pattern_histogram.get(tuple_patterns, 0) + 1
+            )
+
+            relation_by_visible: dict[tuple, set[tuple]] = {}
+            for frontier in frontiers:
+                visible_parts = []
+                gap_parts = []
+                for obligation in obligation_tuple:
+                    path = obligation["path"]
+                    local_order = local_order_by_path[path][frontier]
+                    visible_order = _visible_global_role_order_signature(
+                        frontier,
+                        obligation["projected_roles"],
+                    )
+                    gap_signature = _missing_cyclic_gap_signature(
+                        frontier,
+                        obligation["same_side"],
+                        obligation["projected_roles"],
+                    )
+                    visible_parts.append((path, local_order, visible_order))
+                    gap_parts.append((path, gap_signature))
+                visible_key = tuple(visible_parts)
+                gap_tuple = tuple(gap_parts)
+                relation_by_visible.setdefault(visible_key, set()).add(gap_tuple)
+
+            for visible_key, actual_relation in relation_by_visible.items():
+                visible_relation_case_count += 1
+                actual_size = len(actual_relation)
+                marginals = tuple(
+                    {gap_tuple[index] for gap_tuple in actual_relation}
+                    for index in range(projection_tuple_size)
+                )
+                product_size = _product_size(marginals)
+                false_count = product_size - actual_size
+                max_product_size = max(max_product_size, product_size)
+                max_actual_relation_size = max(max_actual_relation_size, actual_size)
+                max_false_product_count = max(max_false_product_count, false_count)
+                actual_relation_size_histogram[actual_size] = (
+                    actual_relation_size_histogram.get(actual_size, 0) + 1
+                )
+                product_size_histogram[product_size] = (
+                    product_size_histogram.get(product_size, 0) + 1
+                )
+                false_product_size_histogram[false_count] = (
+                    false_product_size_histogram.get(false_count, 0) + 1
+                )
+
+                if product_size > 1:
+                    nontrivial_product_case_count += 1
+                    if len(nontrivial_product_examples) < max_examples:
+                        nontrivial_product_examples.append(
+                            {
+                                "same_side": same_side,
+                                "projection_paths": tuple(
+                                    obligation["path"] for obligation in obligation_tuple
+                                ),
+                                "fine_role_patterns": tuple_patterns,
+                                "visible_key": visible_key,
+                                "actual_relation_size": actual_size,
+                                "product_size": product_size,
+                                "marginal_sizes": tuple(
+                                    len(values) for values in marginals
+                                ),
+                            }
+                        )
+                if false_count > 0:
+                    false_product_case_count += 1
+                    false_product_tuple_count += false_count
+                    if len(false_product_examples) < max_examples:
+                        false_product_examples.append(
+                            {
+                                "same_side": same_side,
+                                "projection_paths": tuple(
+                                    obligation["path"] for obligation in obligation_tuple
+                                ),
+                                "fine_role_patterns": tuple_patterns,
+                                "visible_key": visible_key,
+                                "actual_gap_tuples": tuple(
+                                    sorted(actual_relation, key=repr)[:max_examples]
+                                ),
+                                "marginal_gap_patterns": tuple(
+                                    tuple(sorted(values, key=repr))
+                                    for values in marginals
+                                ),
+                                "missing_product_gap_tuple": _first_missing_product_tuple(
+                                    marginals,
+                                    actual_relation,
+                                ),
+                                "actual_relation_size": actual_size,
+                                "product_size": product_size,
+                                "false_product_count": false_count,
+                            }
+                        )
+        if projection_tuple_limit_reached:
+            break
+
+    return {
+        "method": "pnode_context_gap_composition_report",
+        "n": len(D),
+        "frontier_limit": frontier_limit,
+        "frontiers_seen": len(frontiers),
+        "frontier_truncated": frontier_truncated,
+        "projection_tuple_size": projection_tuple_size,
+        "scope": scope,
+        "max_projection_tuples": max_projection_tuples,
+        "projection_tuple_limit_reached": projection_tuple_limit_reached,
+        "pnode_count": len(node_infos),
+        "obligation_projection_count": len(obligations),
+        "open_obligation_projection_count": len(open_obligations),
+        "same_side_obligation_count": same_side_obligation_count,
+        "composition_obligation_count": composition_obligation_count,
+        "projection_tuple_count": projection_tuple_count,
+        "visible_relation_case_count": visible_relation_case_count,
+        "nontrivial_product_case_count": nontrivial_product_case_count,
+        "false_product_case_count": false_product_case_count,
+        "false_product_tuple_count": false_product_tuple_count,
+        "max_product_size": max_product_size,
+        "max_actual_relation_size": max_actual_relation_size,
+        "max_false_product_count": max_false_product_count,
+        "actual_relation_size_histogram": _sorted_histogram(
+            actual_relation_size_histogram
+        ),
+        "product_size_histogram": _sorted_histogram(product_size_histogram),
+        "false_product_size_histogram": _sorted_histogram(
+            false_product_size_histogram
+        ),
+        "tuple_pattern_histogram": _sorted_histogram(tuple_pattern_histogram),
+        "nontrivial_product_examples": tuple(nontrivial_product_examples),
+        "false_product_examples": tuple(false_product_examples),
+        "interpretation": (
+            "T097 gap-composition diagnostic. false_product_case_count > 0 "
+            "refutes independent composition of per-projection gap marginals "
+            "for the enumerated frontiers. Zero false products is only a "
+            "bounded non-refutation, not a proof."
         ),
     }

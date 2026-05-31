@@ -1,12 +1,14 @@
 from pc_circular.generators import instance_by_kind, single_bad_side_quartet_instance
 from pc_circular.pc_tree import leaf, p_node, pc_tree_from_kind, star_pc_tree
 from pc_circular.solvers.partial_obligation_experiments import (
+    pnode_context_gap_composition_report,
     pnode_context_gap_relation_report,
     pnode_context_signature_ladder_report,
     pnode_partial_context_dependency_report,
     pnode_partial_obligation_report,
     pnode_separator_signature_report,
 )
+from tools.pc_context_gap_composition_probe import run_probe as run_gap_composition_probe
 from tools.pc_context_gap_relation_probe import run_probe as run_gap_probe
 from tools.pc_context_signature_ladder_probe import run_probe as run_ladder_probe
 from tools.pc_partial_context_lab_probe import run_probe as run_context_probe
@@ -321,3 +323,40 @@ def test_context_gap_relation_probe_summarizes_small_sweep():
     assert report["summary"]["rows"] == 4
     assert report["summary"]["rows_with_pnodes"] == 4
     assert "gap_state_mixed_group_count" in report["summary"]
+
+
+def test_context_gap_composition_report_has_expected_shape_on_cycle5():
+    report = pnode_context_gap_composition_report(
+        instance_by_kind(5, kind="cycle"),
+        pc_tree_from_kind("mixed", 5),
+        projection_tuple_size=2,
+        max_projection_tuples=2000,
+    )
+
+    assert report["method"] == "pnode_context_gap_composition_report"
+    assert report["projection_tuple_size"] == 2
+    assert report["open_obligation_projection_count"] > 0
+    assert report["projection_tuple_count"] > 0
+    assert report["visible_relation_case_count"] > 0
+    assert "false_product_case_count" in report
+    assert "actual_relation_size_histogram" in report
+
+
+def test_context_gap_composition_probe_summarizes_small_sweep():
+    report = run_gap_composition_probe(
+        sizes=[4, 5],
+        pc_trees=["star", "mixed"],
+        instance_kinds=["equal", "paired_farthest"],
+        repeats=1,
+        frontier_limit=200,
+        projection_tuple_size=2,
+        scope="all_open",
+        max_projection_tuples=2000,
+        max_examples=2,
+        seed=20260670,
+    )
+
+    assert report["method"] == "t097_context_gap_composition_probe"
+    assert report["summary"]["rows"] == 8
+    assert report["summary"]["rows_with_pnodes"] == 8
+    assert "false_product_case_count" in report["summary"]
