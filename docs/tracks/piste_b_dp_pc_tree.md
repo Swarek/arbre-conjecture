@@ -819,3 +819,30 @@ ne la prouve pas. Les caps augmentent avec la largeur `4`, donc la suite ne
 doit pas seulement augmenter les combinaisons ; elle doit soit construire une
 famille adversariale ciblant l'arité `>=3`, soit essayer une propagation binaire
 réelle et chercher ses collisions.
+
+## T101 - Échantillonnage adversarial de tuples de gaps
+
+Statut : preuve expérimentale bornée, garde-fou DP.
+
+T101 ajoute `make bench-context-gap-random-arity`. Contrairement à T100, le
+probe ne prend pas seulement les premiers tuples sous cap : il tire des tuples
+de projections ouvertes aléatoirement dans l'espace complet, avec tailles `4`
+et `5`, puis refait le test relation réelle vs closure binaire.
+
+Résultat borné :
+
+- `56` lignes ;
+- `32730` tuples échantillonnés dans un espace déclaré de `1680626925`
+  combinaisons ;
+- `111193` relations visibles ;
+- `product_false_case_count=99865` ;
+- `binary_sufficient_case_count=99865` ;
+- `higher_order_case_count=0` ;
+- `max_product_size=1024`, `max_actual_relation_size=8`.
+
+Lecture DP : l'hypothèse "relation de gaps déterminée par les projections
+binaires" résiste aussi à un échantillonnage randomisé de tuples plus larges.
+Mais le résultat reste très loin d'une preuve : aucune borne de taille, aucune
+composition prouvée, aucune garantie promise-aware. La suite doit arrêter les
+simples sweeps d'arité et passer à un modèle constructif ou à une famille
+adversariale explicitement conçue.

@@ -6386,3 +6386,55 @@ avec `by_tuple_size`, `higher_order_case_count`, `pairwise_false_case_count`,
 Risques : la largeur 4 augmente vite le nombre de combinaisons ; des rows
 capées ne prouvent rien. Une absence d'arité `>=3` reste une preuve
 expérimentale bornée, pas un théorème de DP binaire.
+
+## ExecPlan T101 - recherche randomisée de fausse closure binaire
+
+But : corriger le biais principal de T099/T100. Ces probes énumèrent un préfixe
+déterministe des tuples de projections avant d'atteindre un cap ; un
+contre-exemple rare à la closure binaire pourrait être hors de ce préfixe.
+
+Hypothèse testée : l'absence d'arité `>=3` dans T098-T100 n'est pas seulement
+un artefact du préfixe énuméré. En échantillonnant aléatoirement des tuples de
+projections ouvertes à tailles `4` et `5`, on cherche explicitement un cas où
+la closure par projections binaires contient un tuple de gaps jamais observé.
+
+Fichiers visés : `tools/pc_context_gap_random_arity_probe.py`,
+`tests/test_partial_obligation_experiments.py`, `Makefile`, `README.md`,
+`docs/experiment_protocol.md`, `docs/hypothesis_portfolio.md`,
+`docs/proof_obligations.md`, `docs/tracks/piste_a_local_pc_constraints.md`,
+`docs/tracks/piste_b_dp_pc_tree.md`, `docs/tracks/README.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md` et `PLANS.md`.
+
+Algorithme : pour chaque instance et chaque tuple size, énumérer les frontiers
+sous limite, collecter les projections ouvertes `same_side`, puis tirer des
+tuples distincts de projections avec au moins deux obligations différentes.
+Pour chaque état visible joint, comparer la relation réelle de gaps au produit
+unaire et à la closure binaire. Stopper seulement par budget explicite, jamais
+en concluant une preuve globale.
+
+Critères de succès : produire `reports/context_gap_random_arity_probe.json` avec
+les nombres de tuples tentés/échantillonnés, les collisions éventuelles, et les
+exemples `higher_order_examples`. Un `higher_order_case_count > 0` serait un
+contre-exemple durable à ajouter aux régressions ; sinon, documenter seulement
+une non-réfutation randomisée.
+
+Risques : l'échantillonnage ne prouve rien en absence de contre-exemple, et
+peut manquer des régions structurées de l'espace. Le résultat doit servir à
+décider s'il faut écrire un générateur ciblé ou passer à un prototype de
+propagation binaire.
+
+Résultats observés : compilation Python réussie pour
+`tools/pc_context_gap_random_arity_probe.py`. Tests ciblés
+`tests/test_partial_obligation_experiments.py` : `26 passed`.
+`make bench-context-gap-random-arity` écrit
+`reports/context_gap_random_arity_probe.json` avec `56` lignes,
+`32730` tuples échantillonnés, `111193` relations visibles,
+`99865` cas où le produit unaire est trop large mais la closure binaire est
+exacte, `0` cas d'arité `>=3`, `max_product_size=1024` et
+`max_actual_relation_size=8`.
+
+Décision : T101 réduit le biais de préfixe de T100, mais ne prouve toujours
+rien. Après T098-T101, l'augmentation simple de largeur/samples a un rendement
+décroissant. La prochaine étape doit changer de forme : prototype de
+propagation binaire de gaps ou générateur construit pour rendre la closure
+binaire fausse.

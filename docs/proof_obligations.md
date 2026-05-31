@@ -2784,3 +2784,44 @@ Ce que T100 ne prouve pas :
 Obligation suivante : formaliser la sémantique d'une propagation binaire de gaps
 ou construire une famille adversariale cherchant explicitement une closure
 binaire fausse.
+
+### T101 : recherche randomisée de fausse closure binaire
+
+Statut : preuve expérimentale bornée, pas théorème général.
+
+`pc_context_gap_random_arity_probe.py` reprend l'objet T100 mais remplace le
+préfixe déterministe capé par un échantillonnage aléatoire de tuples de
+projections ouvertes. Le but est de chercher un témoin rare où la relation
+réelle des gaps n'est pas reconstruite par ses projections binaires.
+
+Ce que T101 couvre :
+
+- tuple sizes `4` et `5` ;
+- PC-trees `balanced` et `mixed` ;
+- familles `cycle`, `paired_farthest`, `random`, `random4`,
+  `padded_five_local_non_cr` ;
+- `56` lignes, `0` frontier tronquée ;
+- `32730` tuples de projections échantillonnés ;
+- `1680626925` combinaisons déclarées au total ;
+- `111193` relations visibles ;
+- `product_false_case_count=99865` ;
+- `binary_sufficient_case_count=99865` ;
+- `higher_order_case_count=0` ;
+- `max_product_size=1024`, `max_actual_relation_size=8`,
+  `max_pairwise_closure_size=8`.
+
+Interprétation : le contre-exemple "closure binaire fausse" n'est pas trouvé par
+cet échantillonnage randomisé. Cela réduit le risque que T100 ait seulement vu
+un préfixe facile.
+
+Ce que T101 ne prouve pas :
+
+- pas d'exhaustivité sur l'espace de `1680626925` combinaisons ;
+- pas de borne de complexité ;
+- pas de preuve de composition des relations binaires ;
+- pas de résultat sous le promise `T=T(D)` ;
+- pas de décision intégrable dans `candidate.py`.
+
+Obligation suivante : soit construire un générateur ciblé qui impose
+explicitement une obstruction d'arité `>=3`, soit formaliser et tester un
+prototype de propagation binaire de gaps.

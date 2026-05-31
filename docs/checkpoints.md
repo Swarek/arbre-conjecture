@@ -910,6 +910,18 @@ Dernier commit green avant T009 : `07120e4`.
   Les caps restent visibles et empêchent toute conclusion globale.
   `candidate.py` n'a pas été modifié.
 
+- Checkpoint T101 courant : commit contenant le probe randomisé de recherche de
+  fausse closure binaire des relations de gaps. Validation observée :
+  compilation Python de `pc_context_gap_random_arity_probe.py` réussie, tests
+  ciblés `tests/test_partial_obligation_experiments.py` (`26 passed`),
+  `make bench-context-gap-random-arity` (`56` lignes, `0` frontier tronquée,
+  `32730` tuples échantillonnés, `111193` relations visibles,
+  `product_false_case_count=99865`, `binary_sufficient_case_count=99865`,
+  `higher_order_case_count=0`, `max_product_size=1024`,
+  `max_actual_relation_size=8`) et `make quick` (`364 passed`, puis `JUSTE`).
+  L'absence de higher-order reste une non-réfutation randomisée, pas une
+  preuve. `candidate.py` n'a pas été modifié.
+
 ## Rollback
 
 Si une modification régresse et que la cause n’est pas claire :

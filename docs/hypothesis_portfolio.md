@@ -175,6 +175,15 @@ possibles en largeur `4`. Les caps sont encore plus visibles (`18` rows capées
 sur `22`) : l'hypothèse d'interface binaire devient plus robuste
 expérimentalement, mais reste non prouvée et non promise-aware.
 
+Mise à jour T101 : pour réduire le biais de préfixe des caps T099/T100,
+`make bench-context-gap-random-arity` échantillonne aléatoirement des tuples de
+tailles `4` et `5`. Sur `111193` relations visibles et `32730` tuples de
+projections échantillonnés dans un espace de `1680626925` combinaisons,
+`99865` cas demandent une contrainte binaire, `0` demandent une arité `>=3`, et
+le produit unaire monte à `1024`. C'est une non-réfutation randomisée de la
+closure binaire, pas une preuve ; la piste doit maintenant soit construire une
+famille ciblée, soit prototyper la propagation binaire.
+
 ## Piste B : programmation dynamique sur le PC-tree
 
 Intuition : un état de frontière pourrait résumer les contraintes externes d’un

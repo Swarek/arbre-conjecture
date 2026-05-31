@@ -561,6 +561,19 @@ serait un contre-exemple à la reconstruction binaire dans ce scaffold ; un
 compteur nul reste seulement une non-réfutation bornée, surtout si
 `tuple_limit_rows` est positif.
 
+Recherche randomisée d'arité de gaps Piste A/B :
+
+```bash
+make bench-context-gap-random-arity
+```
+
+Cette commande écrit `reports/context_gap_random_arity_probe.json`. Elle
+échantillonne des tuples de projections ouvertes au lieu de scanner seulement le
+préfixe déterministe sous cap. Elle vise les tailles `4` et `5` pour chercher
+un cas où la relation réelle de gaps n'est pas reconstruite par les projections
+binaires. Un témoin `higher_order_case_count > 0` doit devenir un
+contre-exemple durable ; un compteur nul reste une non-réfutation aléatoire.
+
 Contrôle promise-aware des permutations locales Piste F/C :
 
 ```bash

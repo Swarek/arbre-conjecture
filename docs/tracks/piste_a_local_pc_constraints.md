@@ -915,6 +915,42 @@ soit un générateur explicitement conçu pour forcer une arité `>=3`, soit un
 prototype de propagation binaire de gaps à soumettre aux contre-exemples T075,
 T097 et T100.
 
+## T101 - Recherche randomisée de fausse closure binaire
+
+Statut : chasseur de contre-exemples borné, preuve expérimentale négative.
+
+Artefacts ajoutés :
+
+- `tools/pc_context_gap_random_arity_probe.py`
+- cible `make bench-context-gap-random-arity`
+
+Idée testée : T099/T100 scannent un préfixe déterministe des combinaisons de
+projections ouvertes avant d'atteindre un cap. T101 échantillonne des tuples
+aléatoires de tailles `4` et `5` pour chercher une relation réelle de gaps qui
+ne serait pas reconstruite par ses projections binaires.
+
+Résultat du benchmark T101 :
+
+- `56` lignes, `29` lignes où l'échantillon couvre tout l'espace disponible,
+  `0` frontier tronquée ;
+- `32730` tuples de projections échantillonnés ;
+- espace de combinaisons déclaré : `1680626925` ;
+- `111193` relations visibles ;
+- `99865` cas où le produit unaire est trop large mais la closure binaire est
+  exacte ;
+- `0` cas d'arité `>=3` ;
+- tuple size `4` : `15930` tuples, `44056` cas binaires, `0` higher-order ;
+- tuple size `5` : `16800` tuples, `55809` cas binaires, `0` higher-order ;
+- `max_product_size=1024`, `max_actual_relation_size=8`,
+  `max_pairwise_closure_size=8`.
+
+Interprétation : l'absence d'arité `>=3` ne semble pas seulement due au préfixe
+déterministe capé de T100. En revanche, l'échantillonnage couvre une fraction
+minuscule de l'espace total et ne prouve rien. Après T098-T101, continuer à
+augmenter des samples aléatoires a un rendement faible ; la prochaine piste
+doit soit produire une famille adversariale ciblée `binary-closure false`, soit
+implémenter un prototype de propagation binaire à casser.
+
 ## T022 - Rapport `project_farthest_sets_to_pc_nodes`
 
 Statut : diagnostic implémenté, explicitement non décisionnel.

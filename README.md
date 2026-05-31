@@ -76,6 +76,7 @@ make bench-context-gap-composition
 make bench-context-gap-arity
 make bench-context-gap-multi-arity
 make bench-context-gap-high-arity
+make bench-context-gap-random-arity
 make bench-permutation-like
 make bench-permutation-composition
 make bench-relation-components
@@ -268,6 +269,12 @@ pas un solver.
 multi-obligations en tuple sizes `3` et `4` pour chercher une arité supérieure
 au binaire. Les caps de tuples restent visibles ; l'absence de témoin n'est pas
 une preuve de DP binaire.
+
+`make bench-context-gap-random-arity` écrit
+`reports/context_gap_random_arity_probe.json`. Il échantillonne aléatoirement
+des tuples de projections ouvertes en tailles `4` et `5` pour chercher une
+fausse closure binaire que le préfixe déterministe capé de T099/T100 aurait pu
+manquer. C'est un chasseur de contre-exemples borné, pas une preuve.
 
 `make bench-permutation-like` écrit `reports/permutation_like_probe.json`. Il
 teste les profils locaux `permutation_like` observés sur `paired_farthest`

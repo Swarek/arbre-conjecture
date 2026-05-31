@@ -4917,3 +4917,57 @@
 - Next action : construire soit une famille orientée "binary-closure false",
   soit un premier propagateur de relations binaires de gaps, puis le stresser
   sur T075/T097/T100.
+
+## 2026-05-31 recherche randomisée de fausse closure binaire
+
+- Date/heure : 2026-05-31 15:33 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les probes T099/T100 pourraient manquer une arité `>=3`
+  parce qu'ils parcourent un préfixe déterministe des tuples sous cap. Un
+  échantillonnage aléatoire de tuples plus larges pourrait trouver une closure
+  binaire fausse.
+- Changement fait : ajout de `tools/pc_context_gap_random_arity_probe.py`,
+  cible `make bench-context-gap-random-arity`, extension des tests
+  `tests/test_partial_obligation_experiments.py`, et documentation T101.
+  `candidate.py` n'a pas été modifié.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `rtk make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `363 passed`, puis `JUSTE`.
+- Commande exécutée :
+  `rtk .venv/bin/python -m py_compile tools/pc_context_gap_random_arity_probe.py`.
+- Résultat compilation : succès.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_partial_obligation_experiments.py`.
+- Résultat correction ciblée : `26 passed`.
+- Commande exécutée : `rtk make bench-context-gap-random-arity`.
+- Résultat benchmark T101 :
+  `reports/context_gap_random_arity_probe.json` écrit ; `56` lignes,
+  `0` frontier tronquée, `29` lignes où l'échantillon couvre tout l'espace
+  disponible, `32730` tuples de projections échantillonnés.
+- Espace exploré :
+  `1680626925` combinaisons déclarées, `34332` tentatives random,
+  `32730` tuples retenus, `1677` projections ouvertes.
+- Résultat clé :
+  `111193` relations visibles,
+  `product_false_case_count=99865`,
+  `binary_sufficient_case_count=99865`,
+  `higher_order_case_count=0`,
+  `max_product_size=1024`,
+  `max_actual_relation_size=8`,
+  `max_pairwise_closure_size=8`.
+- Répartition :
+  tuple size `4` : `15930` tuples, `51352` relations visibles,
+  `44056` cas binaires, `0` higher-order ;
+  tuple size `5` : `16800` tuples, `59841` relations visibles,
+  `55809` cas binaires, `0` higher-order.
+- Conclusion provisoire : l'échantillonnage randomisé ne trouve pas de fausse
+  closure binaire. Ce résultat réduit le biais de préfixe de T100 mais ne prouve
+  rien ; après T098-T101, il faut arrêter d'augmenter simplement largeur et
+  samples et changer vers une propagation binaire testable ou une famille
+  adversariale ciblée.
+- Commande exécutée : `rtk make quick`.
+- Résultat correction finale : `364 passed`, puis `JUSTE`.
+- Next action : prototype de propagation binaire de gaps, ou générateur
+  construit pour imposer une obstruction d'arité `>=3`.
