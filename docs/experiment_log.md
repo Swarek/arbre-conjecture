@@ -4508,3 +4508,58 @@
 - Next action : construire une relation résiduelle explicite pour ces
   obligations partielles, ou tester si leur composition peut encore rester
   binaire sur des contextes extérieurs variables.
+
+## 2026-05-31 dépendance au contexte des obligations partielles
+
+- Date/heure : 2026-05-31 18:05 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les obligations partielles/support observées en T092 ne
+  sont pas décidées par le seul ordre local des branches d'un P-nœud. Le même
+  triplet `(P-node, obligation same_side, ordre local)` peut contenir à la fois
+  des frontiers satisfaisant et violant l'obligation.
+- Changement fait : extension de
+  `src/pc_circular/solvers/partial_obligation_experiments.py`, ajout de
+  `tools/pc_partial_context_lab_probe.py`, extension des tests
+  `tests/test_partial_obligation_experiments.py`, cible
+  `make bench-partial-context-lab`, et documentation T093. `candidate.py` n'a
+  pas été modifié.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `rtk make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `341 passed`, puis `JUSTE`.
+- Commande exécutée :
+  `rtk .venv/bin/python -m py_compile src/pc_circular/solvers/partial_obligation_experiments.py tools/pc_partial_context_lab_probe.py`.
+- Résultat compilation : succès.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_partial_obligation_experiments.py`.
+- Résultat correction ciblée : `6 passed`.
+- Commande exécutée : `rtk make bench-partial-context-lab`.
+- Résultat benchmark T093 :
+  `reports/partial_context_lab_probe.json` écrit ; `120` lignes,
+  `120` complètes, `80` lignes avec P-nœuds, `35` lignes avec groupes mixtes,
+  `35` lignes avec groupes mixtes support-boundary, `0` ligne avec groupe
+  mixte fully-visible.
+- Totaux observés : `support_boundary_obligation_count=1952`,
+  `fully_visible_obligation_count=1608`, `context_group_count=2361947`,
+  `mixed_group_count=1585`, `support_boundary_mixed_group_count=1223`,
+  `fully_visible_mixed_group_count=0`.
+- Témoin minimal verrouillé : `single_bad_side_quartet_instance()` sur
+  `P(P(0,1),P(2,3))`. À la racine, même ordre local `(0,1)` et même obligation
+  `same_side(0,2;1,3)`, mais frontier satisfaisante `(0,1,3,2)` et frontier
+  violante `(0,1,2,3)`.
+- Histogramme mixte : `support:partial2:EW:split:clean=692`,
+  `support:partial3:missing_witness:s2:mixed=277`,
+  `support:partial3:missing_endpoint:s2:mixed=225`,
+  `support:full_collapsed:s2:mixed=29`, plus
+  `projection:partial2:EW:collapsed:mixed=362`.
+- Commande exécutée : `rtk make quick`.
+- Résultat correction finale : `344 passed`, puis `JUSTE`.
+- Conclusion provisoire : l'ordre local des branches seul est insuffisant pour
+  décider les obligations partielles/support dans le scaffold testé. Les
+  obligations fully-visible restent décidées localement dans ce sweep
+  (`0` groupe mixte), ce qui contrôle le lab T091. Ce résultat pousse vers une
+  relation de séparateur explicite, pas vers une intégration solver.
+- Next action : extraire la plus petite information de séparateur qui distingue
+  les frontiers satisfaisantes/violantes du témoin minimal, puis tester sa
+  composabilité sur les familles T046/T075/T082/T085.

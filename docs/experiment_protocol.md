@@ -444,6 +444,31 @@ cR énumérées sous limite. Une inclusion locale cassée signale un bug ou une
 mauvaise projection ; un grand superset local signale que le modèle
 circle/interlacement local doit transporter davantage de contexte.
 
+Lab obligations partielles Piste A/B/D :
+
+```bash
+make bench-partial-obligation-lab
+```
+
+Cette commande écrit `reports/partial_obligation_lab_probe.json`. Elle mesure,
+autour du lab circle/interlacement, les obligations bad-side qui touchent un
+nœud `P` sans former deux cordes de branches pleinement visibles. Les compteurs
+séparent notamment obligations support/projection, rôles collapsés et
+projections partielles. C'est un diagnostic de séparateur, pas une décision.
+
+Lab dépendance au contexte des obligations partielles Piste A/B :
+
+```bash
+make bench-partial-context-lab
+```
+
+Cette commande écrit `reports/partial_context_lab_probe.json`. Elle groupe les
+frontiers par `(P-node, obligation same_side, ordre local de branches)` et
+cherche si un même groupe contient à la fois des frontiers satisfaisant et
+violant l'obligation. Un groupe mixte prouve que l'ordre local des branches ne
+décide pas cette obligation dans le scaffold testé. Une absence de groupe mixte
+sous limite ne prouve rien.
+
 Contrôle promise-aware des permutations locales Piste F/C :
 
 ```bash

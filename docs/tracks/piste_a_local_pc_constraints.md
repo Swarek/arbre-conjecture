@@ -616,6 +616,48 @@ le modèle de cordes pleinement visibles ignore. Cela pousse la piste A vers une
 relation de séparateur explicite. Ce n'est pas encore une sémantique exacte, et
 cela ne justifie aucun `False` dans `candidate.py`.
 
+## T093 - Dépendance au contexte des obligations partielles
+
+Statut : diagnostic implémenté, lemme négatif expérimental dans le scaffold.
+
+Artefacts ajoutés :
+
+- extension de `src/pc_circular/solvers/partial_obligation_experiments.py`
+- `tools/pc_partial_context_lab_probe.py`
+- cible `make bench-partial-context-lab`
+
+Idée testée : pour chaque P-nœud, chaque obligation `same_side` projetée et
+chaque ordre local de branches, grouper les frontiers globales représentées. Si
+un groupe contient à la fois des frontiers satisfaisant et violant la même
+obligation, alors l'ordre local des branches ne décide pas cette obligation.
+
+Témoin minimal :
+
+- matrice `single_bad_side_quartet_instance()` ;
+- arbre `P(P(0,1), P(2,3))` ;
+- à la racine, même ordre local de branches `(0,1)` ;
+- même obligation `same_side(0,2;1,3)` ;
+- frontier satisfaisante `(0,1,3,2)` ;
+- frontier violante `(0,1,2,3)`.
+
+Résultat du benchmark T093 :
+
+- `120` lignes, toutes complètes ;
+- `80` lignes avec P-nœuds ;
+- `35` lignes avec groupes mixtes ;
+- `35` lignes avec groupes mixtes support-boundary ;
+- `0` groupe mixte fully-visible ;
+- `support_boundary_obligation_count=1952` ;
+- `context_group_count=2361947` ;
+- `mixed_group_count=1585` ;
+- `support_boundary_mixed_group_count=1223`.
+
+Interprétation : les obligations pleinement visibles restent décidées par
+l'ordre local de branches dans ce sweep, ce qui contrôle T091. En revanche, les
+obligations partielles/support ne sont pas des contraintes fermées sur l'ordre
+local des branches. La prochaine abstraction doit transporter une relation de
+séparateur ou d'interface, pas seulement un ordre local enrichi par des cordes.
+
 ## T022 - Rapport `project_farthest_sets_to_pc_nodes`
 
 Statut : diagnostic implémenté, explicitement non décisionnel.

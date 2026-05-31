@@ -806,6 +806,17 @@ Dernier commit green avant T009 : `07120e4`.
   `JUSTE`).
   `candidate.py` n'a pas été modifié.
 
+- Checkpoint T093 courant : commit contenant le lab de dépendance au contexte
+  des obligations partielles. Validation observée : compilation Python de
+  `partial_obligation_experiments.py` et `pc_partial_context_lab_probe.py`
+  réussie, tests ciblés `tests/test_partial_obligation_experiments.py`
+  (`6 passed`), `make bench-partial-context-lab` (`120` lignes,
+  `120` complètes, `80` lignes avec P-nœuds, `35` lignes avec groupes mixtes,
+  `35` lignes avec groupes mixtes support-boundary, `0` groupe mixte
+  fully-visible, `support_boundary_mixed_group_count=1223`) et `make quick`
+  (`344 passed`, puis `JUSTE`).
+  `candidate.py` n'a pas été modifié.
+
 ## Rollback
 
 Si une modification régresse et que la cause n’est pas claire :

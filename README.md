@@ -68,6 +68,7 @@ make bench-residual-interface-stress
 make bench-boundary-residual-projection
 make bench-circle-graph-lab
 make bench-partial-obligation-lab
+make bench-partial-context-lab
 make bench-permutation-like
 make bench-permutation-composition
 make bench-relation-components
@@ -248,6 +249,12 @@ circle/interlacement borné, pas une split decomposition ni un solver.
 comptant les obligations bad-side qui touchent un nœud `P` sans former deux
 cordes de branches pleinement visibles. C'est un diagnostic de séparateur, pas
 une décision d'existence.
+
+`make bench-partial-context-lab` écrit
+`reports/partial_context_lab_probe.json`. Il teste si ces obligations
+partielles sont décidées par le seul ordre local des branches. Les groupes
+mixtes signalent une dépendance au contexte ou aux ordres internes ; ce n'est
+pas un solver.
 
 `make bench-permutation-like` écrit `reports/permutation_like_probe.json`. Il
 teste les profils locaux `permutation_like` observés sur `paired_farthest`

@@ -615,3 +615,23 @@ suffit, mais il ferme une variante simple du contre-argument "l'élimination
 interne crée immédiatement une arité 3" dans les familles testées. La prochaine
 attaque DP doit introduire un contexte extérieur non fixé ou plusieurs patches
 dont les contextes restent variables.
+
+## T093 - Ordre local insuffisant pour les obligations ouvertes
+
+Statut : lemme négatif expérimental.
+
+T093 ajoute `make bench-partial-context-lab`. Le rapport groupe les frontiers
+par `(P-node, obligation same_side, ordre local de branches)` et cherche les
+groupes mixtes : même ordre local, même obligation, mais satisfaction différente
+selon les ordres internes ou le contexte.
+
+Résultat clé : le témoin `single_bad_side_quartet_instance()` sur
+`P(P(0,1),P(2,3))` donne déjà un groupe mixte à la racine. L'ordre local des
+branches est `(0,1)` dans les deux cas, mais `(0,1,3,2)` satisfait
+`same_side(0,2;1,3)` et `(0,1,2,3)` le viole.
+
+Benchmark borné : `120` lignes complètes, `1223` groupes mixtes
+support-boundary, `0` groupe mixte fully-visible. Lecture DP : les contraintes
+fermées en cordes de branches sont bien locales dans ce sweep, mais les
+obligations ouvertes demandent une vraie relation de séparateur. La prochaine
+étape DP doit donc définir cette relation et mesurer sa composabilité.

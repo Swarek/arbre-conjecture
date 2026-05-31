@@ -11,7 +11,8 @@ from __future__ import annotations
 
 from itertools import combinations
 
-from pc_circular.pc_tree import PCNode, labels
+from pc_circular.cyclic_order_sat import same_side_constraint_satisfied
+from pc_circular.pc_tree import PCNode, enumerate_frontiers, labels
 from pc_circular.solvers.circle_graph_experiments import pnode_circle_graph_local_report
 from pc_circular.solvers.dp_experiments import bad_witnesses_by_pair
 from pc_circular.solvers.local_constraints import (
@@ -19,6 +20,7 @@ from pc_circular.solvers.local_constraints import (
     project_bad_side_obligations_to_pc_nodes,
 )
 from pc_circular.solvers.sat_like_experiments import quartet_support_paths
+from pc_circular.solvers.width4_experiments import induced_child_circular_order
 
 
 NON_CHORD_ROLE_PATTERNS = (
@@ -166,6 +168,62 @@ def _fine_pnode_projection_by_path(D, T: PCNode) -> dict[tuple[int, ...], dict]:
                         }
                     )
     return per_path
+
+
+def _iter_pnode_obligation_projections(D, T: PCNode):
+    node_infos = [
+        node_info
+        for node_info in iter_internal_node_child_labels(T)
+        if node_info["kind"] == "P"
+    ]
+    prepared_nodes = []
+    for node_info in node_infos:
+        label_to_branch: dict[int, int] = {}
+        for index, child_labels in enumerate(node_info["child_label_sets"]):
+            for label in child_labels:
+                label_to_branch[label] = index
+        prepared_nodes.append((node_info, label_to_branch))
+
+    for pair, witnesses in bad_witnesses_by_pair(D).items():
+        a, c = pair
+        for b, d in combinations(witnesses, 2):
+            same_side = (a, c, b, d)
+            support_paths = set(quartet_support_paths(T, same_side))
+            roles = (
+                ("endpoint", a),
+                ("endpoint", c),
+                ("witness", b),
+                ("witness", d),
+            )
+            for node_info, label_to_branch in prepared_nodes:
+                path = tuple(node_info["path"])
+                projected_roles = tuple(
+                    (role, label, label_to_branch[label])
+                    for role, label in roles
+                    if label in label_to_branch
+                )
+                if len(projected_roles) < 2:
+                    continue
+                support = tuple(sorted({branch for _, _, branch in projected_roles}))
+                is_support_node = path in support_paths
+                pattern = _fine_role_pattern(
+                    projected_roles,
+                    support,
+                    is_support_node=is_support_node,
+                )
+                yield {
+                    "path": path,
+                    "degree": len(node_info["child_label_sets"]),
+                    "child_label_sets": node_info["child_label_sets"],
+                    "same_side": same_side,
+                    "pair": pair,
+                    "bad_witnesses": (b, d),
+                    "support_paths": tuple(sorted(support_paths)),
+                    "is_support_node": is_support_node,
+                    "projected_roles": projected_roles,
+                    "support": support,
+                    "fine_role_pattern": pattern,
+                }
 
 
 def pnode_partial_obligation_report(
@@ -381,5 +439,219 @@ def pnode_partial_obligation_report(
             "T092 partial-obligation census layered on T091. Counts show where "
             "fully visible chord constraints need separator/interface data; "
             "this is not a decision procedure."
+        ),
+    }
+
+
+def pnode_partial_context_dependency_report(
+    D,
+    T: PCNode,
+    *,
+    frontier_limit: int = 20000,
+    max_examples: int = 5,
+) -> dict:
+    """Test whether local branch order decides partial same-side obligations.
+
+    For each P-node and each projected bad-side obligation, this groups global
+    frontiers by the induced local branch order.  A mixed group, with both
+    satisfying and violating frontiers for the same local branch order, is a
+    direct witness that branch order alone is not a sufficient local state.
+    """
+
+    tree_labels = set(labels(T))
+    if tree_labels != set(range(len(D))):
+        raise ValueError("PC-tree labels must be exactly 0..n-1")
+    if frontier_limit <= 0:
+        raise ValueError("frontier_limit must be positive")
+    if max_examples < 0:
+        raise ValueError("max_examples must be non-negative")
+
+    raw_frontiers = enumerate_frontiers(T, canonical=True, limit=frontier_limit + 1)
+    frontier_truncated = len(raw_frontiers) > frontier_limit
+    frontiers = tuple(raw_frontiers[:frontier_limit])
+
+    node_infos = [
+        node_info
+        for node_info in iter_internal_node_child_labels(T)
+        if node_info["kind"] == "P"
+    ]
+    node_by_path = {tuple(node_info["path"]): node_info for node_info in node_infos}
+    local_order_by_path = {path: {} for path in node_by_path}
+    for path, node_info in node_by_path.items():
+        child_label_sets = node_info["child_label_sets"]
+        for frontier in frontiers:
+            local_order_by_path[path][frontier] = induced_child_circular_order(
+                frontier,
+                child_label_sets,
+            )
+
+    obligations = tuple(_iter_pnode_obligation_projections(D, T))
+    node_accumulator = {
+        path: {
+            "path": path,
+            "degree": len(node_info["child_label_sets"]),
+            "branch_sizes": tuple(len(child_labels) for child_labels in node_info["child_label_sets"]),
+            "support_obligation_count": 0,
+            "support_boundary_obligation_count": 0,
+            "fully_visible_obligation_count": 0,
+            "projection_only_obligation_count": 0,
+            "context_group_count": 0,
+            "mixed_group_count": 0,
+            "support_boundary_mixed_group_count": 0,
+            "fully_visible_mixed_group_count": 0,
+            "mixed_obligations": set(),
+            "fine_role_pattern_histogram": {},
+            "mixed_fine_role_pattern_histogram": {},
+            "mixed_examples": [],
+        }
+        for path, node_info in node_by_path.items()
+    }
+
+    for obligation in obligations:
+        path = obligation["path"]
+        node = node_accumulator[path]
+        pattern = obligation["fine_role_pattern"]
+        node["fine_role_pattern_histogram"][pattern] = (
+            node["fine_role_pattern_histogram"].get(pattern, 0) + 1
+        )
+        if obligation["is_support_node"]:
+            node["support_obligation_count"] += 1
+            if pattern == "support:full_four_branch":
+                node["fully_visible_obligation_count"] += 1
+            else:
+                node["support_boundary_obligation_count"] += 1
+        else:
+            node["projection_only_obligation_count"] += 1
+
+        grouped: dict[tuple[int, ...], dict] = {}
+        for frontier in frontiers:
+            local_order = local_order_by_path[path].get(frontier)
+            if local_order is None:
+                continue
+            group = grouped.setdefault(
+                local_order,
+                {
+                    "satisfied": 0,
+                    "violated": 0,
+                    "satisfied_example": None,
+                    "violated_example": None,
+                },
+            )
+            if same_side_constraint_satisfied(frontier, obligation["same_side"]):
+                group["satisfied"] += 1
+                if group["satisfied_example"] is None:
+                    group["satisfied_example"] = frontier
+            else:
+                group["violated"] += 1
+                if group["violated_example"] is None:
+                    group["violated_example"] = frontier
+
+        for local_order, group in grouped.items():
+            node["context_group_count"] += 1
+            if group["satisfied"] and group["violated"]:
+                node["mixed_group_count"] += 1
+                node["mixed_obligations"].add(obligation["same_side"])
+                node["mixed_fine_role_pattern_histogram"][pattern] = (
+                    node["mixed_fine_role_pattern_histogram"].get(pattern, 0) + 1
+                )
+                if pattern == "support:full_four_branch":
+                    node["fully_visible_mixed_group_count"] += 1
+                if obligation["is_support_node"] and pattern != "support:full_four_branch":
+                    node["support_boundary_mixed_group_count"] += 1
+                if len(node["mixed_examples"]) < max_examples:
+                    node["mixed_examples"].append(
+                        {
+                            "same_side": obligation["same_side"],
+                            "fine_role_pattern": pattern,
+                            "is_support_node": obligation["is_support_node"],
+                            "local_branch_order": local_order,
+                            "satisfied_count": group["satisfied"],
+                            "violated_count": group["violated"],
+                            "satisfied_frontier": group["satisfied_example"],
+                            "violated_frontier": group["violated_example"],
+                            "projected_roles": obligation["projected_roles"],
+                            "support": obligation["support"],
+                        }
+                    )
+
+    nodes = []
+    for node in node_accumulator.values():
+        mixed_obligations = tuple(sorted(node.pop("mixed_obligations")))
+        node["mixed_obligation_count"] = len(mixed_obligations)
+        node["mixed_obligation_examples"] = mixed_obligations[:max_examples]
+        node["fine_role_pattern_histogram"] = _sorted_histogram(
+            node["fine_role_pattern_histogram"]
+        )
+        node["mixed_fine_role_pattern_histogram"] = _sorted_histogram(
+            node["mixed_fine_role_pattern_histogram"]
+        )
+        node["mixed_examples"] = tuple(node["mixed_examples"])
+        nodes.append(node)
+
+    fine_role_pattern_histogram: dict = {}
+    mixed_fine_role_pattern_histogram: dict = {}
+    for node in nodes:
+        _merge_histogram(fine_role_pattern_histogram, node["fine_role_pattern_histogram"])
+        _merge_histogram(
+            mixed_fine_role_pattern_histogram,
+            node["mixed_fine_role_pattern_histogram"],
+        )
+
+    interesting_nodes = [
+        node
+        for node in nodes
+        if node["mixed_group_count"]
+        or node["support_boundary_obligation_count"]
+        or node["fully_visible_mixed_group_count"]
+    ]
+
+    return {
+        "method": "pnode_partial_context_dependency_report",
+        "n": len(D),
+        "frontier_limit": frontier_limit,
+        "frontiers_seen": len(frontiers),
+        "frontier_truncated": frontier_truncated,
+        "pnode_count": len(nodes),
+        "obligation_projection_count": len(obligations),
+        "support_obligation_count": sum(node["support_obligation_count"] for node in nodes),
+        "support_boundary_obligation_count": sum(
+            node["support_boundary_obligation_count"] for node in nodes
+        ),
+        "fully_visible_obligation_count": sum(
+            node["fully_visible_obligation_count"] for node in nodes
+        ),
+        "projection_only_obligation_count": sum(
+            node["projection_only_obligation_count"] for node in nodes
+        ),
+        "context_group_count": sum(node["context_group_count"] for node in nodes),
+        "mixed_group_count": sum(node["mixed_group_count"] for node in nodes),
+        "support_boundary_mixed_group_count": sum(
+            node["support_boundary_mixed_group_count"] for node in nodes
+        ),
+        "fully_visible_mixed_group_count": sum(
+            node["fully_visible_mixed_group_count"] for node in nodes
+        ),
+        "nodes_with_mixed_groups": sum(1 for node in nodes if node["mixed_group_count"]),
+        "nodes_with_support_boundary_mixed_groups": sum(
+            1 for node in nodes if node["support_boundary_mixed_group_count"]
+        ),
+        "fine_role_pattern_histogram": _sorted_histogram(fine_role_pattern_histogram),
+        "mixed_fine_role_pattern_histogram": _sorted_histogram(
+            mixed_fine_role_pattern_histogram
+        ),
+        "max_mixed_group_count": max(
+            (node["mixed_group_count"] for node in nodes),
+            default=0,
+        ),
+        "max_support_boundary_mixed_group_count": max(
+            (node["support_boundary_mixed_group_count"] for node in nodes),
+            default=0,
+        ),
+        "interesting_nodes": tuple(interesting_nodes[:max_examples]),
+        "nodes": tuple(nodes),
+        "interpretation": (
+            "T093 context-dependency diagnostic. Mixed groups show that local "
+            "branch order alone does not decide the projected same-side "
+            "obligation; this is not a solver."
         ),
     }

@@ -22,6 +22,72 @@ Dans un Goal long, le plan doit aussi définir le critère d’arrêt : succès
 mesurable, réfutation, blocage théorique, ou bascule vers une autre piste. Ne pas
 laisser un Goal tourner comme une recherche ouverte sans sortie concrète.
 
+## ExecPlan 2026-05-31 - T093 dependance au contexte des obligations partielles
+
+But : transformer le signal T092 en test sémantique plus net. T092 a montré que
+les supersets vacus du modèle de cordes portent des obligations partielles ou
+multi-niveaux ; T093 doit tester si ces obligations sont déterminées par le seul
+ordre local des branches d'un P-noeud.
+
+Hypothèse : les obligations `support:*` non pleinement visibles ne sont pas des
+contraintes d'ordre de branches fermées. Pour un même ordre local de branches,
+deux frontiers globales peuvent satisfaire ou violer la même obligation selon
+les choix internes ou le contexte extérieur. Si oui, une vraie relation de
+séparateur est nécessaire.
+
+Fichiers à modifier : étendre
+`src/pc_circular/solvers/partial_obligation_experiments.py`, ajouter
+`tools/pc_partial_context_lab_probe.py`, tests ciblés, cible Makefile, puis
+documenter `docs/experiment_log.md`, `docs/checkpoints.md`,
+`docs/proof_obligations.md`, `docs/hypothesis_portfolio.md`,
+`docs/tracks/README.md` et `docs/tracks/piste_a_local_pc_constraints.md`.
+
+Algorithme pressenti : énumérer les frontiers sous limite, extraire l'ordre
+local des branches avec `induced_child_circular_order`, puis grouper chaque
+obligation `same_side(a,c;b,d)` par `(P-node, obligation, ordre_local)`. Si un
+groupe contient à la fois des frontiers satisfaisantes et violantes, l'ordre
+local des branches ne décide pas cette obligation. Contrôler séparément les
+obligations fully-visible `support:full_four_branch`, qui devraient être
+décidées par l'ordre local.
+
+Tests à exécuter : py_compile du module et de l'outil, pytest ciblé,
+`make bench-partial-context-lab`, puis `rtk make quick`.
+
+Risques : l'énumération est bornée par `frontier_limit` ; une absence de groupes
+mixtes ne prouve rien. Un groupe mixte prouve seulement que l'ordre local de
+branches est insuffisant dans le scaffold testé, pas une borne de complexité.
+
+Plan de contre-exemples : utiliser `single_bad_side_quartet_instance()` sur
+`P(P(0,1), P(2,3))` comme seed minimal : la racine a le même ordre de branches,
+mais l'obligation `same_side(0,2;1,3)` dépend des ordres internes. Tout mixte
+fully-visible doit être traité comme bug ou cas à inspecter.
+
+Plan subagents : trois explorateurs read-only sont lancés en parallèle :
+API same-side/projection, design du rapport JSON et conventions tests/docs. Le
+fil principal implémente le probe et garde la synthèse.
+
+Résultats observés : T093 est implémenté. Le contrôle minimal
+`single_bad_side_quartet_instance()` sur `P(P(0,1), P(2,3))` produit bien un
+groupe mixte : même ordre local de branches `(0,1)`, même obligation
+`same_side(0,2;1,3)`, frontier satisfaisante `(0,1,3,2)` et frontier violante
+`(0,1,2,3)`. Le benchmark `make bench-partial-context-lab` donne `120` lignes
+complètes, `80` lignes avec P-noeuds, `35` lignes avec groupes mixtes et
+`35` lignes avec groupes mixtes support-boundary. Aucun groupe mixte
+fully-visible n'est observé (`fully_visible_mixed_group_count=0`). Totaux :
+`support_boundary_obligation_count=1952`, `context_group_count=2361947`,
+`mixed_group_count=1585`, `support_boundary_mixed_group_count=1223`.
+Histogramme mixte : `support:partial2:EW:split:clean=692`,
+`support:partial3:missing_witness:s2:mixed=277`,
+`support:partial3:missing_endpoint:s2:mixed=225`,
+`support:full_collapsed:s2:mixed=29`, plus
+`projection:partial2:EW:collapsed:mixed=362`.
+
+Décision : l'ordre local des branches seul est réfuté comme état suffisant
+pour les obligations partielles/support dans le scaffold testé. Continuer vers
+une vraie relation de séparateur qui expose au moins l'information binaire
+interne/contexte responsable de ces groupes mixtes. Ne pas intégrer dans
+`candidate.py`.
+
 ## ExecPlan 2026-05-31 - T092 obligations partielles apres le lab circle
 
 But : prolonger T091 sans sur-vendre le modele de cordes pleinement visibles.

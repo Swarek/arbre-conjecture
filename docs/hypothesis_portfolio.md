@@ -113,6 +113,14 @@ superset vacu ont des obligations partielles ou multi-niveaux, avec
 Cela renforce la piste d'une relation de séparateur pour les obligations
 ouvertes ; cela ne donne pas encore une sémantique de composition.
 
+Mise à jour T093 : l'ordre local des branches est insuffisant pour décider ces
+obligations ouvertes. Le témoin `single_bad_side_quartet_instance()` sur
+`P(P(0,1),P(2,3))` a le même ordre local `(0,1)` à la racine, mais une frontier
+satisfait `same_side(0,2;1,3)` et une autre la viole. Le sweep borné donne
+`1223` groupes mixtes support-boundary et `0` groupe mixte fully-visible.
+La piste A doit maintenant définir l'information de séparateur minimale, pas
+ajouter seulement des contraintes à l'ordre de branches.
+
 ## Piste B : programmation dynamique sur le PC-tree
 
 Intuition : un état de frontière pourrait résumer les contraintes externes d’un

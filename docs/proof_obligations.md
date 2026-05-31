@@ -2477,3 +2477,37 @@ Ce que T092 ne prouve pas :
 Obligation suivante : définir une relation de séparateur pour les obligations
 partielles observées, puis tester si sa composition reste binaire ou si elle
 réencode une relation résiduelle plus large.
+
+### T093 : dépendance au contexte des obligations partielles
+
+Statut : lemme négatif expérimental dans le scaffold, pas théorème général.
+
+`pnode_partial_context_dependency_report` groupe les frontiers globales par
+`(P-node, obligation same_side, ordre local de branches)`. Un groupe mixte,
+avec à la fois des frontiers satisfaisantes et violantes pour la même clé,
+montre que l'ordre local des branches ne décide pas cette obligation.
+
+Ce que T093 couvre :
+
+- témoin minimal versionné : `single_bad_side_quartet_instance()` sur
+  `P(P(0,1),P(2,3))` ;
+- à la racine de ce témoin, l'obligation `same_side(0,2;1,3)` a le même ordre
+  local de branches `(0,1)` pour une frontier satisfaisante `(0,1,3,2)` et une
+  frontier violante `(0,1,2,3)` ;
+- benchmark borné : `120` lignes complètes, `80` lignes avec P-nœuds ;
+- `35` lignes avec groupes mixtes support-boundary ;
+- `support_boundary_mixed_group_count=1223` ;
+- `fully_visible_mixed_group_count=0`, donc les obligations déjà convertibles
+  en cordes de branches restent localement décidées dans ce sweep.
+
+Ce que T093 ne prouve pas :
+
+- il ne donne pas encore la relation de séparateur correcte ;
+- il ne prouve pas que l'interface nécessaire est seulement binaire ;
+- l'énumération des frontiers reste bornée ;
+- le scaffold `PCNode` n'est pas une reconstruction Hsu/McConnell complète ;
+- aucun résultat ne justifie un rejet `False` dans `candidate.py`.
+
+Obligation suivante : définir une variable/relation de séparateur capable de
+distinguer les deux frontiers du témoin minimal, puis mesurer si cette relation
+compose proprement sur les obligations ouvertes de T092.
