@@ -145,6 +145,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T096 | 2026-05-31 | A/B/R004 | Relation de gaps d'insertion extérieure : explique les collisions T095 sur le sweep, mais expose une relation de bord non triviale à composer | `make bench-context-gap-relation` |
 | T097 | 2026-05-31 | A/B/R004 | Composition des relations de gaps : le produit indépendant des marges locales crée des tuples impossibles, donc une relation jointe de bord est nécessaire | `make bench-context-gap-composition` |
 | T098 | 2026-05-31 | A/B/R004 | Arité des relations jointes de gaps : stress ladder à trois projections, produit unaire trop large mais closure binaire exacte sur le sweep borné | `make bench-context-gap-arity` |
+| T099 | 2026-05-31 | A/B/R004 | Arité multi-obligations des gaps : plusieurs contraintes `same_side` mélangées, aucune arité `>=3` trouvée sous cap, signal binaire non prouvé | `make bench-context-gap-multi-arity` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

@@ -535,6 +535,19 @@ en arité minimale observée `1`, `2` ou `>=3`. Le rapport ajoute un stress
 contrôlé `nested_bad_side_ladder` pour forcer des obligations avec trois
 projections ouvertes. Ce stress est un scaffold, pas une instance promise-aware.
 
+Lab arité multi-obligations des gaps Piste A/B :
+
+```bash
+make bench-context-gap-multi-arity
+```
+
+Cette commande écrit `reports/context_gap_multi_arity_probe.json`. Elle mélange
+des projections ouvertes issues d'au moins deux obligations `same_side`
+distinctes, puis compare produit des marges, closure binaire et relation jointe
+réelle. Les lignes peuvent être bornées par `max_projection_tuples`; un
+`tuple_limit_rows` non nul doit rester visible et empêche toute conclusion
+globale.
+
 Contrôle promise-aware des permutations locales Piste F/C :
 
 ```bash

@@ -22,6 +22,64 @@ Dans un Goal long, le plan doit aussi définir le critère d’arrêt : succès
 mesurable, réfutation, blocage théorique, ou bascule vers une autre piste. Ne pas
 laisser un Goal tourner comme une recherche ouverte sans sortie concrète.
 
+## ExecPlan 2026-05-31 - T099 arite multi-obligations des gaps
+
+But : attaquer la limite de T098. T098 ne teste l'arité que pour plusieurs
+projections d'une même obligation `same_side`. T099 doit tester plusieurs
+obligations ouvertes simultanément, ce qui est plus proche d'une relation de
+bord de patch.
+
+Hypothèse : même lorsque plusieurs obligations `same_side` sont mélangées, la
+relation jointe des patterns de gaps pourrait rester déterminée par ses
+projections binaires. Une arité `>=3` fournirait un contre-signal fort contre
+une DP d'interface binaire.
+
+Fichiers à modifier :
+`src/pc_circular/solvers/partial_obligation_experiments.py`,
+`tools/pc_context_gap_multi_arity_probe.py`,
+`tests/test_partial_obligation_experiments.py`, `Makefile`, puis les documents
+de suivi (`README.md`, `docs/experiment_protocol.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `docs/proof_obligations.md`,
+`docs/hypothesis_portfolio.md`, `docs/tracks/README.md`,
+`docs/tracks/piste_a_local_pc_constraints.md`,
+`docs/tracks/piste_b_dp_pc_tree.md`). `candidate.py` reste hors scope.
+
+Algorithme pressenti : énumérer les frontiers bornées, puis les projections
+ouvertes d'obligations bad-side. Former des tuples de trois projections en
+exigeant au moins deux obligations `same_side` distinctes. À état visible joint
+fixé, comparer la relation réelle des gaps au produit des marges et à la closure
+par projections binaires.
+
+Tests à exécuter : `py_compile`, pytest ciblé,
+`make bench-context-gap-multi-arity`, puis `rtk make quick`.
+
+Risques : le sweep est borné par `frontier_limit` et `max_projection_tuples`.
+Une absence d'arité `3` n'est pas une preuve. Si aucun cas multi-obligation
+n'est produit, la piste doit changer de générateur.
+
+Plan de contre-exemples : commencer par `cycle/mixed/n=5` qui produit déjà des
+faux produits T097, puis étendre au sweep T096/T097. Si une arité `3` apparaît,
+documenter le premier tuple avec les obligations distinctes et les gaps
+pairwise-compatibles mais impossibles.
+
+Plan subagents : pas de fanout pour ce checkpoint borné ; l'expérience est une
+extension directe de T098.
+
+Résultats observés : T099 est implémenté. `make bench-context-gap-multi-arity`
+donne `23` lignes, dont `9` complètes et `14` capées par
+`max_projection_tuples=10000`. Le rapport inspecte `172211` tuples de
+projections et `493440` cas de relation visible. Les marges unaires sont trop
+larges dans `370927` cas (`product_false_tuple_count=1957898`), mais tous ces
+cas sont reconstruits par les projections binaires
+(`binary_sufficient_case_count=370927`, `higher_order_case_count=0`). Maxima :
+`max_product_size=64`, `max_actual_relation_size=16`,
+`max_pairwise_closure_size=16`.
+
+Décision : le signal binaire survit au mélange de plusieurs obligations dans le
+sweep borné. Continuer soit vers un prototype de propagation binaire de gaps,
+soit vers un générateur explicitement orienté arité `3`. Ne pas intégrer dans
+`candidate.py`.
+
 ## ExecPlan 2026-05-31 - T098 arite des relations jointes de gaps
 
 But : poursuivre T097. Le produit indépendant des marges locales est réfuté ;

@@ -4817,3 +4817,52 @@
 - Next action : soit chercher une arité `3` avec plusieurs obligations
   simultanées ou des familles non-ladder, soit prototyper une composition
   binaire et essayer de la casser.
+
+## 2026-05-31 arité multi-obligations des gaps
+
+- Date/heure : 2026-05-31 15:00 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : une arité `3` pourrait apparaître quand on mélange des
+  projections ouvertes issues de plusieurs obligations `same_side` distinctes,
+  même si T098 ne l'a pas trouvée pour une seule obligation.
+- Changement fait : ajout de
+  `pnode_context_gap_multi_obligation_arity_report` dans
+  `src/pc_circular/solvers/partial_obligation_experiments.py`, ajout de
+  `tools/pc_context_gap_multi_arity_probe.py`, extension des tests
+  `tests/test_partial_obligation_experiments.py`, cible
+  `make bench-context-gap-multi-arity`, et documentation T099. `candidate.py`
+  n'a pas été modifié.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `rtk make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `359 passed`, puis `JUSTE`.
+- Commande exécutée :
+  `rtk .venv/bin/python -m py_compile src/pc_circular/solvers/partial_obligation_experiments.py tools/pc_context_gap_multi_arity_probe.py`.
+- Résultat compilation : succès.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_partial_obligation_experiments.py`.
+- Résultat correction ciblée : `23 passed`.
+- Commande exécutée : `rtk make bench-context-gap-multi-arity`.
+- Résultat benchmark T099 :
+  `reports/context_gap_multi_arity_probe.json` écrit ; `23` lignes, `9`
+  complètes, `14` capées par `max_projection_tuples=10000`.
+- Résultat clé :
+  `172211` tuples de projections,
+  `493440` cas de relation visible,
+  `product_false_case_count=370927`,
+  `product_false_tuple_count=1957898`,
+  `binary_sufficient_case_count=370927`,
+  `higher_order_case_count=0`,
+  `max_product_size=64`,
+  `max_actual_relation_size=16`,
+  `max_pairwise_closure_size=16`.
+- Conclusion provisoire : même avec plusieurs obligations `same_side`
+  distinctes, aucune arité `3` n'est observée sous cap ; les cas non
+  indépendants restent reconstruits par projections binaires. Les caps rendent
+  ce résultat strictement expérimental.
+- Commande exécutée : `rtk make quick`.
+- Résultat correction finale : `361 passed`, puis `JUSTE`.
+- Next action : soit construire un prototype de propagation binaire de gaps,
+  soit générer des familles explicitement conçues pour chercher une arité `3`
+  hors du scaffold mixed courant.

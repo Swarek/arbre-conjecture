@@ -161,6 +161,12 @@ reconstruit exactement la relation observée (`higher_order_case_count=0`). Ce
 résultat soutient une interface binaire comme hypothèse de travail dans ce
 stress, sans la prouver ni couvrir les instances promise-aware.
 
+Mise à jour T099 : le test multi-obligations mélange des projections ouvertes
+issues de contraintes `same_side` distinctes. Sur `493440` relations visibles
+bornées, `370927` demandent une contrainte binaire et `0` demandent une arité
+`>=3`. Les caps sont visibles (`tuple_limit_rows=14`), donc c'est un signal
+expérimental en faveur d'une interface binaire, pas une preuve.
+
 ## Piste B : programmation dynamique sur le PC-tree
 
 Intuition : un état de frontière pourrait résumer les contraintes externes d’un

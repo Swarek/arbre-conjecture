@@ -766,3 +766,28 @@ prochain modèle : transporter un graphe de relations binaires entre projections
 de gaps peut être strictement plus pertinent qu'une relation jointe arbitraire.
 Le prochain contre-test doit chercher une vraie arité `3`, ou bien construire un
 prototype de composition binaire et essayer de le casser.
+
+## T099 - Arité binaire avec plusieurs obligations
+
+Statut : diagnostic implémenté, preuve expérimentale bornée.
+
+T099 ajoute `make bench-context-gap-multi-arity`. Contrairement à T098, les
+tuples de projections peuvent venir de plusieurs obligations `same_side`
+distinctes. Le rapport teste si la relation jointe est reconstruite par les
+projections binaires.
+
+Résultat borné :
+
+- `23` lignes, dont `14` atteignent le cap de tuples ;
+- `172211` tuples de projections ;
+- `493440` relations visibles ;
+- `122513` cas où les marges unaires suffisent ;
+- `370927` cas où une contrainte binaire est nécessaire et suffisante ;
+- `0` cas d'arité `>=3` ;
+- `max_actual_relation_size=16`.
+
+Lecture DP : le signal binaire résiste à un mélange de plusieurs obligations,
+mais le cap de tuples et le scaffold non promise-aware empêchent toute preuve.
+La prochaine étape utile est soit un générateur plus agressif pour chercher une
+arity `>=3`, soit un prototype de propagation de relations binaires de gaps
+dont on pourra mesurer la taille et les collisions.

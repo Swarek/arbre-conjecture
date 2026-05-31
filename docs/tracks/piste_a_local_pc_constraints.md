@@ -846,6 +846,39 @@ binaires reconstruisent la relation jointe. Cela soutient une interface binaire
 comme hypothèse de travail pour cette famille, mais ne prouve pas qu'aucune
 relation d'arité `3` n'existe ailleurs.
 
+## T099 - Arité multi-obligations des gaps
+
+Statut : diagnostic implémenté, preuve expérimentale bornée.
+
+Artefacts ajoutés :
+
+- extension de `src/pc_circular/solvers/partial_obligation_experiments.py`
+- `tools/pc_context_gap_multi_arity_probe.py`
+- cible `make bench-context-gap-multi-arity`
+
+Idée testée : T098 ne mélangeait pas plusieurs obligations `same_side`
+distinctes. T099 forme des tuples de trois projections ouvertes, avec au moins
+deux obligations distinctes, puis compare la relation jointe des gaps au produit
+des marges et à la closure par projections binaires.
+
+Résultat du benchmark T099 :
+
+- `23` lignes ;
+- `9` lignes complètes et `14` lignes arrêtées par le cap
+  `max_projection_tuples=10000` ;
+- `172211` tuples de projections testés ;
+- `493440` cas de relation visible ;
+- `product_false_case_count=370927` ;
+- `binary_sufficient_case_count=370927` ;
+- `higher_order_case_count=0` ;
+- `max_product_size=64`, `max_actual_relation_size=16`,
+  `max_pairwise_closure_size=16`.
+
+Interprétation : même en mélangeant plusieurs contraintes `same_side`, les cas
+observés restent reconstruits par des projections binaires. Les caps empêchent
+une conclusion globale, mais l'hypothèse "interface de gaps binaire" devient
+plus concrète et plus falsifiable.
+
 ## T022 - Rapport `project_farthest_sets_to_pc_nodes`
 
 Statut : diagnostic implémenté, explicitement non décisionnel.

@@ -2710,3 +2710,39 @@ Ce que T098 ne prouve pas :
 Obligation suivante : soit chercher activement une arité `3` avec plusieurs
 obligations simultanées ou des familles non-ladder, soit prototyper une
 composition binaire et la soumettre aux contre-exemples T075/T082/T097.
+
+### T099 : arité multi-obligations des gaps
+
+Statut : preuve expérimentale bornée, pas théorème général.
+
+`pnode_context_gap_multi_obligation_arity_report` étend T098 en formant des
+tuples de projections ouvertes issus d'au moins deux obligations `same_side`
+distinctes. Pour chaque état visible joint, il compare la relation réelle des
+patterns de gaps au produit des marges et à la closure par projections binaires.
+
+Ce que T099 couvre :
+
+- `23` lignes bornées ;
+- `9` lignes complètes et `14` lignes arrêtées par
+  `max_projection_tuples=10000` ;
+- `172211` tuples de projections ;
+- `493440` relations visibles ;
+- `product_false_case_count=370927` ;
+- `binary_sufficient_case_count=370927` ;
+- `higher_order_case_count=0` ;
+- `max_actual_relation_size=16`.
+
+Interprétation : sur les tuples inspectés, aucune relation d'arité `>=3`
+n'apparaît ; les cas non indépendants sont reconstruits par leurs projections
+binaires. C'est un signal pour une future DP à relations binaires de gaps.
+
+Ce que T099 ne prouve pas :
+
+- pas d'exhaustivité sur les lignes capées ;
+- pas de résultat promise-aware Hsu/McConnell ;
+- pas de borne de taille de l'ensemble de relations binaires ;
+- pas de décision intégrable dans `candidate.py`.
+
+Obligation suivante : construire un prototype de propagation binaire ou un
+générateur orienté arité `3` qui mélange plusieurs obligations avec contextes
+non-ladder.

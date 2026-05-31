@@ -886,6 +886,18 @@ Dernier commit green avant T009 : `07120e4`.
   Les corrélations du stress ladder sont binaires, mais ce n'est pas une preuve
   générale. `candidate.py` n'a pas été modifié.
 
+- Checkpoint T099 courant : commit contenant le probe d'arité multi-obligations
+  des relations de gaps. Validation observée : compilation Python de
+  `partial_obligation_experiments.py` et
+  `pc_context_gap_multi_arity_probe.py` réussie, tests ciblés
+  `tests/test_partial_obligation_experiments.py` (`23 passed`),
+  `make bench-context-gap-multi-arity` (`23` lignes, `9` complètes,
+  `14` capées par tuples, `172211` tuples de projections,
+  `493440` relations visibles, `binary_sufficient_case_count=370927`,
+  `higher_order_case_count=0`, `max_actual_relation_size=16`) et
+  `make quick` (`361 passed`, puis `JUSTE`). Les caps restent visibles.
+  `candidate.py` n'a pas été modifié.
+
 ## Rollback
 
 Si une modification régresse et que la cause n’est pas claire :
