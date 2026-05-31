@@ -62,6 +62,7 @@ make bench-r004-bad-side-projections
 make bench-pnode-width4
 make bench-handwritten-gadget
 make bench-pnode-interface
+make bench-pnode-context-interface
 make bench-permutation-like
 make bench-permutation-composition
 make bench-relation-components
@@ -205,6 +206,12 @@ fixe un ordre de branches au root et compare la relation exacte des complétions
 internes cR au produit cartésien de ses projections. Un mismatch réfute la
 factorisation produit dans le scaffold testé, mais ne décide pas le problème
 général.
+
+`make bench-pnode-context-interface` écrit
+`reports/pnode_context_interface_probe.json`. Il fixe un contexte extérieur
+linéaire autour d'un P-nœud focal et répète le test de factorisation des
+complétions internes. Un mismatch non vide indique qu'une relation résiduelle
+de bord est nécessaire même avec ce contexte fixé.
 
 `make bench-permutation-like` écrit `reports/permutation_like_probe.json`. Il
 teste les profils locaux `permutation_like` observés sur `paired_farthest`

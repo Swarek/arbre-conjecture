@@ -380,6 +380,55 @@ internes" est fausse dans le scaffold PC-tree général. Cela ne réfute pas une
 version promise-aware plus forte, mais cela impose déjà de transporter au moins
 des relations résiduelles binaires de bord dans une DP correcte.
 
+## T087 - Interface P-nœud avec contexte extérieur explicite
+
+Statut : diagnostic implémenté, réfutation du produit cartésien indépendant
+avec contexte fixé.
+
+Artefacts ajoutés : `fixed_context_interface_product_report` dans
+`src/pc_circular/solvers/interface_experiments.py` et
+`tools/pc_pnode_context_interface_probe.py`, lancé par
+`make bench-pnode-context-interface`.
+
+Définition testée :
+
+```text
+Fixer un focus interne, un ordre de branches sigma et un contexte linéaire.
+Chaque ordre global testé vaut :
+context_before + frontier(focus, sigma, tuple_interne) + context_after.
+```
+
+Le test compare encore `A_exact` au produit des projections unaires et calcule
+la première arité qui reconstruit exactement `A_exact`.
+
+Résultat du sweep T087 :
+
+- `5` lignes, toutes complètes ;
+- `4` lignes factorisées ;
+- `1` ligne réfutée ;
+- `max_false_product_count=2` ;
+- `max_minimal_coupling_support_size=2`.
+
+La réfutation est `context_coupling_seed_matrix()` avec focus
+`P(P(0,1),P(2,3))`, contexte `(4) ... (5)` et ordre de branches `(0,1)`.
+La relation acceptée a `2` tuples, mais le produit des projections en contient
+`4`. Les faux tuples produisent des violations bad-side explicites, par exemple
+`same_side(0,3;1,2)`.
+
+Contrôles :
+
+- égal-distance avec le même focus et contexte factorise complètement ;
+- T046 matching low-hub avec hub placé en contexte collapse vers une relation
+  vide ;
+- les deux profils du seed manuscrit T085 collapsent aussi vers une relation
+  vide quand le bloc `D` est placé en contexte fixe.
+
+Interprétation : fixer explicitement l'extérieur ne suffit pas à rendre les
+branches indépendantes. La suite doit mesurer une vraie relation résiduelle de
+bord, au moins binaire dans ce seed, puis tester sa taille/composabilité sur
+des patches plus grands. Les collapses à relation vide sont informatifs mais
+ne sont pas des preuves positives de factorisation utile.
+
 ## T022 - Rapport `project_farthest_sets_to_pc_nodes`
 
 Statut : diagnostic implémenté, explicitement non décisionnel.

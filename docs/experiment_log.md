@@ -4245,3 +4245,47 @@
 - Next action : étendre le probe d'interface aux P-nœuds internes avec contexte
   extérieur explicite, ou mesurer la taille des relations résiduelles sur les
   familles T046/T075/T082.
+
+## 2026-05-31 interface P-nœud avec contexte extérieur explicite
+
+- Date/heure : 2026-05-31 13:35 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : une fois un contexte extérieur linéaire fixé autour d'un
+  P-nœud focal, les complétions internes valides pourraient se factoriser en
+  produit cartésien de leurs projections unaires.
+- Changement fait : ajout de `fixed_context_interface_product_report`,
+  `tools/pc_pnode_context_interface_probe.py`, tests ciblés, cible
+  `make bench-pnode-context-interface` et documentation T087. `candidate.py`
+  n'a pas été modifié.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `rtk make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `325 passed`, puis `JUSTE`.
+- Commande exécutée :
+  `rtk .venv/bin/python -m py_compile src/pc_circular/solvers/interface_experiments.py tools/pc_pnode_context_interface_probe.py`.
+- Résultat compilation : succès.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_interface_experiments.py`.
+- Résultat correction ciblée : `6 passed`.
+- Commande exécutée : `rtk make bench-pnode-context-interface`.
+- Résultat benchmark T087 :
+  `reports/pnode_context_interface_probe.json` écrit ; `5` lignes,
+  `5` complètes, `4` factorisées, `1` réfutée,
+  `max_false_product_count=2`,
+  `max_minimal_coupling_support_size=2`.
+- Commande exécutée : `rtk make quick`.
+- Résultat correction finale : `328 passed`, puis `JUSTE`.
+- Réfutation : `context_coupling_seed_matrix()` avec focus
+  `P(P(0,1),P(2,3))`, contexte `(4) ... (5)` et ordre de branches `(0,1)`.
+  La relation acceptée contient `2` tuples, le produit des projections en
+  contient `4`, et les faux tuples violent une contrainte bad-side.
+- Contrôles : égal-distance factorise ; T046 et les deux profils T085 donnent
+  une relation vide sous le contexte fixé testé, donc une factorisation vacue
+  qui doit être interprétée comme collapse de contexte.
+- Conclusion provisoire : même avec contexte extérieur explicite, la
+  factorisation produit indépendante est fausse dans le scaffold. La suite doit
+  porter une relation résiduelle d'interface et mesurer sa taille/composabilité.
+- Next action : implémenter un probe de relation résiduelle exacte pour patches
+  de taille 2/3 et le comparer aux signatures unaires/binaires sur T046, T075,
+  T082, T085 et des seeds générés.

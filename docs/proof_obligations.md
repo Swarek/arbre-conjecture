@@ -2263,3 +2263,42 @@ Obligation suivante : remplacer la conjecture produit par une relation
 résiduelle d'interface, au minimum binaire dans ce scaffold, puis tester si la
 taille/largeur de cette relation reste contrôlable dans les familles T046,
 T075, T082 et T085.
+
+### T087 : interface avec contexte extérieur explicite
+
+Statut : lemme négatif expérimental dans le scaffold général.
+
+`fixed_context_interface_product_report` fixe un contexte linéaire extérieur et
+compose les ordres sous la forme :
+
+```text
+context_before + frontier(focus) + context_after
+```
+
+Il énumère ensuite la relation exacte `A_exact` des complétions internes qui
+donnent un ordre cR et compare cette relation au produit de ses projections
+unaires par branche.
+
+Ce que T087 prouve expérimentalement dans le scaffold testé :
+
+- sur `context_coupling_seed_matrix()` avec focus
+  `P(P(0,1),P(2,3))`, contexte `(4) ... (5)` et ordre de branches `(0,1)`,
+  la factorisation produit échoue ;
+- l'échec est non vide : `A_exact` contient `2` tuples et le produit des
+  projections en contient `4` ;
+- l'échec reste binaire : `minimal_coupling_support_size=2` ;
+- les faux tuples sont rejetés par des violations bad-side explicites.
+
+Ce que T087 ne prouve pas :
+
+- le contexte utilisé est une linéarisation fixe de l'extérieur, pas une branche
+  parent/outside complète avec ses propres degrés de liberté ;
+- le seed n'est pas une preuve que la promesse "T vient de D" permet de telles
+  relations ;
+- les lignes T046/T085 avec relation vide ne sont pas des réfutations de
+  factorisation non vide, seulement des collapses de contexte ;
+- aucun `False` ne doit être ajouté à `candidate.py`.
+
+Obligation suivante : définir la relation résiduelle exacte d'un patch/focus et
+mesurer sa taille, ses projections minimales et sa composabilité sur T046,
+T075, T082, T085 et des seeds générés.

@@ -5597,3 +5597,54 @@ Décision : la factorisation produit indépendante est fausse dans le scaffold
 général. H2 doit être reformulé comme relation résiduelle de bord, pas comme
 produit cartésien de projections unaires. La version promise-aware du lemme
 reste ouverte et doit être testée avec contexte extérieur explicite.
+
+## ExecPlan T087 - interface P-nœud avec contexte extérieur explicite
+
+But : tester la limite principale de T086, où le nœud focal était le root et le
+contexte extérieur était vide.
+
+Hypothèse testée : si un P-nœud focal est placé dans un contexte linéaire fixé
+`context_before + frontier(focus) + context_after`, alors les complétions
+internes acceptées pourraient se factoriser en produit de projections unaires.
+Une réfutation indique que le contexte extérieur ne suffit pas à rendre les
+branches indépendantes ; il faut encore transporter une relation résiduelle au
+moins binaire.
+
+Fichiers visés : `src/pc_circular/solvers/interface_experiments.py`,
+`tools/pc_pnode_context_interface_probe.py`,
+`tests/test_interface_experiments.py`, `Makefile`, `README.md`,
+`docs/tracks/piste_a_local_pc_constraints.md`,
+`docs/hypothesis_portfolio.md`, `docs/proof_obligations.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md` et `PLANS.md`.
+
+Algorithme : énumérer les frontiers linéaires internes des branches du nœud
+focal, composer chaque tuple avec un contexte fixe, tester l'ordre global par
+`passes_bad_side_precircular_cR`, puis comparer la relation acceptée
+`A_exact` au produit de ses projections unaires. Comme T086, calculer la
+première arité de projections qui reconstruit exactement `A_exact`.
+
+Risques : le modèle fixe seulement un contexte extérieur linéaire, pas toute la
+branche parent/outside d'un PC-tree non enraciné. Les lignes avec
+`accepted_tuple_count=0` sont informatives comme collapses de contexte, mais ne
+réfutent pas une factorisation non vide.
+
+Résultats observés : compilation Python réussie pour
+`src/pc_circular/solvers/interface_experiments.py` et
+`tools/pc_pnode_context_interface_probe.py`. Tests ciblés
+`tests/test_interface_experiments.py` : `6 passed`.
+`make bench-pnode-context-interface` écrit
+`reports/pnode_context_interface_probe.json` avec `5` lignes, `5` complètes,
+`4` factorisées, `1` réfutée, `max_false_product_count=2` et
+`max_minimal_coupling_support_size=2`.
+
+Réfutation : `context_coupling_seed_matrix()` sur le focus
+`P(P(0,1),P(2,3))`, contexte `(4) ... (5)` et ordre de branches `(0,1)`.
+`A_exact` contient `2` tuples, le produit des projections en contient `4`, et
+les deux faux tuples produisent des violations bad-side explicites, par exemple
+`same_side(0,3;1,2)` ou `same_side(1,2;0,3)` selon la complétion.
+
+Décision : même avec contexte extérieur explicitement fixé, l'indépendance par
+branche est fausse dans le scaffold. La suite doit mesurer la taille et la
+structure de la relation résiduelle exacte plutôt que chercher un produit
+unaire. T046 et T085 montrent aussi que certains contextes fixés collapsent la
+relation à vide ; ces collapses doivent être séparés des réfutations non vides.

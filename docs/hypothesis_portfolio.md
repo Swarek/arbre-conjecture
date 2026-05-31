@@ -71,6 +71,13 @@ est réfuté dans le scaffold par `single_bad_side_quartet_instance()` sur
 relation résiduelle d'interface, au moins binaire dans ce témoin, plutôt qu'une
 simple projection unaire par branche.
 
+Mise à jour T087 : la même idée de produit indépendant reste fausse quand le
+nœud focal est placé dans un contexte extérieur fixé
+`context_before + focus + context_after`. Le seed `n=6` versionné a deux
+complétions acceptées, mais le produit des projections en crée deux fausses.
+La piste A doit donc mesurer et composer des relations résiduelles de bord, pas
+des signatures unaires de branches.
+
 ## Piste B : programmation dynamique sur le PC-tree
 
 Intuition : un état de frontière pourrait résumer les contraintes externes d’un

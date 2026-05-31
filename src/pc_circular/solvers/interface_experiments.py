@@ -228,3 +228,200 @@ def root_fixed_order_interface_product_report(
             "for this fixed root order, not the whole problem"
         ),
     }
+
+
+def _validate_fixed_context(
+    n: int,
+    focus: PCNode,
+    context_before,
+    context_after,
+) -> tuple[tuple[int, ...], tuple[int, ...], tuple[int, ...]]:
+    context_before = tuple(context_before)
+    context_after = tuple(context_after)
+    context_labels = context_before + context_after
+    if len(context_labels) != len(set(context_labels)):
+        raise ValueError("context labels must be distinct")
+
+    focus_labels = tuple(labels(focus))
+    focus_label_set = set(focus_labels)
+    context_label_set = set(context_labels)
+    if focus_label_set & context_label_set:
+        raise ValueError("focus and context labels must be disjoint")
+    if focus_label_set | context_label_set != set(range(n)):
+        raise ValueError("focus labels plus context labels must be exactly 0..n-1")
+
+    return focus_labels, context_before, context_after
+
+
+def _compose_context_order(
+    branch_options: tuple[tuple[tuple[int, ...], ...], ...],
+    branch_order: tuple[int, ...],
+    option_tuple: tuple[int, ...],
+    context_before: tuple[int, ...],
+    context_after: tuple[int, ...],
+) -> tuple[int, ...]:
+    return (
+        context_before
+        + _compose_order(branch_options, branch_order, option_tuple)
+        + context_after
+    )
+
+
+def fixed_context_interface_product_report(
+    D,
+    focus: PCNode,
+    *,
+    branch_order: tuple[int, ...] | None = None,
+    context_before=(),
+    context_after=(),
+    max_branch_options: int = 256,
+    max_product_tuples: int = 200000,
+    max_examples: int = 5,
+) -> dict:
+    """Compare interface factorization for a focal node in a fixed context.
+
+    The composed order is ``context_before + focus_frontier + context_after``.
+    This is a diagnostic for an internal P-node interface with an explicitly
+    fixed outside order; it is not a full unrooted PC-tree solver.
+    """
+
+    n = validate_dissimilarity(D)
+    focus_labels, context_before, context_after = _validate_fixed_context(
+        n,
+        focus,
+        context_before,
+        context_after,
+    )
+    if focus.kind == "leaf":
+        raise ValueError("focus must be an internal node")
+    if max_branch_options <= 0:
+        raise ValueError("max_branch_options must be positive")
+    if max_product_tuples <= 0:
+        raise ValueError("max_product_tuples must be positive")
+    if max_examples < 0:
+        raise ValueError("max_examples must be non-negative")
+
+    degree = len(focus.children)
+    if branch_order is None:
+        branch_order = tuple(range(degree))
+    else:
+        branch_order = tuple(branch_order)
+    if set(branch_order) != set(range(degree)):
+        raise ValueError("branch_order must be a permutation of focus branches")
+
+    branch_options = []
+    branch_truncated = False
+    for child in focus.children:
+        options = _unique_linear_frontiers(child, limit=max_branch_options + 1)
+        if len(options) > max_branch_options:
+            branch_truncated = True
+            options = options[:max_branch_options]
+        branch_options.append(options)
+    branch_options = tuple(branch_options)
+    option_counts = tuple(len(options) for options in branch_options)
+    product_tuple_count = prod(option_counts)
+    product_truncated = product_tuple_count > max_product_tuples
+
+    accepted: set[tuple[int, ...]] = set()
+    accepted_examples = []
+    domains_for_order = tuple(range(option_counts[branch]) for branch in branch_order)
+    if not branch_truncated and not product_truncated:
+        for option_tuple in product(*domains_for_order):
+            order = _compose_context_order(
+                branch_options,
+                branch_order,
+                option_tuple,
+                context_before,
+                context_after,
+            )
+            if passes_bad_side_precircular_cR(D, order):
+                accepted.add(tuple(option_tuple))
+                if len(accepted_examples) < max_examples:
+                    accepted_examples.append({"tuple": tuple(option_tuple), "order": order})
+
+    complete = not branch_truncated and not product_truncated
+    projection_product, projection_product_truncated = (
+        _closure_from_projection_arity(
+            accepted,
+            domains_for_order,
+            1,
+            max_candidates=max_product_tuples,
+        )
+        if complete
+        else (None, False)
+    )
+    false_product = (
+        sorted(projection_product - accepted)
+        if complete and projection_product is not None
+        else []
+    )
+
+    false_examples = []
+    for option_tuple in false_product[:max_examples]:
+        order = _compose_context_order(
+            branch_options,
+            branch_order,
+            tuple(option_tuple),
+            context_before,
+            context_after,
+        )
+        false_examples.append(
+            {
+                "tuple": tuple(option_tuple),
+                "order": order,
+                "bad_side_violation": find_bad_side_precircular_cR_violation(D, order),
+            }
+        )
+
+    closure_by_arity = {}
+    minimal_coupling_support_size = None
+    if complete:
+        for arity in range(1, degree + 1):
+            closure, truncated = _closure_from_projection_arity(
+                accepted,
+                domains_for_order,
+                arity,
+                max_candidates=max_product_tuples,
+            )
+            closure_by_arity[arity] = {
+                "truncated": truncated,
+                "closure_tuple_count": None if closure is None else len(closure),
+                "exact": closure == accepted if closure is not None else False,
+                "false_tuple_count": None if closure is None else len(closure - accepted),
+            }
+            if closure == accepted and minimal_coupling_support_size is None:
+                minimal_coupling_support_size = arity
+
+    return {
+        "method": "fixed_context_interface_product_report",
+        "n": n,
+        "focus_kind": focus.kind,
+        "focus_labels": focus_labels,
+        "context_before": context_before,
+        "context_after": context_after,
+        "degree": degree,
+        "branch_order": branch_order,
+        "branch_label_sets": tuple(tuple(labels(child)) for child in focus.children),
+        "branch_option_counts": option_counts,
+        "branch_options": branch_options,
+        "product_tuple_count": product_tuple_count,
+        "branch_truncated": branch_truncated,
+        "product_truncated": product_truncated,
+        "complete": complete,
+        "accepted_tuple_count": len(accepted),
+        "accepted_tuple_examples": tuple(accepted_examples),
+        "projection_product_count": (
+            None if projection_product is None else len(projection_product)
+        ),
+        "projection_product_truncated": projection_product_truncated,
+        "false_product_count": len(false_product),
+        "false_product_examples": tuple(false_examples),
+        "factorizes": complete and projection_product == accepted,
+        "minimal_coupling_support_size": minimal_coupling_support_size,
+        "closure_by_arity": closure_by_arity,
+        "interpretation": (
+            "diagnostic only: context_before/focus/context_after fixes one "
+            "outside embedding and tests whether internal branch completions "
+            "factorize for that context"
+        ),
+    }

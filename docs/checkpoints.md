@@ -739,6 +739,15 @@ Dernier commit green avant T009 : `07120e4`.
   `max_minimal_coupling_support_size=2`) et `make quick` (`325 passed`, puis
   `JUSTE`). `candidate.py` n'a pas été modifié.
 
+- Checkpoint T087 courant : commit contenant le probe d'interface P-nœud avec
+  contexte extérieur explicite. Validation observée : compilation Python de
+  `interface_experiments.py` et `pc_pnode_context_interface_probe.py` réussie,
+  tests ciblés `tests/test_interface_experiments.py` (`6 passed`),
+  `make bench-pnode-context-interface` (`5` lignes, `5` complètes,
+  `4` factorisées, `1` réfutée, `max_false_product_count=2`,
+  `max_minimal_coupling_support_size=2`) et `make quick` (`328 passed`, puis
+  `JUSTE`). `candidate.py` n'a pas été modifié.
+
 ## Rollback
 
 Si une modification régresse et que la cause n’est pas claire :

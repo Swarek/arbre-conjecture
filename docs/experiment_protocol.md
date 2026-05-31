@@ -377,6 +377,19 @@ cR, puis compare `A_exact` au produit cartésien de ses projections unaires. Une
 ligne `factorizes=false` est une réfutation expérimentale de la factorisation
 produit pour ce scaffold fixé, pas une preuve de dureté ni un rejet général.
 
+Probe interface P-nœud avec contexte extérieur Piste A/R004 :
+
+```bash
+make bench-pnode-context-interface
+```
+
+Cette commande écrit `reports/pnode_context_interface_probe.json`. Elle fixe un
+contexte extérieur linéaire autour d'un nœud focal, compose
+`context_before + focus + context_after`, puis répète le test de factorisation
+de `A_exact`. Une réfutation non vide indique qu'une relation résiduelle
+d'interface est nécessaire même sous contexte fixé. Une relation vide doit être
+interprétée comme collapse de contexte, pas comme preuve positive.
+
 Contrôle promise-aware des permutations locales Piste F/C :
 
 ```bash

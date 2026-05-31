@@ -133,6 +133,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T084 | 2026-05-31 | A/B | Test largeur 4 P-nœud : fermeture par restrictions à quatre branches, aucune réfutation complète sur le sweep borné | `make bench-pnode-width4` |
 | T085 | 2026-05-31 | A/R004 | Gadget manuscrit 4 blocs formalisé : lecture versionnée testée par oracle, `P` libre/`C` fixe séparés, résultat borné sans intégration solver | `make bench-handwritten-gadget` |
 | T086 | 2026-05-31 | A/B/R004 | Interface P-nœud à ordre fixé : factorisation produit réfutée par un couplage bad-side minimal dans le scaffold | `make bench-pnode-interface` |
+| T087 | 2026-05-31 | A/B/R004 | Interface P-nœud avec contexte extérieur fixé : factorisation produit encore réfutée par un seed non vide, relation résiduelle binaire requise | `make bench-pnode-context-interface` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les
