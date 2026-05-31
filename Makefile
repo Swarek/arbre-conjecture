@@ -1,7 +1,7 @@
 PYTHON ?= $(shell if [ -x .venv/bin/python ]; then echo .venv/bin/python; elif command -v python3 >/dev/null 2>&1; then echo python3; else echo python; fi)
 PYTEST ?= $(PYTHON) -m pytest
 
-.PHONY: quick check hunt-counterexamples bench-quick bench bench-piste-f bench-csp-quick bench-width-stress bench-single-p-stress bench-relation-catalog bench-relation-shapes bench-relation-chains bench-relation-unsat-cores bench-sparse-matching bench-sparse-binary-cores bench-quartet-coverage bench-frontier-obstructions bench-strict-algorithm52 bench-strict-positive-coverage bench-threshold-roundness bench-cr-pc-representability bench-unrooted-pc-representability bench-local-obstruction-depth bench-chirotope-high-girth bench-r004-bad-side-projections bench-pnode-width4 bench-handwritten-gadget bench-pnode-interface bench-pnode-context-interface bench-residual-interface bench-residual-interface-stress bench-boundary-residual-projection bench-circle-graph-lab bench-permutation-like bench-permutation-composition bench-relation-components unit acceptance
+.PHONY: quick check hunt-counterexamples bench-quick bench bench-piste-f bench-csp-quick bench-width-stress bench-single-p-stress bench-relation-catalog bench-relation-shapes bench-relation-chains bench-relation-unsat-cores bench-sparse-matching bench-sparse-binary-cores bench-quartet-coverage bench-frontier-obstructions bench-strict-algorithm52 bench-strict-positive-coverage bench-threshold-roundness bench-cr-pc-representability bench-unrooted-pc-representability bench-local-obstruction-depth bench-chirotope-high-girth bench-r004-bad-side-projections bench-pnode-width4 bench-handwritten-gadget bench-pnode-interface bench-pnode-context-interface bench-residual-interface bench-residual-interface-stress bench-boundary-residual-projection bench-circle-graph-lab bench-partial-obligation-lab bench-permutation-like bench-permutation-composition bench-relation-components unit acceptance
 
 unit:
 	$(PYTEST) -q
@@ -356,6 +356,19 @@ bench-circle-graph-lab:
 	  --max-examples 8 \
 	  --seed 20260610 \
 	  --output reports/circle_graph_lab_probe.json
+
+bench-partial-obligation-lab:
+	mkdir -p reports && \
+	$(PYTHON) tools/pc_partial_obligation_lab_probe.py \
+	  --sizes 4,5,6,7,8 \
+	  --pc-trees star,balanced,mixed \
+	  --instance-kinds cycle,equal,paired_farthest,random,padded_four_local_non_cr,padded_five_local_non_cr,even_high_cycle_low_hub,odd_high_cycle_low_hub \
+	  --repeats 2 \
+	  --frontier-limit 20000 \
+	  --max-branch-degree 8 \
+	  --max-examples 8 \
+	  --seed 20260620 \
+	  --output reports/partial_obligation_lab_probe.json
 
 bench-permutation-like:
 	mkdir -p reports && \

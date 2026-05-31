@@ -4455,3 +4455,56 @@
 - Next action : enrichir T091 avec contraintes partiellement visibles comme
   relation de séparateur, ou formaliser le graphe de cordes pour une vraie
   décomposition circle/split.
+
+## 2026-05-31 lab obligations partielles bad-side
+
+- Date/heure : 2026-05-31 17:20 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les supersets locaux vacus de T091 ne sont pas
+  nécessairement un silence bad-side ; ils peuvent venir d'obligations
+  `same_side` qui touchent le P-nœud sans former deux cordes de branches
+  pleinement visibles.
+- Changement fait : ajout de
+  `src/pc_circular/solvers/partial_obligation_experiments.py`,
+  `tools/pc_partial_obligation_lab_probe.py`,
+  `tests/test_partial_obligation_experiments.py`, de la cible
+  `make bench-partial-obligation-lab` et de la documentation T092.
+  `candidate.py` n'a pas été modifié.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `rtk make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `338 passed`, puis `JUSTE`.
+- Commande exécutée :
+  `rtk .venv/bin/python -m py_compile src/pc_circular/solvers/partial_obligation_experiments.py tools/pc_partial_obligation_lab_probe.py`.
+- Résultat compilation : succès.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_partial_obligation_experiments.py`.
+- Résultat correction ciblée : `3 passed`.
+- Commande exécutée : `rtk make bench-partial-obligation-lab`.
+- Résultat benchmark T092 :
+  `reports/partial_obligation_lab_probe.json` écrit ; `120` lignes,
+  `120` complètes, `80` lignes avec P-nœuds, `0` ligne
+  `global_not_contained`, `52` nœuds en superset local vacu et `52/52` avec
+  information partielle ou multi-niveau ; `0` superset local contraint ;
+  histogramme de rôles grossier `4distinct=1576`, `partial_boundary=2499`,
+  `mixed_endpoint_witness=25`, `collapsed_separate_roles=19`.
+- Classification fine observée :
+  `support:full_four_branch=1576`, `support:partial2:EW:split:clean=682`,
+  `support:partial2:WW:split:clean=251`,
+  `support:partial2:EE:split:clean=231`,
+  `support:partial3:missing_witness:s2:mixed=267`,
+  `support:partial3:missing_endpoint:s2:mixed=205`, plus des projections
+  non-support de type `partial2` collapsees. Maxima :
+  `max_non_chord_obligation_count=159`,
+  `max_support_boundary_obligation_count=123`,
+  `max_projection_only_obligation_count=36`.
+- Commande exécutée : `rtk make quick`.
+- Résultat correction finale : `341 passed`, puis `JUSTE`.
+- Conclusion provisoire : les supersets vacus de T091 sont tous corrélés à des
+  obligations bad-side non représentées par les cordes pleinement visibles. Cela
+  renforce l'idée d'une relation de séparateur pour les obligations ouvertes,
+  mais ne fournit ni sémantique exacte, ni preuve de suffisance, ni solver.
+- Next action : construire une relation résiduelle explicite pour ces
+  obligations partielles, ou tester si leur composition peut encore rester
+  binaire sur des contextes extérieurs variables.

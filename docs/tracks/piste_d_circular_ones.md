@@ -144,6 +144,15 @@ graphes d'entrelacement. Le signal est meilleur que les anciennes contraintes
 de non-interlacement ne perd pas les ordres cR observés et ne crée pas de
 superset contraint dans ce sweep.
 
+Complément T092 : `make bench-partial-obligation-lab` vérifie ce que les cordes
+pleinement visibles ne voient pas. Les `52` nœuds en superset local vacu du
+sweep T092 ont tous une information bad-side partielle ou multi-niveau. Le
+signal dominant est `partial_boundary`, et la classification fine distingue les
+obligations `support:*` des simples projections. Interprétation : la route
+circle/interlacement doit être enrichie par une relation de séparateur ; les
+contraintes de cordes locales seules ne forment pas encore une structure
+complète.
+
 ## Risques
 
 - Les contraintes cR peuvent ne pas être exprimables comme contraintes d’arcs

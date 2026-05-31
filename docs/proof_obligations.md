@@ -2435,3 +2435,45 @@ Ce que T091 ne prouve pas :
 Obligation suivante : essayer d'ajouter les obligations partiellement visibles
 comme contraintes de séparateur, ou bien formaliser le graphe de cordes obtenu
 pour attaquer une vraie décomposition de type split/circle.
+
+### T092 : lab obligations partielles bad-side
+
+Statut : preuve expérimentale bornée, pas théorème.
+
+`src/pc_circular/solvers/partial_obligation_experiments.py` complète T091 en
+repartant des obligations exactes `same_side(a,c;b,d)`. Pour chaque P-nœud, il
+sépare les obligations pleinement visibles sur quatre branches distinctes des
+obligations qui ne deviennent pas deux cordes de branches : projections
+partielles, rôles endpoint/witness collapsés dans une même branche, et
+obligations multi-niveaux.
+
+Ce que T092 couvre :
+
+- `120` lignes bornées, toutes complètes sous les limites du benchmark ;
+- `80` lignes avec P-nœuds ;
+- `0` ligne où un ordre de branche venant d'une frontier cR manque dans le
+  modèle local T091 ;
+- `52` nœuds en superset local vacu et `52/52` avec information partielle ou
+  multi-niveau ;
+- `0` superset local contraint ;
+- rôle grossier dominant : `partial_boundary=2499`, en plus de
+  `4distinct=1576` ;
+- classification fine support/projection des obligations ouvertes, avec
+  `max_non_chord_obligation_count=159`,
+  `max_support_boundary_obligation_count=123` et
+  `max_projection_only_obligation_count=36`.
+
+Ce que T092 ne prouve pas :
+
+- il mesure une corrélation entre supersets vacus et information bad-side
+  cachée, pas une sémantique exacte de séparateur ;
+- les compteurs d'obligations ne sont pas des compteurs d'ordres ;
+- `support_path_count` et `multi_level_hit_count` restent des proxys du scaffold
+  pour les obligations multi-niveaux ;
+- aucune relation résiduelle n'est encore composée ;
+- l'énumération des frontiers reste bornée par `frontier_limit` ;
+- aucun résultat ne justifie une intégration dans `candidate.py`.
+
+Obligation suivante : définir une relation de séparateur pour les obligations
+partielles observées, puis tester si sa composition reste binaire ou si elle
+réencode une relation résiduelle plus large.

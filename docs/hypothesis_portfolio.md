@@ -106,6 +106,13 @@ contraint est observé ; les `25` supersets locaux sont vacus, sans paire de
 cordes locale. Signal positif pour cette abstraction locale, mais pas une split
 decomposition ni une preuve.
 
+Mise à jour T092 : les supersets locaux vacus de T091 ne sont pas des nœuds
+sans information bad-side. Dans le même type de sweep, `52/52` nœuds en
+superset vacu ont des obligations partielles ou multi-niveaux, avec
+`partial_boundary` dominant et des classes fines `support:partial2/partial3`.
+Cela renforce la piste d'une relation de séparateur pour les obligations
+ouvertes ; cela ne donne pas encore une sémantique de composition.
+
 ## Piste B : programmation dynamique sur le PC-tree
 
 Intuition : un état de frontière pourrait résumer les contraintes externes d’un
@@ -223,6 +230,11 @@ Le probe ne fait pas de reconnaissance de circle graph complète, mais fournit
 un premier pont concret vers la route split/circle : sur les lignes bornées,
 les contraintes pleinement visibles ne produisent pas de superset contraint par
 rapport aux ordres de branches cR observés.
+
+Mise à jour T092 : les cas où le modèle de cordes est vacu sont tous corrélés,
+dans le sweep borné, à des obligations bad-side partielles/multi-niveaux.
+La route split/circle doit donc porter aussi des séparateurs ouverts, pas
+seulement des graphes de non-croisement entre cordes déjà fermées.
 
 ## Piste E : obstructions interdites par quartets farthest-neighbor
 

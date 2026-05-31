@@ -794,6 +794,18 @@ Dernier commit green avant T009 : `07120e4`.
   `JUSTE`).
   `candidate.py` n'a pas été modifié.
 
+- Checkpoint T092 courant : commit contenant le lab des obligations bad-side
+  partielles autour de T091. Validation observée : compilation Python de
+  `partial_obligation_experiments.py` et `pc_partial_obligation_lab_probe.py`
+  réussie, tests ciblés `tests/test_partial_obligation_experiments.py`
+  (`3 passed`), `make bench-partial-obligation-lab` (`120` lignes,
+  `120` complètes, `80` lignes avec P-nœuds, `0` ligne
+  `global_not_contained`, `52` nœuds en superset local vacu, `52/52` avec
+  information partielle ou multi-niveau, `0` superset local contraint,
+  `max_non_chord_obligation_count=159`) et `make quick` (`341 passed`, puis
+  `JUSTE`).
+  `candidate.py` n'a pas été modifié.
+
 ## Rollback
 
 Si une modification régresse et que la cause n’est pas claire :

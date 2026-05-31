@@ -67,6 +67,7 @@ make bench-residual-interface
 make bench-residual-interface-stress
 make bench-boundary-residual-projection
 make bench-circle-graph-lab
+make bench-partial-obligation-lab
 make bench-permutation-like
 make bench-permutation-composition
 make bench-relation-components
@@ -241,6 +242,12 @@ traduit les obligations `same_side` pleinement visibles sur un nœud `P` en
 contraintes de non-croisement entre cordes de branches, puis compare les ordres
 locaux autorisés aux ordres de branches vus dans les frontiers cR. C'est un lab
 circle/interlacement borné, pas une split decomposition ni un solver.
+
+`make bench-partial-obligation-lab` écrit
+`reports/partial_obligation_lab_probe.json`. Il complète le lab précédent en
+comptant les obligations bad-side qui touchent un nœud `P` sans former deux
+cordes de branches pleinement visibles. C'est un diagnostic de séparateur, pas
+une décision d'existence.
 
 `make bench-permutation-like` écrit `reports/permutation_like_probe.json`. Il
 teste les profils locaux `permutation_like` observés sur `paired_farthest`

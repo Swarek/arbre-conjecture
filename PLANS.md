@@ -22,6 +22,73 @@ Dans un Goal long, le plan doit aussi définir le critère d’arrêt : succès
 mesurable, réfutation, blocage théorique, ou bascule vers une autre piste. Ne pas
 laisser un Goal tourner comme une recherche ouverte sans sortie concrète.
 
+## ExecPlan 2026-05-31 - T092 obligations partielles apres le lab circle
+
+But : prolonger T091 sans sur-vendre le modele de cordes pleinement visibles.
+Le checkpoint doit mesurer si les ecarts locaux restants, notamment les
+supersets vacus de T091, sont accompagnes d'obligations bad-side partielles ou
+multi-niveaux qui exigent une relation de separateur.
+
+Hypothese : les contraintes fully-visible `same_side(a,c;b,d)` donnent des
+non-croisements de cordes utiles, mais les P-noeuds sans telle corde locale
+peuvent encore porter des obligations `partial_boundary`, `endpoints_collapsed`,
+`witnesses_collapsed` ou `mixed_endpoint_witness`. Ces obligations expliqueraient
+pourquoi un modele local par cordes ne suffit pas encore.
+
+Fichiers a modifier : ajouter
+`src/pc_circular/solvers/partial_obligation_experiments.py`,
+`tools/pc_partial_obligation_lab_probe.py`, `tests/test_partial_obligation_experiments.py`,
+une cible Makefile, puis documenter `docs/experiment_log.md`,
+`docs/checkpoints.md`, `docs/proof_obligations.md`, `docs/tracks/README.md`,
+`docs/tracks/piste_a_local_pc_constraints.md` et, si utile,
+`docs/tracks/piste_d_circular_ones.md`.
+
+Algorithme pressenti : reutiliser `project_bad_side_obligations_to_pc_nodes`
+et `pnode_circle_graph_local_report`. Pour chaque P-noeud, separer les
+obligations pleinement visibles en 4 branches distinctes des obligations
+partielles/degeneres. Croiser ces compteurs avec le statut local T091
+(`local_unsat`, `local_strict_superset`, etc.) et produire un rapport JSON :
+histogrammes de `role_pattern`, nombre de supersets vacus qui ont de
+l'information partielle, nombre de supersets contraints inexpliques, et exemples
+bornes.
+
+Tests a executer : py_compile du nouveau module et outil, pytest cible,
+`make bench-partial-obligation-lab`, puis `rtk make quick`.
+
+Risques : ce probe mesure une correlation, pas une semantique exacte des
+obligations ouvertes. Il ne decide pas l'existence, ne reconstruit pas de
+frontier et ne doit pas modifier `candidate.py`.
+
+Plan de contre-exemples : si un noeud a un superset local contraint mais aucune
+obligation partielle ou multi-niveau, le rapport doit le rendre visible comme
+cas inexpliqué. Si un ordre global cR manque deja dans T091, conserver le statut
+`global_not_contained` comme alerte de bug/regression.
+
+Plan subagents : trois explorateurs read-only sont lances en parallele :
+extraction des obligations partielles, extension de T091, et conventions
+Makefile/tests/docs. Le fil principal implemente le probe et integre seulement
+ce qui est utile.
+
+Resultats observes : T092 est implemente. `make bench-partial-obligation-lab`
+donne `120` lignes completes, `80` lignes avec P-noeuds, `0` ligne
+`global_not_contained`, `52` noeuds en superset local vacu, et `52/52` avec de
+l'information partielle ou multi-niveau. Aucun superset local contraint n'est
+observe. Le role histogramme grossier donne `4distinct=1576`,
+`partial_boundary=2499`, `mixed_endpoint_witness=25`,
+`collapsed_separate_roles=19`; la classification fine separe notamment
+`support:full_four_branch=1576`, `support:partial2:EW:split:clean=682`,
+`support:partial3:missing_witness:s2:mixed=267`,
+`support:partial3:missing_endpoint:s2:mixed=205`, et des projections non
+support de type `partial2` collapsees. Les maxima observes sont
+`max_non_chord_obligation_count=159`, `max_support_boundary_obligation_count=123`
+et `max_projection_only_obligation_count=36`.
+
+Decision : continuer vers une vraie relation de separateur ou un modele de
+composition des obligations ouvertes. T092 explique experimentalement les
+supersets vacus de T091 par de l'information bad-side non convertie en cordes,
+mais ne donne ni semantique exacte, ni split decomposition, ni solver. Ne pas
+integrer dans `candidate.py`.
+
 ## ExecPlan 2026-05-31 - T091 lab interlacement des contraintes same_side
 
 But : explorer explicitement la route circle graph / split decomposition

@@ -571,6 +571,51 @@ route circle/interlacement, mais très borné : les contraintes partiellement
 visibles, les corrélations multi-niveaux et la vraie split decomposition ne
 sont pas encore traitées.
 
+## T092 - Obligations partielles autour du lab circle
+
+Statut : diagnostic implémenté, non décisionnel.
+
+Artefacts ajoutés :
+
+- `src/pc_circular/solvers/partial_obligation_experiments.py`
+- `tools/pc_partial_obligation_lab_probe.py`
+- cible `make bench-partial-obligation-lab`
+
+Idée testée : compléter T091 en gardant les obligations `same_side` qui touchent
+un P-nœud mais ne donnent pas deux cordes de branches pleinement visibles. Le
+probe sépare :
+
+- `full_four_branch` : l'ancien cas T091, deux cordes locales ;
+- `full_collapsed` : les quatre labels visibles mais certains rôles tombent
+  dans la même branche ;
+- `partial2` / `partial3` : seuls deux ou trois rôles visibles au nœud ;
+- `support:*` versus `projection:*` : le nœud détermine réellement le quartet
+  selon `quartet_support_paths`, ou il voit seulement une projection.
+
+Résultat du benchmark T092 :
+
+- `120` lignes, toutes complètes ;
+- `80` lignes avec P-nœuds ;
+- `0` ligne où un ordre de branche cR manque dans le modèle local ;
+- `52` nœuds en superset local vacu, et `52/52` avec information partielle ou
+  multi-niveau ;
+- `0` superset local contraint ;
+- histogramme grossier : `4distinct=1576`, `partial_boundary=2499`,
+  `mixed_endpoint_witness=25`, `collapsed_separate_roles=19` ;
+- classification fine : notamment `support:full_four_branch=1576`,
+  `support:partial2:EW:split:clean=682`,
+  `support:partial3:missing_witness:s2:mixed=267`,
+  `support:partial3:missing_endpoint:s2:mixed=205` ;
+- maxima : `max_non_chord_obligation_count=159`,
+  `max_support_boundary_obligation_count=123`,
+  `max_projection_only_obligation_count=36`.
+
+Interprétation : les supersets vacus de T091 ne sont pas des nœuds sans signal
+bad-side ; dans ce sweep, ils sont tous corrélés à des obligations ouvertes que
+le modèle de cordes pleinement visibles ignore. Cela pousse la piste A vers une
+relation de séparateur explicite. Ce n'est pas encore une sémantique exacte, et
+cela ne justifie aucun `False` dans `candidate.py`.
+
 ## T022 - Rapport `project_farthest_sets_to_pc_nodes`
 
 Statut : diagnostic implémenté, explicitement non décisionnel.
