@@ -326,7 +326,8 @@ benchmarks et obligations de preuve à jour.
 Pour reprendre la boucle de recherche, lire `docs/agent_loop_guide.md`.
 Pour lire l’évolution par piste, utiliser `docs/tracks/README.md`.
 Pour transmettre l'etat courant a un chercheur sans entrer dans le code, lire
-`docs/research_handoff_2026-05-31.md`.
+`docs/research_handoff_2026-05-31.md` ou envoyer le PDF
+`docs/research_handoff_2026-05-31.pdf`.
 Pour les notes issues des documents locaux, lire `docs/source_notes.md`.
 Les PDF/captures conservés dans le dépôt et leurs hashes sont listés dans
 `docs/source_materials/README.md`.
