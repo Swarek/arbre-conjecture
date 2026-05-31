@@ -2094,3 +2094,39 @@ Limites :
 - ce module ne prouve pas que la profondeur d'obstruction est non bornée ;
 - aucun rejet supplémentaire dans `candidate.py` n'est justifié sans lemme de
   sous-cas.
+
+### R004 : obligations issues des notes externes du 2026-05-31
+
+Statut : nouvelles obligations de preuve, pas résultats.
+
+Le digest `docs/external_reviews/researcher_advances_2026-05-31.md` conserve
+quatre hypothèses externes utiles. Pour qu'elles deviennent des résultats du
+dépôt, il faut au minimum :
+
+1. **Projection bad-side complète sur PC-tree.** Définir formellement, pour un
+   nœud PC `v`, la projection d'un atome `same_side(a,c;b,d)` sur les branches
+   de `v`. Montrer si cette projection est nécessaire, suffisante, locale ou
+   seulement diagnostique. Les projections farthest `I_x(v)` seules sont déjà
+   insuffisantes par T046/T075.
+
+2. **Lemme d'interface P-noeud.** Définir l'interface d'un bloc, le contexte
+   extérieur fixé, les ordres internes valides et la relation résiduelle. Prouver
+   ou réfuter que les complétions internes se factorisent en produit cartésien
+   à ordre de branches fixé.
+
+3. **Largeur 4 P-noeud.** Définir `A_v` et les relations `R_ijlm` sur
+   quadruplets de branches. Prouver que les restrictions à quatre branches
+   caractérisent `A_v`, ou produire un contre-exemple minimal sous le scaffold
+   actuel.
+
+4. **Route circle graph.** Formaliser le graphe d'entrelacement induit par les
+   contraintes bad-side localisées et prouver qu'il appartient à une classe
+   tractable, ou montrer qu'il peut simuler cyclic ordering sous les contraintes
+   réalisables par une matrice `D`.
+
+5. **Gadget manuscrit.** Transformer le screenshot 4 blocs x 2 feuilles en
+   matrice, PC-tree et objectif explicites. Sans validation oracle et shrink, il
+   reste un seed de générateur, pas un contre-exemple.
+
+Ces obligations doivent être testées contre les garde-fous T046, T075, T081 et
+T082 avant toute intégration dans `candidate.py`.

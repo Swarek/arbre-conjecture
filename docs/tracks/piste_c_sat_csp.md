@@ -1466,3 +1466,34 @@ Résultat : `make bench-chirotope-high-girth` trouve des candidats high-girth
 dans les familles low-hub high-cycle, sans mismatch oracle sous `n<=8`. Ce
 module doit servir à chercher et minimiser des obstructions globales, pas à
 remplacer les solveurs CSP existants.
+
+## R004 - Largeur 4 P-noeud et relations `R_ijlm`
+
+Statut : conjecture externe à matérialiser, pas solveur.
+
+Les notes du 2026-05-31 proposent de remplacer l'énumération factorielle d'un
+gros P-noeud par une famille de relations locales `R_ijlm` sur quadruplets de
+branches. La conjecture est que l'ensemble `A_v` des ordres locaux admissibles
+serait déterminé par toutes ses restrictions à quatre branches, sous la
+structure quasi-circulaire pertinente.
+
+Cette idée est compatible avec le langage CSP de la Piste C, mais elle doit
+affronter deux garde-fous déjà établis :
+
+- T064 : treewidth faible ne suffit pas si le domaine local `P` reste
+  factoriel ;
+- T081/T082 : les petits caps locaux ne suffisent pas comme théorie globale
+  dans les familles star/all-orders.
+
+Expérience de réconciliation :
+
+```text
+construire A_v par énumération bornée
+extraire les relations R_ijlm
+tester si les restrictions à 4 branches reconstruisent A_v
+séparer les lignes sous promesse quasi-circulaire des lignes hors promesse
+```
+
+Familles obligatoires : `paired_farthest`, `p3_block_tree`, les contre-signaux
+T046/T075, et les candidats high-girth T082. Aucun `False` de ce système ne
+doit entrer dans `candidate.py` sans preuve de complétude.

@@ -5311,3 +5311,48 @@ globales star/all-orders. Ne pas intégrer dans `candidate.py`. La suite
 mathématique prioritaire est de prouver une famille paramétrée low-hub
 high-cycle de profondeur locale croissante ou de relier cette obstruction aux
 contraintes PC-tree restreintes.
+
+## ExecPlan R004 - triage des notes externes du 2026-05-31
+
+But : ranger les nouvelles notes et le screenshot fournis par l'utilisateur en
+documents exploitables, sans importer les claims non prouvés comme résultats du
+dépôt.
+
+Hypothèse : les matériaux contiennent des pistes utiles sur les P-noeuds, mais
+la valeur de recherche vient surtout d'une séparation nette entre faits
+fixed-order solides, conjectures conditionnelles et faux leads déjà couverts
+par T046/T075/T081/T082.
+
+Fichiers visés : `docs/external_reviews/researcher_advances_2026-05-31.md`,
+`docs/external_reviews/README.md`, `docs/source_materials/README.md`,
+`docs/source_materials/images/handwritten_block_gadget_2026-05-31.png`,
+`docs/external_analysis_digest.md`, `docs/hypothesis_portfolio.md`,
+`docs/proof_obligations.md`, `docs/tracks/piste_a_local_pc_constraints.md`,
+`docs/tracks/piste_b_dp_pc_tree.md`,
+`docs/tracks/piste_c_sat_csp.md`,
+`docs/tracks/piste_f_complexity_subcases.md`, `docs/tracks/README.md`,
+`docs/experiment_log.md` et `PLANS.md`.
+
+Algorithme pressenti : ne pas recopier les textes bruts comme instructions.
+Extraire seulement les hypothèses testables : projection bad-side complète,
+lemme d'interface P-noeud, largeur 4 conditionnelle, circle graph, et gadget
+manuscrit. Marquer explicitement comme rejetés les claims de polynomialité
+générale, les validations numériques non versionnées et les projections
+farthest seules.
+
+Tests à exécuter : `make quick` avant modification pour vérifier que le dépôt
+est green ; après modification documentaire, exécuter au moins `git diff
+--check` et relancer `make quick` si le temps le permet.
+
+Risques : surpondérer une note externe ancienne ou contradictoire ; mélanger
+un résultat fixed-order avec l'existence dans un PC-tree ; oublier que T075 et
+T082 sont des garde-fous contre les règles locales et petits caps.
+
+Résultats observés : triage rédigé dans le digest R004 ; le screenshot est
+vendorisé ; les pistes A/B/C/F et les obligations de preuve pointent vers des
+probes falsifiables. Aucun fichier de solveur, oracle ou test n'est modifié.
+
+Décision : garder R004 comme contexte de recherche et prochaine file
+d'expériences, pas comme amélioration candidate. Le prochain travail utile est
+un probe `project_bad_side_obligations_to_pc_nodes` combiné à un test largeur
+4/interface sur les contre-signaux existants.

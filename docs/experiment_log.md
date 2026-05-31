@@ -4051,3 +4051,33 @@
 - Next action : prouver ou généraliser la famille low-hub high-cycle comme
   obstruction locale de profondeur croissante ; en parallèle, tester la
   conjecture sur les P-nœuds résiduels/modules proposée par le chercheur.
+
+## 2026-05-31 triage des notes externes P-noeud / largeur 4
+
+- Date/heure : 2026-05-31 10:50:25 CEST.
+- Commit hash : base `7046db8`; checkpoint final à lire avec `git log -1`
+  après commit.
+- Hypothèse testée : les nouvelles notes externes peuvent contenir des pistes
+  utiles, mais elles doivent être triées comme hypothèses falsifiables et non
+  comme preuves ou consignes d'intégration.
+- Changement fait : ajout du digest
+  `docs/external_reviews/researcher_advances_2026-05-31.md`, vendor du
+  screenshot manuscrit comme source matérielle, et liens R004 dans
+  `docs/external_analysis_digest.md`, `docs/hypothesis_portfolio.md`,
+  `docs/proof_obligations.md` et les pistes A/B/C/F.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `rtk make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `310 passed`, puis `JUSTE`.
+- Résultat benchmark : non relancé à ce stade ; changement documentaire
+  uniquement.
+- Commande exécutée après modification : `rtk make quick`.
+- Résultat correction finale : `310 passed`, puis `JUSTE`.
+- Conclusion : les idées à garder sont la projection bad-side complète sur les
+  nœuds PC, le lemme d'interface des P-noeuds, la conjecture de largeur 4 et la
+  route circle graph. Les claims de résolution polynomial-time, les validations
+  numériques non versionnées, et les projections farthest seules restent
+  explicitement non acceptés.
+- Next action : construire un probe R004 qui matérialise les obligations
+  `same_side(a,c;b,d)` au niveau des P-noeuds et teste la largeur 4/interface
+  contre T046/T075/T081/T082.

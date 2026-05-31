@@ -694,6 +694,13 @@ Dernier commit green avant T009 : `07120e4`.
   `make bench-quick` (`40/40` runs, `0` timeout, `0` incomplet).
   `candidate.py` n'a pas été modifié.
 
+- Checkpoint R004 courant : commit contenant le triage documentaire des notes
+  externes du 2026-05-31 et le screenshot manuscrit vendorisé. Validation
+  observée avant modification : `make quick` (`310 passed`, puis `JUSTE`) ;
+  validation finale : `rtk make quick` (`310 passed`, puis `JUSTE`).
+  Modification documentaire seulement ; `candidate.py`, l'oracle et les tests
+  ne sont pas modifiés.
+
 ## Rollback
 
 Si une modification régresse et que la cause n’est pas claire :

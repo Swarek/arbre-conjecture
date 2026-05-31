@@ -179,3 +179,12 @@ L'addendum
 ce recadrage : T057 est une piste de compression, tandis que T059/T060 doivent
 également nourrir bad-side, CSP quartets, 2-SAT/treewidth, circular-ones et
 catalogue non booléen.
+
+## Revue externe 2026-05-31
+
+Les notes externes et le screenshot fournis le 2026-05-31 sont triés dans
+`docs/external_reviews/researcher_advances_2026-05-31.md`. Le statut retenu est
+explicitement conditionnel : interface P-noeud, largeur 4 des P-noeuds,
+projection bad-side complète et route circle graph sont des hypothèses à tester
+contre T046/T075/T081/T082, pas des preuves ni des consignes à intégrer dans
+`candidate.py`.

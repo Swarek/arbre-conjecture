@@ -156,6 +156,38 @@ dans chaque frontier. Une règle locale utile doit donc mémoriser une relation 
 bord ou construire une contrainte globale auxiliaire ; elle ne peut pas se
 limiter aux ensembles `I_x(v)` indépendants par nœud.
 
+## R004 - Notes externes 2026-05-31 sur projection P-noeud
+
+Statut : hypothèses externes à tester, pas résultat.
+
+Les notes fournies le 2026-05-31 remettent au centre la question suivante :
+pour un P-noeud `v` de branches `B_1,...,B_k`, les projections
+`I_x(v) = { i : B_i intersecte F_x }` ont-elles une structure d'intervalles
+circulaires ou de famille convexe ? Cette question est utile comme diagnostic,
+mais T046/T075 montrent déjà que les `I_x(v)` farthest seuls sont insuffisants.
+
+La version à tester maintenant doit donc projeter les obligations bad-side
+complètes :
+
+```text
+same_side(a,c;b,d) pour b,d in B_ac
+```
+
+sur les branches des nœuds PC. Le rapport attendu n'est plus seulement
+`I_x(v)` intervalle ou non, mais :
+
+- quels atomes bad-side traversent un nœud ;
+- quelles branches portent les deux endpoints et les deux mauvais témoins ;
+- si la contrainte devient locale, binaire entre voisins, ou réellement
+  multi-niveau ;
+- si les familles projetées ressemblent à circular-ones/circle graph, ou si
+  elles simulent cyclic ordering arbitraire.
+
+Le screenshot manuscrit du 2026-05-31 est conservé comme seed ambigu dans
+`docs/source_materials/images/handwritten_block_gadget_2026-05-31.png`. Il ne
+doit pas être traité comme contre-exemple tant qu'une matrice explicite, un
+PC-tree et un oracle/shrink ne sont pas versionnés.
+
 ## T022 - Rapport `project_farthest_sets_to_pc_nodes`
 
 Statut : diagnostic implémenté, explicitement non décisionnel.

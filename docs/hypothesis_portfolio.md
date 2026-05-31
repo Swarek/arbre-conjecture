@@ -316,6 +316,15 @@ stricts validés mais `0` nouveau positif par rapport à `candidate.py` sur
 doit soit recevoir une preuve de sous-cas, soit être relancée avec une famille
 où la candidate est réellement incomplète.
 
+Mise à jour R004 (2026-05-31) : les notes externes récentes sont triées dans
+`docs/external_reviews/researcher_advances_2026-05-31.md`. Les idées à garder
+ne sont pas des résultats : (1) projection des contraintes bad-side complètes
+sur les nœuds PC plutôt que projection farthest seule, (2) lemme d'interface
+pour les P-nœuds à contexte fixé, (3) conjecture de largeur 4 sur les ordres de
+branches d'un P-nœud, (4) route circle graph / split decomposition. La suite ne
+doit pas intégrer ces claims à `candidate.py`; elle doit d'abord les transformer
+en probes falsifiables contre T046/T075/T081/T082.
+
 État 2026-05-22 : deux familles explicites ont été ajoutées sans modifier
 `mixed` :
 

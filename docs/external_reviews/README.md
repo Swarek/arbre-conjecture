@@ -20,3 +20,7 @@ Fichiers courants :
 - `gpt55_global_strategy_addendum_2026-05-23.md` : rappel que la revue ne doit
   pas enfermer le Goal dans T056/T057 ; elle liste les experiences a garder
   separees.
+- `researcher_advances_2026-05-31.md` : triage des notes externes et du
+  screenshot manuscrit fournis le 2026-05-31. A lire comme portefeuille
+  d'hypotheses falsifiables : interface P-noeud, largeur 4 conditionnelle,
+  projection bad-side complete et route circle graph.

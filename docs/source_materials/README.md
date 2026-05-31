@@ -27,7 +27,12 @@ It is now vendored here:
 | File | Source path at import time | SHA-256 |
 | --- | --- | --- |
 | `images/proposition_4_4_2026-05-22.png` | `/var/folders/yx/knynxqw926j197htt4wm7jhh0000gn/T/TemporaryItems/NSIRD_screencaptureui_YxIDQL/Screenshot 2026-05-22 at 10.55.03 PM.png` | `cef8d6fa5de1065658c45cb5b8072ac77957f9b21d117d4bb758e3bda9c66ad1` |
+| `images/handwritten_block_gadget_2026-05-31.png` | `/var/folders/yx/knynxqw926j197htt4wm7jhh0000gn/T/TemporaryItems/NSIRD_screencaptureui_vBxMdn/Screenshot 2026-05-31 at 10.39.05 AM.png` | `79713da3d07776c4f0948d825f0ed1b4184006a9c6723bb2693b72c94e195876` |
 
 The mathematical content shown in the screenshot, Proposition 4.4, is preserved
 in `docs/source_notes.md` and covered by tests for
 `passes_farthest_prop_4_4_condition`.
+
+The 2026-05-31 handwritten screenshot is not a proof. It is summarized as an
+ambiguous four-block gadget seed in
+`docs/external_reviews/researcher_advances_2026-05-31.md`.

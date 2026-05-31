@@ -1591,3 +1591,30 @@ Conclusion prudente : la DP treewidth est utile comme oracle expérimental et
 comme classification FPT, mais dans ce sweep elle n'améliore pas la candidate
 en mode positive-only. Les `False` relationnels restent exclus de toute
 intégration générale.
+
+## R004 - Circle graph et risque cyclic-ordering sur gros P-noeuds
+
+Statut : piste externe ajoutée au portefeuille, non testée.
+
+Le digest du 2026-05-31 ajoute une route théorique : traduire les contraintes
+`same_side` localisées à un P-noeud en système de cordes ou graphe
+d'entrelacement, puis comparer aux outils de type circle graph / split
+decomposition. Cette piste est intéressante précisément parce qu'elle attaque
+le risque principal de la Piste F : un gros P-noeud actif pourrait simuler un
+problème de cyclic ordering, sauf si la provenance quasi-circulaire de `D`
+force une classe plus rigide.
+
+Premier test souhaitable :
+
+- choisir un P-noeud actif et extraire les contraintes bad-side projetées sur
+  ses branches ;
+- construire le graphe d'entrelacement induit par les paires de branches ;
+- mesurer si les familles produites par `paired_farthest`, `p3_block_tree` et
+  T082 ressemblent à une classe circle-graph contrôlée ou à des contraintes
+  arbitraires ;
+- conserver séparément les cas sous promesse `T(D)` et les PC-trees
+  arbitraires.
+
+Un signal circle-graph structuré nourrirait une piste polynomial/FPT. Un signal
+cyclic-ordering arbitraire nourrirait la piste NP-hardness, mais ne suffirait
+pas sans contrôler les contraintes parasites de la matrice `D`.

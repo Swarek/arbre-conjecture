@@ -560,3 +560,32 @@ Prochaine expérience Piste B : comparer `local_boundary_response` à la relatio
 résiduelle exacte sur des patches de supports de taille `2` ou `3`. Cette
 expérience doit rester une piste parmi d'autres, en parallèle du CSP exact par
 quartets et du sous-cas booléen.
+
+## R004 - Lemme d'interface P-noeud à contexte fixé
+
+Statut : conjecture externe, non reproduite dans le dépôt.
+
+Les notes du 2026-05-31 proposent de réparer le recollement naïf des P-noeuds
+par un lemme d'interface :
+
+```text
+à ordre de branches sigma et contexte extérieur fixés, les complétions internes
+valides des blocs d'un P-noeud se factorisent en produit cartésien.
+```
+
+Cette hypothèse est exactement dans le prolongement de T056/T057 : une signature
+locale n'est utile que si elle détermine la relation résiduelle sur le bord. Le
+lemme d'interface serait une forme de factorisation plus forte pour les
+P-noeuds, mais il doit être vérifié contre les familles déjà difficiles.
+
+Probe recommandé :
+
+- fixer `(P, sigma, contexte)` ;
+- énumérer les complétions internes admissibles de chaque bloc ;
+- comparer l'ensemble global accepté au produit des relations de bloc ;
+- inclure les cas T046/T075/T081/T082 et un gros `P` actif ;
+- si un mismatch apparaît, le shrinker et l'ajouter aux régressions.
+
+Même sans mismatch, la taille des relations d'interface doit être mesurée :
+une factorisation exacte mais exponentielle serait utile pour la preuve, pas
+forcément pour un algorithme polynomial général.
