@@ -4204,3 +4204,44 @@
   d'interface.
 - Next action : basculer vers le diagnostic d'interface P-nœud à ordre de
   branches fixé, en comparant `A_exact` aux produits des projections internes.
+
+## 2026-05-31 interface P-nœud à ordre de branches fixé
+
+- Date/heure : 2026-05-31 12:45 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : à ordre de branches fixé, les complétions internes
+  valides d'un root `P` pourraient se factoriser en produit cartésien de leurs
+  projections unaires.
+- Changement fait : ajout de
+  `src/pc_circular/solvers/interface_experiments.py`,
+  `tools/pc_pnode_interface_probe.py`, `tests/test_interface_experiments.py`,
+  de la cible `make bench-pnode-interface` et de la documentation T086.
+  `candidate.py` n'a pas été modifié.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `rtk make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `322 passed`, puis `JUSTE`.
+- Commande exécutée :
+  `rtk .venv/bin/python -m py_compile src/pc_circular/solvers/interface_experiments.py tools/pc_pnode_interface_probe.py`.
+- Résultat compilation : succès.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_interface_experiments.py`.
+- Résultat correction ciblée : `3 passed`.
+- Commande exécutée : `rtk make bench-pnode-interface`.
+- Résultat benchmark T086 :
+  `reports/pnode_interface_probe.json` écrit ; `9` lignes, `9` complètes,
+  `8` factorisées, `1` réfutée, `max_false_product_count=2`,
+  `max_minimal_coupling_support_size=2`.
+- Réfutation : `single_bad_side_quartet_instance()` avec
+  `T=P(P(0,1),P(2,3))` et ordre de branches `(0,1)`. La relation acceptée
+  contient `2` tuples, le produit des projections en contient `4`, et les faux
+  tuples produisent la violation bad-side `same_side(0,2;1,3)`.
+- Contrôles : égal-distance factorise ; le seed manuscrit T085 factorise une
+  fois le bon ordre de branches fixé ; T046 est vide/vacu pour l'ordre testé.
+- Conclusion provisoire : la factorisation produit indépendante est fausse dans
+  le scaffold général. Une DP correcte doit transporter une relation résiduelle
+  d'interface au moins binaire. La version promise-aware du lemme reste ouverte.
+- Next action : étendre le probe d'interface aux P-nœuds internes avec contexte
+  extérieur explicite, ou mesurer la taille des relations résiduelles sur les
+  familles T046/T075/T082.

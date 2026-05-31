@@ -331,6 +331,55 @@ relation exacte acceptée `A_exact` avec le produit cartésien de ses projection
 internes. Un échec de factorisation donnerait une corrélation de bord minimale ;
 une réussite bornée devra aussi mesurer la taille de la relation résiduelle.
 
+## T086 - Produit d'interface à ordre de branches fixé
+
+Statut : diagnostic implémenté, réfutation du produit cartésien indépendant
+dans le scaffold général.
+
+Artefacts ajoutés : `src/pc_circular/solvers/interface_experiments.py` et
+`tools/pc_pnode_interface_probe.py`, lancé par `make bench-pnode-interface`.
+
+Définition testée :
+
+```text
+Fixer un root interne, un ordre de branches sigma.
+Chaque branche i a un ensemble de complétions linéaires L_i.
+A_exact subset product_i L_i contient les tuples dont la composition
+globale dans l'ordre sigma est cR.
+```
+
+Le test compare `A_exact` au produit des projections unaires `prod_i pi_i(A)`.
+Il calcule aussi la plus petite arité `k` telle que les projections `k`-aires
+reconstruisent exactement `A_exact`.
+
+Résultat du sweep T086 :
+
+- `9` lignes, toutes complètes ;
+- `8` lignes factorisées ;
+- `1` ligne réfutée ;
+- `max_false_product_count=2` ;
+- `max_minimal_coupling_support_size=2`.
+
+La réfutation minimale est
+`single_bad_side_quartet_instance()` avec
+`T = P(P(0,1), P(2,3))` et ordre de branches `(0,1)`. La relation acceptée a
+`2` tuples, mais le produit des projections en contient `4`; les deux tuples
+faux produisent une violation bad-side de type `same_side(0,2;1,3)`.
+
+Contrôles :
+
+- égal-distance sur le même arbre factorise complètement ;
+- le seed manuscrit T085 factorise une fois l'ordre de branches fixé : les
+  ordres rejetés par T085 viennent du mauvais ordre de branches, pas d'une
+  corrélation interne restante ;
+- T046 matching low-hub est vide pour l'ordre root testé, donc factorise
+  seulement de façon vacue.
+
+Interprétation : la conjecture "interface = produit cartésien des complétions
+internes" est fausse dans le scaffold PC-tree général. Cela ne réfute pas une
+version promise-aware plus forte, mais cela impose déjà de transporter au moins
+des relations résiduelles binaires de bord dans une DP correcte.
+
 ## T022 - Rapport `project_farthest_sets_to_pc_nodes`
 
 Statut : diagnostic implémenté, explicitement non décisionnel.

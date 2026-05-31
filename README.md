@@ -61,6 +61,7 @@ make bench-chirotope-high-girth
 make bench-r004-bad-side-projections
 make bench-pnode-width4
 make bench-handwritten-gadget
+make bench-pnode-interface
 make bench-permutation-like
 make bench-permutation-composition
 make bench-relation-components
@@ -198,6 +199,12 @@ branches. Une absence de réfutation n'est pas une preuve de largeur 4.
 Il formalise le screenshot manuscrit 4 blocs x 2 feuilles comme une recherche
 bornée d'interprétations `P` libre vs `C` fixé. C'est un diagnostic de
 provenance, pas un solver ni une preuve de dureté.
+
+`make bench-pnode-interface` écrit `reports/pnode_interface_probe.json`. Il
+fixe un ordre de branches au root et compare la relation exacte des complétions
+internes cR au produit cartésien de ses projections. Un mismatch réfute la
+factorisation produit dans le scaffold testé, mais ne décide pas le problème
+général.
 
 `make bench-permutation-like` écrit `reports/permutation_like_probe.json`. Il
 teste les profils locaux `permutation_like` observés sur `paired_farthest`

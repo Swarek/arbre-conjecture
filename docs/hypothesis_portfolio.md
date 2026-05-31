@@ -65,6 +65,12 @@ silencieuses pour les projections locales `I_x(v)` et exigent toutes un
 support multi-niveau. La prochaine tentative locale doit porter une relation de
 bord, pas seulement des ensembles projetés par nœud.
 
+Mise à jour T086 : le produit cartésien indépendant des complétions internes
+est réfuté dans le scaffold par `single_bad_side_quartet_instance()` sur
+`P(P(0,1),P(2,3))`. La prochaine formulation locale doit donc transporter une
+relation résiduelle d'interface, au moins binaire dans ce témoin, plutôt qu'une
+simple projection unaire par branche.
+
 ## Piste B : programmation dynamique sur le PC-tree
 
 Intuition : un état de frontière pourrait résumer les contraintes externes d’un

@@ -2234,3 +2234,32 @@ Ce que T085 ne prouve pas :
 Obligation suivante : définir et tester une relation d'interface à ordre de
 branches fixé, car T085 montre un phénomène de contrainte sur l'ordre de
 branches mais ne teste pas encore la factorisation des complétions internes.
+
+### T086 : produit d'interface à ordre de branches fixé
+
+Statut : lemme négatif expérimental dans le scaffold général.
+
+`root_fixed_order_interface_product_report` fixe un ordre de branches `sigma`,
+énumère les complétions internes de chaque branche, puis calcule la relation
+exacte `A_exact` des tuples qui donnent un ordre cR. Le diagnostic compare
+`A_exact` au produit des projections unaires.
+
+Ce que T086 prouve expérimentalement dans le scaffold testé :
+
+- sur `single_bad_side_quartet_instance()` avec
+  `T = P(P(0,1),P(2,3))` et `sigma=(0,1)`, la factorisation produit échoue ;
+- l'échec est binaire : `minimal_coupling_support_size=2` ;
+- les tuples faux du produit sont rejetés par une violation bad-side explicite
+  `same_side(0,2;1,3)`.
+
+Ce que T086 ne prouve pas :
+
+- il ne réfute pas une version du lemme d'interface sous la promesse stricte
+  "T vient de D" ou avec une définition enrichie d'interface ;
+- il ne donne pas une preuve de dureté ;
+- il ne justifie aucun `False` dans `candidate.py`.
+
+Obligation suivante : remplacer la conjecture produit par une relation
+résiduelle d'interface, au minimum binaire dans ce scaffold, puis tester si la
+taille/largeur de cette relation reste contrôlable dans les familles T046,
+T075, T082 et T085.

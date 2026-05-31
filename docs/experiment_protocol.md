@@ -364,6 +364,19 @@ et des roots `C` fixant les trois ordres circulaires de blocs. Le rapport est
 un artefact de diagnostic/provenance : il ne décide pas l'existence générale,
 ne prouve pas la dureté, et ne justifie aucun changement dans `candidate.py`.
 
+Probe interface P-nœud à ordre fixé Piste A/R004 :
+
+```bash
+make bench-pnode-interface
+```
+
+Cette commande écrit `reports/pnode_interface_probe.json`. Elle fixe un ordre
+de branches au root, énumère les complétions linéaires internes de chaque
+branche, calcule la relation exacte `A_exact` des tuples qui donnent un ordre
+cR, puis compare `A_exact` au produit cartésien de ses projections unaires. Une
+ligne `factorizes=false` est une réfutation expérimentale de la factorisation
+produit pour ce scaffold fixé, pas une preuve de dureté ni un rejet général.
+
 Contrôle promise-aware des permutations locales Piste F/C :
 
 ```bash

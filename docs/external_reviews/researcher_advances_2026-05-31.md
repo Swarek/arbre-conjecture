@@ -119,6 +119,15 @@ Ce qui reste ouvert :
 - les contre-signaux T075/T082 doivent etre inclus dans le banc d'essai ;
 - `0 mismatch` ne suffit pas si la relation d'interface reste exponentielle.
 
+Statut apres T086 :
+
+- une version produit cartésien indépendante est déjà fausse dans le scaffold
+  général : `single_bad_side_quartet_instance()` sur `P(P(0,1),P(2,3))`
+  demande une relation binaire entre les deux branches ;
+- cela ne réfute pas encore une version promise-aware ou enrichie du lemme, mais
+  cela montre que l'interface doit transporter une relation résiduelle, pas
+  seulement les projections unaires.
+
 Probe conseille :
 
 ```text

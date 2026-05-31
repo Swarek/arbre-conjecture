@@ -5538,3 +5538,62 @@ confirme un phénomène "ordre de branches imposé vs P libre" et un faux silenc
 farthest sur la lecture plate, mais il ne réfute pas le `P` libre et ne prouve
 ni dureté, ni largeur 4, ni lemme d'interface. La suite doit basculer vers le
 diagnostic d'interface P-nœud à ordre de branches fixé.
+
+## ExecPlan T086 - produit d'interface P-nœud à ordre fixé
+
+But : tester directement la conjecture R004/H2 selon laquelle, à ordre de
+branches et contexte fixés, les complétions internes valides des branches d'un
+P-nœud se factorisent en produit cartésien.
+
+Hypothèse testée : pour un root `P` du scaffold, si l'ordre circulaire des
+branches `sigma` est fixé, alors la relation exacte `A_exact` des choix
+internes de branches qui produisent un ordre cR pourrait être égale au produit
+des projections de `A_exact` sur chaque branche. Une réfutation minimale
+indique qu'une signature d'interface doit transporter une corrélation entre
+branches.
+
+Fichiers visés : `src/pc_circular/solvers/interface_experiments.py`,
+`tools/pc_pnode_interface_probe.py`, `tests/test_interface_experiments.py`,
+`Makefile`, `README.md`, `docs/experiment_protocol.md`,
+`docs/tracks/piste_a_local_pc_constraints.md`, `docs/proof_obligations.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md` et `PLANS.md`.
+
+Algorithme pressenti : pour un arbre root avec branches `B_i` et un ordre
+`sigma`, énumérer les frontiers linéaires internes de chaque branche sous cap,
+composer le produit cartésien dans l'ordre `sigma`, tester chaque ordre global
+par `passes_bad_side_precircular_cR`, puis comparer la relation acceptée au
+produit de ses projections unaires. Calculer aussi la première arité `k` dont
+les projections `k`-aires reconstruisent exactement la relation.
+
+Tests à exécuter : test ciblé de factorisation sur égal-distance, test de
+réfutation sur `single_bad_side_quartet_instance` avec deux branches `P2`,
+`make bench-pnode-interface`, puis `make quick`.
+
+Risques : ce premier modèle fixe seulement un root/contexte vide ; il ne prouve
+pas encore le cas d'un P-nœud interne avec branche parent/outside. Une
+factorisation observée est expérimentale ; une réfutation indique une
+corrélation à porter, pas une preuve de dureté.
+
+Plan de contre-exemples : inclure le gadget `single_bad_side_quartet_instance`
+comme contrôle négatif minimal, le seed T085 dans ses deux profils et les
+familles low-hub/T046. Si `A_exact != produit_i R_i`, documenter le tuple
+produit faux, son ordre global et la violation bad-side.
+
+Plan subagents : pas de nouveau fanout nécessaire pour ce checkpoint ; les
+subagents T085 ont déjà isolé ce livrable comme prochaine étape.
+
+Résultats observés : compilation Python réussie pour
+`src/pc_circular/solvers/interface_experiments.py` et
+`tools/pc_pnode_interface_probe.py`. Tests ciblés
+`tests/test_interface_experiments.py` : `3 passed`.
+`make bench-pnode-interface` écrit `reports/pnode_interface_probe.json` avec
+`9` lignes, `9` complètes, `8` factorisées, `1` réfutée,
+`max_false_product_count=2` et `max_minimal_coupling_support_size=2`.
+La réfutation est le contrôle minimal `single_bad_side_quartet_instance()` sur
+`P(P(0,1),P(2,3))` : `A_exact` contient `2` tuples, le produit des projections
+en contient `4`, et les tuples faux violent `same_side(0,2;1,3)`.
+
+Décision : la factorisation produit indépendante est fausse dans le scaffold
+général. H2 doit être reformulé comme relation résiduelle de bord, pas comme
+produit cartésien de projections unaires. La version promise-aware du lemme
+reste ouverte et doit être testée avec contexte extérieur explicite.
