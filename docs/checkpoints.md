@@ -712,6 +712,15 @@ Dernier commit green avant T009 : `07120e4`.
   `77` lignes multi-niveaux, `max_obligation_count=378`) et `make quick`
   (`313 passed`, puis `JUSTE`). `candidate.py` n'a pas été modifié.
 
+- Checkpoint T084 courant : commit contenant le test empirique largeur 4 des
+  P-nœuds. Validation observée : compilation Python de
+  `width4_experiments.py` et `pc_pnode_width4_probe.py` réussie, tests ciblés
+  `tests/test_width4_experiments.py` (`6 passed`),
+  `make bench-pnode-width4` (`103` lignes, `103` complètes, `35` lignes avec
+  nœud testé, `0` nœud réfuté, `0` nœud unsupported,
+  `max_frontiers_seen=20160`, `max_missing_order_count=0`) et `make quick`
+  (`319 passed`, puis `JUSTE`). `candidate.py` n'a pas été modifié.
+
 ## Rollback
 
 Si une modification régresse et que la cause n’est pas claire :

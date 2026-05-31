@@ -332,6 +332,13 @@ une projection farthest silencieuse mais des obligations bad-side actives, et
 falsifiable n'est donc plus "`I_x(v)` suffit", mais "les obligations
 multi-niveaux admettent une petite relation d'interface exploitable".
 
+Mise à jour T084 : le probe `make bench-pnode-width4` teste directement, dans
+le scaffold enraciné, si les ordres de branches cR projetés sur un nœud `P`
+sont déterminés par leurs restrictions à quatre branches. Le sweep initial ne
+trouve aucune réfutation complète (`0` nœud réfuté sur `35` lignes testées),
+mais cela reste une preuve expérimentale bornée : la branche parent/outside et
+la vraie relation d'interface ne sont pas encore modélisées.
+
 État 2026-05-22 : deux familles explicites ont été ajoutées sans modifier
 `mixed` :
 

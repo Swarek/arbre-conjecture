@@ -4124,3 +4124,42 @@
 - Next action : chercher une factorisation par relation d'interface pour les
   obligations multi-niveaux, ou construire une famille qui force une corrélation
   de type cyclic ordering.
+
+## 2026-05-31 test largeur 4 P-nœud
+
+- Date/heure : 2026-05-31 11:24:00 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : pour un nœud `P`, les ordres circulaires de branches
+  induits par les frontiers globales cR pourraient être déterminés par leurs
+  restrictions à toutes les sous-familles de quatre branches.
+- Changement fait : ajout de `src/pc_circular/solvers/width4_experiments.py`,
+  `tools/pc_pnode_width4_probe.py`, des tests unitaires, de la cible
+  `make bench-pnode-width4` et de la documentation T084. `candidate.py` n'a
+  pas été modifié.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `rtk make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `313 passed`, puis `JUSTE`.
+- Commande exécutée :
+  `rtk .venv/bin/python -m py_compile src/pc_circular/solvers/width4_experiments.py tools/pc_pnode_width4_probe.py`.
+- Résultat compilation : succès.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_width4_experiments.py`.
+- Résultat correction ciblée : `6 passed`.
+- Commande exécutée : `rtk make bench-pnode-width4`.
+- Résultat benchmark T084 :
+  `reports/pnode_width4_probe.json` écrit ; `103` lignes, `103` complètes,
+  `0` tronquée, `35` lignes avec nœud testé, `0` ligne réfutée,
+  `0` nœud réfuté, `0` nœud unsupported, `max_frontiers_seen=20160`,
+  `max_missing_order_count=0`.
+- Commande exécutée : `rtk make quick`.
+- Résultat correction finale : `319 passed`, puis `JUSTE`.
+- Conclusion provisoire : aucune réfutation width4 complète n'est trouvée dans
+  ce sweep, y compris sur les familles star/high-girth. C'est une preuve
+  expérimentale bornée seulement : la branche parent/outside d'un PC-tree
+  non enraciné et la relation d'interface locale complète ne sont pas encore
+  modélisées.
+- Next action : ajouter une couche interface à T084 ou chercher une famille
+  synthétique réalisable par `D,T` dont la fermeture width4 est strictement trop
+  grande.

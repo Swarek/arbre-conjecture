@@ -5420,3 +5420,62 @@ Décision : garder T083 comme probe R004 de référence. Il confirme qu'il faut
 raisonner sur les obligations bad-side complètes plutôt que sur `I_x(v)` seul,
 mais il renforce aussi le besoin d'une relation d'interface multi-niveau avant
 toute règle locale ou intégration candidate.
+
+## ExecPlan T084 - test largeur 4 P-nœud
+
+But : transformer la conjecture R004 "les ordres admissibles d'un P-nœud sont
+déterminés par leurs restrictions à quatre branches" en diagnostic falsifiable
+dans le scaffold actuel.
+
+Hypothèse testée : pour un nœud `P`, si `A_v` est l'ensemble des ordres
+circulaires de branches induits par les frontiers globales représentées et cR,
+alors `A_v` pourrait être exactement la fermeture des restrictions de `A_v` à
+toutes les sous-familles de quatre branches.
+
+Fichiers visés : `src/pc_circular/solvers/width4_experiments.py`,
+`tools/pc_pnode_width4_probe.py`, `tests/test_width4_experiments.py`,
+`Makefile`, `README.md`, `docs/experiment_protocol.md`,
+`docs/tracks/piste_a_local_pc_constraints.md`, `docs/proof_obligations.md`,
+`docs/hypothesis_portfolio.md`, `docs/tracks/README.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md` et `PLANS.md`.
+
+Algorithme pressenti : énumérer les frontiers représentées sous
+`frontier_limit + 1`, garder les frontiers cR via le prédicat bad-side, extraire
+pour chaque nœud `P` l'ordre circulaire de ses enfants, construire les relations
+`R_Q` sur chaque quadruplet de branches, puis comparer `A_v` à la fermeture de
+ces relations sur tous les ordres circulaires de branches. Une réfutation n'est
+valide que si la ligne est complète.
+
+Plan de contre-exemples : inclure `star`/single gros `P`,
+`paired_farthest`, `random`, les obstructions paddées T081, les familles
+high-girth T082 et les arbres `balanced/mixed`. Le cas synthétique d'une
+famille d'ordres non fermée par largeur 4 est verrouillé comme test unitaire du
+calcul de fermeture, mais il ne prétend pas être réalisable par une matrice `D`.
+
+Plan subagents : trois explorations read-only ont été lancées. Elles ont
+confirmé les pièges de canonicalisation, la nécessité d'un statut incomplet si
+un cap est touché, et les familles red-team prioritaires : star/high-girth,
+T046/T075 et `p3_block_tree`.
+
+Tests à exécuter : compilation Python, `tests/test_width4_experiments.py`,
+`make bench-pnode-width4`, puis `make quick`.
+
+Risques : le scaffold enraciné ne modélise pas encore la branche parent/outside
+d'un vrai PC-tree interne. `A_v` est une projection de frontiers globales, pas
+une relation d'interface locale indépendante. Une absence de réfutation est
+un signal, pas une preuve de largeur 4 ni de polynomialité.
+
+Résultats observés : compilation Python réussie pour
+`src/pc_circular/solvers/width4_experiments.py` et
+`tools/pc_pnode_width4_probe.py`. Les tests ciblés
+`tests/test_width4_experiments.py` passent avec `6 passed`.
+`make bench-pnode-width4` écrit `reports/pnode_width4_probe.json` avec `103`
+lignes, `103` complètes, `0` tronquée, `35` lignes avec nœud testé,
+`0` ligne réfutée, `0` nœud réfuté, `0` nœud unsupported,
+`max_frontiers_seen=20160` et `max_missing_order_count=0`.
+Gate finale : `make quick` passe avec `319 passed`, puis `JUSTE`.
+
+Décision provisoire : T084 ne casse pas la conjecture largeur 4 dans le sweep
+initial. La piste reste vivante, mais doit maintenant être renforcée par une
+vraie relation d'interface ou par une recherche synthétique de famille
+réalisable qui produit une fermeture 4 strictement trop grande.

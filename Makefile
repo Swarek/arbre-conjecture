@@ -1,7 +1,7 @@
 PYTHON ?= $(shell if [ -x .venv/bin/python ]; then echo .venv/bin/python; elif command -v python3 >/dev/null 2>&1; then echo python3; else echo python; fi)
 PYTEST ?= $(PYTHON) -m pytest
 
-.PHONY: quick check hunt-counterexamples bench-quick bench bench-piste-f bench-csp-quick bench-width-stress bench-single-p-stress bench-relation-catalog bench-relation-shapes bench-relation-chains bench-relation-unsat-cores bench-sparse-matching bench-sparse-binary-cores bench-quartet-coverage bench-frontier-obstructions bench-strict-algorithm52 bench-strict-positive-coverage bench-threshold-roundness bench-cr-pc-representability bench-unrooted-pc-representability bench-local-obstruction-depth bench-chirotope-high-girth bench-r004-bad-side-projections bench-permutation-like bench-permutation-composition bench-relation-components unit acceptance
+.PHONY: quick check hunt-counterexamples bench-quick bench bench-piste-f bench-csp-quick bench-width-stress bench-single-p-stress bench-relation-catalog bench-relation-shapes bench-relation-chains bench-relation-unsat-cores bench-sparse-matching bench-sparse-binary-cores bench-quartet-coverage bench-frontier-obstructions bench-strict-algorithm52 bench-strict-positive-coverage bench-threshold-roundness bench-cr-pc-representability bench-unrooted-pc-representability bench-local-obstruction-depth bench-chirotope-high-girth bench-r004-bad-side-projections bench-pnode-width4 bench-permutation-like bench-permutation-composition bench-relation-components unit acceptance
 
 unit:
 	$(PYTEST) -q
@@ -278,6 +278,19 @@ bench-r004-bad-side-projections:
 	  --frontier-limit 512 \
 	  --seed 20260660 \
 	  --output reports/r004_bad_side_pc_node_projection_probe.json
+
+bench-pnode-width4:
+	mkdir -p reports && \
+	$(PYTHON) tools/pc_pnode_width4_probe.py \
+	  --sizes 5,6,7,8 \
+	  --pc-trees star,balanced,mixed \
+	  --instance-kinds cycle,equal,paired_farthest,random,padded_four_local_non_cr,padded_five_local_non_cr,even_high_cycle_low_hub,odd_high_cycle_low_hub \
+	  --repeats 2 \
+	  --frontier-limit 10000 \
+	  --max-branch-degree 8 \
+	  --include-high-girth-n9 \
+	  --seed 20260670 \
+	  --output reports/pnode_width4_probe.json
 
 bench-permutation-like:
 	mkdir -p reports && \

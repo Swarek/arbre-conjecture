@@ -230,6 +230,46 @@ prochaine étape utile est de chercher si les obligations multi-niveaux se
 factorisent par une petite relation d'interface sur P-nœuds, ou si elles
 produisent des familles de corrélations de type cyclic ordering.
 
+## T084 - Test largeur 4 empirique sur P-nœuds
+
+Statut : diagnostic implémenté, non décisionnel.
+
+Artefacts ajoutés : `src/pc_circular/solvers/width4_experiments.py` et
+`tools/pc_pnode_width4_probe.py`, lancé par `make bench-pnode-width4`.
+
+Définition testée dans le scaffold :
+
+```text
+A_v = ordres circulaires des branches d'un nœud P induits par les frontiers
+      représentées et vérifiées cR.
+```
+
+Pour chaque quadruplet de branches `Q`, le probe calcule `R_Q`, la restriction
+de `A_v` à `Q`. Il réfute la largeur 4 seulement si l'énumération est complète
+et si un ordre de branches absent de `A_v` satisfait toutes les contraintes
+`R_Q`.
+
+Résultat du sweep borné `n=5..8`, `star/balanced/mixed`, plus le témoin
+high-girth `n=9` :
+
+- `103` lignes, `103` complètes, `0` troncature ;
+- `35` lignes avec au moins un nœud `P` testé ;
+- `0` nœud réfuté ;
+- `0` nœud unsupported ;
+- `max_frontiers_seen=20160`, couvrant le cas high-girth `n=9` sous star ;
+- `max_missing_order_count=0`.
+
+Interprétation : ce sweep ne casse pas la conjecture largeur 4 dans le modèle
+testé, y compris sur des garde-fous star/high-girth. Cela ne prouve rien de
+général : l'objet testé est la projection de frontiers globales dans le
+scaffold enraciné, pas encore une relation d'interface locale complète avec
+branche parent/outside.
+
+Prochaine action : enrichir T084 avec les métriques d'interface issues de T083
+ou chercher activement une famille synthétique où une famille d'ordres de
+branches non fermée par largeur 4 est réellement réalisable par une matrice
+`D` et un PC-tree.
+
 ## T022 - Rapport `project_farthest_sets_to_pc_nodes`
 
 Statut : diagnostic implémenté, explicitement non décisionnel.

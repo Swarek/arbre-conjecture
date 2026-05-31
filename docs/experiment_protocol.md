@@ -337,6 +337,20 @@ mesure si elles sont locales, multi-niveaux, ou concentrées sur quatre branches
 distinctes. Le rapport sert à tester les hypothèses R004 sur les P-nœuds et les
 interfaces ; il ne fournit ni solver, ni certificat `False`.
 
+Probe largeur 4 P-nœud Piste A/B :
+
+```bash
+make bench-pnode-width4
+```
+
+Cette commande écrit `reports/pnode_width4_probe.json`. Elle énumère des
+frontiers représentées sous cap, extrait les ordres de branches des nœuds `P`
+parmi les frontiers cR, puis teste si cette famille est exactement récupérée
+par ses restrictions à toutes les sous-familles de quatre branches. Une ligne
+`refuted` complète serait une réfutation expérimentale forte de la conjecture
+largeur 4 dans le scaffold ; une absence de réfutation reste seulement un
+signal expérimental.
+
 Contrôle promise-aware des permutations locales Piste F/C :
 
 ```bash

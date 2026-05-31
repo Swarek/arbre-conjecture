@@ -2168,3 +2168,40 @@ Limites :
   métriques de stress, pas des certificats de `False` ;
 - aucun résultat T083 ne doit être utilisé dans `candidate.py` sans lemme de
   sous-cas et témoin/rejet vérifiable.
+
+### T084 : test empirique largeur 4 des P-nœuds
+
+Statut : diagnostic expérimental borné, pas preuve de largeur 4.
+
+Pour un nœud `P` du scaffold `PCNode`, `pnode_width4_frontier_projection_report`
+définit :
+
+```text
+A_v = ordres circulaires des branches de v induits par les frontiers globales
+      représentées et vérifiées cR.
+```
+
+Le diagnostic construit ensuite, pour chaque quadruplet de branches `Q`, la
+relation `R_Q` obtenue en restreignant les ordres de `A_v` à `Q`. La fermeture
+width4 est l'ensemble des ordres de branches dont toutes les restrictions à
+quatre branches appartiennent aux `R_Q`. Une ligne complète est `refuted` si
+cette fermeture contient un ordre absent de `A_v`.
+
+Ce que T084 couvre :
+
+- test direct de la conjecture R004 "les restrictions à quatre branches
+  caractérisent les ordres de branches admissibles" dans le scaffold actuel ;
+- séparation explicite entre énumération complète et troncature de frontiers ;
+- garde de canonicalisation : les restrictions sont prises modulo rotation et
+  renversement, et l'extraction d'ordre de branches tolère un bloc qui traverse
+  la coupure linéaire de la frontier globale.
+
+Limites :
+
+- le test porte sur les enfants immédiats d'un nœud enraciné `PCNode`; il
+  n'inclut pas encore la branche parent/outside d'un vrai PC-tree non enraciné ;
+- `A_v` est défini par frontiers globales cR sous cap, pas par une relation
+  d'interface locale indépendante ;
+- une absence de réfutation sur un sweep ne prouve pas la largeur 4 ;
+- un statut `holds` ne justifie aucune intégration candidate sans preuve que le
+  modèle local ainsi testé est nécessaire, suffisant et composable.

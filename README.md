@@ -59,6 +59,7 @@ make bench-unrooted-pc-representability
 make bench-local-obstruction-depth
 make bench-chirotope-high-girth
 make bench-r004-bad-side-projections
+make bench-pnode-width4
 make bench-permutation-like
 make bench-permutation-composition
 make bench-relation-components
@@ -186,6 +187,11 @@ SAT scalable.
 obligations exactes `same_side(a,c;b,d)` sur les nœuds du PC-tree et mesure
 leur support local/multi-niveau. C'est le probe R004 pour tester les notes sur
 P-nœuds ; il ne décide pas l'existence et ne modifie pas `candidate.py`.
+
+`make bench-pnode-width4` écrit `reports/pnode_width4_probe.json`. Il teste
+empiriquement, sous énumération complète bornée, si les ordres de branches
+acceptés sur un nœud `P` sont déterminés par leurs restrictions à quatre
+branches. Une absence de réfutation n'est pas une preuve de largeur 4.
 
 `make bench-permutation-like` écrit `reports/permutation_like_probe.json`. Il
 teste les profils locaux `permutation_like` observés sur `paired_farthest`
