@@ -748,6 +748,16 @@ Dernier commit green avant T009 : `07120e4`.
   `max_minimal_coupling_support_size=2`) et `make quick` (`328 passed`, puis
   `JUSTE`). `candidate.py` n'a pas été modifié.
 
+- Checkpoint T088 courant : commit contenant le probe d'arité des relations
+  résiduelles d'interface. Validation observée : compilation Python de
+  `interface_experiments.py` et `pc_residual_interface_probe.py` réussie, tests
+  ciblés `tests/test_residual_interface_probe.py` et
+  `tests/test_interface_experiments.py` (`8 passed`),
+  `make bench-residual-interface` (`24157` cas two-level complets,
+  `2514` relations non triviales, histogramme d'arité minimale
+  `{1: 24103, 2: 54}`, `0` cas au-delà du binaire) et `make quick`
+  (`330 passed`, puis `JUSTE`). `candidate.py` n'a pas été modifié.
+
 ## Rollback
 
 Si une modification régresse et que la cause n’est pas claire :

@@ -134,6 +134,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T085 | 2026-05-31 | A/R004 | Gadget manuscrit 4 blocs formalisé : lecture versionnée testée par oracle, `P` libre/`C` fixe séparés, résultat borné sans intégration solver | `make bench-handwritten-gadget` |
 | T086 | 2026-05-31 | A/B/R004 | Interface P-nœud à ordre fixé : factorisation produit réfutée par un couplage bad-side minimal dans le scaffold | `make bench-pnode-interface` |
 | T087 | 2026-05-31 | A/B/R004 | Interface P-nœud avec contexte extérieur fixé : factorisation produit encore réfutée par un seed non vide, relation résiduelle binaire requise | `make bench-pnode-context-interface` |
+| T088 | 2026-05-31 | A/B/R004 | Relations résiduelles d'interface : sweep `P2 x P2 x P2` two-level complet jusqu'à 4 paires hautes, 54 relations binaires, aucune arité 3 trouvée | `make bench-residual-interface` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

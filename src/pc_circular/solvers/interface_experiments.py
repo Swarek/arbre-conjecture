@@ -212,6 +212,7 @@ def root_fixed_order_interface_product_report(
         "product_truncated": product_truncated,
         "complete": complete,
         "accepted_tuple_count": len(accepted),
+        "accepted_tuples": tuple(sorted(accepted)) if complete else None,
         "accepted_tuple_examples": tuple(accepted_examples),
         "projection_product_count": (
             None if projection_product is None else len(projection_product)
@@ -409,6 +410,7 @@ def fixed_context_interface_product_report(
         "product_truncated": product_truncated,
         "complete": complete,
         "accepted_tuple_count": len(accepted),
+        "accepted_tuples": tuple(sorted(accepted)) if complete else None,
         "accepted_tuple_examples": tuple(accepted_examples),
         "projection_product_count": (
             None if projection_product is None else len(projection_product)

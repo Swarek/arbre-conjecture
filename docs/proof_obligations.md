@@ -2302,3 +2302,33 @@ Ce que T087 ne prouve pas :
 Obligation suivante : définir la relation résiduelle exacte d'un patch/focus et
 mesurer sa taille, ses projections minimales et sa composabilité sur T046,
 T075, T082, T085 et des seeds générés.
+
+### T088 : arité des relations résiduelles d'interface
+
+Statut : preuve expérimentale bornée, pas théorème.
+
+`tools/pc_residual_interface_probe.py` matérialise `A_exact`, la relation des
+complétions internes acceptées pour une interface fixe, puis calcule pour chaque
+arité `k` la fermeture déterminée par toutes les projections `k`-aires.
+
+Ce que T088 couvre :
+
+- le seed T087 est bien une relation non unaire, mais binaire ;
+- dans le sweep two-level `P2 x P2 x P2` avec contexte `(6) ... (7)`,
+  `24157` matrices sont inspectées complètement jusqu'à `4` paires hautes ;
+- `2514` relations sont non triviales ;
+- `54` cas exigent une arité minimale `2` ;
+- aucun cas exigeant une arité strictement supérieure à `2` n'est trouvé dans
+  ce budget.
+
+Ce que T088 ne prouve pas :
+
+- il ne prouve pas que toutes les interfaces résiduelles sont binaires ;
+- le focus testé a seulement trois branches `P2` et des distances two-level ;
+- le contexte extérieur est fixé linéairement ;
+- la promesse "PC-tree issu de D" n'est pas vérifiée ;
+- aucun résultat ne justifie une intégration dans `candidate.py`.
+
+Obligation suivante : chercher activement une relation résiduelle d'arité `3`
+dans des familles plus riches : branches `P3`, plus de niveaux de distance,
+contexts non vides plus longs, et patches composés de plusieurs supports.

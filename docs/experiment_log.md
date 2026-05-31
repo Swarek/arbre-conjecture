@@ -4289,3 +4289,44 @@
 - Next action : implémenter un probe de relation résiduelle exacte pour patches
   de taille 2/3 et le comparer aux signatures unaires/binaires sur T046, T075,
   T082, T085 et des seeds générés.
+
+## 2026-05-31 arité des relations résiduelles d'interface
+
+- Date/heure : 2026-05-31 14:20 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : après la réfutation du produit unaire, les relations
+  résiduelles de petits P-nœuds pourraient rester déterminées par leurs
+  projections binaires.
+- Changement fait : ajout de `tools/pc_residual_interface_probe.py`,
+  `tests/test_residual_interface_probe.py`, de la cible
+  `make bench-residual-interface` et de la documentation T088. `candidate.py`
+  n'a pas été modifié.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `rtk make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `328 passed`, puis `JUSTE`.
+- Commande exécutée :
+  `rtk .venv/bin/python -m py_compile src/pc_circular/solvers/interface_experiments.py tools/pc_residual_interface_probe.py`.
+- Résultat compilation : succès.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_residual_interface_probe.py tests/test_interface_experiments.py`.
+- Résultat correction ciblée : `8 passed`.
+- Commande exécutée : `rtk make bench-residual-interface`.
+- Résultat benchmark T088 :
+  `reports/residual_interface_probe.json` écrit ; contrôle T087 binaire ;
+  recherche two-level `P2 x P2 x P2` complète sur `24157` cas jusqu'à `4`
+  paires hautes ; `21460` relations vides, `183` pleines, `2514` non
+  triviales ; histogramme d'arité minimale `{1: 24103, 2: 54}` ;
+  aucun cas au-delà du binaire.
+- Commande exécutée : `rtk make quick`.
+- Résultat correction finale : `330 passed`, puis `JUSTE`.
+- Meilleur témoin non unaire : paires hautes `{(0,2), (1,3)}` avec relation
+  `A_exact={(0,0,0),(0,0,1),(1,1,0),(1,1,1)}`, donc égalité entre deux
+  branches et troisième libre.
+- Conclusion provisoire : le produit unaire est trop faible, mais aucune
+  relation d'arité `3` n'apparaît dans cette famille bornée. Ce signal ne
+  prouve pas une interface binaire générale ; il indique la prochaine famille à
+  attaquer.
+- Next action : chercher l'arité `3` avec branches `P3`, distances `1/2/3/4`,
+  contextes plus longs ou patches composés de plusieurs supports.

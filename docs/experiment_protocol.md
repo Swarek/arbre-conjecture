@@ -390,6 +390,20 @@ de `A_exact`. Une réfutation non vide indique qu'une relation résiduelle
 d'interface est nécessaire même sous contexte fixé. Une relation vide doit être
 interprétée comme collapse de contexte, pas comme preuve positive.
 
+Probe relation résiduelle d'interface Piste A/B :
+
+```bash
+make bench-residual-interface
+```
+
+Cette commande écrit `reports/residual_interface_probe.json`. Elle calcule
+`A_exact` et les fermetures par projections d'arité `1,2,...` pour des
+interfaces fixes. Le sweep par défaut reprend le seed T087 puis énumère des
+matrices two-level sur un focus `P2 x P2 x P2` jusqu'à une taille bornée de
+paires hautes. Une ligne exigeant une arité strictement supérieure à `2` serait
+un contre-signal fort contre une interface binaire ; son absence reste une
+preuve expérimentale bornée seulement.
+
 Contrôle promise-aware des permutations locales Piste F/C :
 
 ```bash

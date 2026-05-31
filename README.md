@@ -63,6 +63,7 @@ make bench-pnode-width4
 make bench-handwritten-gadget
 make bench-pnode-interface
 make bench-pnode-context-interface
+make bench-residual-interface
 make bench-permutation-like
 make bench-permutation-composition
 make bench-relation-components
@@ -212,6 +213,13 @@ général.
 linéaire autour d'un P-nœud focal et répète le test de factorisation des
 complétions internes. Un mismatch non vide indique qu'une relation résiduelle
 de bord est nécessaire même avec ce contexte fixé.
+
+`make bench-residual-interface` écrit
+`reports/residual_interface_probe.json`. Il mesure l'arité minimale des
+projections nécessaires pour reconstruire exactement une relation résiduelle
+d'interface. Le sweep par défaut cherche une relation au-delà du binaire dans
+un focus `P2 x P2 x P2` two-level borné ; une absence de témoin est
+expérimentale, pas une preuve.
 
 `make bench-permutation-like` écrit `reports/permutation_like_probe.json`. Il
 teste les profils locaux `permutation_like` observés sur `paired_farthest`

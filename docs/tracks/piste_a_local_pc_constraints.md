@@ -429,6 +429,44 @@ bord, au moins binaire dans ce seed, puis tester sa taille/composabilité sur
 des patches plus grands. Les collapses à relation vide sont informatifs mais
 ne sont pas des preuves positives de factorisation utile.
 
+## T088 - Arité des relations résiduelles d'interface
+
+Statut : diagnostic implémenté, non décisionnel.
+
+Artefact ajouté : `tools/pc_residual_interface_probe.py`, lancé par
+`make bench-residual-interface`.
+
+Le probe calcule la relation exacte `A_exact` des complétions internes
+acceptées, puis mesure la fermeture par projections d'arité `1,2,...`. Il ne
+demande plus si la relation est un produit unaire ; il demande quelle arité est
+nécessaire pour la reconstruire exactement.
+
+Résultat du sweep T088 :
+
+- contrôle T087 : relation acceptée de taille `2`, arité minimale `2` ;
+- recherche two-level sur focus `P2 x P2 x P2`, contexte `(6) ... (7)` ;
+- `24157` cas inspectés, recherche complète jusqu'à `4` paires hautes ;
+- `21460` relations vides, `183` relations pleines, `2514` non triviales ;
+- histogramme d'arité minimale : `{1: 24103, 2: 54}` ;
+- aucun cas d'arité `3` trouvé dans ce budget.
+
+Meilleur témoin non unaire two-level :
+
+```text
+high_pairs = {(0,2), (1,3)}
+A_exact = {(0,0,0), (0,0,1), (1,1,0), (1,1,1)}
+```
+
+Il impose une égalité entre les deux premières branches, tandis que la troisième
+branche reste libre. Les projections unaires créent `4` faux tuples ; les
+projections binaires reconstruisent exactement la relation.
+
+Interprétation : dans cette famille bornée, la relation résiduelle dépasse bien
+le produit unaire mais ne dépasse pas le binaire. C'est un signal utile pour
+une DP d'interface binaire, pas une preuve. La prochaine attaque doit chercher
+une arité `3` avec branches `P3`, distances à plus de niveaux, contexte plus
+riche ou patches composés.
+
 ## T022 - Rapport `project_farthest_sets_to_pc_nodes`
 
 Statut : diagnostic implémenté, explicitement non décisionnel.

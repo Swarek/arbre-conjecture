@@ -5648,3 +5648,51 @@ branche est fausse dans le scaffold. La suite doit mesurer la taille et la
 structure de la relation résiduelle exacte plutôt que chercher un produit
 unaire. T046 et T085 montrent aussi que certains contextes fixés collapsent la
 relation à vide ; ces collapses doivent être séparés des réfutations non vides.
+
+## ExecPlan T088 - mesure de relations résiduelles d'interface
+
+But : passer de la question "est-ce un produit unaire ?" à "quelle arité de
+projection reconstruit la relation résiduelle exacte ?".
+
+Hypothèse testée : sur de petits P-nœuds à branches `P2`, les relations
+résiduelles non triviales pourraient rester déterminées par leurs projections
+binaires. Une réfutation d'arité `3` serait un signal fort contre une DP à
+interfaces binaires ; une absence de réfutation reste seulement un résultat
+expérimental borné.
+
+Fichiers visés : `tools/pc_residual_interface_probe.py`,
+`tests/test_residual_interface_probe.py`, `Makefile`, `README.md`,
+`docs/experiment_protocol.md`, `docs/tracks/piste_a_local_pc_constraints.md`,
+`docs/proof_obligations.md`, `docs/experiment_log.md`,
+`docs/checkpoints.md`, `docs/tracks/README.md` et `PLANS.md`.
+
+Algorithme : réutiliser `fixed_context_interface_product_report`. Tester le
+seed T087, puis énumérer des matrices two-level `n=8` où un focus
+`P(P(0,1),P(2,3),P(4,5))` est placé entre les contextes `(6)` et `(7)`.
+Pour chaque ensemble de paires hautes jusqu'à une taille bornée, calculer
+`A_exact`, ses fermetures par projections d'arité `1,2,3`, le nombre de faux
+tuples par arité, et la plus petite arité exacte.
+
+Critères de succès : produire un JSON lisible avec histogrammes d'arité,
+exemples de relations non unaires, et un champ explicite indiquant si une
+relation exige une arité strictement supérieure à `2` dans le budget testé.
+
+Risques : une absence de relation d'arité `3` dans les matrices two-level de
+petit budget ne prouve pas une largeur binaire générale. Les matrices testées
+ne sont pas garanties sous la promesse Hsu/McConnell `T=T(D)`.
+
+Résultats observés : compilation Python réussie pour
+`src/pc_circular/solvers/interface_experiments.py` et
+`tools/pc_residual_interface_probe.py`. Tests ciblés
+`tests/test_residual_interface_probe.py` et
+`tests/test_interface_experiments.py` : `8 passed`.
+`make bench-residual-interface` écrit
+`reports/residual_interface_probe.json`. Le contrôle T087 est binaire. La
+recherche two-level `P2 x P2 x P2` est complète sur `24157` cas jusqu'à `4`
+paires hautes : `21460` relations vides, `183` pleines, `2514` non triviales,
+histogramme d'arité minimale `{1: 24103, 2: 54}`, aucun cas au-delà du binaire.
+
+Décision : garder l'hypothèse "interfaces binaires possibles" comme piste à
+attaquer, pas comme résultat. La prochaine expérience doit chercher une arité
+`3` dans des familles plus riches : branches `P3`, distances à quatre niveaux,
+contextes plus longs ou patches composés.

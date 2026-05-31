@@ -78,6 +78,12 @@ complétions acceptées, mais le produit des projections en crée deux fausses.
 La piste A doit donc mesurer et composer des relations résiduelles de bord, pas
 des signatures unaires de branches.
 
+Mise à jour T088 : un premier probe d'arité résiduelle sur un focus
+`P2 x P2 x P2` two-level a inspecté `24157` cas complets jusqu'à `4` paires
+hautes. Il trouve `54` relations exigeant une projection binaire, mais aucune
+relation exigeant une arité `3`. C'est un signal en faveur d'interfaces
+binaires dans cette famille bornée, pas une preuve générale.
+
 ## Piste B : programmation dynamique sur le PC-tree
 
 Intuition : un état de frontière pourrait résumer les contraintes externes d’un
