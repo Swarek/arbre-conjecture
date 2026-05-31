@@ -2672,3 +2672,41 @@ Ce que T097 ne prouve pas :
 Obligation suivante : mesurer la taille minimale de la relation jointe sur des
 patches composés, puis chercher soit une compression exacte, soit une famille
 paramétrée où cette relation croît.
+
+### T098 : arité des relations jointes de gaps
+
+Statut : preuve expérimentale bornée, pas théorème général.
+
+`pnode_context_gap_arity_report` compare, pour des tuples de trois projections
+ouvertes, la relation observée des patterns de gaps avec le produit des marges
+et avec la closure par projections binaires. Le benchmark ajoute un stress
+`nested_bad_side_ladder` qui force artificiellement une même obligation
+`same_side` à apparaître dans trois projections ouvertes.
+
+Ce que T098 couvre :
+
+- `124` lignes complètes ;
+- `120` lignes de sweep standard et `4` lignes de stress ladder ;
+- `875` relations jointes à trois projections, toutes issues du ladder ;
+- `product_false_case_count=875`, donc les marges unaires ne suffisent jamais
+  dans ces cas ;
+- `binary_sufficient_case_count=875` ;
+- `higher_order_case_count=0` ;
+- `max_product_size=64`, `max_actual_relation_size=4`,
+  `max_pairwise_closure_size=4`.
+
+Interprétation : dans le stress testé, les corrélations de gaps sont exactement
+reconstruites par leurs projections binaires. Cela donne une hypothèse de
+travail utile pour une DP de relations binaires, mais ne prouve ni l'absence
+d'arité `3` en général, ni une borne de taille sur les PC-trees réels.
+
+Ce que T098 ne prouve pas :
+
+- pas de résultat promise-aware Hsu/McConnell ;
+- pas de preuve que tous les patches aient une closure binaire ;
+- pas de preuve de complexité polynomiale ;
+- pas de décision intégrable dans `candidate.py`.
+
+Obligation suivante : soit chercher activement une arité `3` avec plusieurs
+obligations simultanées ou des familles non-ladder, soit prototyper une
+composition binaire et la soumettre aux contre-exemples T075/T082/T097.

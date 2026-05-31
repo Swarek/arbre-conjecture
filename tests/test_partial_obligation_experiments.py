@@ -1,12 +1,18 @@
 from pc_circular.generators import instance_by_kind, single_bad_side_quartet_instance
 from pc_circular.pc_tree import leaf, p_node, pc_tree_from_kind, star_pc_tree
 from pc_circular.solvers.partial_obligation_experiments import (
+    pnode_context_gap_arity_report,
     pnode_context_gap_composition_report,
     pnode_context_gap_relation_report,
     pnode_context_signature_ladder_report,
     pnode_partial_context_dependency_report,
     pnode_partial_obligation_report,
     pnode_separator_signature_report,
+)
+from tools.pc_context_gap_arity_probe import (
+    _nested_bad_side_ladder_tree,
+    _padded_single_bad_side_instance,
+    run_probe as run_gap_arity_probe,
 )
 from tools.pc_context_gap_composition_probe import run_probe as run_gap_composition_probe
 from tools.pc_context_gap_relation_probe import run_probe as run_gap_probe
@@ -360,3 +366,41 @@ def test_context_gap_composition_probe_summarizes_small_sweep():
     assert report["summary"]["rows"] == 8
     assert report["summary"]["rows_with_pnodes"] == 8
     assert "false_product_case_count" in report["summary"]
+
+
+def test_context_gap_arity_ladder_is_binary_on_small_stress():
+    report = pnode_context_gap_arity_report(
+        _padded_single_bad_side_instance(7),
+        _nested_bad_side_ladder_tree(3),
+        projection_tuple_size=3,
+        max_projection_tuples=2000,
+    )
+
+    assert report["method"] == "pnode_context_gap_arity_report"
+    assert report["projection_tuple_count"] > 0
+    assert report["product_false_case_count"] > 0
+    assert report["binary_sufficient_case_count"] > 0
+    assert report["higher_order_case_count"] == 0
+    assert report["min_required_arity_histogram"][2] > 0
+
+
+def test_context_gap_arity_probe_summarizes_ladder_stress():
+    report = run_gap_arity_probe(
+        sizes=[4],
+        pc_trees=["star"],
+        instance_kinds=["equal"],
+        repeats=1,
+        ladder_depths=[3],
+        frontier_limit=200,
+        projection_tuple_size=3,
+        scope="all_open",
+        max_projection_tuples=2000,
+        max_examples=2,
+        seed=20260680,
+    )
+
+    assert report["method"] == "t098_context_gap_arity_probe"
+    assert report["summary"]["rows"] == 2
+    assert report["summary"]["ladder_rows"] == 1
+    assert report["summary"]["binary_sufficient_case_count"] > 0
+    assert report["summary"]["higher_order_case_count"] == 0

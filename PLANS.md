@@ -22,6 +22,69 @@ Dans un Goal long, le plan doit aussi définir le critère d’arrêt : succès
 mesurable, réfutation, blocage théorique, ou bascule vers une autre piste. Ne pas
 laisser un Goal tourner comme une recherche ouverte sans sortie concrète.
 
+## ExecPlan 2026-05-31 - T098 arite des relations jointes de gaps
+
+But : poursuivre T097. Le produit indépendant des marges locales est réfuté ;
+il faut maintenant savoir si les relations jointes de gaps restent déterminées
+par leurs projections binaires, ou si des corrélations d'arité 3 apparaissent
+déjà.
+
+Hypothèse : les faux produits T097 pourraient être seulement des contraintes
+binaires entre projections. Si les closures pairwise des relations jointes
+coïncident avec les relations observées, cela renforce l'idée d'une interface
+binaire. Si une closure pairwise ajoute des tuples impossibles, alors il faut
+transporter une relation d'arité au moins 3.
+
+Fichiers à modifier :
+`src/pc_circular/solvers/partial_obligation_experiments.py`,
+`tools/pc_context_gap_arity_probe.py`,
+`tests/test_partial_obligation_experiments.py`, `Makefile`, puis les documents
+de suivi (`README.md`, `docs/experiment_protocol.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md`, `docs/proof_obligations.md`,
+`docs/hypothesis_portfolio.md`, `docs/tracks/README.md`,
+`docs/tracks/piste_a_local_pc_constraints.md`,
+`docs/tracks/piste_b_dp_pc_tree.md`). `candidate.py` reste hors scope.
+
+Algorithme pressenti : pour chaque obligation `same_side`, prendre des tuples
+de `3` projections ouvertes. Pour chaque état visible joint, collecter la
+relation observée des patterns de gaps, puis comparer : produit des marges,
+closure par toutes les projections binaires, relation réelle. Ajouter un stress
+contrôlé "nested bad-side ladder" pour créer des obligations avec au moins trois
+projections ouvertes, car le sweep T097 standard en produit peu ou pas.
+
+Tests à exécuter : `py_compile`, pytest ciblé,
+`make bench-context-gap-arity`, puis `rtk make quick`.
+
+Risques : le stress ladder est un scaffold construit, pas une instance promise
+Hsu/McConnell. Il sert à tester la forme de relation résiduelle, pas à prouver
+la complexité générale. Une absence d'arité 3 reste seulement une
+non-réfutation bornée.
+
+Plan de contre-exemples : inclure `cycle/mixed`, le sweep T097 et le ladder
+bad-side de profondeur croissante. Si une arité 3 apparaît, documenter le plus
+petit témoin. Si seule l'arité 2 apparaît, basculer ensuite vers une
+compression binaire ou vers un stress qui force plusieurs obligations
+simultanées.
+
+Plan subagents : pas de fanout pour ce checkpoint borné ; l'expérience découle
+directement du résultat T097.
+
+Résultats observés : T098 est implémenté. `make bench-context-gap-arity` donne
+`124` lignes complètes, dont `120` lignes de sweep standard et `4` lignes
+`nested_bad_side_ladder`. Le sweep standard ne produit pas de tuple à trois
+projections ouvertes, mais le ladder produit `875` relations jointes. Toutes ont
+un produit unaire trop large (`product_false_case_count=875`,
+`product_false_tuple_count=9786`), et toutes sont reconstruites par les
+projections binaires (`binary_sufficient_case_count=875`,
+`higher_order_case_count=0`). Les maxima observés sont `max_product_size=64`,
+`max_actual_relation_size=4`, `max_pairwise_closure_size=4`.
+
+Décision : poursuivre l'hypothèse d'une relation de bord binaire, mais la traiter
+comme preuve expérimentale bornée. La prochaine étape doit soit chercher une
+vraie arité `3` avec plusieurs obligations simultanées/non-ladder, soit
+prototyper une composition binaire et l'attaquer. Ne pas intégrer dans
+`candidate.py`.
+
 ## ExecPlan 2026-05-31 - T097 composition des relations de gaps
 
 But : tester si la relation de gaps T096, qui explique les obligations ouvertes

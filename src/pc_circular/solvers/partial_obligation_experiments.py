@@ -389,6 +389,35 @@ def _first_missing_product_tuple(marginals: tuple[set, ...], actual: set) -> tup
     return None
 
 
+def _pairwise_closure(relation: set[tuple], arity: int) -> set[tuple]:
+    marginals = tuple(
+        {value_tuple[index] for value_tuple in relation}
+        for index in range(arity)
+    )
+    pair_projections = {
+        (i, j): {
+            (value_tuple[i], value_tuple[j])
+            for value_tuple in relation
+        }
+        for i, j in combinations(range(arity), 2)
+    }
+    closure = set()
+    for candidate in product(*(sorted(values, key=repr) for values in marginals)):
+        if all(
+            (candidate[i], candidate[j]) in pair_projections[(i, j)]
+            for i, j in combinations(range(arity), 2)
+        ):
+            closure.add(candidate)
+    return closure
+
+
+def _first_missing_pairwise_tuple(pairwise_closure: set[tuple], actual: set) -> tuple | None:
+    for candidate in sorted(pairwise_closure, key=repr):
+        if candidate not in actual:
+            return candidate
+    return None
+
+
 def pnode_partial_obligation_report(
     D,
     T: PCNode,
@@ -602,6 +631,278 @@ def pnode_partial_obligation_report(
             "T092 partial-obligation census layered on T091. Counts show where "
             "fully visible chord constraints need separator/interface data; "
             "this is not a decision procedure."
+        ),
+    }
+
+
+def pnode_context_gap_arity_report(
+    D,
+    T: PCNode,
+    *,
+    frontier_limit: int = 20000,
+    projection_tuple_size: int = 3,
+    scope: str = "all_open",
+    max_projection_tuples: int = 50000,
+    max_examples: int = 5,
+) -> dict:
+    """Measure whether joint gap relations need arity beyond binary."""
+
+    tree_labels = set(labels(T))
+    if tree_labels != set(range(len(D))):
+        raise ValueError("PC-tree labels must be exactly 0..n-1")
+    if frontier_limit <= 0:
+        raise ValueError("frontier_limit must be positive")
+    if projection_tuple_size < 3:
+        raise ValueError("projection_tuple_size must be at least 3")
+    if max_projection_tuples < 1:
+        raise ValueError("max_projection_tuples must be positive")
+    if max_examples < 0:
+        raise ValueError("max_examples must be non-negative")
+
+    raw_frontiers = enumerate_frontiers(T, canonical=True, limit=frontier_limit + 1)
+    frontier_truncated = len(raw_frontiers) > frontier_limit
+    frontiers = tuple(raw_frontiers[:frontier_limit])
+
+    node_infos = [
+        node_info
+        for node_info in iter_internal_node_child_labels(T)
+        if node_info["kind"] == "P"
+    ]
+    node_by_path = {tuple(node_info["path"]): node_info for node_info in node_infos}
+    local_order_by_path = {path: {} for path in node_by_path}
+    for path, node_info in node_by_path.items():
+        child_label_sets = node_info["child_label_sets"]
+        for frontier in frontiers:
+            local_order_by_path[path][frontier] = induced_child_circular_order(
+                frontier,
+                child_label_sets,
+            )
+
+    obligations = tuple(_iter_pnode_obligation_projections(D, T))
+    open_obligations = tuple(
+        obligation
+        for obligation in obligations
+        if _is_gap_composition_projection(obligation, scope)
+    )
+    obligations_by_same_side: dict[tuple, list[dict]] = {}
+    for obligation in open_obligations:
+        obligations_by_same_side.setdefault(obligation["same_side"], []).append(obligation)
+
+    same_side_obligation_count = len(obligations_by_same_side)
+    arity_obligation_count = 0
+    projection_tuple_count = 0
+    relation_case_count = 0
+    unary_sufficient_case_count = 0
+    binary_sufficient_case_count = 0
+    higher_order_case_count = 0
+    product_false_case_count = 0
+    pairwise_false_case_count = 0
+    product_false_tuple_count = 0
+    pairwise_false_tuple_count = 0
+    max_product_size = 0
+    max_pairwise_closure_size = 0
+    max_actual_relation_size = 0
+    max_pairwise_false_count = 0
+    min_required_arity_histogram: dict = {}
+    actual_relation_size_histogram: dict = {}
+    product_size_histogram: dict = {}
+    pairwise_closure_size_histogram: dict = {}
+    pairwise_false_size_histogram: dict = {}
+    tuple_pattern_histogram: dict = {}
+    binary_sufficient_examples = []
+    higher_order_examples = []
+    projection_tuple_limit_reached = False
+
+    for same_side, same_side_obligations in sorted(obligations_by_same_side.items()):
+        ordered_obligations = sorted(
+            same_side_obligations,
+            key=lambda obligation: (
+                obligation["path"],
+                obligation["fine_role_pattern"],
+                obligation["projected_roles"],
+            ),
+        )
+        if len(ordered_obligations) < projection_tuple_size:
+            continue
+        arity_obligation_count += 1
+
+        for obligation_tuple in combinations(ordered_obligations, projection_tuple_size):
+            if projection_tuple_count >= max_projection_tuples:
+                projection_tuple_limit_reached = True
+                break
+            projection_tuple_count += 1
+            tuple_patterns = tuple(
+                obligation["fine_role_pattern"] for obligation in obligation_tuple
+            )
+            tuple_pattern_histogram[tuple_patterns] = (
+                tuple_pattern_histogram.get(tuple_patterns, 0) + 1
+            )
+
+            relation_by_visible: dict[tuple, set[tuple]] = {}
+            for frontier in frontiers:
+                visible_parts = []
+                gap_parts = []
+                for obligation in obligation_tuple:
+                    path = obligation["path"]
+                    local_order = local_order_by_path[path][frontier]
+                    visible_order = _visible_global_role_order_signature(
+                        frontier,
+                        obligation["projected_roles"],
+                    )
+                    gap_signature = _missing_cyclic_gap_signature(
+                        frontier,
+                        obligation["same_side"],
+                        obligation["projected_roles"],
+                    )
+                    visible_parts.append((path, local_order, visible_order))
+                    gap_parts.append((path, gap_signature))
+                relation_by_visible.setdefault(tuple(visible_parts), set()).add(
+                    tuple(gap_parts)
+                )
+
+            for visible_key, actual_relation in relation_by_visible.items():
+                relation_case_count += 1
+                actual_size = len(actual_relation)
+                marginals = tuple(
+                    {gap_tuple[index] for gap_tuple in actual_relation}
+                    for index in range(projection_tuple_size)
+                )
+                product_size = _product_size(marginals)
+                pairwise = _pairwise_closure(actual_relation, projection_tuple_size)
+                pairwise_size = len(pairwise)
+                product_false_count = product_size - actual_size
+                pairwise_false_count = pairwise_size - actual_size
+
+                max_product_size = max(max_product_size, product_size)
+                max_pairwise_closure_size = max(
+                    max_pairwise_closure_size,
+                    pairwise_size,
+                )
+                max_actual_relation_size = max(max_actual_relation_size, actual_size)
+                max_pairwise_false_count = max(
+                    max_pairwise_false_count,
+                    pairwise_false_count,
+                )
+
+                actual_relation_size_histogram[actual_size] = (
+                    actual_relation_size_histogram.get(actual_size, 0) + 1
+                )
+                product_size_histogram[product_size] = (
+                    product_size_histogram.get(product_size, 0) + 1
+                )
+                pairwise_closure_size_histogram[pairwise_size] = (
+                    pairwise_closure_size_histogram.get(pairwise_size, 0) + 1
+                )
+                pairwise_false_size_histogram[pairwise_false_count] = (
+                    pairwise_false_size_histogram.get(pairwise_false_count, 0) + 1
+                )
+
+                if product_false_count:
+                    product_false_case_count += 1
+                    product_false_tuple_count += product_false_count
+
+                if product_size == actual_size:
+                    unary_sufficient_case_count += 1
+                    required_arity = 1
+                elif pairwise_false_count == 0:
+                    binary_sufficient_case_count += 1
+                    required_arity = 2
+                    if len(binary_sufficient_examples) < max_examples:
+                        binary_sufficient_examples.append(
+                            {
+                                "same_side": same_side,
+                                "projection_paths": tuple(
+                                    obligation["path"] for obligation in obligation_tuple
+                                ),
+                                "fine_role_patterns": tuple_patterns,
+                                "visible_key": visible_key,
+                                "actual_relation_size": actual_size,
+                                "product_size": product_size,
+                                "pairwise_closure_size": pairwise_size,
+                            }
+                        )
+                else:
+                    higher_order_case_count += 1
+                    pairwise_false_case_count += 1
+                    pairwise_false_tuple_count += pairwise_false_count
+                    required_arity = f">=3"
+                    if len(higher_order_examples) < max_examples:
+                        higher_order_examples.append(
+                            {
+                                "same_side": same_side,
+                                "projection_paths": tuple(
+                                    obligation["path"] for obligation in obligation_tuple
+                                ),
+                                "fine_role_patterns": tuple_patterns,
+                                "visible_key": visible_key,
+                                "actual_gap_tuples": tuple(
+                                    sorted(actual_relation, key=repr)[:max_examples]
+                                ),
+                                "missing_pairwise_tuple": _first_missing_pairwise_tuple(
+                                    pairwise,
+                                    actual_relation,
+                                ),
+                                "actual_relation_size": actual_size,
+                                "product_size": product_size,
+                                "pairwise_closure_size": pairwise_size,
+                                "pairwise_false_count": pairwise_false_count,
+                            }
+                        )
+                min_required_arity_histogram[required_arity] = (
+                    min_required_arity_histogram.get(required_arity, 0) + 1
+                )
+        if projection_tuple_limit_reached:
+            break
+
+    return {
+        "method": "pnode_context_gap_arity_report",
+        "n": len(D),
+        "frontier_limit": frontier_limit,
+        "frontiers_seen": len(frontiers),
+        "frontier_truncated": frontier_truncated,
+        "projection_tuple_size": projection_tuple_size,
+        "scope": scope,
+        "max_projection_tuples": max_projection_tuples,
+        "projection_tuple_limit_reached": projection_tuple_limit_reached,
+        "pnode_count": len(node_infos),
+        "obligation_projection_count": len(obligations),
+        "open_obligation_projection_count": len(open_obligations),
+        "same_side_obligation_count": same_side_obligation_count,
+        "arity_obligation_count": arity_obligation_count,
+        "projection_tuple_count": projection_tuple_count,
+        "relation_case_count": relation_case_count,
+        "unary_sufficient_case_count": unary_sufficient_case_count,
+        "binary_sufficient_case_count": binary_sufficient_case_count,
+        "higher_order_case_count": higher_order_case_count,
+        "product_false_case_count": product_false_case_count,
+        "pairwise_false_case_count": pairwise_false_case_count,
+        "product_false_tuple_count": product_false_tuple_count,
+        "pairwise_false_tuple_count": pairwise_false_tuple_count,
+        "max_product_size": max_product_size,
+        "max_pairwise_closure_size": max_pairwise_closure_size,
+        "max_actual_relation_size": max_actual_relation_size,
+        "max_pairwise_false_count": max_pairwise_false_count,
+        "min_required_arity_histogram": _sorted_histogram(
+            min_required_arity_histogram
+        ),
+        "actual_relation_size_histogram": _sorted_histogram(
+            actual_relation_size_histogram
+        ),
+        "product_size_histogram": _sorted_histogram(product_size_histogram),
+        "pairwise_closure_size_histogram": _sorted_histogram(
+            pairwise_closure_size_histogram
+        ),
+        "pairwise_false_size_histogram": _sorted_histogram(
+            pairwise_false_size_histogram
+        ),
+        "tuple_pattern_histogram": _sorted_histogram(tuple_pattern_histogram),
+        "binary_sufficient_examples": tuple(binary_sufficient_examples),
+        "higher_order_examples": tuple(higher_order_examples),
+        "interpretation": (
+            "T098 gap-arity diagnostic. Unary means independent marginals "
+            "suffice, binary means pairwise projections exactly reconstruct "
+            "the observed joint gap relation, and >=3 means pairwise closure "
+            "still admits impossible tuples. This is not a solver."
         ),
     }
 

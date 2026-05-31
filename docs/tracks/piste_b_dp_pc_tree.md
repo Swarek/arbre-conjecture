@@ -734,3 +734,35 @@ projection perd des corrélations. Le prochain objet DP doit être une relation
 résiduelle jointe sur le séparateur, ou une factorisation prouvée plus fine que
 le produit naïf. Le résultat ne borne pas encore la taille de cette relation
 jointe et ne justifie aucune intégration dans `candidate.py`.
+
+## T098 - Closure binaire des relations de gaps
+
+Statut : diagnostic implémenté, preuve expérimentale bornée.
+
+T098 ajoute `make bench-context-gap-arity`. Le rapport prend des tuples de trois
+projections ouvertes d'une même obligation, fixe l'état visible joint, puis
+compare :
+
+1. le produit des marges ;
+2. la closure par toutes les projections binaires ;
+3. la relation jointe réellement observée.
+
+Résultat borné :
+
+- `124` lignes complètes ;
+- `120` lignes du sweep standard, qui ne produisent pas de tuples à trois
+  projections ouvertes ;
+- `4` lignes du stress `nested_bad_side_ladder` ;
+- `875` relations jointes testées ;
+- toutes ont besoin d'au moins une contrainte binaire
+  (`product_false_case_count=875`) ;
+- aucune n'exige plus que les projections binaires
+  (`higher_order_case_count=0`) ;
+- `max_product_size=64`, `max_actual_relation_size=4`,
+  `max_pairwise_closure_size=4`.
+
+Lecture DP : ce stress ne valide pas une DP binaire générale, mais il oriente le
+prochain modèle : transporter un graphe de relations binaires entre projections
+de gaps peut être strictement plus pertinent qu'une relation jointe arbitraire.
+Le prochain contre-test doit chercher une vraie arité `3`, ou bien construire un
+prototype de composition binaire et essayer de le casser.

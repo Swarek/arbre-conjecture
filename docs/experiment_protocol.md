@@ -522,6 +522,19 @@ jointe observée avec le produit cartésien des marges locales. Un
 relations locales sur le sweep borné. Un compteur nul serait seulement une
 non-réfutation bornée.
 
+Lab arité des relations jointes de gaps Piste A/B :
+
+```bash
+make bench-context-gap-arity
+```
+
+Cette commande écrit `reports/context_gap_arity_probe.json`. Elle prend des
+tuples de trois projections ouvertes, compare la relation réelle des gaps au
+produit des marges et à la closure par projections binaires, puis classe les cas
+en arité minimale observée `1`, `2` ou `>=3`. Le rapport ajoute un stress
+contrôlé `nested_bad_side_ladder` pour forcer des obligations avec trois
+projections ouvertes. Ce stress est un scaffold, pas une instance promise-aware.
+
 Contrôle promise-aware des permutations locales Piste F/C :
 
 ```bash

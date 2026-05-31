@@ -4769,3 +4769,51 @@
 - Next action : mesurer la taille minimale de cette relation jointe sur patches
   composés, puis chercher soit une compression exacte, soit une famille où la
   relation jointe croît.
+
+## 2026-05-31 arité des relations jointes de gaps
+
+- Date/heure : 2026-05-31 14:48 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les faux produits T097 pourraient être expliqués par des
+  contraintes binaires entre projections de gaps, sans nécessiter de relation
+  d'arité `3`.
+- Changement fait : ajout de `pnode_context_gap_arity_report` dans
+  `src/pc_circular/solvers/partial_obligation_experiments.py`, ajout de
+  `tools/pc_context_gap_arity_probe.py`, extension des tests
+  `tests/test_partial_obligation_experiments.py`, cible
+  `make bench-context-gap-arity`, et documentation T098. `candidate.py` n'a pas
+  été modifié.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `rtk make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `357 passed`, puis `JUSTE`.
+- Commande exécutée :
+  `rtk .venv/bin/python -m py_compile src/pc_circular/solvers/partial_obligation_experiments.py tools/pc_context_gap_arity_probe.py`.
+- Résultat compilation : succès.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_partial_obligation_experiments.py`.
+- Résultat correction ciblée : `21 passed`.
+- Commande exécutée : `rtk make bench-context-gap-arity`.
+- Résultat benchmark T098 :
+  `reports/context_gap_arity_probe.json` écrit ; `124` lignes, `124`
+  complètes, `120` lignes du sweep standard et `4` lignes du stress
+  `nested_bad_side_ladder`.
+- Résultat clé :
+  `875` relations jointes à trois projections, toutes issues du ladder ;
+  `product_false_case_count=875`,
+  `product_false_tuple_count=9786`,
+  `binary_sufficient_case_count=875`,
+  `higher_order_case_count=0`,
+  `max_product_size=64`,
+  `max_actual_relation_size=4`,
+  `max_pairwise_closure_size=4`.
+- Conclusion provisoire : le stress ladder confirme que les marges unaires sont
+  insuffisantes, mais toutes les relations jointes observées sont reconstruites
+  exactement par leurs projections binaires. Cela soutient une piste de relation
+  de bord binaire, sans preuve générale.
+- Commande exécutée : `rtk make quick`.
+- Résultat correction finale : `359 passed`, puis `JUSTE`.
+- Next action : soit chercher une arité `3` avec plusieurs obligations
+  simultanées ou des familles non-ladder, soit prototyper une composition
+  binaire et essayer de la casser.

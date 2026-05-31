@@ -874,6 +874,18 @@ Dernier commit green avant T009 : `07120e4`.
   la prochaine abstraction doit transporter une relation jointe de bord.
   `candidate.py` n'a pas été modifié.
 
+- Checkpoint T098 courant : commit contenant le probe d'arité des relations
+  jointes de gaps. Validation observée : compilation Python de
+  `partial_obligation_experiments.py` et `pc_context_gap_arity_probe.py`
+  réussie, tests ciblés `tests/test_partial_obligation_experiments.py`
+  (`21 passed`), `make bench-context-gap-arity` (`124` lignes complètes,
+  `4` lignes `nested_bad_side_ladder`, `875` relations jointes,
+  `product_false_case_count=875`, `binary_sufficient_case_count=875`,
+  `higher_order_case_count=0`, `max_product_size=64`,
+  `max_actual_relation_size=4`) et `make quick` (`359 passed`, puis `JUSTE`).
+  Les corrélations du stress ladder sont binaires, mais ce n'est pas une preuve
+  générale. `candidate.py` n'a pas été modifié.
+
 ## Rollback
 
 Si une modification régresse et que la cause n’est pas claire :

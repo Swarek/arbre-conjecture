@@ -154,6 +154,13 @@ le produit des marges locales crée des tuples de gaps jamais observés, sur
 jointe de bord au moins entre projections, pas seulement une liste de relations
 locales `visible_state -> gap_patterns`.
 
+Mise à jour T098 : le stress `nested_bad_side_ladder` force des obligations à
+trois projections ouvertes. Sur `875` relations jointes de taille `3`, le
+produit unaire est toujours trop large, mais la closure par projections binaires
+reconstruit exactement la relation observée (`higher_order_case_count=0`). Ce
+résultat soutient une interface binaire comme hypothèse de travail dans ce
+stress, sans la prouver ni couvrir les instances promise-aware.
+
 ## Piste B : programmation dynamique sur le PC-tree
 
 Intuition : un état de frontière pourrait résumer les contraintes externes d’un

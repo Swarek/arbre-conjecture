@@ -808,6 +808,44 @@ de bord, ou trouver une structure supplémentaire qui compresse exactement cette
 corrélation. Ce résultat reste un diagnostic borné du scaffold, pas une preuve
 de dureté générale.
 
+## T098 - Arité des relations jointes de gaps
+
+Statut : diagnostic implémenté, preuve expérimentale bornée.
+
+Artefacts ajoutés :
+
+- extension de `src/pc_circular/solvers/partial_obligation_experiments.py`
+- `tools/pc_context_gap_arity_probe.py`
+- cible `make bench-context-gap-arity`
+
+Idée testée : après T097, le produit des marges locales est trop faible comme
+composition. T098 teste si les relations jointes de gaps à trois projections
+sont néanmoins déterminées par leurs projections binaires.
+
+Stress ajouté : `nested_bad_side_ladder`, une matrice `single_bad_side` paddée
+par des feuilles neutres et un PC-tree à chaîne de P-nœuds contenant les deux
+mêmes rôles visibles. Ce stress force une même obligation `same_side` à avoir
+au moins trois projections ouvertes ; il est volontairement un scaffold, pas une
+construction promise-aware.
+
+Résultat du benchmark T098 :
+
+- `124` lignes, toutes complètes ;
+- `120` lignes de sweep standard et `4` lignes ladder ;
+- le sweep standard ne produit pas de relation à trois projections ;
+- le ladder produit `875` relations jointes ;
+- `product_false_case_count=875` et `product_false_tuple_count=9786` ;
+- `binary_sufficient_case_count=875` ;
+- `higher_order_case_count=0` ;
+- `max_product_size=64`, `max_actual_relation_size=4`,
+  `max_pairwise_closure_size=4`.
+
+Interprétation : dans ce stress, les corrélations de gaps sont strictement
+binaires : les marges unaires sont insuffisantes, mais toutes les projections
+binaires reconstruisent la relation jointe. Cela soutient une interface binaire
+comme hypothèse de travail pour cette famille, mais ne prouve pas qu'aucune
+relation d'arité `3` n'existe ailleurs.
+
 ## T022 - Rapport `project_farthest_sets_to_pc_nodes`
 
 Statut : diagnostic implémenté, explicitement non décisionnel.
