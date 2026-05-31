@@ -635,3 +635,28 @@ support-boundary, `0` groupe mixte fully-visible. Lecture DP : les contraintes
 fermées en cordes de branches sont bien locales dans ce sweep, mais les
 obligations ouvertes demandent une vraie relation de séparateur. La prochaine
 étape DP doit donc définir cette relation et mesurer sa composabilité.
+
+## T094 - Signature visible insuffisante comme état DP
+
+Statut : diagnostic implémenté, garde-fou DP.
+
+T094 ajoute `make bench-separator-signature-lab`. La signature testée raffine
+l'ordre local de branches par l'ordre des rôles visibles `endpoint/witness`
+dans chaque branche touchée par une obligation `same_side`.
+
+Résultat positif local : cette signature distingue le témoin minimal T093 à la
+racine de `P(P(0,1),P(2,3))`.
+
+Résultat négatif global borné :
+
+- `120` lignes complètes ;
+- `branch_order_mixed_group_count=1434` ;
+- `separator_signature_mixed_group_count=1957` ;
+- `support_boundary_separator_mixed_group_count=1428` ;
+- `fully_visible_separator_mixed_group_count=0`.
+
+Lecture DP : la signature visible n'est pas une congruence de composition. Elle
+peut même scinder un groupe mixte grossier en plusieurs groupes mixtes plus
+fins. Les exemples restants ont des rôles absents du nœud courant ; une vraie
+relation de séparateur doit donc représenter la relation entre les rôles visibles
+et les côtés/contextes extérieurs, pas seulement l'ordre visible interne.

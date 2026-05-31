@@ -121,6 +121,14 @@ satisfait `same_side(0,2;1,3)` et une autre la viole. Le sweep borné donne
 La piste A doit maintenant définir l'information de séparateur minimale, pas
 ajouter seulement des contraintes à l'ordre de branches.
 
+Mise à jour T094 : raffiner l'ordre local par l'ordre des rôles visibles
+`endpoint/witness` dans chaque branche distingue le témoin minimal T093, mais ne
+suffit pas sur le sweep. `make bench-separator-signature-lab` garde `1957`
+groupes mixtes sous cette signature, dont `1428` support-boundary, et `0`
+groupe fully-visible. La prochaine relation de séparateur doit donc porter les
+obligations ouvertes vers le contexte extérieur, pas seulement mémoriser l'ordre
+interne des rôles visibles.
+
 ## Piste B : programmation dynamique sur le PC-tree
 
 Intuition : un état de frontière pourrait résumer les contraintes externes d’un

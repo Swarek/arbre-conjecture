@@ -1,11 +1,13 @@
-from pc_circular.generators import single_bad_side_quartet_instance
-from pc_circular.pc_tree import leaf, p_node, star_pc_tree
+from pc_circular.generators import instance_by_kind, single_bad_side_quartet_instance
+from pc_circular.pc_tree import leaf, p_node, pc_tree_from_kind, star_pc_tree
 from pc_circular.solvers.partial_obligation_experiments import (
     pnode_partial_context_dependency_report,
     pnode_partial_obligation_report,
+    pnode_separator_signature_report,
 )
 from tools.pc_partial_context_lab_probe import run_probe as run_context_probe
 from tools.pc_partial_obligation_lab_probe import run_probe as run_obligation_probe
+from tools.pc_separator_signature_lab_probe import run_probe as run_separator_probe
 
 
 def test_partial_report_keeps_fully_visible_star_chord_clean():
@@ -121,3 +123,85 @@ def test_partial_context_probe_summarizes_small_sweep():
     assert report["summary"]["rows"] == 4
     assert report["summary"]["rows_with_pnodes"] == 4
     assert report["summary"]["rows_with_fully_visible_mixed_groups"] == 0
+
+
+def test_separator_signature_refines_collapsed_root_mixed_group():
+    T = p_node(
+        (
+            p_node((leaf(0), leaf(1))),
+            p_node((leaf(2), leaf(3))),
+        )
+    )
+    report = pnode_separator_signature_report(
+        single_bad_side_quartet_instance(),
+        T,
+    )
+
+    root = next(node for node in report["nodes"] if node["path"] == ())
+    assert root["branch_order_mixed_group_count"] == 1
+    assert root["support_boundary_branch_order_mixed_group_count"] == 1
+    assert root["separator_signature_mixed_group_count"] == 0
+    assert root["support_boundary_removed_mixed_group_count"] == 1
+    example = root["branch_order_mixed_examples"][0]
+    assert example["same_side"] == (0, 2, 1, 3)
+    assert example["local_branch_order"] == (0, 1)
+    assert example["satisfied_frontier"] == (0, 1, 3, 2)
+    assert example["violated_frontier"] == (0, 1, 2, 3)
+    assert example["satisfied_separator_signature"] != example[
+        "violated_separator_signature"
+    ]
+    assert example["satisfied_separator_signature"] == (
+        (0, (("endpoint", 0), ("witness", 1))),
+        (1, (("witness", 3), ("endpoint", 2))),
+    )
+    assert example["violated_separator_signature"] == (
+        (0, (("endpoint", 0), ("witness", 1))),
+        (1, (("endpoint", 2), ("witness", 3))),
+    )
+
+
+def test_separator_signature_keeps_fully_visible_star_local():
+    report = pnode_separator_signature_report(
+        single_bad_side_quartet_instance(),
+        star_pc_tree(4),
+    )
+
+    node = report["nodes"][0]
+    assert report["branch_order_mixed_group_count"] == 0
+    assert report["separator_signature_mixed_group_count"] == 0
+    assert node["fully_visible_obligation_count"] == 1
+    assert node["branch_order_mixed_group_count"] == 0
+
+
+def test_separator_signature_is_not_sufficient_on_mixed_cycle():
+    report = pnode_separator_signature_report(
+        instance_by_kind(4, kind="cycle"),
+        pc_tree_from_kind("mixed", 4),
+    )
+
+    assert report["separator_signature_mixed_group_count"] == 4
+    assert report["support_boundary_separator_mixed_group_count"] == 4
+    node = next(
+        node for node in report["nodes"] if node["separator_signature_mixed_group_count"]
+    )
+    example = node["separator_signature_mixed_examples"][0]
+    assert example["same_side"] == (0, 3, 1, 2)
+    assert example["satisfied_frontier"] == (0, 1, 2, 3)
+    assert example["violated_frontier"] == (0, 1, 3, 2)
+
+
+def test_separator_signature_probe_summarizes_small_sweep():
+    report = run_separator_probe(
+        sizes=[4, 5],
+        pc_trees=["star"],
+        instance_kinds=["equal", "paired_farthest"],
+        repeats=1,
+        frontier_limit=200,
+        max_examples=2,
+        seed=20260640,
+    )
+
+    assert report["method"] == "t094_separator_signature_lab_probe"
+    assert report["summary"]["rows"] == 4
+    assert report["summary"]["rows_with_pnodes"] == 4
+    assert "separator_signature_mixed_group_count" in report["summary"]

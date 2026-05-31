@@ -817,6 +817,21 @@ Dernier commit green avant T009 : `07120e4`.
   (`344 passed`, puis `JUSTE`).
   `candidate.py` n'a pas été modifié.
 
+- Checkpoint T094 courant : commit contenant le lab de signature de séparateur
+  pour obligations partielles. Validation observée : compilation Python de
+  `partial_obligation_experiments.py` et `pc_separator_signature_lab_probe.py`
+  réussie, tests ciblés `tests/test_partial_obligation_experiments.py`
+  (`10 passed`), `make bench-separator-signature-lab` (`120` lignes,
+  `120` complètes, `80` lignes avec P-nœuds,
+  `branch_order_mixed_group_count=1434`,
+  `separator_signature_mixed_group_count=1957`,
+  `support_boundary_separator_mixed_group_count=1428`,
+  `fully_visible_separator_mixed_group_count=0`) et `make quick`
+  (`348 passed`, puis `JUSTE`).
+  Le témoin minimal T093 est raffiné correctement, mais le sweep garde des
+  groupes mixtes ; la signature par ordre de rôles visibles n'est donc pas une
+  relation de séparateur suffisante. `candidate.py` n'a pas été modifié.
+
 ## Rollback
 
 Si une modification régresse et que la cause n’est pas claire :

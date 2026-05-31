@@ -22,6 +22,68 @@ Dans un Goal long, le plan doit aussi définir le critère d’arrêt : succès
 mesurable, réfutation, blocage théorique, ou bascule vers une autre piste. Ne pas
 laisser un Goal tourner comme une recherche ouverte sans sortie concrète.
 
+## ExecPlan 2026-05-31 - T094 signature de separateur pour obligations ouvertes
+
+But : réparer le collage raté et créer un checkpoint de code réel après T093.
+T093 a montré que le même ordre local de branches d'un P-noeud peut contenir
+des frontiers satisfaisant et violant la même obligation `same_side`. T094 doit
+tester si l'information minimale manquante est l'ordre des rôles visibles
+endpoint/witness à l'intérieur des branches touchées.
+
+Hypothèse : une signature
+`(ordre local des branches, ordre des rôles visibles dans chaque branche)`
+élimine au moins le témoin minimal T093 et mesure combien de groupes mixtes
+support-boundary restent. Si des groupes mixtes restent, ils deviennent des
+contre-exemples plus fins pour la prochaine relation de séparateur.
+
+Fichiers à modifier :
+`src/pc_circular/solvers/partial_obligation_experiments.py`,
+`tools/pc_separator_signature_lab_probe.py`,
+`tests/test_partial_obligation_experiments.py`, `Makefile`, puis les documents
+de suivi (`docs/experiment_log.md`, `docs/checkpoints.md`,
+`docs/proof_obligations.md`, `docs/hypothesis_portfolio.md`,
+`docs/tracks/README.md`, `docs/tracks/piste_a_local_pc_constraints.md`,
+`docs/tracks/piste_b_dp_pc_tree.md`). `candidate.py` ne doit pas être modifié.
+
+Algorithme pressenti : pour chaque frontier énumérée, chaque P-noeud et chaque
+obligation projetée, calculer l'ordre local des branches avec
+`induced_child_circular_order`, puis ajouter une signature par branche listant
+les rôles `endpoint/witness` dans l'ordre où leurs labels apparaissent dans la
+frontier. Comparer les groupes mixtes T093 à ceux obtenus après raffinement par
+cette signature.
+
+Tests à exécuter : `py_compile`, pytest ciblé,
+`make bench-separator-signature-lab`, puis `rtk make quick`.
+
+Risques : la signature est dérivée de frontiers complètes ; elle peut être trop
+fine et ne constitue pas encore un état DP compact. Une disparition des groupes
+mixtes n'est pas une preuve de composabilité.
+
+Plan de contre-exemples : verrouiller `single_bad_side_quartet_instance()` sur
+`P(P(0,1), P(2,3))`. Si la signature ne distingue pas `(0,1,3,2)` et
+`(0,1,2,3)`, elle est trop faible. Si elle distingue ce témoin mais laisse des
+groupes mixtes dans le sweep, ces exemples deviennent la prochaine cible de
+shrink.
+
+Plan subagents : pas de fanout nécessaire pour ce checkpoint borné ; le design
+vient directement de T093 et vise un artefact mesurable.
+
+Résultats observés : T094 est implémenté. Le témoin minimal
+`single_bad_side_quartet_instance()` sur `P(P(0,1),P(2,3))` est bien raffiné :
+l'ordre local de branches reste `(0,1)`, mais la signature visible distingue la
+branche `{2,3}` dans `(0,1,3,2)` et `(0,1,2,3)`. Le benchmark
+`make bench-separator-signature-lab` donne `120` lignes complètes, `80` avec
+P-nœuds, `branch_order_mixed_group_count=1434`,
+`separator_signature_mixed_group_count=1957`,
+`support_boundary_separator_mixed_group_count=1428` et
+`fully_visible_separator_mixed_group_count=0`. Un contre-signal minimal
+`cycle/mixed/n=4` garde des groupes mixtes sous signature visible.
+
+Décision : la signature visible n'est pas un état de séparateur suffisant. Elle
+est utile pour comprendre le témoin T093, mais les groupes mixtes restants
+montrent que le contexte extérieur des rôles absents doit être transporté par
+une vraie relation résiduelle. Ne pas intégrer dans `candidate.py`.
+
 ## ExecPlan 2026-05-31 - T093 dependance au contexte des obligations partielles
 
 But : transformer le signal T092 en test sémantique plus net. T092 a montré que

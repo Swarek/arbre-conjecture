@@ -658,6 +658,46 @@ obligations partielles/support ne sont pas des contraintes fermées sur l'ordre
 local des branches. La prochaine abstraction doit transporter une relation de
 séparateur ou d'interface, pas seulement un ordre local enrichi par des cordes.
 
+## T094 - Signature visible de séparateur
+
+Statut : diagnostic implémenté, lemme négatif expérimental.
+
+Artefacts ajoutés :
+
+- extension de `src/pc_circular/solvers/partial_obligation_experiments.py`
+- `tools/pc_separator_signature_lab_probe.py`
+- cible `make bench-separator-signature-lab`
+
+Idée testée : raffiner la clé de T093
+`(P-node, obligation same_side, ordre local de branches)` par une signature qui
+garde, pour chaque branche touchée, l'ordre des rôles visibles
+`endpoint/witness` dans la frontier.
+
+Résultat local : sur le témoin minimal
+`single_bad_side_quartet_instance()` avec `P(P(0,1),P(2,3))`, la signature
+distingue bien `(0,1,3,2)` de `(0,1,2,3)`. Le groupe mixte branch-order de T093
+disparaît pour ce témoin.
+
+Résultat du benchmark T094 :
+
+- `120` lignes, toutes complètes ;
+- `80` lignes avec P-nœuds ;
+- `branch_order_mixed_group_count=1434` ;
+- `separator_signature_mixed_group_count=1957` ;
+- `support_boundary_separator_mixed_group_count=1428` ;
+- `fully_visible_separator_mixed_group_count=0`.
+
+Contre-signal : `cycle/mixed/n=4` garde déjà des groupes mixtes sous la
+signature visible. Exemple : même obligation `same_side(0,3;1,2)`, même ordre
+local `(0,1)`, même signature visible `endpoint 0` dans une branche et
+`witness 1` dans l'autre, mais `(0,1,2,3)` satisfait et `(0,1,3,2)` viole.
+Les deux rôles absents sont précisément dans le contexte extérieur du nœud.
+
+Interprétation : l'ordre des rôles visibles est utile pour comprendre le témoin
+minimal, mais il n'est pas une contrainte locale suffisante. La piste A doit
+maintenant représenter les côtés des obligations ouvertes vis-à-vis du contexte
+extérieur, ou passer explicitement à une relation résiduelle.
+
 ## T022 - Rapport `project_farthest_sets_to_pc_nodes`
 
 Statut : diagnostic implémenté, explicitement non décisionnel.

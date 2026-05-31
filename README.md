@@ -69,6 +69,7 @@ make bench-boundary-residual-projection
 make bench-circle-graph-lab
 make bench-partial-obligation-lab
 make bench-partial-context-lab
+make bench-separator-signature-lab
 make bench-permutation-like
 make bench-permutation-composition
 make bench-relation-components

@@ -226,6 +226,28 @@ def _iter_pnode_obligation_projections(D, T: PCNode):
                 }
 
 
+def _branch_role_order_signature(frontier, projected_roles) -> tuple:
+    """Order the visible endpoint/witness roles inside each touched branch.
+
+    This is a frontier-derived separator diagnostic: it deliberately keeps more
+    information than a closed local P-node branch order.  It is not claimed to
+    be a compact or composable DP state.
+    """
+
+    position = {label: index for index, label in enumerate(frontier)}
+    by_branch: dict[int, list[tuple[int, str, int]]] = {}
+    for role, label, branch in projected_roles:
+        by_branch.setdefault(branch, []).append((position[label], role, label))
+
+    return tuple(
+        (
+            branch,
+            tuple((role, label) for _, role, label in sorted(items)),
+        )
+        for branch, items in sorted(by_branch.items())
+    )
+
+
 def pnode_partial_obligation_report(
     D,
     T: PCNode,
@@ -653,5 +675,339 @@ def pnode_partial_context_dependency_report(
             "T093 context-dependency diagnostic. Mixed groups show that local "
             "branch order alone does not decide the projected same-side "
             "obligation; this is not a solver."
+        ),
+    }
+
+
+def pnode_separator_signature_report(
+    D,
+    T: PCNode,
+    *,
+    frontier_limit: int = 20000,
+    max_examples: int = 5,
+) -> dict:
+    """Measure whether a simple separator signature refines T093 collisions.
+
+    T093 groups by ``(P-node, same_side obligation, local branch order)``.  This
+    report adds, for every frontier, the order of the obligation's visible
+    endpoint/witness roles inside each touched branch.  If T093's mixed groups
+    disappear under this refinement, the minimal missing information is exposed
+    as separator/order-of-roles data rather than as a closed branch-order
+    constraint.
+    """
+
+    tree_labels = set(labels(T))
+    if tree_labels != set(range(len(D))):
+        raise ValueError("PC-tree labels must be exactly 0..n-1")
+    if frontier_limit <= 0:
+        raise ValueError("frontier_limit must be positive")
+    if max_examples < 0:
+        raise ValueError("max_examples must be non-negative")
+
+    raw_frontiers = enumerate_frontiers(T, canonical=True, limit=frontier_limit + 1)
+    frontier_truncated = len(raw_frontiers) > frontier_limit
+    frontiers = tuple(raw_frontiers[:frontier_limit])
+
+    node_infos = [
+        node_info
+        for node_info in iter_internal_node_child_labels(T)
+        if node_info["kind"] == "P"
+    ]
+    node_by_path = {tuple(node_info["path"]): node_info for node_info in node_infos}
+    local_order_by_path = {path: {} for path in node_by_path}
+    for path, node_info in node_by_path.items():
+        child_label_sets = node_info["child_label_sets"]
+        for frontier in frontiers:
+            local_order_by_path[path][frontier] = induced_child_circular_order(
+                frontier,
+                child_label_sets,
+            )
+
+    obligations = tuple(_iter_pnode_obligation_projections(D, T))
+    node_accumulator = {
+        path: {
+            "path": path,
+            "degree": len(node_info["child_label_sets"]),
+            "branch_sizes": tuple(
+                len(child_labels) for child_labels in node_info["child_label_sets"]
+            ),
+            "obligation_projection_count": 0,
+            "support_obligation_count": 0,
+            "support_boundary_obligation_count": 0,
+            "fully_visible_obligation_count": 0,
+            "projection_only_obligation_count": 0,
+            "branch_order_group_count": 0,
+            "branch_order_mixed_group_count": 0,
+            "support_boundary_branch_order_mixed_group_count": 0,
+            "fully_visible_branch_order_mixed_group_count": 0,
+            "separator_signature_group_count": 0,
+            "separator_signature_mixed_group_count": 0,
+            "support_boundary_separator_mixed_group_count": 0,
+            "fully_visible_separator_mixed_group_count": 0,
+            "branch_order_mixed_obligations": set(),
+            "separator_signature_mixed_obligations": set(),
+            "fine_role_pattern_histogram": {},
+            "branch_order_mixed_fine_role_pattern_histogram": {},
+            "separator_mixed_fine_role_pattern_histogram": {},
+            "branch_order_mixed_examples": [],
+            "separator_signature_mixed_examples": [],
+        }
+        for path, node_info in node_by_path.items()
+    }
+
+    for obligation in obligations:
+        path = obligation["path"]
+        node = node_accumulator[path]
+        pattern = obligation["fine_role_pattern"]
+        node["obligation_projection_count"] += 1
+        node["fine_role_pattern_histogram"][pattern] = (
+            node["fine_role_pattern_histogram"].get(pattern, 0) + 1
+        )
+        if obligation["is_support_node"]:
+            node["support_obligation_count"] += 1
+            if pattern == "support:full_four_branch":
+                node["fully_visible_obligation_count"] += 1
+            else:
+                node["support_boundary_obligation_count"] += 1
+        else:
+            node["projection_only_obligation_count"] += 1
+
+        branch_groups: dict[tuple[int, ...], dict] = {}
+        separator_groups: dict[tuple, dict] = {}
+        for frontier in frontiers:
+            local_order = local_order_by_path[path].get(frontier)
+            if local_order is None:
+                continue
+            separator_signature = _branch_role_order_signature(
+                frontier,
+                obligation["projected_roles"],
+            )
+            satisfied = same_side_constraint_satisfied(frontier, obligation["same_side"])
+
+            branch_group = branch_groups.setdefault(
+                local_order,
+                {
+                    "satisfied": 0,
+                    "violated": 0,
+                    "satisfied_example": None,
+                    "violated_example": None,
+                    "satisfied_signature": None,
+                    "violated_signature": None,
+                },
+            )
+            target_prefix = "satisfied" if satisfied else "violated"
+            branch_group[target_prefix] += 1
+            if branch_group[f"{target_prefix}_example"] is None:
+                branch_group[f"{target_prefix}_example"] = frontier
+                branch_group[f"{target_prefix}_signature"] = separator_signature
+
+            separator_key = (local_order, separator_signature)
+            separator_group = separator_groups.setdefault(
+                separator_key,
+                {
+                    "satisfied": 0,
+                    "violated": 0,
+                    "satisfied_example": None,
+                    "violated_example": None,
+                },
+            )
+            separator_group[target_prefix] += 1
+            if separator_group[f"{target_prefix}_example"] is None:
+                separator_group[f"{target_prefix}_example"] = frontier
+
+        for local_order, group in branch_groups.items():
+            node["branch_order_group_count"] += 1
+            if group["satisfied"] and group["violated"]:
+                node["branch_order_mixed_group_count"] += 1
+                node["branch_order_mixed_obligations"].add(obligation["same_side"])
+                node["branch_order_mixed_fine_role_pattern_histogram"][pattern] = (
+                    node["branch_order_mixed_fine_role_pattern_histogram"].get(pattern, 0)
+                    + 1
+                )
+                if pattern == "support:full_four_branch":
+                    node["fully_visible_branch_order_mixed_group_count"] += 1
+                if obligation["is_support_node"] and pattern != "support:full_four_branch":
+                    node["support_boundary_branch_order_mixed_group_count"] += 1
+                if len(node["branch_order_mixed_examples"]) < max_examples:
+                    node["branch_order_mixed_examples"].append(
+                        {
+                            "same_side": obligation["same_side"],
+                            "fine_role_pattern": pattern,
+                            "is_support_node": obligation["is_support_node"],
+                            "local_branch_order": local_order,
+                            "satisfied_frontier": group["satisfied_example"],
+                            "violated_frontier": group["violated_example"],
+                            "satisfied_separator_signature": group[
+                                "satisfied_signature"
+                            ],
+                            "violated_separator_signature": group["violated_signature"],
+                        }
+                    )
+
+        for (local_order, separator_signature), group in separator_groups.items():
+            node["separator_signature_group_count"] += 1
+            if group["satisfied"] and group["violated"]:
+                node["separator_signature_mixed_group_count"] += 1
+                node["separator_signature_mixed_obligations"].add(
+                    obligation["same_side"]
+                )
+                node["separator_mixed_fine_role_pattern_histogram"][pattern] = (
+                    node["separator_mixed_fine_role_pattern_histogram"].get(pattern, 0)
+                    + 1
+                )
+                if pattern == "support:full_four_branch":
+                    node["fully_visible_separator_mixed_group_count"] += 1
+                if obligation["is_support_node"] and pattern != "support:full_four_branch":
+                    node["support_boundary_separator_mixed_group_count"] += 1
+                if len(node["separator_signature_mixed_examples"]) < max_examples:
+                    node["separator_signature_mixed_examples"].append(
+                        {
+                            "same_side": obligation["same_side"],
+                            "fine_role_pattern": pattern,
+                            "is_support_node": obligation["is_support_node"],
+                            "local_branch_order": local_order,
+                            "separator_signature": separator_signature,
+                            "satisfied_frontier": group["satisfied_example"],
+                            "violated_frontier": group["violated_example"],
+                        }
+                    )
+
+    nodes = []
+    fine_role_pattern_histogram: dict = {}
+    branch_order_mixed_fine_role_pattern_histogram: dict = {}
+    separator_mixed_fine_role_pattern_histogram: dict = {}
+
+    for node in node_accumulator.values():
+        node = dict(node)
+        node["branch_order_mixed_obligations"] = tuple(
+            sorted(node["branch_order_mixed_obligations"])
+        )
+        node["separator_signature_mixed_obligations"] = tuple(
+            sorted(node["separator_signature_mixed_obligations"])
+        )
+        node["fine_role_pattern_histogram"] = _sorted_histogram(
+            node["fine_role_pattern_histogram"]
+        )
+        node["branch_order_mixed_fine_role_pattern_histogram"] = _sorted_histogram(
+            node["branch_order_mixed_fine_role_pattern_histogram"]
+        )
+        node["separator_mixed_fine_role_pattern_histogram"] = _sorted_histogram(
+            node["separator_mixed_fine_role_pattern_histogram"]
+        )
+        node["removed_mixed_group_count"] = (
+            node["branch_order_mixed_group_count"]
+            - node["separator_signature_mixed_group_count"]
+        )
+        node["support_boundary_removed_mixed_group_count"] = (
+            node["support_boundary_branch_order_mixed_group_count"]
+            - node["support_boundary_separator_mixed_group_count"]
+        )
+        nodes.append(node)
+        _merge_histogram(fine_role_pattern_histogram, node["fine_role_pattern_histogram"])
+        _merge_histogram(
+            branch_order_mixed_fine_role_pattern_histogram,
+            node["branch_order_mixed_fine_role_pattern_histogram"],
+        )
+        _merge_histogram(
+            separator_mixed_fine_role_pattern_histogram,
+            node["separator_mixed_fine_role_pattern_histogram"],
+        )
+
+    interesting_nodes = [
+        node
+        for node in nodes
+        if node["branch_order_mixed_group_count"]
+        or node["separator_signature_mixed_group_count"]
+        or node["support_boundary_obligation_count"]
+    ]
+
+    branch_order_mixed_group_count = sum(
+        node["branch_order_mixed_group_count"] for node in nodes
+    )
+    separator_signature_mixed_group_count = sum(
+        node["separator_signature_mixed_group_count"] for node in nodes
+    )
+    support_boundary_branch_order_mixed_group_count = sum(
+        node["support_boundary_branch_order_mixed_group_count"] for node in nodes
+    )
+    support_boundary_separator_mixed_group_count = sum(
+        node["support_boundary_separator_mixed_group_count"] for node in nodes
+    )
+
+    return {
+        "method": "pnode_separator_signature_report",
+        "n": len(D),
+        "frontier_limit": frontier_limit,
+        "frontiers_seen": len(frontiers),
+        "frontier_truncated": frontier_truncated,
+        "pnode_count": len(nodes),
+        "obligation_projection_count": sum(
+            node["obligation_projection_count"] for node in nodes
+        ),
+        "support_obligation_count": sum(node["support_obligation_count"] for node in nodes),
+        "support_boundary_obligation_count": sum(
+            node["support_boundary_obligation_count"] for node in nodes
+        ),
+        "fully_visible_obligation_count": sum(
+            node["fully_visible_obligation_count"] for node in nodes
+        ),
+        "projection_only_obligation_count": sum(
+            node["projection_only_obligation_count"] for node in nodes
+        ),
+        "branch_order_group_count": sum(
+            node["branch_order_group_count"] for node in nodes
+        ),
+        "branch_order_mixed_group_count": branch_order_mixed_group_count,
+        "support_boundary_branch_order_mixed_group_count": (
+            support_boundary_branch_order_mixed_group_count
+        ),
+        "fully_visible_branch_order_mixed_group_count": sum(
+            node["fully_visible_branch_order_mixed_group_count"] for node in nodes
+        ),
+        "separator_signature_group_count": sum(
+            node["separator_signature_group_count"] for node in nodes
+        ),
+        "separator_signature_mixed_group_count": separator_signature_mixed_group_count,
+        "support_boundary_separator_mixed_group_count": (
+            support_boundary_separator_mixed_group_count
+        ),
+        "fully_visible_separator_mixed_group_count": sum(
+            node["fully_visible_separator_mixed_group_count"] for node in nodes
+        ),
+        "removed_mixed_group_count": (
+            branch_order_mixed_group_count - separator_signature_mixed_group_count
+        ),
+        "support_boundary_removed_mixed_group_count": (
+            support_boundary_branch_order_mixed_group_count
+            - support_boundary_separator_mixed_group_count
+        ),
+        "nodes_with_branch_order_mixed_groups": sum(
+            1 for node in nodes if node["branch_order_mixed_group_count"]
+        ),
+        "nodes_with_separator_signature_mixed_groups": sum(
+            1 for node in nodes if node["separator_signature_mixed_group_count"]
+        ),
+        "fine_role_pattern_histogram": _sorted_histogram(fine_role_pattern_histogram),
+        "branch_order_mixed_fine_role_pattern_histogram": _sorted_histogram(
+            branch_order_mixed_fine_role_pattern_histogram
+        ),
+        "separator_mixed_fine_role_pattern_histogram": _sorted_histogram(
+            separator_mixed_fine_role_pattern_histogram
+        ),
+        "max_branch_order_mixed_group_count": max(
+            (node["branch_order_mixed_group_count"] for node in nodes),
+            default=0,
+        ),
+        "max_separator_signature_mixed_group_count": max(
+            (node["separator_signature_mixed_group_count"] for node in nodes),
+            default=0,
+        ),
+        "interesting_nodes": tuple(interesting_nodes[:max_examples]),
+        "nodes": tuple(nodes),
+        "interpretation": (
+            "T094 separator-signature diagnostic. It tests whether adding the "
+            "per-branch order of visible endpoint/witness roles refines the "
+            "T093 branch-order mixed groups. This is a frontier-derived "
+            "diagnostic, not a compact DP state or solver."
         ),
     }

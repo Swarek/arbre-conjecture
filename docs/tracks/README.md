@@ -140,6 +140,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T091 | 2026-05-31 | A/D/R004 | Lab circle/interlacement : obligations `same_side` locales comme non-croisement de cordes ; aucun ordre cR projeté manquant, supersets seulement vacus | `make bench-circle-graph-lab` |
 | T092 | 2026-05-31 | A/B/D/R004 | Obligations partielles autour du lab circle : tous les supersets vacus observés portent une information bad-side partielle ou multi-niveau | `make bench-partial-obligation-lab` |
 | T093 | 2026-05-31 | A/B/R004 | Dépendance au contexte : un même ordre local de branches peut satisfaire ou violer une obligation partielle selon les choix internes/contexte | `make bench-partial-context-lab` |
+| T094 | 2026-05-31 | A/B/R004 | Signature de séparateur visible : répare le témoin minimal T093 mais reste insuffisante sur le sweep, donc contexte extérieur/relation résiduelle requis | `make bench-separator-signature-lab` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les

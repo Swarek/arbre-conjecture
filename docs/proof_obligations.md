@@ -2511,3 +2511,42 @@ Ce que T093 ne prouve pas :
 Obligation suivante : définir une variable/relation de séparateur capable de
 distinguer les deux frontiers du témoin minimal, puis mesurer si cette relation
 compose proprement sur les obligations ouvertes de T092.
+
+### T094 : signature visible de séparateur
+
+Statut : lemme négatif expérimental dans le scaffold, pas théorème général.
+
+`pnode_separator_signature_report` raffine T093. Pour chaque frontier, il ajoute
+à l'ordre local de branches l'ordre des rôles `endpoint/witness` visibles dans
+chaque branche touchée par l'obligation projetée. Cette signature distingue bien
+le témoin minimal T093 :
+
+- sur `single_bad_side_quartet_instance()` avec `P(P(0,1),P(2,3))`,
+  `(0,1,3,2)` et `(0,1,2,3)` ont le même ordre local de branches à la racine ;
+- leurs signatures de rôles diffèrent sur la branche `{2,3}` ;
+- le groupe mixte branch-order disparaît sous cette signature dans ce témoin.
+
+Ce que T094 couvre :
+
+- benchmark borné : `120` lignes complètes, `80` lignes avec P-nœuds ;
+- `branch_order_mixed_group_count=1434` ;
+- `separator_signature_mixed_group_count=1957` ;
+- `support_boundary_separator_mixed_group_count=1428` ;
+- `fully_visible_separator_mixed_group_count=0` ;
+- contre-exemple régressé : `cycle/mixed/n=4` garde des groupes mixtes même
+  après raffinement par signature visible.
+
+Interprétation : l'ordre des rôles visibles dans les branches est une
+information utile mais insuffisante. Les groupes mixtes restants ont souvent une
+projection partielle, par exemple seulement un endpoint et un témoin visibles au
+nœud ; le résultat dépend alors des endpoint/witness absents et donc du contexte
+extérieur. La prochaine relation de séparateur doit transporter les côtés ou
+contraintes ouvertes vers l'extérieur, pas seulement l'ordre interne des rôles
+visibles.
+
+Ce que T094 ne prouve pas :
+
+- pas de relation résiduelle exacte ;
+- pas de composabilité DP ;
+- pas de borne d'arité ou de taille d'interface ;
+- pas de décision `False` ou `True` intégrable dans `candidate.py`.

@@ -4563,3 +4563,54 @@
 - Next action : extraire la plus petite information de séparateur qui distingue
   les frontiers satisfaisantes/violantes du témoin minimal, puis tester sa
   composabilité sur les familles T046/T075/T082/T085.
+
+## 2026-05-31 signature de séparateur visible
+
+- Date/heure : 2026-05-31 18:45 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : raffiner l'ordre local de branches par l'ordre des rôles
+  visibles `endpoint/witness` dans chaque branche peut expliquer les groupes
+  mixtes T093 ou, au minimum, isoler les obligations où le contexte extérieur
+  reste nécessaire.
+- Changement fait : ajout de `pnode_separator_signature_report` dans
+  `src/pc_circular/solvers/partial_obligation_experiments.py`, ajout de
+  `tools/pc_separator_signature_lab_probe.py`, extension des tests
+  `tests/test_partial_obligation_experiments.py`, cible
+  `make bench-separator-signature-lab`, et documentation T094. `candidate.py`
+  n'a pas été modifié.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `rtk make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre ; `344 passed`, puis `JUSTE`.
+- Commande exécutée :
+  `rtk .venv/bin/python -m py_compile src/pc_circular/solvers/partial_obligation_experiments.py tools/pc_separator_signature_lab_probe.py`.
+- Résultat compilation : succès.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_partial_obligation_experiments.py`.
+- Résultat correction ciblée : `10 passed`.
+- Commande exécutée : `rtk make bench-separator-signature-lab`.
+- Résultat benchmark T094 :
+  `reports/separator_signature_lab_probe.json` écrit ; `120` lignes,
+  `120` complètes, `80` lignes avec P-nœuds,
+  `branch_order_mixed_group_count=1434`,
+  `support_boundary_branch_order_mixed_group_count=1105`,
+  `fully_visible_branch_order_mixed_group_count=0`,
+  `separator_signature_mixed_group_count=1957`,
+  `support_boundary_separator_mixed_group_count=1428`,
+  `fully_visible_separator_mixed_group_count=0`.
+- Signal positif local : le témoin minimal T093
+  `single_bad_side_quartet_instance()` sur `P(P(0,1),P(2,3))` est distingué par
+  la signature visible ; la branche `{2,3}` porte `witness,endpoint` dans la
+  frontier satisfaisante et `endpoint,witness` dans la frontier violante.
+- Contre-signal : `cycle/mixed/n=4` garde des groupes mixtes sous la signature
+  visible, par exemple `same_side(0,3;1,2)` avec seulement `endpoint 0` et
+  `witness 1` visibles au nœud. Les rôles absents restent dans le contexte.
+- Conclusion provisoire : l'ordre des rôles visibles est utile mais insuffisant
+  comme état de séparateur. La prochaine abstraction doit transporter une
+  relation résiduelle incluant les côtés/contextes extérieurs des rôles absents.
+- Commande exécutée : `rtk make quick`.
+- Résultat correction finale : `348 passed`, puis `JUSTE`.
+- Next action : définir une signature/relation d'obligation ouverte qui inclut
+  les ports extérieurs du nœud, puis tester si elle réduit les groupes mixtes
+  sans simplement encoder la frontier complète.

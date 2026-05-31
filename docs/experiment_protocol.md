@@ -469,6 +469,19 @@ violant l'obligation. Un groupe mixte prouve que l'ordre local des branches ne
 décide pas cette obligation dans le scaffold testé. Une absence de groupe mixte
 sous limite ne prouve rien.
 
+Lab signature de séparateur Piste A/B :
+
+```bash
+make bench-separator-signature-lab
+```
+
+Cette commande écrit `reports/separator_signature_lab_probe.json`. Elle raffine
+les groupes T093 par l'ordre des rôles `endpoint/witness` visibles dans chaque
+branche touchée. Si des groupes mixtes disparaissent, cela signale une
+information de séparateur utile ; si des groupes mixtes restent, ils indiquent
+qu'il faut transporter du contexte extérieur ou une relation résiduelle plus
+riche. Le rapport n'est pas un solver.
+
 Contrôle promise-aware des permutations locales Piste F/C :
 
 ```bash
