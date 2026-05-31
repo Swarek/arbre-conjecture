@@ -4081,3 +4081,46 @@
 - Next action : construire un probe R004 qui matérialise les obligations
   `same_side(a,c;b,d)` au niveau des P-noeuds et teste la largeur 4/interface
   contre T046/T075/T081/T082.
+
+## 2026-05-31 projection bad-side complète sur nœuds PC
+
+- Date/heure : 2026-05-31 11:10:39 CEST.
+- Commit hash : checkpoint commit containing this entry; report with
+  `git log -1`.
+- Hypothèse testée : les projections farthest `I_x(v)` seules sont
+  insuffisantes, mais les obligations exactes `same_side(a,c;b,d)` peuvent
+  fournir le bon objet de diagnostic pour les conjectures R004 sur P-nœuds et
+  interfaces.
+- Changement fait : ajout de
+  `project_bad_side_obligations_to_pc_nodes(D,T)`, du probe
+  `tools/pc_bad_side_projection_probe.py`, de la cible
+  `make bench-r004-bad-side-projections`, de tests locaux et de la
+  documentation T083. `candidate.py` n'a pas été modifié.
+- Commande exécutée avant modification : `git status --short --branch`, puis
+  `rtk make quick`.
+- Résultat correction avant modification : branche `research/agent-loop`
+  propre au démarrage ; `310 passed`, puis `JUSTE`.
+- Commande exécutée :
+  `rtk .venv/bin/python -m py_compile src/pc_circular/solvers/local_constraints.py tools/pc_bad_side_projection_probe.py`.
+- Résultat compilation : succès.
+- Commande exécutée :
+  `PYTHONPATH=src:. rtk .venv/bin/pytest -q tests/test_local_constraints.py tests/test_regression_counterexamples.py`.
+- Résultat correction ciblée : `58 passed`.
+- Commande exécutée : `rtk make bench-r004-bad-side-projections`.
+- Résultat benchmark T083 :
+  `reports/r004_bad_side_pc_node_projection_probe.json` écrit ; `130` lignes,
+  `112` complètes, `18` tronquées seulement par `frontier_limit`,
+  `0` troncature d'obligations, `82` lignes où la projection farthest est
+  silencieuse mais les obligations bad-side sont actives, `77` lignes avec
+  obligations multi-niveaux, `38` lignes avec un nœud à quatre branches
+  distinctes, `max_obligation_count=378`,
+  `max_multi_level_obligation_count=378`, `max_branch_interface_load=375`.
+- Commande exécutée : `rtk make quick`.
+- Résultat correction finale : `313 passed`, puis `JUSTE`.
+- Conclusion provisoire : R004 doit utiliser les obligations bad-side complètes
+  comme objet de mesure. Le signal local `I_x(v)` reste un garde-fou négatif,
+  pas une abstraction suffisante. T083 ne donne pas de solver et ne justifie
+  aucun `False`.
+- Next action : chercher une factorisation par relation d'interface pour les
+  obligations multi-niveaux, ou construire une famille qui force une corrélation
+  de type cyclic ordering.

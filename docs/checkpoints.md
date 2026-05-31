@@ -701,6 +701,17 @@ Dernier commit green avant T009 : `07120e4`.
   Modification documentaire seulement ; `candidate.py`, l'oracle et les tests
   ne sont pas modifiés.
 
+- Checkpoint T083 courant : commit contenant la projection bad-side complète
+  sur les nœuds PC et le probe R004 correspondant. Validation observée :
+  compilation Python de `local_constraints.py` et
+  `pc_bad_side_projection_probe.py` réussie, tests ciblés
+  `tests/test_local_constraints.py` et `tests/test_regression_counterexamples.py`
+  (`58 passed`), `make bench-r004-bad-side-projections` (`130` lignes,
+  `112` complètes, `18` tronquées par limite de frontiers, `0` troncature
+  d'obligations, `82` lignes farthest silencieuses mais bad-side actives,
+  `77` lignes multi-niveaux, `max_obligation_count=378`) et `make quick`
+  (`313 passed`, puis `JUSTE`). `candidate.py` n'a pas été modifié.
+
 ## Rollback
 
 Si une modification régresse et que la cause n’est pas claire :

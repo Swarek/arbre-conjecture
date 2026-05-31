@@ -325,6 +325,13 @@ branches d'un P-nœud, (4) route circle graph / split decomposition. La suite ne
 doit pas intégrer ces claims à `candidate.py`; elle doit d'abord les transformer
 en probes falsifiables contre T046/T075/T081/T082.
 
+Mise à jour T083 : le probe `make bench-r004-bad-side-projections` matérialise
+la projection bad-side complète. Le signal clé du sweep est que `82` lignes ont
+une projection farthest silencieuse mais des obligations bad-side actives, et
+`77` lignes ont des obligations multi-niveaux. La prochaine hypothèse
+falsifiable n'est donc plus "`I_x(v)` suffit", mais "les obligations
+multi-niveaux admettent une petite relation d'interface exploitable".
+
 État 2026-05-22 : deux familles explicites ont été ajoutées sans modifier
 `mixed` :
 

@@ -58,6 +58,7 @@ make bench-cr-pc-representability
 make bench-unrooted-pc-representability
 make bench-local-obstruction-depth
 make bench-chirotope-high-girth
+make bench-r004-bad-side-projections
 make bench-permutation-like
 make bench-permutation-composition
 make bench-relation-components
@@ -179,6 +180,12 @@ bad-side en contraintes de même côté de corde et les résout par énumératio
 exacte des ordres circulaires jusqu'à une taille bornée. Il cherche des
 obstructions globales invisibles sous un cap local ; ce n'est pas un solveur
 SAT scalable.
+
+`make bench-r004-bad-side-projections` écrit
+`reports/r004_bad_side_pc_node_projection_probe.json`. Il projette les
+obligations exactes `same_side(a,c;b,d)` sur les nœuds du PC-tree et mesure
+leur support local/multi-niveau. C'est le probe R004 pour tester les notes sur
+P-nœuds ; il ne décide pas l'existence et ne modifie pas `candidate.py`.
 
 `make bench-permutation-like` écrit `reports/permutation_like_probe.json`. Il
 teste les profils locaux `permutation_like` observés sur `paired_farthest`

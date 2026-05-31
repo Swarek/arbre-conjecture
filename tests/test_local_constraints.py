@@ -9,6 +9,7 @@ from pc_circular.generators import (
     permuted_chain_high_graph_plus_low_hub,
     permuted_disjoint_chain_high_graph_plus_low_hub,
     quasi_circular_not_circular_four_point,
+    single_bad_side_quartet_instance,
 )
 from pc_circular.oracle import exact_oracle_pc_tree
 from pc_circular.pc_tree import (
@@ -33,8 +34,10 @@ from pc_circular.solvers.local_constraints import (
     low_hub_strong_ordering_report,
     measure_obstruction_support,
     pc_tree_guided_low_hub_matching_witness_report,
+    project_bad_side_obligations_to_pc_nodes,
     project_farthest_sets_to_pc_nodes,
 )
+from pc_circular.solvers.sat_like_experiments import quartet_support_paths
 from tools.pc_frontier_obstruction_support_probe import (
     run_frontier_obstruction_support_probe,
 )
@@ -119,6 +122,67 @@ def test_farthest_projection_reports_declared_c_node_interval_violation():
     assert {"point": 4, "projection": (0, 2)} in root["declared_order_interval_violations"]
 
 
+def test_bad_side_obligation_projection_reports_single_star_constraint():
+    D = single_bad_side_quartet_instance()
+    result = project_bad_side_obligations_to_pc_nodes(D, star_pc_tree(4))
+    root = result["nodes"][0]
+
+    assert result["obligation_count"] == 1
+    assert result["atom_count"] == 2
+    assert result["support_path_count_histogram"] == {1: 1}
+    assert root["path"] == ()
+    assert root["kind"] == "P"
+    assert root["projection_hit_count"] == 1
+    assert root["support_node_hit_count"] == 1
+    assert root["full_projection_count"] == 1
+    assert root["full_distinct_four_branch_count"] == 1
+    assert root["role_pattern_histogram"] == {"4distinct": 1}
+    assert root["forbidden_chord_pair_count"] == 1
+
+    example = root["examples"][0]
+    assert example["same_side"] == (0, 2, 1, 3)
+    assert example["support"] == (0, 1, 2, 3)
+    assert example["support_size"] == 4
+    assert example["endpoint_branches"] == (0, 2)
+    assert example["witness_branches"] == (1, 3)
+    assert example["declared_order_satisfied"] is False
+
+
+def test_bad_side_obligation_projection_keeps_nested_support_paths():
+    D = single_bad_side_quartet_instance()
+    T = p_node([p_node([leaf(0), leaf(1)]), p_node([leaf(2), leaf(3)])])
+
+    result = project_bad_side_obligations_to_pc_nodes(D, T)
+    expected_support = quartet_support_paths(T, (0, 2, 1, 3))
+    assert expected_support == ((), (0,), (1,))
+    assert result["obligation_count"] == 1
+    assert result["multi_level_obligation_count"] == 1
+    assert result["support_path_count_histogram"] == {3: 1}
+
+    support_nodes = {
+        node["path"]: node
+        for node in result["nodes"]
+        if node["support_node_hit_count"]
+    }
+    assert set(support_nodes) == set(expected_support)
+    assert support_nodes[()]["full_projection_count"] == 1
+    assert support_nodes[()]["support_size_histogram"] == {2: 1}
+    assert support_nodes[(0,)]["full_projection_count"] == 0
+    assert support_nodes[(1,)]["full_projection_count"] == 0
+
+
+def test_bad_side_obligation_projection_has_zero_obligations_on_equal_distance():
+    result = project_bad_side_obligations_to_pc_nodes(equal_distance_instance(5), star_pc_tree(5))
+    root = result["nodes"][0]
+
+    assert result["obligation_count"] == 0
+    assert result["atom_count"] == 0
+    assert result["multi_level_obligation_count"] == 0
+    assert root["projection_hit_count"] == 0
+    assert root["support_node_hit_count"] == 0
+    assert root["examples"] == ()
+
+
 def test_low_hub_i_projection_is_silent_on_refined_negative_pc_tree():
     D = even_high_cycle_plus_low_hub(7)
     T = balanced_pc_tree(7, kind="mixed")
@@ -133,6 +197,11 @@ def test_low_hub_i_projection_is_silent_on_refined_negative_pc_tree():
     assert all(node["proper_nontrivial_count"] == 0 for node in report["nodes"])
     assert all(node["laminar_violation_count"] == 0 for node in report["nodes"])
     assert all(node["declared_order_interval_violation_count"] == 0 for node in report["nodes"])
+
+    bad_side_report = project_bad_side_obligations_to_pc_nodes(D, T)
+    assert bad_side_report["obligation_count"] > 0
+    assert bad_side_report["multi_level_obligation_count"] > 0
+    assert bad_side_report["support_path_count_histogram"] == {3: bad_side_report["obligation_count"]}
 
 
 def test_frontier_obstruction_support_probe_sees_silent_ix_negative_tree():

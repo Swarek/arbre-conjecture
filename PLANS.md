@@ -5356,3 +5356,67 @@ Décision : garder R004 comme contexte de recherche et prochaine file
 d'expériences, pas comme amélioration candidate. Le prochain travail utile est
 un probe `project_bad_side_obligations_to_pc_nodes` combiné à un test largeur
 4/interface sur les contre-signaux existants.
+
+## ExecPlan T083 - projection bad-side complète sur nœuds PC
+
+But : matérialiser la prochaine étape R004 sous forme d'un diagnostic
+exécutable : projeter les obligations exactes `same_side(a,c;b,d)` issues des
+mauvais témoins sur les nœuds du PC-tree, puis mesurer si elles sont locales,
+multi-niveaux ou concentrées sur des interfaces de branches.
+
+Hypothèse testée : les projections farthest `I_x(v)` seules sont trop faibles
+par T046/T075, mais les obligations bad-side complètes peuvent fournir un objet
+correct pour tester les conjectures P-nœud/interface sans encore décider
+l'existence.
+
+Fichiers visés : `src/pc_circular/solvers/local_constraints.py`,
+`tools/pc_bad_side_projection_probe.py`, `tests/test_local_constraints.py`,
+`tests/test_regression_counterexamples.py`, `Makefile`, `README.md`,
+`docs/experiment_protocol.md`, `docs/tracks/piste_a_local_pc_constraints.md`,
+`docs/proof_obligations.md`, `docs/tracks/README.md`,
+`docs/experiment_log.md`, `docs/checkpoints.md` et `PLANS.md`.
+
+Algorithme pressenti : calculer `B_ac`, créer une obligation unique pour chaque
+paire non ordonnée `b,d in B_ac`, récupérer `quartet_support_paths(T, Q)`, puis
+pour chaque nœud interne noter les branches portant endpoints et témoins, les
+rôles effondrés, les supports multi-niveaux, les paires de cordes interdites et
+les charges d'interface. Le rapport reste diagnostique et ne retourne jamais
+`exists`.
+
+Plan de contre-exemples : verrouiller le gadget star à un seul `B_ac={b,d}`,
+le même gadget dans un arbre imbriqué `P(P(0,1),P(2,3))`, le cas
+égal-distance sans obligation, et la régression T046 matching low-hub où
+`I_x(v)` est silencieux mais les obligations bad-side sont multi-niveaux.
+
+Plan subagents : quatre lectures read-only ont été utilisées. Elles ont
+convergé sur le même livrable borné : fonction de projection bad-side, probe
+JSON R004, contrôles star/nested/equal/T046, et métriques d'interface pour une
+future piste largeur 4.
+
+Tests à exécuter : compilation Python de la fonction et du probe, tests ciblés
+`tests/test_local_constraints.py` et `tests/test_regression_counterexamples.py`,
+`make bench-r004-bad-side-projections`, puis `make quick`.
+
+Risques : le diagnostic peut mesurer beaucoup d'obligations sans donner de
+compression exploitable. Une contrainte à support multi-niveau n'est pas une
+preuve de dureté ; une contrainte locale n'est pas une preuve de
+polynomialité. Aucun résultat T083 ne doit être intégré à `candidate.py`.
+
+Résultats observés : compilation Python réussie pour
+`src/pc_circular/solvers/local_constraints.py` et
+`tools/pc_bad_side_projection_probe.py`. Les tests ciblés
+`tests/test_local_constraints.py` et `tests/test_regression_counterexamples.py`
+passent avec `58 passed`. `make bench-r004-bad-side-projections` écrit
+`reports/r004_bad_side_pc_node_projection_probe.json` avec `130` lignes,
+`112` complètes, `18` tronquées seulement par limite de frontiers,
+`0` troncature d'obligations, `82` lignes où la projection farthest est
+silencieuse mais les obligations bad-side sont actives, `77` lignes avec
+obligations multi-niveaux, `38` lignes avec un nœud à quatre branches
+distinctes, `max_obligation_count=378`, `max_multi_level_obligation_count=378`
+et `max_branch_interface_load=375`.
+Gate finale : `make quick` passe avec `313 passed`, puis `JUSTE`.
+
+Décision : garder T083 comme probe R004 de référence. Il confirme qu'il faut
+raisonner sur les obligations bad-side complètes plutôt que sur `I_x(v)` seul,
+mais il renforce aussi le besoin d'une relation d'interface multi-niveau avant
+toute règle locale ou intégration candidate.

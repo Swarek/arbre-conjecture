@@ -28,6 +28,7 @@ from pc_circular.solvers.candidate import _minimum_distance_cycle_order, _paired
 from pc_circular.solvers.local_constraints import (
     _matching_crossing_parts,
     exact_low_hub_matching_projected_pc_tree_search_report,
+    project_bad_side_obligations_to_pc_nodes,
     project_farthest_sets_to_pc_nodes,
 )
 from pc_circular.solvers.sat_like_experiments import (
@@ -279,6 +280,12 @@ def test_minimal_low_hub_matching_local_projection_silent_but_negative_pc_tree()
     assert all(node["laminar_violation_count"] == 0 for node in local_report["nodes"])
     assert all(node["declared_order_interval_violation_count"] == 0 for node in local_report["nodes"])
     assert all(node["circular_ones_status"] == "compatible" for node in local_report["nodes"])
+
+    bad_side_projection = project_bad_side_obligations_to_pc_nodes(D, T)
+    assert bad_side_projection["obligation_count"] == 4
+    assert bad_side_projection["atom_count"] == 8
+    assert bad_side_projection["multi_level_obligation_count"] == 4
+    assert bad_side_projection["support_path_count_histogram"] == {3: 4}
 
     projected_report = exact_low_hub_matching_projected_pc_tree_search_report(D, T)
     assert projected_report["status"] == "no_projected_pc_tree_order_represented"

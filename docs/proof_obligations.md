@@ -2130,3 +2130,41 @@ dépôt, il faut au minimum :
 
 Ces obligations doivent être testées contre les garde-fous T046, T075, T081 et
 T082 avant toute intégration dans `candidate.py`.
+
+### T083 : projection bad-side complète sur nœuds PC
+
+Statut : diagnostic expérimental R004, pas algorithme de décision.
+
+`project_bad_side_obligations_to_pc_nodes(D,T)` matérialise les obligations
+exactes d'ordre fixé :
+
+```text
+same_side(a,c;b,d) pour b,d in B_ac.
+```
+
+Pour chaque obligation, le diagnostic calcule les nœuds support du quartet,
+puis enregistre, pour chaque nœud interne du PC-tree, les branches portant les
+deux endpoints et les deux mauvais témoins. Le rapport distingue notamment les
+obligations vues dans un seul nœud, les obligations multi-niveaux, les
+projections à quatre branches distinctes, les rôles effondrés dans une même
+branche et les charges d'interface de branches.
+
+Ce que T083 couvre :
+
+- il remplace le signal farthest `I_x(v)` seul par les obligations bad-side
+  complètes ;
+- il donne un objet mesurable pour tester les conjectures P-nœud/interface des
+  notes R004 ;
+- il verrouille T046 comme garde-fou : la projection farthest peut être muette
+  alors que les obligations bad-side multi-niveaux sont actives.
+
+Limites :
+
+- le rapport ne prouve ni nécessité/suffisance d'une règle locale projetée, ni
+  polynomialité ;
+- une obligation multi-niveaux n'est pas automatiquement une obstruction, elle
+  indique seulement où une relation résiduelle peut être nécessaire ;
+- les counts de quatre branches et de violations dans l'ordre déclaré sont des
+  métriques de stress, pas des certificats de `False` ;
+- aucun résultat T083 ne doit être utilisé dans `candidate.py` sans lemme de
+  sous-cas et témoin/rejet vérifiable.

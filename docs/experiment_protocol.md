@@ -324,6 +324,19 @@ red-team : globalement négative, mais sans sous-matrice négative visible sous 
 cap local. L'absence de candidate dans le sweep ne prouve pas de borne
 universelle sur les obstructions.
 
+Projection bad-side complète sur nœuds PC Piste A/B :
+
+```bash
+make bench-r004-bad-side-projections
+```
+
+Cette commande écrit `reports/r004_bad_side_pc_node_projection_probe.json`. Elle
+calcule les obligations exactes `same_side(a,c;b,d)` dérivées des mauvais
+témoins `b,d in B_ac`, les projette sur chaque nœud interne du PC-tree, et
+mesure si elles sont locales, multi-niveaux, ou concentrées sur quatre branches
+distinctes. Le rapport sert à tester les hypothèses R004 sur les P-nœuds et les
+interfaces ; il ne fournit ni solver, ni certificat `False`.
+
 Contrôle promise-aware des permutations locales Piste F/C :
 
 ```bash

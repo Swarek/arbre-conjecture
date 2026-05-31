@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from itertools import permutations, product
+from itertools import combinations, permutations, product
 from math import comb
 
 from pc_circular.predicates import (
@@ -1568,6 +1568,300 @@ def project_farthest_sets_to_pc_nodes(D, T: PCNode, *, circular_ones_degree_limi
         "node_count": len(nodes),
         "circular_ones_degree_limit": circular_ones_degree_limit,
         "nodes": tuple(nodes),
+    }
+
+
+def _histogram_tuple(values) -> dict:
+    histogram: dict = {}
+    for value in values:
+        histogram[value] = histogram.get(value, 0) + 1
+    return dict(sorted(histogram.items(), key=lambda item: item[0]))
+
+
+def _same_side_on_declared_branch_order(
+    degree: int,
+    endpoint_branches: tuple[int, int],
+    witness_branches: tuple[int, int],
+) -> bool | None:
+    branches = (*endpoint_branches, *witness_branches)
+    if len(set(branches)) != 4:
+        return None
+
+    a_branch, c_branch = endpoint_branches
+    b_branch, d_branch = witness_branches
+    branch_order = tuple(range(degree))
+    position = {branch: idx for idx, branch in enumerate(branch_order)}
+    b_between = (
+        0
+        < (position[b_branch] - position[a_branch]) % degree
+        < (position[c_branch] - position[a_branch]) % degree
+    )
+    d_between = (
+        0
+        < (position[d_branch] - position[a_branch]) % degree
+        < (position[c_branch] - position[a_branch]) % degree
+    )
+    return b_between == d_between
+
+
+def _same_side_role_pattern(projected_roles, support: tuple[int, ...]) -> str:
+    if len(projected_roles) < 4:
+        return "partial_boundary"
+    endpoint_branches = tuple(branch for role, _, branch in projected_roles if role == "endpoint")
+    witness_branches = tuple(branch for role, _, branch in projected_roles if role == "witness")
+    endpoint_set = set(endpoint_branches)
+    witness_set = set(witness_branches)
+    if len(support) == 4:
+        return "4distinct"
+    if len(support) == 1:
+        return "all_in_one_branch"
+    if endpoint_set & witness_set:
+        return "mixed_endpoint_witness"
+    if len(endpoint_set) == 1 and len(witness_set) > 1:
+        return "endpoints_collapsed"
+    if len(witness_set) == 1 and len(endpoint_set) > 1:
+        return "witnesses_collapsed"
+    return "collapsed_separate_roles"
+
+
+def project_bad_side_obligations_to_pc_nodes(
+    D,
+    T: PCNode,
+    *,
+    max_examples_per_node: int = 10,
+    max_obligations: int | None = None,
+):
+    """Project exact bad-side same-side obligations onto PC-tree nodes.
+
+    This is an R004 diagnostic, not a decision procedure.  For every bad-side
+    obligation ``same_side(a,c;b,d)`` induced by ``b,d in B_ac``, it records how
+    the four labels project to the branches of every internal PC-tree node.
+    The report is designed to compare complete bad-side information with the
+    weaker farthest-set projections ``I_x(v)``.
+    """
+
+    n = validate_dissimilarity(D)
+    tree_labels = set(labels(T))
+    if tree_labels != set(range(n)):
+        raise ValueError("PC-tree labels must be exactly 0..n-1")
+    if max_examples_per_node < 0:
+        raise ValueError("max_examples_per_node must be non-negative")
+    if max_obligations is not None and max_obligations < 0:
+        raise ValueError("max_obligations must be non-negative or None")
+
+    from pc_circular.solvers.dp_experiments import bad_witnesses_by_pair
+    from pc_circular.solvers.sat_like_experiments import quartet_support_paths
+
+    obligations = []
+    truncated = False
+    for pair, witnesses in bad_witnesses_by_pair(D).items():
+        a, c = pair
+        for b, d in combinations(witnesses, 2):
+            if max_obligations is not None and len(obligations) >= max_obligations:
+                truncated = True
+                break
+            same_side = (a, c, b, d)
+            support_paths = quartet_support_paths(T, same_side)
+            obligations.append(
+                {
+                    "same_side": same_side,
+                    "pair": pair,
+                    "bad_witnesses": (b, d),
+                    "support_paths": support_paths,
+                    "support_path_count": len(support_paths),
+                    "requires_multi_level_correlation": len(support_paths) > 1,
+                }
+            )
+        if truncated:
+            break
+
+    nodes = []
+    for node_info in iter_internal_node_child_labels(T):
+        path = node_info["path"]
+        child_label_sets = node_info["child_label_sets"]
+        degree = len(child_label_sets)
+        child_labels_sorted = tuple(tuple(sorted(child_labels)) for child_labels in child_label_sets)
+
+        label_to_branch: dict[int, int] = {}
+        for index, child_labels in enumerate(child_label_sets):
+            for label in child_labels:
+                label_to_branch[label] = index
+
+        projection_hits = 0
+        support_node_hits = 0
+        full_projection_count = 0
+        full_distinct_four_branch_count = 0
+        declared_order_violation_count = 0
+        multi_level_hit_count = 0
+        support_size_values = []
+        full_support_size_values = []
+        endpoint_branch_count_values = []
+        witness_branch_count_values = []
+        role_pattern_values = []
+        branch_interface = [
+            {
+                "branch": index,
+                "incident_obligation_count": 0,
+                "endpoint_role_count": 0,
+                "witness_role_count": 0,
+                "mixed_role_count": 0,
+            }
+            for index in range(degree)
+        ]
+        four_branch_supports: set[tuple[int, ...]] = set()
+        forbidden_chord_pairs: set[tuple[tuple[int, int], tuple[int, int]]] = set()
+        examples = []
+
+        for obligation in obligations:
+            a, c, b, d = obligation["same_side"]
+            roles = (
+                ("endpoint", a),
+                ("endpoint", c),
+                ("witness", b),
+                ("witness", d),
+            )
+            projected_roles = tuple(
+                (role, label, label_to_branch[label])
+                for role, label in roles
+                if label in label_to_branch
+            )
+            if len(projected_roles) < 2:
+                continue
+
+            support = tuple(sorted({branch for _, _, branch in projected_roles}))
+            endpoint_branches = tuple(
+                sorted({branch for role, _, branch in projected_roles if role == "endpoint"})
+            )
+            witness_branches = tuple(
+                sorted({branch for role, _, branch in projected_roles if role == "witness"})
+            )
+            support_size = len(support)
+            projection_hits += 1
+            support_size_values.append(support_size)
+            endpoint_branch_count_values.append(len(endpoint_branches))
+            witness_branch_count_values.append(len(witness_branches))
+            role_pattern = _same_side_role_pattern(projected_roles, support)
+            role_pattern_values.append(role_pattern)
+
+            roles_by_branch: dict[int, set[str]] = {}
+            for role, _, branch in projected_roles:
+                roles_by_branch.setdefault(branch, set()).add(role)
+                if role == "endpoint":
+                    branch_interface[branch]["endpoint_role_count"] += 1
+                else:
+                    branch_interface[branch]["witness_role_count"] += 1
+            for branch, roles in roles_by_branch.items():
+                branch_interface[branch]["incident_obligation_count"] += 1
+                if len(roles) > 1:
+                    branch_interface[branch]["mixed_role_count"] += 1
+
+            is_support_node = path in obligation["support_paths"]
+            if is_support_node:
+                support_node_hits += 1
+            if obligation["requires_multi_level_correlation"]:
+                multi_level_hit_count += 1
+
+            full_projection = len(projected_roles) == 4
+            declared_order_satisfied = None
+            endpoint_chord = None
+            witness_chord = None
+            forbidden_chord_pair = None
+            if full_projection:
+                full_projection_count += 1
+                full_support_size_values.append(support_size)
+                if support_size == 4:
+                    four_branch_supports.add(support)
+                    full_distinct_four_branch_count += 1
+                    endpoint_branch_pair = (label_to_branch[a], label_to_branch[c])
+                    witness_branch_pair = (label_to_branch[b], label_to_branch[d])
+                    endpoint_chord = tuple(sorted(endpoint_branch_pair))
+                    witness_chord = tuple(sorted(witness_branch_pair))
+                    forbidden_chord_pair = tuple(sorted((endpoint_chord, witness_chord)))
+                    forbidden_chord_pairs.add(forbidden_chord_pair)
+                    declared_order_satisfied = _same_side_on_declared_branch_order(
+                        degree,
+                        endpoint_branch_pair,
+                        witness_branch_pair,
+                    )
+                    if declared_order_satisfied is False:
+                        declared_order_violation_count += 1
+
+            if len(examples) < max_examples_per_node:
+                examples.append(
+                    {
+                        "same_side": obligation["same_side"],
+                        "pair": obligation["pair"],
+                        "bad_witnesses": obligation["bad_witnesses"],
+                        "support_paths": obligation["support_paths"],
+                        "is_support_node": is_support_node,
+                        "projected_roles": projected_roles,
+                        "support": support,
+                        "support_size": support_size,
+                        "endpoint_branches": endpoint_branches,
+                        "witness_branches": witness_branches,
+                        "role_pattern": role_pattern,
+                        "full_projection": full_projection,
+                        "declared_order_satisfied": declared_order_satisfied,
+                        "endpoint_chord": endpoint_chord,
+                        "witness_chord": witness_chord,
+                        "forbidden_chord_pair": forbidden_chord_pair,
+                    }
+                )
+
+        nodes.append(
+            {
+                "path": path,
+                "kind": node_info["kind"],
+                "degree": degree,
+                "label_count": sum(len(child_labels) for child_labels in child_label_sets),
+                "branch_sizes": tuple(len(child_labels) for child_labels in child_label_sets),
+                "child_label_sets": child_labels_sorted,
+                "projection_hit_count": projection_hits,
+                "support_node_hit_count": support_node_hits,
+                "full_projection_count": full_projection_count,
+                "full_distinct_four_branch_count": full_distinct_four_branch_count,
+                "declared_order_violation_count": declared_order_violation_count,
+                "multi_level_hit_count": multi_level_hit_count,
+                "support_size_histogram": _histogram_tuple(tuple(support_size_values)),
+                "full_support_size_histogram": _histogram_tuple(tuple(full_support_size_values)),
+                "role_pattern_histogram": _histogram_tuple(tuple(role_pattern_values)),
+                "endpoint_branch_count_histogram": _histogram_tuple(
+                    tuple(endpoint_branch_count_values)
+                ),
+                "witness_branch_count_histogram": _histogram_tuple(
+                    tuple(witness_branch_count_values)
+                ),
+                "unique_four_branch_support_count": len(four_branch_supports),
+                "unique_four_branch_supports": tuple(sorted(four_branch_supports)),
+                "forbidden_chord_pair_count": len(forbidden_chord_pairs),
+                "forbidden_chord_pairs": tuple(sorted(forbidden_chord_pairs)),
+                "branch_interface": tuple(branch_interface),
+                "max_branch_interface_load": max(
+                    (item["incident_obligation_count"] for item in branch_interface),
+                    default=0,
+                ),
+                "examples": tuple(examples),
+            }
+        )
+
+    support_path_count_values = [obligation["support_path_count"] for obligation in obligations]
+    return {
+        "n": n,
+        "method": "project_bad_side_obligations_to_pc_nodes",
+        "obligation_count": len(obligations),
+        "atom_count": 2 * len(obligations),
+        "obligations_truncated": truncated,
+        "max_obligations": max_obligations,
+        "multi_level_obligation_count": sum(
+            1 for obligation in obligations if obligation["requires_multi_level_correlation"]
+        ),
+        "support_path_count_histogram": _histogram_tuple(tuple(support_path_count_values)),
+        "node_count": len(nodes),
+        "nodes": tuple(nodes),
+        "interpretation": (
+            "Diagnostic projection of exact bad-side same-side obligations; "
+            "local visibility is not a solver decision."
+        ),
     }
 
 

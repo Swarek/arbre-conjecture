@@ -188,6 +188,48 @@ Le screenshot manuscrit du 2026-05-31 est conservé comme seed ambigu dans
 doit pas être traité comme contre-exemple tant qu'une matrice explicite, un
 PC-tree et un oracle/shrink ne sont pas versionnés.
 
+## T083 - Projection bad-side complète sur nœuds PC
+
+Statut : diagnostic implémenté, explicitement non décisionnel.
+
+Artefacts ajoutés : `project_bad_side_obligations_to_pc_nodes(D,T)` dans
+`src/pc_circular/solvers/local_constraints.py` et
+`tools/pc_bad_side_projection_probe.py`, lancé par
+`make bench-r004-bad-side-projections`.
+
+Le diagnostic part des mauvais témoins exacts `B_ac` et crée une obligation
+unique pour chaque paire non ordonnée `b,d in B_ac` :
+
+```text
+same_side(a,c;b,d)
+```
+
+Il projette ensuite cette obligation sur les nœuds internes du PC-tree :
+
+- branches contenant les endpoints `{a,c}` ;
+- branches contenant les témoins `{b,d}` ;
+- nœuds support du quartet ;
+- rôle local `4distinct`, `endpoints_collapsed`, `witnesses_collapsed`,
+  `mixed_endpoint_witness`, `partial_boundary`, etc. ;
+- histogrammes de support et charges d'interface.
+
+Ce que T083 apprend déjà avant benchmark large :
+
+- sur le gadget `B_ac={b,d}` en star, l'obligation est vue dans un unique nœud
+  avec quatre branches distinctes ;
+- sur `P(P(0,1),P(2,3))`, la même obligation traverse trois supports
+  `root`, `0`, `1`, donc elle n'est pas locale à un seul nœud ;
+- sur l'instance égal-distance, il n'y a aucune obligation bad-side ;
+- sur la régression T046 matching low-hub, les projections farthest `I_x(v)`
+  restent silencieuses alors que les obligations bad-side sont actives et
+  multi-niveaux.
+
+Conclusion : la projection complète est le bon objet de mesure pour R004, mais
+elle confirme aussi que les règles locales par nœud restent dangereuses. La
+prochaine étape utile est de chercher si les obligations multi-niveaux se
+factorisent par une petite relation d'interface sur P-nœuds, ou si elles
+produisent des familles de corrélations de type cyclic ordering.
+
 ## T022 - Rapport `project_farthest_sets_to_pc_nodes`
 
 Statut : diagnostic implémenté, explicitement non décisionnel.

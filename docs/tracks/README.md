@@ -129,6 +129,7 @@ conjecture, preuve expérimentale, intuition et prochaine action.
 | T081 | 2026-05-23 | E | Profondeur locale des obstructions induites : noyaux minimaux de tailles `5` et `6`, garde-fou contre les petits certificats seuls | `make bench-local-obstruction-depth` |
 | T082 | 2026-05-23 | C/E | Chirotope same-side borné : candidats high-girth low-hub en `n=8` et `n=9`, aucun mismatch oracle | `make bench-chirotope-high-girth` |
 | R004 | 2026-05-31 | A/B/C/F | Triage des notes externes : interface P-noeud, largeur 4 conditionnelle, projection bad-side complète et route circle graph | `docs/external_reviews/researcher_advances_2026-05-31.md` |
+| T083 | 2026-05-31 | A/B | Projection bad-side complète sur nœuds PC : obligations `same_side` locales/multi-niveaux mesurées, sans intégration solver | `make bench-r004-bad-side-projections` |
 
 Le Goal courant exige au moins 50 pistes/tentatives actives documentées avant un
 abandon honnête. Cette table sert de compteur lisible ; elle ne remplace pas les
