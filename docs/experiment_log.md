@@ -5119,3 +5119,18 @@
 - Next action : shrinker le cas `mixed/odd_high_cycle_low_hub` sous
   `gap_with_distance`, puis le tester contre une signature encore plus exacte
   et contre frontiers non canoniques.
+
+## 2026-05-31 passation chercheur avant pause
+
+- Date/heure : 2026-05-31 18:10 CEST.
+- Changement fait : ajout de `docs/research_handoff_2026-05-31.md` et lien
+  depuis `README.md`.
+- Objectif : fournir au chercheur une synthese courte mais exploitable des
+  resultats du depot, sans pretendre a une preuve globale.
+- Contenu : separation definitions/quasi-circularite/cR, socle bad-side,
+  refutations principales, etat des relations de gaps, interpretation de T104,
+  comparaison avec les phases envoyees par le chercheur, questions ouvertes et
+  ordre de reprise apres la pause.
+- Decision : ne pas creer de "preuve" generale artificielle. Le document
+  presente les preuves a rediger et les preuves experimentales bornees, avec
+  les limites visibles.

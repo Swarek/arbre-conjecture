@@ -961,6 +961,11 @@ Dernier commit green avant T009 : `07120e4`.
   la closure binaire universelle des gaps, pas une preuve sous `T=T(D)`.
   `candidate.py` n'a pas été modifié.
 
+- Checkpoint handoff 2026-05-31 courant : commit contenant
+  `docs/research_handoff_2026-05-31.md`, synthese chercheur avant pause d'une
+  semaine. Validation attendue : document de passation lie depuis `README.md`,
+  `make quick` vert. Ce checkpoint ne modifie aucun solver.
+
 ## Rollback
 
 Si une modification régresse et que la cause n’est pas claire :
